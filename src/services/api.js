@@ -1,16 +1,13 @@
-const explicitBase = String(import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '');
+const API_BASE_URL_VALUE =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+
+export const API_BASE_URL = String(API_BASE_URL_VALUE)
+  .trim()
+  .replace(/\/+$/, '');
+
+export const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 
 const AUTH_TOKEN_KEY = 'crednivo-auth-token';
-
-function defaultApiBase() {
-  if (typeof window === 'undefined') return 'http://localhost:8080/api';
-  const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-  const host = window.location.hostname || 'localhost';
-  return `${protocol}//${host}:8080/api`;
-}
-
-export const API_BASE_URL = explicitBase || defaultApiBase();
-export const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 
 export function getAuthToken() {
   try { return localStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch { return ''; }
