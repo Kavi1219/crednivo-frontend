@@ -1,0 +1,8 @@
+CREDNIVO Phase 9.0.6 - Create Loan Search Customer CSS Fix
+
+- Removed the double/nested border from Search Customer.
+- Search icon and text now sit inside one clean input shell.
+- Search field and Customer select align consistently.
+- Focus state uses the normal CREDNIVO blue ring.
+- Dark/light theme compatible.
+- No backend or database change required.

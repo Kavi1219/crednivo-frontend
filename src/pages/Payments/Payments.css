@@ -1,0 +1,16 @@
+.payment-history-card{overflow:hidden}
+.payment-history-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px 16px 12px;border-bottom:1px solid var(--line)}
+.payment-history-head h2{margin:0;font-size:14px}.payment-history-head>div>span{display:block;margin-top:4px;color:var(--ink-500);font-size:9.5px}
+.payment-export-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.payment-date-toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface-soft);border-bottom:1px solid var(--line)}
+.payment-date-field{height:46px;min-width:190px;display:flex;align-items:center;gap:9px;padding:0 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:#1268dc}
+.payment-date-field>svg{flex:0 0 auto;display:block}.payment-date-field label{min-width:0;flex:1}.payment-date-field span{display:block;color:var(--ink-500);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}.payment-date-field input{width:100%;margin-top:2px;padding:0;border:0;outline:0;background:transparent;color:var(--ink-900);font-size:10px;font-weight:600}
+.payment-date-quick-actions{display:flex;align-items:center;gap:8px;margin-left:auto}.payment-list-toolbar{border-bottom:1px solid var(--line)}
+.payment-type-cell{display:inline-flex;align-items:center;gap:8px;min-height:30px}.payment-type-icon{width:28px;height:28px;flex:0 0 28px;display:inline-flex;align-items:center;justify-content:center;line-height:0;border-radius:8px}.payment-type-icon svg{display:block}
+.payment-type-icon.green{color:#168b40;background:#e6f8ec}.payment-type-icon.orange{color:#e27331;background:var(--surface)0e5}.payment-type-icon.blue{color:#1268dc;background:#e8f1ff}
+@media(max-width:900px){.payment-date-toolbar{flex-wrap:wrap}.payment-date-quick-actions{margin-left:0}}
+@media(max-width:767px){.payment-history-head{align-items:flex-start;flex-direction:column}.payment-export-actions{width:100%;justify-content:flex-start}.payment-date-toolbar{align-items:stretch;flex-direction:column}.payment-date-field{width:100%;min-width:0}.payment-date-quick-actions{width:100%;flex-wrap:wrap}}
+@media print{
+  .payments-page .module-header,.payments-page .metric-strip,.payment-date-toolbar,.payment-list-toolbar,.payment-export-actions{display:none!important}
+  .payment-history-card{border:0;box-shadow:none}.payment-history-head{padding:0 0 14px;border:0}.desktop-data-table{display:block!important}.mobile-data-list{display:none!important}
+}

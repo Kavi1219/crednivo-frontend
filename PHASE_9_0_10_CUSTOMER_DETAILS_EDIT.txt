@@ -1,0 +1,14 @@
+CREDNIVO Phase 9.0.10 - Customer Details Edit
+
+Added:
+- Edit Details button in Customer Details card.
+- Editable fields: Name, Mobile, Father's Name, Date, Work and Address.
+- Customer ID remains locked and cannot be changed.
+- Changes are NOT saved while typing.
+- Cancel discards unsaved changes.
+- Save Details updates the backend and refreshes the customer profile.
+- Existing Customer/Jamin media is preserved.
+- Responsive desktop/mobile editor.
+- Uses existing customers.edit permission.
+
+No backend or database change required.

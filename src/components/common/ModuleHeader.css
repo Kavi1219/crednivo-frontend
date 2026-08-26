@@ -1,0 +1,6 @@
+.module-header { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; }
+.module-header h1 { margin:4px 0 0; font-size:clamp(22px,2vw,28px); letter-spacing:-.035em; }
+.module-header p { max-width:680px; margin:7px 0 0; color:var(--ink-600); font-size:12px; line-height:1.55; }
+.module-eyebrow { color:var(--blue-600); font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.module-header-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width:767px){ .module-header{align-items:flex-start}.module-header-actions{align-self:flex-start}.module-header p{font-size:11px}.module-header h1{font-size:21px} }

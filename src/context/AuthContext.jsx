@@ -1,0 +1,185 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { apiRequest, clearAuthToken, getAuthToken, mediaUrl, setAuthToken, uploadCompanyLogo } from '../services/api';
+
+const AuthContext = createContext(null);
+const UI_SETTINGS_KEY = 'crednivo-ui-settings';
+
+function applyStoredTheme() {
+  try {
+    const settings = JSON.parse(localStorage.getItem(UI_SETTINGS_KEY) || '{}');
+    const selected = settings.theme || 'system';
+    const theme = selected === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : selected;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch { /* use CSS defaults */ }
+}
+
+function normalizeUser(payload) {
+  if (!payload) return null;
+  return {
+    ...payload,
+    role: String(payload.role || '').toUpperCase(),
+    profilePhoto: mediaUrl(payload.profilePhoto),
+    permissions: payload.permissions || {},
+  };
+}
+
+export function AuthProvider({ children }) {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [status, setStatus] = useState({ ownerSetupRequired: false, companyName: 'CREDNIVO', ownerName: 'Owner', branch: '' });
+  const [error, setError] = useState('');
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      applyStoredTheme();
+      const authStatus = await apiRequest('/auth/status', { skipAuth: true });
+      setStatus(authStatus || {});
+      if (authStatus?.ownerSetupRequired) {
+        clearAuthToken();
+        setUser(null);
+        return;
+      }
+      const token = getAuthToken();
+      if (!token) { setUser(null); return; }
+      try {
+        const me = await apiRequest('/auth/me');
+        setUser(normalizeUser(me));
+      } catch {
+        clearAuthToken();
+        setUser(null);
+      }
+    } catch (err) {
+      setError(err?.message || 'Unable to reach CREDNIVO backend.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  useEffect(() => {
+    const expired = () => { clearAuthToken(); setUser(null); };
+    window.addEventListener('crednivo-auth-expired', expired);
+    return () => window.removeEventListener('crednivo-auth-expired', expired);
+  }, []);
+
+
+  useEffect(() => {
+    const refreshCurrentUser = async () => {
+      if (!getAuthToken()) return;
+      try {
+        const me = await apiRequest('/auth/me');
+        setUser(normalizeUser(me));
+      } catch {
+        // Auth expiry is handled centrally by the API service/event listener.
+      }
+    };
+    const onVisibility = () => { if (document.visibilityState === 'visible') refreshCurrentUser(); };
+    window.addEventListener('focus', refreshCurrentUser);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', refreshCurrentUser);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+
+  const login = async ({ identifier, password, role }) => {
+    setError('');
+    const result = await apiRequest('/auth/login', {
+      method: 'POST',
+      skipAuth: true,
+      body: JSON.stringify({ identifier, password, role }),
+    });
+    setAuthToken(result.token);
+    setUser(normalizeUser(result));
+    return result;
+  };
+
+  const setupOwner = async ({ username, mobile, password }) => {
+    setError('');
+    const result = await apiRequest('/auth/setup-owner', {
+      method: 'POST',
+      skipAuth: true,
+      body: JSON.stringify({ username, mobile, password }),
+    });
+    setAuthToken(result.token);
+    setUser(normalizeUser(result));
+    setStatus((current) => ({ ...current, ownerSetupRequired: false }));
+    return result;
+  };
+
+
+  const registerCompany = async ({ logoFile, ...payload }) => {
+    setError('');
+    const result = await apiRequest('/auth/register-company', {
+      method: 'POST',
+      skipAuth: true,
+      body: JSON.stringify(payload),
+    });
+    setAuthToken(result.token);
+    setUser(normalizeUser(result));
+    setStatus((current) => ({ ...current, ownerSetupRequired: false, companyName: payload.companyName, ownerName: payload.ownerName, branch: payload.branch }));
+    if (logoFile) {
+      try {
+        await uploadCompanyLogo(logoFile);
+        const me = await apiRequest('/auth/me');
+        setUser(normalizeUser(me));
+      } catch (uploadError) {
+        console.warn('Company registered but logo upload failed', uploadError);
+      }
+    }
+    return result;
+  };
+
+  const registerAgent = async ({ photoFile, name, mobile, companyName, branch, password }) => {
+    setError('');
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('mobile', mobile);
+    formData.append('companyName', companyName);
+    formData.append('branch', branch);
+    formData.append('password', password);
+    if (photoFile) formData.append('photo', photoFile);
+    return apiRequest('/auth/register-agent', { method: 'POST', skipAuth: true, body: formData });
+  };
+
+  const changePassword = async ({ currentPassword, newPassword }) => {
+    await apiRequest('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    clearAuthToken();
+    setUser(null);
+    return true;
+  };
+
+  const logout = async () => {
+    try {
+      if (getAuthToken()) await apiRequest('/auth/logout', { method: 'POST' });
+    } catch { /* local logout must still succeed if backend is unavailable */ }
+    finally { clearAuthToken(); setUser(null); }
+  };
+
+  const isOwner = user?.role === 'OWNER';
+  const hasPermission = useCallback((permission) => {
+    if (!permission) return true;
+    if (user?.role === 'OWNER') return true;
+    return Boolean(user?.permissions?.[permission]);
+  }, [user]);
+  const value = useMemo(() => ({
+    loading, user, status, error, login, setupOwner, registerCompany, registerAgent,
+    logout, changePassword, refresh, isOwner, hasPermission, permissions: user?.permissions || {},
+  }), [loading, user, status, error, isOwner, hasPermission, refresh]);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const value = useContext(AuthContext);
+  if (!value) throw new Error('useAuth must be used inside AuthProvider');
+  return value;
+}

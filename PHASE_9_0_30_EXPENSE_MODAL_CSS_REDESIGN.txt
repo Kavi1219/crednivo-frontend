@@ -1,0 +1,16 @@
+CREDNIVO Phase 9.0.30 - Expense Modal CSS Redesign
+
+Fixed Add Expense / Edit Expense popup:
+- Dedicated expense modal classes so Collection popup CSS cannot interfere.
+- Professional centered desktop modal.
+- Purpose is full width.
+- Amount + Category align in one row.
+- Date is aligned cleanly with the form.
+- Created By is a read-only account card instead of a normal editable-looking input.
+- Consistent input heights and spacing.
+- Fixed header and footer; body can scroll when needed.
+- Added Cancel + Save Expense footer actions.
+- Save is disabled until Purpose and valid Amount are entered.
+- Mobile uses a clean bottom-sheet layout with one-column fields.
+
+No backend/database change required.

@@ -1,0 +1,2 @@
+.customers-page .module-table td:first-child { min-width:220px; }
+.customers-page .module-table td:nth-child(5) { color:#173b69; }

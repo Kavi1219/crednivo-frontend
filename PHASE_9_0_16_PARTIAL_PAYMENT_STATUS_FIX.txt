@@ -1,0 +1,25 @@
+CREDNIVO Phase 9.0.16 - Partial Payment Status Fix
+
+Validated from Phase 9 payment testing:
+- Partial payment is being saved.
+- Payment History records the partial collection.
+- Loan outstanding reduces correctly.
+- The same installment remains in Upcoming with its remaining balance.
+
+Fixed status semantics:
+- Future installment + partial payment -> Partial
+- Due-today installment + partial payment -> Pending
+- Past installment with balance -> Overdue
+- Fully paid installment -> Paid
+- Future unpaid installment -> Unpaid
+
+Also:
+- Added Partial to the Collection status filter.
+- Future partial action now says Pay Balance.
+- Due-today partial action now says Collect Balance.
+
+Example from test:
+Due Rs.115, Paid Rs.65, Balance Rs.50, Due 30 Aug while today is 25 Aug
+=> Status: Partial (not Pending)
+
+No backend or database change required.

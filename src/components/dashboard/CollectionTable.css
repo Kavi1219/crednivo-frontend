@@ -1,0 +1,264 @@
+.collection-card { min-width: 0; overflow: hidden; padding: 20px 20px 18px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.section-head h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+.section-head > button { display: flex; align-items: center; gap: 5px; color: var(--blue-500); background: transparent; font-size: 12px; cursor: pointer; }
+.collection-tabs { display: flex; align-items: center; gap: 12px; margin-top: 16px; border-bottom: 1px solid var(--line); }
+.collection-tabs button { min-width: 70px; padding: 10px 7px 11px; color: var(--ink-600); background: transparent; border-bottom: 2px solid transparent; cursor: pointer; font-size: 12px; }
+.collection-tabs button.active { color: var(--blue-500); border-bottom-color: var(--blue-500); font-weight: 600; }
+.collection-table-wrap { margin-top: 10px; overflow-x: auto; }
+.collection-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.collection-table th { padding: 13px 15px; text-align: left; background: var(--surface-soft); color: var(--ink-800); font-weight: 500; white-space: nowrap; }
+.collection-table td { padding: 11px 15px; border-bottom: 1px solid var(--line); color: var(--ink-800); white-space: nowrap; }
+.cycle-chip { display: inline-flex; padding: 5px 10px; color: var(--blue-500); background: var(--blue-100); border-radius: 7px; font-size: 10px; }
+.view-collections-button { margin: 10px auto 0; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 15px; border: 1px solid var(--line); border-radius: 8px; color: var(--blue-500); background: var(--surface); cursor: pointer; font-size: 11px; }
+.mobile-collection-list { display: none; }
+
+@media (max-width: 767px) {
+  .collection-card { padding: 16px 13px 14px; }
+  .section-head h2 { font-size: 15px; }
+  .collection-tabs { margin-top: 12px; }
+  .collection-table-wrap { display: none; }
+  .mobile-collection-list { display: grid; gap: 9px; margin-top: 12px; }
+  .mobile-collection-row { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+  .mobile-row-top, .mobile-row-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .mobile-row-top > div { display: flex; flex-direction: column; gap: 4px; }
+  .mobile-row-top strong { font-size: 12px; }
+  .mobile-row-top span { color: var(--ink-600); font-size: 9.5px; }
+  .mobile-row-bottom { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
+  .mobile-row-bottom > span { display: flex; flex-direction: column; gap: 3px; }
+  .mobile-row-bottom small { color: var(--ink-500); font-size: 8.5px; }
+  .mobile-row-bottom b { font-size: 10.5px; }
+  .view-collections-button { width: 100%; margin-top: 12px; }
+}
+.dashboard-empty { min-height:180px; display:grid; place-items:center; color:var(--ink-500); font-size:11px; }
+
+/* Dashboard collection actions */
+.dashboard-collection-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+}
+
+.dashboard-pay-button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--line));
+  border-radius: 9px;
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+
+.dashboard-pay-button svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.dashboard-pay-button:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--success-soft) 82%, var(--success) 18%);
+  border-color: color-mix(in srgb, var(--success) 55%, var(--line));
+  box-shadow: 0 5px 14px rgba(11, 135, 62, .10);
+}
+
+.dashboard-pay-button:active { transform: translateY(0); }
+
+.dashboard-pay-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(3, 20, 39, .48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dashboard-pay-modal {
+  width: min(445px, 100%);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink-950);
+  box-shadow: 0 24px 70px rgba(3, 29, 56, .24);
+}
+
+.dashboard-pay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dashboard-pay-head strong {
+  display: block;
+  color: var(--ink-950);
+  font-size: 16px;
+}
+
+.dashboard-pay-head span {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-500);
+  font-size: 10px;
+}
+
+.dashboard-pay-due {
+  margin: 16px 0;
+  padding: 15px;
+  border-radius: 13px;
+  background: var(--blue-100);
+}
+
+.dashboard-pay-due > span,
+.dashboard-pay-due small {
+  display: block;
+  color: var(--ink-500);
+  font-size: 9.5px;
+}
+
+.dashboard-pay-due strong {
+  display: block;
+  margin: 5px 0;
+  color: var(--ink-950);
+  font-size: 22px;
+}
+
+.dashboard-pay-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-pay-fields label {
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-pay-fields label > span {
+  color: var(--ink-600);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.dashboard-pay-fields input,
+.dashboard-pay-fields select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  color: var(--ink-950);
+  background: var(--surface-soft);
+  font: inherit;
+}
+
+.dashboard-pay-fields input:focus,
+.dashboard-pay-fields select:focus {
+  border-color: #1681f4;
+  box-shadow: 0 0 0 3px rgba(22, 129, 244, .10);
+}
+
+.dashboard-save-payment {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 11px;
+  color: #fff;
+  background: #0aa64f;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.dashboard-save-payment svg { display: block; }
+.dashboard-save-payment:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-width: 767px) {
+  .mobile-row-bottom { align-items: flex-end; }
+  .dashboard-collection-actions.mobile-actions { margin-left: auto; }
+  .dashboard-pay-button.compact { min-height: 34px; padding: 0 10px; }
+  .dashboard-pay-modal { padding: 17px; border-radius: 16px; }
+}
+
+@media (max-width: 440px) {
+  .dashboard-pay-fields { grid-template-columns: 1fr; }
+  .dashboard-pay-button.compact span { display: none; }
+  .dashboard-pay-button.compact { width: 34px; padding: 0; }
+}
+
+/* Paid collections move out of the cycle queues into their own Today tab. */
+.collection-tabs .collected-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 116px;
+}
+.collection-tab-count {
+  min-width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: var(--success);
+  background: var(--success-soft);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+.collection-tabs .collected-tab.active .collection-tab-count {
+  color: #fff;
+  background: #18a24b;
+}
+@media (max-width: 767px) {
+  .collection-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .collection-tabs::-webkit-scrollbar { display: none; }
+  .collection-tabs button { flex: 0 0 auto; }
+}
+
+
+/* Theme-aware dashboard collection surfaces. */
+.collection-table tbody tr { background: transparent; transition: background .15s ease; }
+.collection-table tbody tr:hover { background: var(--surface-hover); }
+.collection-table-wrap { scrollbar-color: color-mix(in srgb, var(--ink-500) 65%, transparent) var(--surface-soft); }
+.collection-table-wrap::-webkit-scrollbar { height: 8px; }
+.collection-table-wrap::-webkit-scrollbar-track { background: var(--surface-soft); }
+.collection-table-wrap::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--ink-500) 58%, transparent); border-radius: 999px; }
+html[data-theme='dark'] .collection-table th { background: var(--surface-soft); color: var(--ink-800); }
+html[data-theme='dark'] .collection-table td { color: var(--ink-800); border-bottom-color: var(--line); }
+html[data-theme='dark'] .collection-tabs { border-bottom-color: var(--line); }
+html[data-theme='dark'] .collection-tabs button { color: var(--ink-600); }
+html[data-theme='dark'] .collection-tabs button.active { color: var(--blue-500); }
+html[data-theme='dark'] .mobile-collection-row { background: var(--surface-soft); border-color: var(--line); }
+html[data-theme='dark'] .dashboard-pay-modal { background: var(--surface); border-color: var(--line); color: var(--ink-950); }
+
+
+/* Phase 9.0.22 - Closed loan payment lock */
+.dashboard-pay-button.closed,
+.dashboard-pay-button.closed:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+  filter: saturate(.3);
+  transform: none !important;
+}

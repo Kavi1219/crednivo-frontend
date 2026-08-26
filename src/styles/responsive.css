@@ -1,0 +1,8 @@
+@media (max-width: 1199px) {
+  :root { --sidebar-width: 88px; }
+}
+
+@media (max-width: 767px) {
+  :root { --header-height: 72px; }
+  body { padding-bottom: env(safe-area-inset-bottom); }
+}

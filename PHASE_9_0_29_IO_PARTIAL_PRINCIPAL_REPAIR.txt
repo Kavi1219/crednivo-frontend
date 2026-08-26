@@ -1,0 +1,27 @@
+CREDNIVO Phase 9.0.29 - IO Partial Principal Repricing Repair
+
+This update makes partial-principal repricing self-healing.
+
+Example:
+Principal before payment: ₹10,000
+Principal Payment entered: ₹4,000
+Remaining Principal: ₹6,000
+Interest rate: 2%
+New Interest / Cycle: ₹120
+
+Fixes:
+- Loans are loaded before collections during frontend sync.
+- Backend automatically repairs ACTIVE IO loans whose principal was reduced
+  but collection/interest values are still stale.
+- Repair uses the latest principal-payment date and changes FUTURE cycles only.
+- Customer Loan Details derives current IO interest directly from current principal
+  as a display fail-safe.
+- "Principal Paid" is renamed "Principal Payment" with clearer help text.
+- Preview says "Remaining Principal" to avoid confusing payment amount with balance.
+
+Important:
+If a test loan currently shows ₹4,000 outstanding, the database has recorded
+₹6,000 of principal payments on that loan. This update will correctly change
+its 2% interest to ₹80/cycle; it will not rewrite already-recorded principal
+payments. To test the intended ₹4,000 payment case, use a fresh ₹10,000 IO loan
+and enter Principal Payment = ₹4,000.

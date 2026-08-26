@@ -1,0 +1,10 @@
+.action-button { min-height:40px; display:inline-flex; align-items:center; justify-content:center; gap:7px; line-height:1; padding:0 14px; border-radius:10px; cursor:pointer; font-size:11px; font-weight:700; transition:.16s ease; border:1px solid transparent; }
+.action-button:hover{transform:translateY(-1px)}
+.action-button.primary{color:#fff;background:linear-gradient(135deg,#1988ff,#0563dd);box-shadow:0 6px 16px rgba(8,104,236,.18)}
+.action-button.secondary{color:var(--blue-500);background:var(--surface);border-color:var(--line)}
+.action-button.secondary:hover{background:var(--surface-soft);border-color:color-mix(in srgb,var(--blue-500) 25%,var(--line))}
+.action-button.danger{color:var(--danger);background:var(--danger-soft);border-color:color-mix(in srgb,var(--danger) 24%,var(--line))}
+.action-button.success{color:var(--success);background:var(--success-soft);border-color:color-mix(in srgb,var(--success) 24%,var(--line))}
+@media (max-width:480px){.action-button{min-height:38px;padding:0 11px}.action-button span{font-size:10px}}
+
+.action-button svg{display:block;flex:0 0 auto}.action-button span{display:block;line-height:1.15}

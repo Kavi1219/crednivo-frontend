@@ -1,0 +1,23 @@
+CREDNIVO Phase 9.0.17 - Dashboard Partial Card + Requested Order
+
+Dashboard card order:
+1. Available Capital
+2. Active Loans
+3. Today's Collection
+4. Collected Today
+5. Today's Expenses
+6. Pending / Overdue
+7. Partial
+8. Upcoming 7 Days
+
+Partial card:
+- Shows the remaining balance on future partially-paid installments.
+- Does not treat future partial balances as overdue/pending.
+- Shows the number of affected customers.
+- View Details opens Collection -> Upcoming with Partial status filter.
+
+Today's Collection:
+- Renamed from Expected Today.
+- Still represents the amount scheduled/due today.
+
+No backend or database change required.

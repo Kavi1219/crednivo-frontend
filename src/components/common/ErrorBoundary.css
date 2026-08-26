@@ -1,0 +1,34 @@
+.crednivo-error-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--canvas);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.crednivo-error-card {
+  width: min(560px, 100%);
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 18px 50px rgba(20, 42, 74, .10);
+}
+.crednivo-error-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #eaf2ff;
+  color: #0b68e8;
+  font-weight: 800;
+  font-size: 22px;
+}
+.crednivo-error-eyebrow { margin: 18px 0 6px; color: #0b68e8; font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+.crednivo-error-card h1 { margin: 0; color: var(--ink-950); font-size: 24px; line-height: 1.2; }
+.crednivo-error-copy { color: var(--ink-600); line-height: 1.6; font-size: 14px; }
+.crednivo-error-card pre { overflow: auto; margin: 16px 0; padding: 12px; border-radius: 10px; background: var(--surface-soft); color: #b4232f; white-space: pre-wrap; font-size: 12px; }
+.crednivo-error-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.crednivo-error-actions button { min-height: 40px; padding: 0 14px; border-radius: 10px; background: #0b68e8; color: #fff; cursor: pointer; font-weight: 700; }
+.crednivo-error-actions button.secondary { background: var(--surface-soft); color: var(--ink-800); }

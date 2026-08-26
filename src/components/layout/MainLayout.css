@@ -1,0 +1,7 @@
+.app-shell { min-height: 100vh; background: var(--canvas); }
+.main-shell { min-height: 100vh; margin-left: var(--sidebar-width); transition: margin .2s ease; }
+.page-content { padding: 18px 30px 34px 20px; }
+@media (max-width: 767px) {
+  .main-shell { margin-left: 0; }
+  .page-content { padding: 14px 12px calc(var(--mobile-nav-height) + 38px); }
+}

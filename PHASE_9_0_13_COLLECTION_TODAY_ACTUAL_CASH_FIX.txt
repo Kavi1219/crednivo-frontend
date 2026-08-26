@@ -1,0 +1,19 @@
+CREDNIVO Phase 9.0.13 - Collection Today Actual Cash Fix
+
+Why this update:
+Phase 9.0.12 was not fully applied after Windows reported EBUSY, so the Collection page
+still showed the old labels and calculated Collected Today only from installments whose
+due date was today.
+
+Fixed:
+- Collected Today = all Collection payments whose PAYMENT DATE is today.
+- Includes early payments.
+- Includes overdue recoveries collected today.
+- Expected Today = only installments due today.
+- Pending Today = only unpaid balance due today.
+- Total Entries renamed to Due Today Entries.
+- Paid & Unpaid Entries renamed to Today's Due Paid / Unpaid.
+- Keeps the Phase 9.0.9 Today / Overdue / Upcoming / All behavior.
+- Keeps Phase 9.0.11 Customer + Jamin Edit Details.
+
+No backend or database change required.

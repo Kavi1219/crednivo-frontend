@@ -1,0 +1,29 @@
+.media-uploader{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}.profile-media-card,.document-media-card{min-width:0;display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}.profile-photo{position:relative;width:72px;height:72px;flex:0 0 72px;display:grid;place-items:center;overflow:hidden;border:1px dashed #a9c9f5;border-radius:19px;color:#0868ec;background:#eaf3ff;cursor:pointer}.profile-photo.has-photo{border-style:solid}.profile-photo img{width:100%;height:100%;object-fit:cover}.photo-expand{position:absolute;right:5px;bottom:5px;width:23px;height:23px;display:grid;place-items:center;border-radius:8px;color:#fff;background:rgba(4,29,56,.75);backdrop-filter:blur(3px)}.profile-media-copy{min-width:0}.profile-media-copy strong,.document-media-card strong{display:block;font-size:10.5px}.profile-media-copy p,.document-media-card p{margin:4px 0 8px;color:var(--ink-500);font-size:8.8px;line-height:1.4}.media-actions{display:flex;gap:6px;flex-wrap:wrap}.media-actions button{min-height:31px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0 9px;border:1px solid var(--line);border-radius:8px;color:#145fbf;background:var(--surface);cursor:pointer;font-size:9px;font-weight:700}.media-actions button:hover{background:var(--surface-hover)}.document-media-card{display:grid;grid-template-columns:auto 1fr auto}.document-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;color:#7448df;background:#eee8ff}.document-media-card p{margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.document-actions{justify-content:flex-end}.media-open{color:#117c37!important;background:#ecfaF0!important;border-color:#d5f0dd!important}.hidden-media-input{display:none}.media-viewer{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:26px;background:rgba(1,12,27,.88);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.media-viewer img{max-width:min(94vw,1000px);max-height:88vh;object-fit:contain;border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.4)}.media-viewer-close{position:fixed;right:22px;top:22px;width:42px;height:42px;display:grid;place-items:center;border-radius:13px;color:#fff;background:rgba(255,255,255,.14);cursor:pointer}
+@media(max-width:900px){.media-uploader{grid-template-columns:1fr}.document-media-card{grid-template-columns:auto 1fr}.document-actions{grid-column:1/-1;justify-content:flex-start;padding-left:54px}}
+@media(max-width:500px){.profile-media-card{align-items:flex-start}.profile-photo{width:64px;height:64px;flex-basis:64px}.document-media-card{grid-template-columns:auto 1fr}.document-actions{padding-left:0}.media-actions button span{display:none}}
+
+
+/* Phase 5.0.3 media upload error */
+.media-upload-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 95, 105, .28);
+  border-radius: 10px;
+  background: rgba(255, 95, 105, .08);
+  color: #ff8b93;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Phase 5.0.4 - keep uploader contents inside their container */
+.media-uploader{grid-template-columns:repeat(2,minmax(0,1fr));min-width:0;width:100%;box-sizing:border-box}
+.profile-media-card,.document-media-card{width:100%;max-width:100%;box-sizing:border-box;overflow:hidden}
+.document-media-card{grid-template-columns:auto minmax(0,1fr) auto}
+.document-actions{min-width:0}
+@media(max-width:900px){
+  .media-uploader{grid-template-columns:minmax(0,1fr)}
+  .document-media-card{grid-template-columns:auto minmax(0,1fr)}
+}

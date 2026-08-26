@@ -1,0 +1,39 @@
+CREDNIVO FRONTEND - PHASE 5.0 REPORTS OVERVIEW
+================================================
+
+Phase 5.0 starts the major Reports module.
+
+Added / upgraded:
+- New Reports & Analytics overview page.
+- Date From / To filtering.
+- Quick filters: Today, This Week, This Month.
+- Cycle filter: All / Daily / Weekly / Monthly.
+- Current branch + authenticated report scope shown in filter area.
+- KPI cards:
+  * Expected Collection
+  * Collected
+  * Pending
+  * New Loans Given
+  * Expenses
+  * Net Cash Flow
+- Cycle performance with recovery percentage bars.
+- Cash-flow breakdown.
+- Collection trend chart.
+- Recovery / overdue attention list.
+- Portfolio activity summary.
+- Owner agent snapshot / Agent self-scope card.
+- CSV export for the filtered Reports Overview.
+- Print layout.
+- Existing database monthly-report endpoint retained as a new
+  "Monthly Statement" view.
+- Monthly Statement can be exported as CSV.
+- Responsive desktop/tablet/mobile layout.
+- Carried forward the agent/mobile profile-photo circle fix.
+
+Backend:
+- No Phase 5 backend replacement is required for this 5.0 frontend step.
+- Overview uses the existing backend-synced CREDNIVO context data.
+- Monthly Statement continues using /reports/monthly.
+
+Next planned report phase:
+- Phase 5.1: Detailed Collection Report + drill-down/export.

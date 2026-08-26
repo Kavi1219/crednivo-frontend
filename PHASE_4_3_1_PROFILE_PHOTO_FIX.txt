@@ -1,0 +1,6 @@
+CREDNIVO Frontend Phase 4.3.1
+
+Fix:
+- Mobile agent profile photo in the top-right header is now locked to a square/circular avatar.
+- Profile image uses object-fit: cover and cannot stretch vertically.
+- Existing Phase 4.3 agent permissions and all other frontend features are preserved.

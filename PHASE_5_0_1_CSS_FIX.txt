@@ -1,0 +1,9 @@
+CREDNIVO PHASE 5.0.1 - REPORTS CSS FIX
+
+Fixed:
+- Monthly Business Statement header now follows Light/Dark theme correctly.
+- CREDNIVO title and company/branch text no longer disappear in Dark theme.
+- Removed the hard-coded light statement header conflict.
+- Improved desktop report text sizing and table readability.
+- Kept existing Phase 5.0 report logic unchanged.
+- No backend change required.

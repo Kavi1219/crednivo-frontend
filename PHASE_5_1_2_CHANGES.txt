@@ -1,0 +1,14 @@
+CREDNIVO Phase 5.1.2 - Collection Report Upcoming Schedule Fix
+
+Fixed:
+- Detailed Collection Report no longer stops the To Date at today.
+- Default report range is the full current calendar month.
+- "This Week" now covers Monday through Sunday, including upcoming collection dates.
+- "This Month" now covers the full month, including upcoming scheduled collections.
+- Reset returns to the full current month.
+- Upcoming schedule rows can now appear in Collection Report.
+
+Why:
+A Weekly loan created on 24 Aug 2026 has its first due date on 31 Aug 2026.
+The previous report range ended on 24 Aug, so 0 schedule rows was correct for that range,
+but it made the report appear broken. Phase 5.1.2 makes upcoming schedules visible.

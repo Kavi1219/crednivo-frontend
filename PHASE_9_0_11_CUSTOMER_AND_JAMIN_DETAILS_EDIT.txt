@@ -1,0 +1,18 @@
+CREDNIVO Phase 9.0.11 - Customer + Jamin Details Edit
+
+Customer Details:
+- Existing Edit Details remains available.
+- Name, Mobile, Father's Name, Date, Work and Address are editable.
+- Customer ID remains locked.
+
+Jamin Details:
+- Added Edit Details beside Add / Edit Media.
+- Editable fields: Name, Mobile, Father's Name, Work and Address.
+- Nothing is saved while typing.
+- Cancel discards unsaved changes.
+- Save Details updates the backend.
+- Existing Jamin photo/document are preserved.
+- Uses the existing customers.edit permission.
+- Desktop and mobile use the same responsive editor.
+
+No backend or database change is required.

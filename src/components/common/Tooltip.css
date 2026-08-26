@@ -1,0 +1,27 @@
+.tooltip-wrap { position: relative; display: inline-flex; }
+.tooltip-bubble {
+  position: absolute;
+  z-index: 120;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translate(-50%, 4px);
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+  color: #fff;
+  background: #0b1d35;
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  transition: opacity .16s ease, transform .16s ease;
+}
+.tooltip-wrap:hover .tooltip-bubble,
+.tooltip-wrap:focus-within .tooltip-bubble { opacity: 1; transform: translate(-50%, 0); }
+.tooltip-bottom .tooltip-bubble { top: calc(100% + 10px); bottom: auto; }
+.tooltip-right .tooltip-bubble { left: calc(100% + 10px); top: 50%; bottom: auto; transform: translate(4px,-50%); }
+.tooltip-right:hover .tooltip-bubble,
+.tooltip-right:focus-within .tooltip-bubble { transform: translate(0,-50%); }
+
+@media (hover: none), (max-width: 767px) { .tooltip-bubble { display: none; } }

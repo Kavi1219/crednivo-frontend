@@ -1,0 +1,16 @@
+CREDNIVO Phase 9.0.9 - Collection Workload View
+
+Changed main Collections page:
+- Today: only collections due today.
+- Overdue: previous unpaid/partial entries.
+- Upcoming: only ONE next unpaid installment for each active loan.
+- All: overdue + today + one next upcoming installment per active loan.
+- Future rows use Pay Early instead of Collect.
+- Full future schedule is available only after clicking Schedule for a specific loan.
+- Today summary cards stay based on today's dues only.
+
+Reason:
+Daily loans can create 100 schedule rows. Showing every future row in the main Collection page
+would make the page unusable as customer volume grows.
+
+No backend or database change is required.

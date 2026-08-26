@@ -1,0 +1,12 @@
+CREDNIVO Phase 9.0.14 - Customer Profile Loan Summary
+
+Added to the top Customer Profile card:
+- Active Loans: number of currently active loans.
+- Pending Due: total unpaid/partial amount whose due date is today or earlier.
+- All Loans: total number of loans for the customer.
+- Total Outstanding remains visible.
+- Current collection amount/cycle remains visible.
+
+Pending Due does NOT count future scheduled installments.
+Works on desktop and mobile.
+No backend or database change required.

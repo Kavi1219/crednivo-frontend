@@ -1,0 +1,12 @@
+CREDNIVO Phase 3.2 - Expenses + Capital PostgreSQL
+
+- Expenses now load from /api/expenses instead of localStorage.
+- Add, edit and delete expense now persist through Spring Boot/PostgreSQL.
+- Expense changes refresh Payment History because the backend creates/updates/deletes the linked EXPENSE transaction.
+- Capital now loads from /api/capital instead of localStorage.
+- Add, edit and delete capital now persist through Spring Boot/PostgreSQL.
+- Available Capital now recalculates from database-backed capital, collections, loan disbursements and expenses.
+- Dashboard Today's Expenses and Available Capital now use synchronized database data.
+- Added save/delete waiting states to prevent duplicate writes.
+- Removed duplicated BUSINESS CASH POSITION label.
+- Existing backend Phase 1 already contains the required Expenses and Capital APIs, so no backend replacement is required.

@@ -1,0 +1,19 @@
+CREDNIVO Phase 9.0.26 - IO Future Interest Cancelled Display Fix
+
+Fixed Closed IO Closure Summary:
+- Future Interest Cancelled was showing ₹0 because cancelled collection rows
+  are intentionally removed from the live frontend Collection list after sync.
+- CREDNIVO now derives cancelled future interest from:
+    Projected post-disbursement IO interest
+    minus actual interest payments received.
+- Owner extensions are automatically included because Projected Repayment
+  increases when extension cycles are added.
+
+Example:
+Principal: ₹10,000
+Projected Repayment after extension: ₹12,400
+Interest paid after disbursement: ₹0
+Future Interest Cancelled: ₹2,400
+
+Actual Repayment and Profit Earned calculations are unchanged.
+No backend/database change required.

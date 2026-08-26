@@ -1,0 +1,24 @@
+CREDNIVO Phase 9.0.28 - IO Partial Principal Repricing
+
+Final business rule:
+- IO interest is always recalculated from the CURRENT principal outstanding.
+- Example: Principal ₹10,000 at 2% = ₹200/cycle.
+- Customer returns ₹4,000 principal -> principal becomes ₹6,000.
+- Next/future interest becomes 2% of ₹6,000 = ₹120/cycle.
+
+Important timing rule:
+- Interest already due/pending on or before the principal-payment date is NOT changed.
+- Only future collection cycles after the principal-payment date are repriced.
+- Fully paid future cycles are never rewritten.
+- A partially prepaid future cycle preserves money already paid.
+
+UI:
+- Principal payment field shows live New Principal + Next Interest/Cycle preview.
+- After saving, Loan Details updates Interest/Cycle and Principal Outstanding.
+- Active IO loans with reduced principal show Current Projected Remaining.
+
+Closure reporting:
+- New closures persist the exact future interest cancelled so closure summaries
+  remain correct even after principal repricing.
+
+No change to EMI rules.

@@ -1,0 +1,1255 @@
+.customer-details-page{min-width:0}
+.customer-hero{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(220px,auto);align-items:center;gap:16px;padding:18px;min-width:0}
+.customer-hero-main{display:flex;align-items:center;gap:14px;min-width:0}
+.customer-big-avatar{width:70px;height:70px;flex:0 0 70px;display:grid;place-items:center;overflow:hidden;border-radius:20px;color:#fff;background:linear-gradient(145deg,#1988ff,#075dc8);font-size:25px;font-weight:800;cursor:default;box-shadow:0 10px 24px rgba(8,104,236,.18)}
+.customer-big-avatar.with-photo{padding:0;cursor:zoom-in}.customer-big-avatar img{width:100%;height:100%;object-fit:cover}
+.customer-hero-copy{min-width:0}.customer-name-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.customer-hero-copy h2{margin:0;font-size:18px}.customer-hero-copy p{margin:6px 0 0;display:flex;align-items:center;gap:7px;color:var(--ink-600);font-size:11px}
+.customer-rating{display:grid;place-items:center;min-width:96px;padding:0 20px;color:#e7a00a;border-left:1px solid var(--line);border-right:1px solid var(--line)}.customer-rating strong{font-size:17px}.customer-rating span{margin-top:3px;color:var(--ink-500);font-size:9px}
+.customer-outstanding span,.customer-outstanding small{display:block;color:var(--ink-500);font-size:9.5px}.customer-outstanding strong{display:block;margin:6px 0;font-size:20px}.customer-outstanding small{line-height:1.45}
+.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}.detail-card{padding:17px;min-width:0}.detail-card-title{display:flex;align-items:center;gap:8px;color:#1268dc}.detail-card-title h2{margin:0;color:var(--ink-950);font-size:13px}.detail-card dl{margin:14px 0 0;display:grid;gap:10px}.detail-card dl div{display:flex;justify-content:space-between;gap:12px;padding-bottom:9px;border-bottom:1px dashed var(--line)}.detail-card dt{color:var(--ink-500);font-size:9.5px}.detail-card dd{max-width:64%;margin:0;text-align:right;overflow-wrap:anywhere;font-size:10.5px;font-weight:700}
+.detail-media-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:9px;margin-top:13px}.detail-photo-tile,.detail-document-tile{min-height:56px;min-width:0;display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--line);border-radius:11px;color:#145fbf;background:var(--surface-soft);cursor:pointer;font-size:9px;font-weight:700}.detail-photo-tile{flex-direction:column;justify-content:center}.detail-photo-tile img{width:34px;height:34px;object-fit:cover;border-radius:9px}.detail-document-tile span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}.detail-photo-tile:disabled,.detail-document-tile:disabled{cursor:default;opacity:.55}
+.detail-section-head{display:flex;align-items:center;justify-content:space-between;padding:15px}.detail-section-head h2{margin:0;font-size:13px}.detail-section-head span{color:var(--ink-500);font-size:9.5px}.loan-detail-table{min-width:1450px}.customer-loans-section,.customer-payment-section{min-width:0;overflow:hidden}.customer-detail-desktop-table{min-width:0;max-width:100%;overflow-x:auto}.customer-loan-mobile-list,.customer-payment-mobile-list{display:none}
+.customer-photo-viewer{position:fixed;inset:0;z-index:1400;display:grid;place-items:center;padding:24px;background:rgba(1,12,27,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}.customer-photo-viewer>button{position:fixed;top:max(22px,env(safe-area-inset-top));right:22px;width:42px;height:42px;display:grid;place-items:center;border-radius:13px;color:#fff;background:rgba(255,255,255,.14);cursor:pointer}.customer-photo-viewer>div{display:grid;gap:9px;place-items:center}.customer-photo-viewer img{max-width:min(94vw,1000px);max-height:84vh;object-fit:contain;border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.42)}.customer-photo-viewer span{color:#fff;font-size:10px;font-weight:700}
+.customer-mobile-empty{padding:18px;text-align:center;color:var(--ink-500);font-size:12px}
+
+@media(max-width:900px){
+  .customer-hero{grid-template-columns:minmax(0,1fr) auto}.customer-outstanding{grid-column:1/-1;padding-top:12px;border-top:1px solid var(--line)}.detail-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:767px){
+  .customer-details-page{gap:12px}
+  .customer-details-page .module-header{display:grid;grid-template-columns:1fr;gap:10px}
+  .customer-details-page .module-header-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .customer-details-page .module-header-actions .action-button{width:100%;min-height:42px}
+
+  .customer-hero{display:block;padding:14px;border-radius:16px}
+  .customer-hero-main{gap:12px}
+  .customer-big-avatar{width:64px;height:64px;flex-basis:64px;border-radius:18px;font-size:23px}
+  .customer-hero-copy h2{font-size:17px}.customer-hero-copy p{font-size:11.5px;line-height:1.35}
+  .customer-name-line .soft-chip{font-size:9.5px;padding:5px 8px}
+  .customer-rating{display:none}
+  .customer-outstanding{margin-top:13px;padding:13px 14px;border:0;border-radius:13px;background:var(--blue-100)}
+  .customer-outstanding span{font-size:10.5px}.customer-outstanding strong{margin:4px 0;font-size:23px;color:#075fcf}.customer-outstanding small{font-size:10.5px}
+
+  .detail-grid{grid-template-columns:1fr;gap:10px}.detail-card{padding:14px;border-radius:16px}.detail-card-title h2{font-size:14px}.detail-card dl{gap:0;margin-top:12px}
+  .detail-card dl div{align-items:flex-start;padding:10px 0;gap:16px}.detail-card dt{font-size:11px;line-height:1.4}.detail-card dd{max-width:60%;font-size:11.5px;line-height:1.4}
+  .detail-media-row{grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.detail-photo-tile,.detail-document-tile{min-height:66px;padding:9px;font-size:10.5px;border-radius:12px}.detail-photo-tile img{width:38px;height:38px}
+
+  .detail-section-head{padding:14px}.detail-section-head h2{font-size:14px}.detail-section-head span{font-size:10px}
+  .customer-detail-desktop-table{display:none}
+  .customer-loan-mobile-list,.customer-payment-mobile-list{display:grid;gap:10px;padding:0 10px 10px}
+
+  .customer-loan-mobile-card{padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .customer-loan-mobile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.customer-loan-mobile-head>div{display:grid;gap:3px}.customer-loan-mobile-head>div span,.customer-loan-mobile-amount span,.customer-loan-mobile-grid span{color:var(--ink-500);font-size:9.5px}.customer-loan-mobile-head>div strong{font-size:11.5px}
+  .customer-loan-mobile-amount{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:12px 0;padding:11px 12px;border-radius:11px;background:var(--surface-soft)}.customer-loan-mobile-amount strong{font-size:18px;color:#0b63d1}
+  .customer-loan-mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}.customer-loan-mobile-grid>div{display:grid;gap:3px;padding:9px 0;border-bottom:1px dashed var(--line)}.customer-loan-mobile-grid strong{font-size:10.5px;line-height:1.35;overflow-wrap:anywhere}
+
+  .customer-payment-mobile-card{padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--surface)}.customer-payment-mobile-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.customer-payment-mobile-head strong{font-size:11.5px}.customer-payment-mobile-head span{font-size:12px}.customer-payment-mobile-card p{margin:7px 0;color:var(--ink-600);font-size:10.5px;line-height:1.4}.customer-payment-mobile-card small{color:var(--ink-500);font-size:9.5px}
+}
+
+@media(max-width:430px){
+  .customer-details-page .module-header-actions{grid-template-columns:1fr 1.1fr}
+  .customer-details-page .module-header-actions .action-button{padding:0 9px}
+  .customer-big-avatar{width:60px;height:60px;flex-basis:60px}.customer-hero-copy h2{font-size:16px}.customer-hero-copy p{font-size:10.5px}
+  .detail-card dd{max-width:58%}.detail-media-row{grid-template-columns:1fr 1fr}
+  .customer-loan-mobile-grid{gap:0 12px}
+}
+
+/* Phase 2.5 - Desktop customer profile readability */
+@media (min-width: 901px) {
+  .customer-details-page {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    gap: 20px;
+  }
+
+  .customer-hero {
+    grid-template-columns: minmax(0, 1fr) 130px minmax(280px, 330px);
+    gap: 24px;
+    min-height: 126px;
+    padding: 24px 26px;
+    border-radius: 18px;
+  }
+
+  .customer-hero-main { gap: 18px; }
+  .customer-big-avatar {
+    width: 86px;
+    height: 86px;
+    flex-basis: 86px;
+    border-radius: 24px;
+    font-size: 30px;
+  }
+  .customer-hero-copy h2 { font-size: 22px; }
+  .customer-hero-copy p {
+    margin-top: 8px;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .customer-hero-copy p svg { width: 17px; height: 17px; }
+  .customer-name-line .soft-chip { font-size: 10.5px; padding: 6px 10px; }
+
+  .customer-rating {
+    min-width: 118px;
+    padding: 4px 24px;
+  }
+  .customer-rating svg { width: 22px; height: 22px; }
+  .customer-rating strong { margin-top: 4px; font-size: 21px; }
+  .customer-rating span { margin-top: 5px; font-size: 11px; }
+
+  .customer-outstanding { min-width: 0; }
+  .customer-outstanding span,
+  .customer-outstanding small { font-size: 11.5px; }
+  .customer-outstanding strong {
+    margin: 7px 0;
+    font-size: 27px;
+    letter-spacing: -.025em;
+  }
+  .customer-outstanding small { line-height: 1.55; }
+
+  .detail-grid { gap: 18px; }
+  .detail-card {
+    padding: 22px 24px;
+    border-radius: 18px;
+  }
+  .detail-card-title { gap: 10px; }
+  .detail-card-title svg { width: 21px; height: 21px; }
+  .detail-card-title h2 { font-size: 16px; }
+  .detail-card dl { margin-top: 18px; gap: 0; }
+  .detail-card dl div {
+    min-height: 44px;
+    align-items: center;
+    padding: 10px 0;
+  }
+  .detail-card dt { font-size: 12px; }
+  .detail-card dd {
+    max-width: 66%;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .detail-media-row {
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .detail-photo-tile,
+  .detail-document-tile {
+    min-height: 72px;
+    padding: 11px 13px;
+    border-radius: 13px;
+    font-size: 11px;
+  }
+  .detail-photo-tile img { width: 46px; height: 46px; border-radius: 12px; }
+  .detail-photo-tile svg,
+  .detail-document-tile > svg:first-child { width: 23px; height: 23px; }
+
+  .customer-loans-section,
+  .customer-payment-section { border-radius: 18px; }
+  .detail-section-head { padding: 18px 20px; }
+  .detail-section-head h2 { font-size: 16px; }
+  .detail-section-head span { font-size: 11px; }
+
+  .loan-detail-table { min-width: 1540px; }
+  .customer-loans-section .module-table,
+  .customer-payment-section .module-table { font-size: 12.5px; }
+  .customer-loans-section .module-table th,
+  .customer-payment-section .module-table th {
+    padding: 14px 14px;
+    font-size: 10.5px;
+  }
+  .customer-loans-section .module-table td,
+  .customer-payment-section .module-table td {
+    padding: 15px 14px;
+    line-height: 1.35;
+  }
+  .customer-loans-section .soft-chip { font-size: 10px; }
+}
+
+@media (min-width: 901px) and (max-width: 1250px) {
+  .customer-details-page { max-width: 1180px; }
+  .customer-hero {
+    grid-template-columns: minmax(0, 1fr) 110px minmax(240px, 280px);
+    gap: 18px;
+    padding: 21px;
+  }
+  .customer-big-avatar { width: 76px; height: 76px; flex-basis: 76px; border-radius: 21px; }
+  .customer-hero-copy h2 { font-size: 20px; }
+  .detail-card { padding: 19px; }
+  .detail-card dt { font-size: 11px; }
+  .detail-card dd { font-size: 12px; }
+}
+
+/* Phase 2.9 - Compact loan cards on every screen */
+.customer-loans-section .customer-detail-desktop-table{display:none}
+.customer-loan-mobile-list{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  padding:0 16px 16px;
+}
+.customer-loan-mobile-card{
+  min-width:0;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--surface);
+  box-shadow:0 3px 12px rgba(15,40,72,.035);
+}
+.customer-loan-mobile-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.customer-loan-mobile-head>div:first-child{display:grid;gap:4px;min-width:0}
+.customer-loan-mobile-head>div:first-child span,
+.customer-loan-mobile-amount span,
+.customer-loan-mobile-grid span{color:var(--ink-500);font-size:10px}
+.customer-loan-mobile-head>div:first-child strong{font-size:12.5px;overflow-wrap:anywhere}
+.customer-loan-card-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.customer-loan-pay-button{
+  min-height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:0 11px;
+  border:1px solid #bde9cc;
+  border-radius:9px;
+  color:#07853b;
+  background:#eaf9ef;
+  font-size:10.5px;
+  font-weight:750;
+  cursor:pointer;
+  transition:.16s ease;
+}
+.customer-loan-pay-button svg{display:block;flex:0 0 auto}
+.customer-loan-pay-button:hover{transform:translateY(-1px);background:#dcf6e5;border-color:#96deb0;box-shadow:0 5px 14px rgba(11,135,62,.10)}
+.customer-loan-pay-button:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.customer-loan-mobile-amount{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:12px;
+  margin:14px 0 4px;
+  padding:12px 13px;
+  border-radius:12px;
+  background:var(--blue-100);
+}
+.customer-loan-mobile-amount strong{font-size:20px;color:#0b63d1;letter-spacing:-.02em}
+.customer-loan-mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.customer-loan-mobile-grid>div{display:grid;gap:4px;padding:10px 0;border-bottom:1px dashed var(--line);min-width:0}
+.customer-loan-mobile-grid strong{font-size:11.5px;line-height:1.4;overflow-wrap:anywhere}
+
+.customer-loan-pay-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:1500;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(3,20,39,.48);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+.customer-loan-pay-modal{
+  width:min(455px,100%);
+  padding:20px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--surface);
+  box-shadow:0 24px 70px rgba(3,29,56,.24);
+}
+.customer-loan-pay-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.customer-loan-pay-head strong{display:block;color:var(--ink-950);font-size:16px}
+.customer-loan-pay-head span{display:block;margin-top:4px;color:var(--ink-500);font-size:10px}
+.customer-loan-pay-close{width:36px;height:36px;display:grid;place-items:center;flex:0 0 36px;border:1px solid var(--line);border-radius:10px;color:var(--ink-600);background:var(--surface);cursor:pointer}
+.customer-loan-pay-close svg{display:block}
+.customer-loan-pay-summary{margin:16px 0;padding:14px;border-radius:13px;background:var(--blue-100)}
+.customer-loan-pay-summary>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0}
+.customer-loan-pay-summary span,.customer-loan-pay-summary small{color:var(--ink-500);font-size:9.5px}
+.customer-loan-pay-summary strong{color:var(--ink-950);font-size:15px}
+.customer-loan-pay-summary small{display:block;margin-top:6px;line-height:1.45}
+.customer-loan-pay-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.customer-loan-pay-fields label{display:grid;gap:6px}
+.customer-loan-pay-fields label>span{color:var(--ink-600);font-size:10px;font-weight:650}
+.customer-loan-pay-fields input,.customer-loan-pay-fields select{width:100%;min-height:42px;padding:0 12px;border:1px solid var(--line);border-radius:10px;outline:none;color:var(--ink-950);background:var(--surface);font:inherit}
+.customer-loan-pay-fields input:focus,.customer-loan-pay-fields select:focus{border-color:#1681f4;box-shadow:0 0 0 3px rgba(22,129,244,.10)}
+.customer-loan-payment-date{grid-column:1/-1}.customer-loan-payment-date small{color:var(--ink-500);font-size:9px;line-height:1.45}
+.customer-loan-save-payment{width:100%;min-height:44px;margin-top:15px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;color:#fff;background:#0aa64f;font-size:11px;font-weight:750;cursor:pointer}
+.customer-loan-save-payment svg{display:block}
+.customer-loan-save-payment:disabled{opacity:.5;cursor:not-allowed}
+
+@media(max-width:1100px){
+  .customer-loan-mobile-list{grid-template-columns:1fr}
+}
+@media(max-width:767px){
+  .customer-loan-mobile-list{grid-template-columns:1fr;gap:10px;padding:0 10px 10px}
+  .customer-loan-mobile-card{padding:13px;border-radius:14px;box-shadow:none}
+  .customer-loan-card-actions{gap:6px}
+  .customer-loan-pay-button{min-height:32px;padding:0 9px}
+  .customer-loan-mobile-head>div:first-child span,.customer-loan-mobile-amount span,.customer-loan-mobile-grid span{font-size:9.5px}
+  .customer-loan-mobile-head>div:first-child strong{font-size:11.5px}
+  .customer-loan-mobile-amount{margin:12px 0;padding:11px 12px;border-radius:11px}
+  .customer-loan-mobile-amount strong{font-size:18px}
+  .customer-loan-mobile-grid{gap:0 16px}
+  .customer-loan-mobile-grid strong{font-size:10.5px}
+  .customer-loan-pay-modal{padding:17px;border-radius:16px}
+}
+@media(max-width:440px){
+  .customer-loan-pay-fields{grid-template-columns:1fr}
+  .customer-loan-pay-button span{display:none}
+  .customer-loan-pay-button{width:32px;padding:0}
+}
+
+/* Phase 2.22 - customer delete action */
+.customer-danger-zone{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  padding:20px 22px;
+  border:1px solid color-mix(in srgb, var(--danger) 35%, var(--line));
+  background:color-mix(in srgb, var(--danger-soft) 48%, var(--surface));
+}
+.customer-danger-copy{display:flex;align-items:center;gap:14px;min-width:0}
+.customer-danger-icon{
+  width:44px;height:44px;display:grid;place-items:center;flex:0 0 44px;
+  border-radius:13px;color:var(--danger);background:var(--danger-soft)
+}
+.customer-danger-copy h2{margin:0;color:var(--ink-950);font-size:15px}
+.customer-danger-copy p{max-width:760px;margin:5px 0 0;color:var(--ink-600);font-size:11px;line-height:1.5}
+.customer-delete-button{
+  min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:0 0 auto;
+  padding:0 15px;border:1px solid color-mix(in srgb, var(--danger) 55%, var(--line));border-radius:11px;
+  color:#fff;background:var(--danger);font:inherit;font-size:11px;font-weight:750;cursor:pointer;transition:.16s ease
+}
+.customer-delete-button:hover{transform:translateY(-1px);filter:brightness(.97);box-shadow:0 8px 18px rgba(240,84,97,.18)}
+.customer-delete-button svg{display:block}
+
+.customer-delete-backdrop{
+  position:fixed;inset:0;z-index:1700;display:grid;place-items:center;padding:18px;
+  background:rgba(3,20,39,.58);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)
+}
+.customer-delete-modal{
+  width:min(455px,100%);padding:24px;border:1px solid var(--line);border-radius:20px;
+  background:var(--surface);box-shadow:0 28px 80px rgba(0,0,0,.28);text-align:center
+}
+.customer-delete-modal-icon{
+  width:52px;height:52px;display:grid;place-items:center;margin:0 auto 14px;border-radius:16px;
+  color:var(--danger);background:var(--danger-soft)
+}
+.customer-delete-modal h2{margin:0;color:var(--ink-950);font-size:18px}
+.customer-delete-modal p{margin:10px auto 0;color:var(--ink-600);font-size:11px;line-height:1.65}
+.customer-delete-modal p strong{color:var(--ink-950)}
+.customer-delete-modal-actions{display:grid;grid-template-columns:1fr 1.2fr;gap:10px;margin-top:20px}
+.customer-delete-modal-actions button{
+  min-height:43px;border-radius:11px;font:inherit;font-size:11px;font-weight:750;cursor:pointer
+}
+.customer-delete-cancel{border:1px solid var(--line);color:var(--ink-800);background:var(--surface-soft)}
+.customer-delete-confirm{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--danger);color:#fff;background:var(--danger)}
+.customer-delete-confirm svg{display:block}
+
+@media(max-width:767px){
+  .customer-danger-zone{align-items:stretch;flex-direction:column;padding:16px;gap:14px}
+  .customer-danger-copy{align-items:flex-start}
+  .customer-delete-button{width:100%}
+  .customer-delete-modal{padding:20px;border-radius:18px}
+}
+@media(max-width:420px){
+  .customer-delete-modal-actions{grid-template-columns:1fr}
+}
+
+.customer-loan-pay-fields label>small{color:var(--ink-500);font-size:8.5px;line-height:1.35}
+
+
+/* Phase 5.0.3 - customer media editor */
+.detail-card-title-with-action{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.detail-card-title-with-action>div{display:flex;align-items:center;gap:9px;min-width:0}
+.detail-media-edit-button{min-height:32px;padding:0 11px;border:1px solid rgba(45,133,255,.28);border-radius:9px;background:rgba(45,133,255,.08);color:var(--blue-500);font:inherit;font-size:9.5px;font-weight:750;cursor:pointer;white-space:nowrap}
+.detail-media-edit-button:hover{background:rgba(45,133,255,.14)}
+.detail-photo-tile.can-add,.detail-document-tile.can-add{border-style:dashed;border-color:rgba(45,133,255,.34);color:var(--blue-500);cursor:pointer;opacity:1}
+.detail-photo-tile.can-add:hover,.detail-document-tile.can-add:hover{background:rgba(45,133,255,.07);border-color:rgba(45,133,255,.55)}
+
+.customer-media-editor-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:20px;background:rgba(2,16,31,.68);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.customer-media-editor-modal{width:min(760px,100%);max-height:min(88vh,780px);display:flex;flex-direction:column;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:0 30px 90px rgba(0,0,0,.36);overflow:hidden}
+.customer-media-editor-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.customer-media-editor-head strong{display:block;color:var(--ink-950);font-size:16px}
+.customer-media-editor-head span{display:block;margin-top:4px;color:var(--ink-500);font-size:10px}
+.customer-media-editor-head>button{width:36px;height:36px;display:grid;place-items:center;flex:0 0 36px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);color:var(--ink-600);cursor:pointer}
+.customer-media-editor-body{padding:18px 20px;overflow:auto;-webkit-overflow-scrolling:touch}
+.customer-media-editor-actions{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--line);background:var(--surface-soft)}
+.customer-media-editor-actions button{min-height:40px;padding:0 15px;border-radius:10px;font:inherit;font-size:10.5px;font-weight:750;cursor:pointer}
+.customer-media-editor-cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-700)}
+.customer-media-editor-save{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--blue-500);background:var(--blue-500);color:#fff}
+.customer-media-editor-actions button:disabled{opacity:.55;cursor:not-allowed}
+
+@media(max-width:767px){
+  .detail-card-title-with-action{align-items:flex-start}
+  .detail-media-edit-button{min-height:30px;padding:0 9px;font-size:9px}
+  .customer-media-editor-backdrop{padding:0;align-items:end}
+  .customer-media-editor-modal{width:100%;max-height:92vh;border-radius:20px 20px 0 0}
+  .customer-media-editor-head{padding:16px}
+  .customer-media-editor-body{padding:14px 16px}
+  .customer-media-editor-actions{padding:12px 16px max(12px,env(safe-area-inset-bottom))}
+  .customer-media-editor-actions button{flex:1}
+}
+
+/* =========================================================
+   Phase 5.0.4 - Customer Media Modal responsive CSS fix
+   Prevent horizontal overflow / clipped media cards.
+   ========================================================= */
+.customer-media-editor-backdrop{
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.customer-media-editor-modal{
+  width:min(720px,calc(100vw - 40px));
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.customer-media-editor-head,
+.customer-media-editor-body,
+.customer-media-editor-actions{
+  min-width:0;
+  box-sizing:border-box;
+}
+.customer-media-editor-head>div{
+  min-width:0;
+}
+.customer-media-editor-head strong,
+.customer-media-editor-head span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.customer-media-editor-body{
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+.customer-media-editor-body .media-uploader{
+  width:100%;
+  min-width:0;
+  grid-template-columns:minmax(0,1fr) !important;
+  margin-bottom:0;
+}
+.customer-media-editor-body .profile-media-card,
+.customer-media-editor-body .document-media-card{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+}
+.customer-media-editor-body .document-media-card{
+  grid-template-columns:42px minmax(0,1fr);
+}
+.customer-media-editor-body .document-actions{
+  grid-column:1 / -1;
+  justify-content:flex-start;
+  padding-left:54px;
+  min-width:0;
+}
+.customer-media-editor-body .profile-media-copy,
+.customer-media-editor-body .document-media-card>div{
+  min-width:0;
+}
+.customer-media-editor-body .media-actions{
+  max-width:100%;
+}
+.customer-media-editor-body .media-actions button{
+  max-width:100%;
+}
+
+@media(max-width:767px){
+  .customer-media-editor-backdrop{
+    padding:0;
+  }
+  .customer-media-editor-modal{
+    width:100%;
+    max-width:100vw;
+    max-height:92dvh;
+    border-left:0;
+    border-right:0;
+    border-bottom:0;
+  }
+  .customer-media-editor-body .document-actions{
+    padding-left:0;
+  }
+}
+
+@media(max-width:430px){
+  .customer-media-editor-head{
+    padding:14px;
+  }
+  .customer-media-editor-head strong{
+    font-size:14px;
+  }
+  .customer-media-editor-head span{
+    font-size:9px;
+  }
+  .customer-media-editor-body{
+    padding:12px 14px;
+  }
+  .customer-media-editor-body .profile-media-card,
+  .customer-media-editor-body .document-media-card{
+    padding:11px;
+  }
+  .customer-media-editor-actions{
+    padding:11px 14px max(11px,env(safe-area-inset-bottom));
+  }
+}
+
+
+/* Phase 9.0.10 - Customer profile details editor */
+.detail-card-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.detail-profile-edit-button{
+  min-height:32px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:0 11px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--surface-soft);
+  color:var(--ink-800);
+  font:inherit;
+  font-size:9.5px;
+  font-weight:750;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:.16s ease;
+}
+.detail-profile-edit-button:hover{
+  border-color:rgba(45,133,255,.38);
+  background:rgba(45,133,255,.08);
+  color:var(--blue-500);
+}
+.detail-profile-edit-button svg{display:block;flex:0 0 auto}
+
+.customer-profile-editor-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:2600;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(2,16,31,.68);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.customer-profile-editor-modal{
+  width:min(720px,100%);
+  max-height:min(88vh,760px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:var(--surface);
+  box-shadow:0 30px 90px rgba(0,0,0,.36);
+}
+.customer-profile-editor-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:18px 20px;
+  border-bottom:1px solid var(--line);
+}
+.customer-profile-editor-head strong{
+  display:block;
+  color:var(--ink-950);
+  font-size:16px;
+}
+.customer-profile-editor-head span{
+  display:block;
+  margin-top:4px;
+  color:var(--ink-500);
+  font-size:10px;
+  line-height:1.45;
+}
+.customer-profile-editor-head>button{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  flex:0 0 36px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface-soft);
+  color:var(--ink-600);
+  cursor:pointer;
+}
+.customer-profile-editor-head>button:disabled{opacity:.55;cursor:not-allowed}
+.customer-profile-editor-body{
+  padding:18px 20px;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.customer-profile-editor-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.customer-profile-editor-grid label{
+  display:grid;
+  gap:7px;
+  min-width:0;
+}
+.customer-profile-editor-grid label>span{
+  color:var(--ink-600);
+  font-size:10.5px;
+  font-weight:700;
+}
+.customer-profile-editor-grid input,
+.customer-profile-editor-grid textarea{
+  width:100%;
+  min-width:0;
+  border:1px solid var(--line);
+  border-radius:11px;
+  outline:none;
+  color:var(--ink-950);
+  background:var(--surface-soft);
+  font:inherit;
+  font-size:12px;
+  transition:.16s ease;
+}
+.customer-profile-editor-grid input{
+  min-height:44px;
+  padding:0 12px;
+}
+.customer-profile-editor-grid textarea{
+  min-height:104px;
+  padding:11px 12px;
+  resize:vertical;
+  line-height:1.5;
+}
+.customer-profile-editor-grid input:focus,
+.customer-profile-editor-grid textarea:focus{
+  border-color:#1681f4;
+  background:var(--surface);
+  box-shadow:0 0 0 3px rgba(22,129,244,.10);
+}
+.customer-profile-editor-address{grid-column:1/-1}
+.customer-profile-editor-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:14px 20px;
+  border-top:1px solid var(--line);
+  background:var(--surface-soft);
+}
+.customer-profile-editor-actions button{
+  min-height:40px;
+  padding:0 16px;
+  border-radius:10px;
+  font:inherit;
+  font-size:10.5px;
+  font-weight:750;
+  cursor:pointer;
+}
+.customer-profile-editor-cancel{
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-700);
+}
+.customer-profile-editor-save{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:1px solid var(--blue-500);
+  background:var(--blue-500);
+  color:#fff;
+}
+.customer-profile-editor-actions button:disabled{opacity:.55;cursor:not-allowed}
+
+@media(max-width:767px){
+  .detail-card-title-with-action{gap:10px}
+  .detail-card-actions{gap:6px}
+  .detail-profile-edit-button,
+  .detail-media-edit-button{min-height:30px;padding:0 9px;font-size:9px}
+  .detail-profile-edit-button span{display:none}
+  .detail-profile-edit-button{width:32px;padding:0}
+
+  .customer-profile-editor-backdrop{
+    padding:0;
+    align-items:end;
+  }
+  .customer-profile-editor-modal{
+    width:100%;
+    max-height:92vh;
+    border-radius:20px 20px 0 0;
+  }
+  .customer-profile-editor-head{padding:16px}
+  .customer-profile-editor-body{padding:14px 16px}
+  .customer-profile-editor-grid{grid-template-columns:1fr;gap:12px}
+  .customer-profile-editor-address{grid-column:auto}
+  .customer-profile-editor-actions{
+    padding:12px 16px max(12px,env(safe-area-inset-bottom));
+  }
+  .customer-profile-editor-actions button{flex:1}
+}
+
+
+/* Phase 9.0.14 - Customer financial quick summary */
+.customer-finance-summary{
+  min-width:0;
+  display:grid;
+  gap:12px;
+}
+.customer-loan-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.customer-loan-summary-grid>div{
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface-soft);
+}
+.customer-loan-summary-grid span{
+  display:block;
+  color:var(--ink-500);
+  font-size:8.5px;
+  line-height:1.25;
+  white-space:nowrap;
+}
+.customer-loan-summary-grid strong{
+  display:block;
+  margin-top:4px;
+  color:var(--ink-950);
+  font-size:12px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+
+@media (min-width:901px){
+  .customer-hero{
+    grid-template-columns:minmax(0,1fr) 130px minmax(360px,430px);
+  }
+  .customer-finance-summary{align-self:stretch;align-content:center}
+  .customer-loan-summary-grid>div{padding:10px 11px}
+  .customer-loan-summary-grid span{font-size:9.5px}
+  .customer-loan-summary-grid strong{font-size:13px}
+}
+
+@media (max-width:900px){
+  .customer-finance-summary{
+    grid-column:1/-1;
+    margin-top:2px;
+    padding-top:12px;
+    border-top:1px solid var(--line);
+  }
+  .customer-outstanding{
+    grid-column:auto;
+    padding-top:0;
+    border-top:0;
+  }
+}
+
+@media (max-width:767px){
+  .customer-finance-summary{
+    margin-top:13px;
+    padding-top:0;
+    border-top:0;
+  }
+  .customer-finance-summary .customer-outstanding{
+    margin-top:0;
+  }
+  .customer-loan-summary-grid{
+    gap:7px;
+  }
+  .customer-loan-summary-grid>div{
+    padding:10px 8px;
+    text-align:center;
+    border-radius:11px;
+  }
+  .customer-loan-summary-grid span{
+    font-size:9px;
+  }
+  .customer-loan-summary-grid strong{
+    margin-top:5px;
+    font-size:12px;
+  }
+}
+
+@media (max-width:420px){
+  .customer-loan-summary-grid{
+    grid-template-columns:1fr 1fr;
+  }
+  .customer-loan-summary-grid>div:last-child{
+    grid-column:1/-1;
+  }
+}
+
+
+/* Phase 9.0.23 - IO settlement + owner-only extension */
+.customer-loan-extend-button{
+  min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;
+  border:1px solid rgba(20,119,242,.24);border-radius:9px;background:rgba(20,119,242,.08);
+  color:var(--blue-600);font:inherit;font-size:9.5px;font-weight:750;cursor:pointer;white-space:nowrap;
+}
+.customer-loan-extend-button:hover{background:rgba(20,119,242,.14);border-color:rgba(20,119,242,.38)}
+.io-settlement-panel{margin-top:14px;padding:13px;border:1px solid rgba(20,119,242,.20);border-radius:13px;background:rgba(20,119,242,.055)}
+.io-settlement-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.io-settlement-head strong{display:block;color:var(--ink-950);font-size:11px}
+.io-settlement-head small{display:block;margin-top:3px;color:var(--ink-500);font-size:8.8px;line-height:1.45}
+.io-settlement-head button{flex:0 0 auto;min-height:34px;padding:0 11px;border:1px solid var(--blue-500);border-radius:9px;background:var(--blue-500);color:#fff;font:inherit;font-size:9.5px;font-weight:750;cursor:pointer}
+.io-settlement-head button:disabled{opacity:.55;cursor:not-allowed}
+.io-settlement-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:11px}
+.io-settlement-grid>div{padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+.io-settlement-grid span,.io-settlement-grid small{display:block;color:var(--ink-500);font-size:8.5px}
+.io-settlement-grid strong{display:block;margin-top:3px;color:var(--ink-950);font-size:12px}
+.io-settlement-grid small{margin-top:2px}
+
+.customer-io-extension-backdrop{position:fixed;inset:0;z-index:2500;display:grid;place-items:center;padding:18px;background:rgba(2,16,31,.68);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.customer-io-extension-modal{width:min(610px,100%);max-height:90vh;overflow:auto;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 28px 80px rgba(0,0,0,.34)}
+.io-extension-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+.io-extension-summary>div{padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft)}
+.io-extension-summary span{display:block;color:var(--ink-500);font-size:8.7px}
+.io-extension-summary strong{display:block;margin-top:4px;color:var(--ink-950);font-size:12px}
+.customer-loan-extension-reason{grid-column:1/-1}
+.customer-loan-extension-reason textarea{width:100%;min-height:86px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;outline:none;resize:vertical;background:var(--surface);color:var(--ink-950);font:inherit;font-size:10.5px}
+.customer-loan-extension-reason textarea:focus{border-color:#1681f4;box-shadow:0 0 0 3px rgba(22,129,244,.10)}
+.io-extension-rule{margin:12px 0;padding:10px 12px;border-radius:10px;background:var(--surface-soft);color:var(--ink-600);font-size:9px;line-height:1.5}
+
+@media(max-width:767px){
+  .customer-loan-extend-button{width:32px;padding:0}
+  .customer-loan-extend-button span{display:none}
+  .io-settlement-head{align-items:flex-start;flex-direction:column}
+  .io-settlement-head button{width:100%}
+  .io-settlement-grid{grid-template-columns:1fr}
+  .customer-io-extension-backdrop{padding:0;align-items:end}
+  .customer-io-extension-modal{width:100%;max-height:92vh;border-radius:18px 18px 0 0;padding:16px}
+  .io-extension-summary{grid-template-columns:1fr}
+}
+
+
+/* =========================================================
+   PHASE 9.0.24 - Loan payment modal alignment + scrolling
+   ========================================================= */
+.customer-loan-pay-backdrop{
+  overflow:hidden;
+  overscroll-behavior:contain;
+}
+
+.customer-loan-pay-modal{
+  width:min(690px,100%) !important;
+  max-height:calc(100dvh - 36px);
+  padding:0 !important;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.customer-loan-pay-head{
+  flex:0 0 auto;
+  padding:18px 20px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface);
+}
+
+.customer-loan-pay-body{
+  min-height:0;
+  flex:1 1 auto;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+  padding:18px 20px;
+}
+
+.customer-loan-pay-body::-webkit-scrollbar{
+  width:8px;
+}
+.customer-loan-pay-body::-webkit-scrollbar-thumb{
+  background:color-mix(in srgb,var(--ink-400) 50%,transparent);
+  border-radius:999px;
+}
+.customer-loan-pay-body::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+.customer-loan-pay-summary{
+  margin:0 0 16px !important;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 22px;
+  padding:14px 16px !important;
+}
+.customer-loan-pay-summary>div{
+  padding:0 !important;
+  display:grid !important;
+  gap:4px;
+}
+.customer-loan-pay-summary>div:nth-child(2){
+  text-align:right;
+}
+.customer-loan-pay-summary>small{
+  grid-column:1/-1;
+  margin-top:5px !important;
+  padding-top:10px;
+  border-top:1px solid rgba(20,119,242,.12);
+}
+
+.customer-loan-pay-fields{
+  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  gap:14px 14px !important;
+  align-items:start;
+}
+.customer-loan-pay-fields label{
+  min-width:0;
+  align-content:start;
+}
+.customer-loan-pay-fields input,
+.customer-loan-pay-fields select{
+  height:44px;
+  min-height:44px !important;
+  box-sizing:border-box;
+}
+.customer-loan-payment-date{
+  grid-column:1/-1;
+}
+
+.io-settlement-panel{
+  margin:18px 0 0 !important;
+  padding:16px !important;
+}
+.io-settlement-head{
+  align-items:center;
+}
+.io-settlement-head>div{
+  min-width:0;
+}
+.io-settlement-head button{
+  min-width:155px;
+  min-height:38px;
+}
+.io-settlement-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:10px !important;
+}
+.io-settlement-grid>div{
+  min-height:78px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.io-settlement-grid strong{
+  font-size:13px !important;
+}
+
+.customer-loan-pay-footer{
+  flex:0 0 auto;
+  padding:14px 20px 18px;
+  border-top:1px solid var(--line);
+  background:var(--surface);
+  box-shadow:0 -8px 22px rgba(3,29,56,.035);
+}
+.customer-loan-pay-footer .customer-loan-save-payment{
+  width:auto;
+  min-width:170px;
+  margin:0 0 0 auto !important;
+  padding:0 22px;
+  display:flex;
+}
+
+@media(max-width:767px){
+  .customer-loan-pay-backdrop{
+    padding:0 !important;
+    align-items:end;
+  }
+  .customer-loan-pay-modal{
+    width:100% !important;
+    max-height:94dvh;
+    border-radius:18px 18px 0 0 !important;
+  }
+  .customer-loan-pay-head{
+    padding:15px 16px;
+  }
+  .customer-loan-pay-body{
+    padding:15px 16px;
+  }
+  .customer-loan-pay-summary{
+    grid-template-columns:1fr 1fr;
+  }
+  .customer-loan-pay-fields{
+    grid-template-columns:1fr !important;
+  }
+  .customer-loan-payment-date{
+    grid-column:auto;
+  }
+  .io-settlement-head{
+    align-items:stretch;
+  }
+  .io-settlement-head button{
+    width:100%;
+    min-width:0;
+  }
+  .io-settlement-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+  }
+  .customer-loan-pay-footer{
+    padding:12px 16px max(14px,env(safe-area-inset-bottom));
+  }
+  .customer-loan-pay-footer .customer-loan-save-payment{
+    width:100%;
+    margin:0 !important;
+  }
+}
+
+@media(max-width:420px){
+  .io-settlement-grid{
+    grid-template-columns:1fr !important;
+  }
+  .customer-loan-pay-summary{
+    grid-template-columns:1fr;
+  }
+  .customer-loan-pay-summary>div:nth-child(2){
+    text-align:left;
+  }
+}
+
+
+/* =========================================================
+   PHASE 9.0.25 - Actual repayment + owner-only customer profit
+   ========================================================= */
+
+.customer-finance-primary{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:9px;
+}
+.customer-finance-primary.with-profit{
+  grid-template-columns:minmax(0,1.1fr) minmax(190px,.9fr);
+}
+.customer-finance-primary .customer-outstanding{
+  min-width:0;
+}
+
+.customer-profit-card{
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid rgba(16,160,92,.22);
+  border-radius:11px;
+  background:rgba(16,160,92,.065);
+}
+.customer-profit-title{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:#0f9b5a;
+}
+.customer-profit-title span{
+  color:var(--ink-600);
+  font-size:9px;
+  font-weight:750;
+}
+.customer-profit-title small{
+  margin-left:auto;
+  padding:2px 6px;
+  border-radius:999px;
+  background:rgba(16,160,92,.10);
+  color:#0f8c51;
+  font-size:7.5px;
+  font-weight:750;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.customer-profit-card>strong{
+  display:block;
+  margin-top:7px;
+  color:var(--ink-950);
+  font-size:18px;
+  line-height:1.1;
+}
+.customer-profit-card>p{
+  margin:5px 0 0;
+  color:var(--ink-500);
+  font-size:8.5px;
+  line-height:1.4;
+}
+
+.loan-actual-repayment-item{
+  border-color:rgba(16,160,92,.22) !important;
+  background:rgba(16,160,92,.045);
+}
+.loan-actual-repayment-item strong{
+  color:#0b9955 !important;
+}
+
+.loan-closure-summary{
+  margin-top:13px;
+  padding:13px;
+  border:1px solid rgba(20,119,242,.16);
+  border-radius:12px;
+  background:var(--surface-soft);
+}
+.loan-closure-summary-title{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+.loan-closure-summary-title strong{
+  color:var(--ink-950);
+  font-size:10.5px;
+}
+.loan-closure-summary-title span{
+  color:var(--ink-500);
+  font-size:8.3px;
+}
+.loan-closure-summary-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+.loan-closure-summary-grid>div{
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:var(--surface);
+}
+.loan-closure-summary-grid span,
+.loan-closure-summary-grid small{
+  display:block;
+  color:var(--ink-500);
+  font-size:8px;
+  line-height:1.3;
+}
+.loan-closure-summary-grid strong{
+  display:block;
+  margin-top:4px;
+  color:var(--ink-950);
+  font-size:11.5px;
+}
+.loan-closure-summary-grid small{
+  margin-top:3px;
+}
+.loan-closure-summary-grid .loan-owner-profit{
+  border-color:rgba(16,160,92,.22);
+  background:rgba(16,160,92,.055);
+}
+.loan-closure-summary-grid .loan-owner-profit strong{
+  color:#0b9955;
+}
+
+@media(min-width:901px){
+  .customer-finance-summary{
+    min-width:420px;
+  }
+}
+
+@media(max-width:1100px){
+  .customer-finance-primary.with-profit{
+    grid-template-columns:1fr;
+  }
+  .loan-closure-summary-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:767px){
+  .customer-finance-primary,
+  .customer-finance-primary.with-profit{
+    grid-template-columns:1fr;
+  }
+  .customer-profit-card{
+    padding:12px;
+  }
+  .customer-profit-card>strong{
+    font-size:20px;
+  }
+  .loan-closure-summary{
+    margin-top:11px;
+    padding:11px;
+  }
+  .loan-closure-summary-title{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:3px;
+  }
+  .loan-closure-summary-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:420px){
+  .loan-closure-summary-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* =========================================================
+   PHASE 9.0.28 - IO partial principal repricing
+   ========================================================= */
+.io-principal-reprice-preview{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  padding:11px 12px;
+  border:1px solid rgba(16,160,92,.20);
+  border-radius:11px;
+  background:rgba(16,160,92,.055);
+}
+.io-principal-reprice-preview>div{
+  min-width:0;
+}
+.io-principal-reprice-preview span{
+  display:block;
+  color:var(--ink-500);
+  font-size:8.5px;
+}
+.io-principal-reprice-preview strong{
+  display:block;
+  margin-top:3px;
+  color:#0b9955;
+  font-size:12.5px;
+}
+.io-principal-reprice-preview>small{
+  grid-column:1/-1;
+  padding-top:7px;
+  border-top:1px solid rgba(16,160,92,.12);
+  color:var(--ink-500);
+  font-size:8.5px;
+  line-height:1.45;
+}
+
+.loan-current-projection-item{
+  border-color:rgba(20,119,242,.20) !important;
+  background:rgba(20,119,242,.045);
+}
+.loan-current-projection-item strong{
+  color:var(--blue-600) !important;
+}
+
+@media(max-width:767px){
+  .io-principal-reprice-preview{
+    grid-template-columns:1fr 1fr;
+  }
+}
+@media(max-width:420px){
+  .io-principal-reprice-preview{
+    grid-template-columns:1fr;
+  }
+  .io-principal-reprice-preview>small{
+    grid-column:auto;
+  }
+}
+
+
+/* Phase 9.0.29 - clearer IO principal payment preview */
+.io-principal-reprice-preview{
+  box-shadow:inset 3px 0 0 rgba(16,160,92,.45);
+}

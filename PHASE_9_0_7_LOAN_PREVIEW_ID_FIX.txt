@@ -1,0 +1,12 @@
+CREDNIVO Phase 9.0.7 - Loan Preview ID Fix
+
+Fixed:
+- Review Loan Summary no longer uses the hard-coded SFCLN prefix.
+- Loan preview ID now follows the selected customer's company code.
+- Example: PFC-0001 -> PFCLN-00001.
+- Numbering only considers loans with the same company prefix.
+- No backend/database change is required.
+
+Note:
+The backend Phase 9.0.4 already creates the real company-specific Loan ID.
+This update makes the frontend preview show the same ID before confirmation.

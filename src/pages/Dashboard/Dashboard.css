@@ -1,0 +1,15 @@
+.dashboard-page { display: grid; gap: 20px; }
+.dashboard-toolbar { min-height: 20px; display: flex; justify-content: flex-end; }
+.date-button { height: 36px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink-800); background: var(--surface); box-shadow: var(--shadow-sm); font-size: 10px; cursor: pointer; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 11px; }
+.dashboard-middle { display: grid; grid-template-columns: minmax(0, 1.66fr) minmax(340px, 1fr); gap: 16px; }
+
+@media (max-width: 1350px) { .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }.dashboard-middle { grid-template-columns: minmax(0, 1.55fr) minmax(300px, .9fr); } }
+@media (max-width: 980px) { .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }.dashboard-middle { grid-template-columns: 1fr; } }
+@media (max-width: 767px) {
+  .dashboard-page { gap: 12px; }
+  .dashboard-toolbar { min-height: 0; }
+  .date-button { height: 34px; margin-left: auto; }
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .dashboard-middle { gap: 12px; }
+}

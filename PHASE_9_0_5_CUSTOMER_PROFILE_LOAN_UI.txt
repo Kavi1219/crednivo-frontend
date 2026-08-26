@@ -1,0 +1,9 @@
+CREDNIVO Phase 9.0.5 - Customer Profile > New Loan UI
+
+- When New Loan is opened from a customer profile, the customer is already locked in.
+- The customer search bar and selector are hidden in that flow.
+- Only the customer name is shown.
+- When Create Loan is opened normally from the Loans module, customer search remains available.
+- Customer dropdown options now show only the customer name (no ID/mobile).
+- Selected customer preview and loan review show only the customer name.
+- No backend/database change required.

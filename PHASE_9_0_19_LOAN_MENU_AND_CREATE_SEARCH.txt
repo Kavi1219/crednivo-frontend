@@ -1,0 +1,24 @@
+CREDNIVO Phase 9.0.19 - Loan Menu + Create Loan Customer Search
+
+Loans sidebar now contains:
+- All Loans
+- Create Loan
+- Active Loans (live count)
+- Closed Loans (live count)
+
+Clicking Active Loans opens the Active loan details list.
+Clicking Closed Loans opens the Closed loan details list.
+Active count includes every loan that is not Closed.
+
+Create Loan improvements:
+- No customer is selected automatically anymore.
+- Removed the duplicate Search + Customer dropdown flow.
+- One proper customer search bar only.
+- Search by customer name, Customer ID, or mobile.
+- Matching customer results appear below the search field.
+- Click a result once to select the customer.
+- Selected customer is shown once in a confirmation card.
+- Change button lets the user pick another customer.
+- Creating a loan from inside a Customer Profile still locks directly to that customer.
+
+No backend or database change required.

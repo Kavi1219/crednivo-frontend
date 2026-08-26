@@ -1,0 +1,12 @@
+CREDNIVO Phase 5.0.4 - Customer Media Modal CSS Fix
+
+Fixed:
+- Customer/Jamin media popup horizontal overflow
+- Removed horizontal scrollbar in media popup
+- Media cards now stay inside modal width
+- Document Camera/Files buttons wrap correctly
+- Modal fits desktop/tablet/mobile viewport
+- Mobile bottom-sheet remains fully visible
+- Save Media / Cancel remain accessible
+
+Backend changes: none. Keep the Phase 5.0.3 backend.

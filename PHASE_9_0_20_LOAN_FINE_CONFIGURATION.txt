@@ -1,0 +1,23 @@
+CREDNIVO Phase 9.0.20 - Loan Fine Configuration
+
+Loan creation:
+- Added Fine applicable? ON/OFF switch.
+- Fine OFF: no Fine Amount field is shown.
+- Fine ON: Fine Amount field appears immediately.
+- Fine Amount must be greater than zero.
+- Fine is shown in Review Loan Summary.
+- Works for Create Loan and the first loan created during New Customer registration.
+
+Loan details:
+- Saved default Fine is shown in Customer -> Loan Details.
+
+Collection behavior:
+- Fine stays separate from loan repayment/outstanding.
+- The configured Fine does NOT increase Total Repayment.
+- When collecting an overdue installment, the configured Fine is automatically
+  prefilled in Fine Paid (only when no fine has already been recorded for that entry).
+- The collector can still edit the Fine Paid value before saving, subject to permission.
+
+Backend:
+- Loan stores fineEnabled and fineAmount.
+- No change to interest/EMI/IO calculations.

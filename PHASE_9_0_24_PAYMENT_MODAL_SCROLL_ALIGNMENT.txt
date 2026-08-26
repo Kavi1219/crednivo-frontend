@@ -1,0 +1,15 @@
+CREDNIVO Phase 9.0.24 - Loan Payment Modal Scroll + Alignment
+
+Fixed the Record Loan Payment modal:
+- Modal is wider and properly aligned on desktop.
+- Header stays fixed at the top.
+- Save Payment stays fixed at the bottom.
+- Only the middle content scrolls, so the modal always fits inside the screen.
+- Payment fields are aligned in a clean two-column layout.
+- Payment Date stays full width.
+- IO settlement values use four equal summary cards on desktop.
+- Mobile uses a bottom-sheet style modal and single-column payment fields.
+- Settlement cards become two columns on mobile and one column on very small screens.
+- Background page no longer needs to scroll while the payment modal is open.
+
+No backend/database change required.

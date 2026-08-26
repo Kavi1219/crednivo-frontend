@@ -1,0 +1,116 @@
+.stat-card {
+  min-width: 0;
+  min-height: 202px;
+  padding: 18px 16px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.stat-main {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+}
+.stat-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 0;
+  border-radius: 50%;
+}
+.stat-icon svg { display: block; margin: 0; }
+.stat-copy {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 30px auto 31px;
+  align-content: start;
+}
+.stat-copy p {
+  min-width: 0;
+  margin: 2px 0 0;
+  display: flex;
+  align-items: flex-start;
+  color: var(--ink-600);
+  font-size: 10.5px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.stat-copy strong {
+  display: block;
+  align-self: start;
+  margin-top: 1px;
+  font-size: 19px;
+  line-height: 1.1;
+  letter-spacing: -.03em;
+  white-space: nowrap;
+}
+.stat-copy small {
+  min-width: 0;
+  display: block;
+  align-self: end;
+  color: var(--ink-500);
+  font-size: 9.5px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.stat-progress {
+  height: 4px;
+  margin: auto 0 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+}
+.stat-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width .25s ease;
+}
+.stat-progress.is-empty span { width: 0 !important; }
+.stat-detail {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  color: #0568e8;
+  background: transparent;
+  font-size: 10px;
+  cursor: pointer;
+}
+.stat-blue .stat-icon, .stat-indigo .stat-icon { color: #2d72f0; background: #e9f1ff; }
+.stat-green .stat-icon { color: #18a842; background: #e3f7e8; }
+.stat-orange .stat-icon { color: #f07b36; background: #fff0e7; }
+.stat-purple .stat-icon { color: #7647e9; background: #eee8ff; }
+.stat-pink .stat-icon { color: #eb4f81; background: #ffe8ef; }
+.stat-blue .stat-progress span, .stat-indigo .stat-progress span { background: #5b8cff; }
+.stat-green .stat-progress span { background: #20ad4f; }
+.stat-orange .stat-progress span { background: #ff8c48; }
+.stat-purple .stat-progress span { background: #8a55e9; }
+.stat-pink .stat-progress span { background: #ef7ca1; }
+
+@media (max-width: 767px) {
+  .stat-card { min-height: 150px; padding: 13px 12px 11px; border-radius: 14px; }
+  .stat-main { grid-template-columns: 42px minmax(0, 1fr); gap: 9px; }
+  .stat-icon { width: 42px; height: 42px; }
+  .stat-icon svg { width: 21px; height: 21px; }
+  .stat-copy { grid-template-rows: 24px auto 25px; }
+  .stat-copy p { margin-top: 0; font-size: 9px; line-height: 1.2; }
+  .stat-copy strong { font-size: 14px; }
+  .stat-copy small { font-size: 8.5px; line-height: 1.2; }
+  .stat-progress { margin-bottom: 8px; height: 3px; }
+  .stat-detail { font-size: 8.5px; }
+}
+
+.stat-detail:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.stat-detail:not(:disabled):hover {
+  text-decoration: underline;
+}

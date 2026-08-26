@@ -1,0 +1,19 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.status-due-today { color: #11843a; background: #e4f7e9; }
+.status-paid { color: #0c8133; background: #dbf4e2; }
+.status-overdue { color: #d42c37; background: #ffe4e7; }
+
+.status-pending { color: #c56a18; background: #fff0df; }
+.status-unpaid { color:#b65c15; background:#fff0df; }
+
+.status-partial { color:#1b63c9; background:#e7f0ff; }

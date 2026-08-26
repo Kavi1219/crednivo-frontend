@@ -1,0 +1,7 @@
+CREDNIVO Phase 2.23 - Full App Theme Audit
+
+- Fixed white mobile collection/customer/loan/payment/agent/document cards in Dark theme.
+- Replaced legacy hard-coded white surfaces with shared theme variables.
+- Audited common mobile data cards, forms, toolbars, media uploaders, icon buttons, quick actions, customer loan cards, payment modals, Agents and Documents.
+- Dark theme now keeps text, borders and surfaces readable across all main pages.
+- Light and System themes continue to use the same shared tokens.

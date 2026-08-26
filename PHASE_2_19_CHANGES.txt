@@ -1,0 +1,7 @@
+CREDNIVO Frontend Phase 2.19
+
+Profile dropdown behavior fix:
+- Clicking/tapping anywhere outside the company profile dropdown now closes it.
+- Pressing Escape closes the dropdown on desktop.
+- Navigating to another page automatically closes the dropdown.
+- Existing theme styling and profile navigation are unchanged.

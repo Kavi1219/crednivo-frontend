@@ -1,0 +1,130 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { BarChart3, Bell, Building2, ChevronDown, Edit3, KeyRound, LogOut, Mail, MapPin, Menu, Phone, Search, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useCrednivo } from '../../context/CrednivoContext';
+import { useAuth } from '../../context/AuthContext';
+import { formatIndianMobile } from '../../utils/finance';
+import IconButton from '../common/IconButton';
+import CompanyProfileModal from './CompanyProfileModal';
+import ChangePasswordModal from './ChangePasswordModal';
+import './Header.css';
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function getHeaderIdentity(pathname) {
+  if (pathname === '/' || pathname.startsWith('/overview')) return { title: 'Overview', isOverview: true };
+  return { title: 'Business Workspace', isOverview: false };
+}
+
+function ProfileDetails({ company, user, isOwner, onEdit, onChangePassword, onLogout }) {
+  const avatar = user?.profilePhoto || company.logo;
+  const initial = String(user?.displayName || company.name || 'C').charAt(0);
+  return (
+    <div className="profile-dropdown app-card" role="dialog" aria-label="Signed-in profile details">
+      <div className="profile-dropdown-heading">
+        <span className="profile-dropdown-avatar">{avatar ? <img src={avatar} alt="" /> : initial}</span>
+        <div>
+          <small>{isOwner ? 'Owner Account' : 'Agent Account'}</small>
+          <strong>{user?.displayName || company.owner}</strong>
+          <span>{user?.employeeId ? `${user.employeeId} · ` : ''}{user?.branch || company.branch}</span>
+        </div>
+      </div>
+
+      <div className="profile-detail-list">
+        <div className="profile-detail-row"><span className="profile-detail-icon"><ShieldCheck size={16} /></span><div><small>Access</small><strong>{isOwner ? 'Owner · Full Access' : 'Agent · Field Access'}</strong></div></div>
+        <div className="profile-detail-row"><span className="profile-detail-icon"><Building2 size={16} /></span><div><small>Company</small><strong>{company.name}</strong>{company.companyId && <span>{company.companyId}</span>}</div></div>
+        <div className="profile-detail-row"><span className="profile-detail-icon"><Phone size={16} /></span><div><small>Login Mobile</small><strong>{formatIndianMobile(user?.mobile)}</strong></div></div>
+        {isOwner && <>
+          <div className="profile-detail-row"><span className="profile-detail-icon"><Mail size={16} /></span><div><small>Company Email</small><strong>{company.email || '—'}</strong></div></div>
+          <div className="profile-detail-row profile-detail-address"><span className="profile-detail-icon"><MapPin size={16} /></span><div><small>Address</small><strong>{company.address || '—'}</strong></div></div>
+        </>}
+      </div>
+      {isOwner && <button type="button" className="profile-edit-button" onClick={onEdit}><Edit3 size={15} /><span>Edit Company Profile</span></button>}
+      <button type="button" className="profile-password-button" onClick={onChangePassword}><KeyRound size={15} /><span>Change Password</span></button>
+      <button type="button" className="profile-logout-button" onClick={onLogout}><LogOut size={15} /><span>Logout</span></button>
+    </div>
+  );
+}
+
+export default function Header({ onOpenMenu }) {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const [passwordEditorOpen, setPasswordEditorOpen] = useState(false);
+  const desktopProfileRef = useRef(null);
+  const mobileProfileRef = useRef(null);
+  const { company } = useCrednivo();
+  const { user, isOwner, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const greeting = getGreeting();
+  const headerIdentity = useMemo(() => getHeaderIdentity(location.pathname), [location.pathname]);
+  const { title, isOverview } = headerIdentity;
+  const avatar = user?.profilePhoto || company.logo;
+  const profileInitial = String(user?.displayName || company.name || 'C').charAt(0);
+
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+    const handleOutsidePress = (event) => {
+      const insideDesktop = desktopProfileRef.current?.contains(event.target);
+      const insideMobile = mobileProfileRef.current?.contains(event.target);
+      if (!insideDesktop && !insideMobile) setProfileOpen(false);
+    };
+    const handleEscape = (event) => { if (event.key === 'Escape') setProfileOpen(false); };
+    document.addEventListener('pointerdown', handleOutsidePress);
+    document.addEventListener('keydown', handleEscape);
+    return () => { document.removeEventListener('pointerdown', handleOutsidePress); document.removeEventListener('keydown', handleEscape); };
+  }, [profileOpen]);
+
+  useEffect(() => { setProfileOpen(false); }, [location.pathname]);
+
+  const submitSearch = (event) => {
+    event.preventDefault();
+    if (!search.trim()) return;
+    navigate(`/customers?search=${encodeURIComponent(search.trim())}`);
+  };
+
+  const signOut = async () => { setProfileOpen(false); await logout(); navigate('/login', { replace: true }); };
+  const editCompany = () => { setProfileOpen(false); if (isOwner) setProfileEditorOpen(true); };
+  const editPassword = () => { setProfileOpen(false); setPasswordEditorOpen(true); };
+
+  return (
+    <header className="app-header">
+      <div className="header-title-wrap">
+        <IconButton label="Open menu" onClick={onOpenMenu} className="mobile-menu-button"><Menu size={22} /></IconButton>
+        <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark"><BarChart3 size={21} strokeWidth={2.2} /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
+        <div className="desktop-header-identity">
+          <h1>{title}</h1>
+          {isOverview ? (
+            <p className="overview-greeting"><span>{greeting}, {user?.displayName || company.owner}</span><Sparkles size={14} aria-hidden="true" /><span className="overview-greeting-divider">•</span><span className="overview-greeting-context">Your CREDNIVO snapshot for today</span></p>
+          ) : <p className="overview-greeting"><span>{company.name}</span><span className="overview-greeting-divider">•</span><span className="overview-greeting-context">{user?.branch || company.branch}</span></p>}
+        </div>
+      </div>
+
+      <div className="header-actions">
+        <form className="search-box" onSubmit={submitSearch}><Search size={17} /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search customers, loans..." aria-label="Search customers and loans" /><Search size={17} className="search-end" /></form>
+        <div className="notification-wrap"><IconButton label="Notifications" className="header-icon-btn"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
+        <div className="profile-menu-wrap" ref={desktopProfileRef}>
+          <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <img src={avatar} alt="" /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
+          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onChangePassword={editPassword} onLogout={signOut} />}
+        </div>
+      </div>
+
+      <div className="mobile-header-actions">
+        <IconButton label="Search" onClick={()=>navigate('/customers')}><Search size={19} /></IconButton>
+        <div className="notification-wrap"><IconButton label="Notifications"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
+        <div className="mobile-profile-menu-wrap" ref={mobileProfileRef}>
+          <button className="mobile-avatar" aria-label="Signed-in profile" aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{avatar ? <img src={avatar} alt="" /> : profileInitial}</button>
+          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onChangePassword={editPassword} onLogout={signOut} />}
+        </div>
+      </div>
+      {isOwner && <CompanyProfileModal open={profileEditorOpen} onClose={() => setProfileEditorOpen(false)} />}
+      <ChangePasswordModal open={passwordEditorOpen} onClose={() => setPasswordEditorOpen(false)} />
+    </header>
+  );
+}

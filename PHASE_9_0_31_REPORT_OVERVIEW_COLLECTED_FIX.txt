@@ -1,0 +1,27 @@
+CREDNIVO Phase 9.0.31 - Report Overview Customer Money Received Fix
+
+Corrected the Reports > Overview top collection summary.
+
+Before:
+- The top "Collected" card used only paid amounts attached to scheduled collection rows.
+- IO principal repayments, early settlements and other actual collection payments
+  could therefore be missing.
+- Example: Overview showed ₹1,000 while Detailed Collection Report correctly showed ₹20,200.
+
+Now:
+- Top card is "Customer Money Received".
+- It totals actual Collection payment transactions by PAYMENT DATE.
+- It includes IO principal repayments / settlements and early payments.
+- Fine remains separate from collection amount.
+- Payment transaction count is shown below the amount.
+
+Important:
+- Expected Collection still follows scheduled due dates.
+- Pending/Overdue still follow schedule balances.
+- Cycle Performance is NOT changed.
+- Cycle Recovery % still compares scheduled expected vs scheduled collected.
+- Overview CSV now exports both:
+    Customer Money Received
+    Scheduled Collection Collected
+
+No backend/database change required.

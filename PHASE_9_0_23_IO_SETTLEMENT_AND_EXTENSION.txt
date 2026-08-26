@@ -1,0 +1,17 @@
+CREDNIVO Phase 9.0.23 - IO Settlement + Owner Extension
+
+IO full settlement:
+- Amount to close = Principal Outstanding + ONLY interest already due/pending as of Payment Date.
+- No pending interest -> principal only.
+- 1 pending cycle -> principal + 1 cycle interest.
+- Future IO interest is cancelled when principal is fully returned.
+- IO payment modal shows a settlement preview and Use Settlement Amount button.
+- IO Total Repayment label is now Projected Repayment.
+
+Owner-only IO extension:
+- Active IO loan shows Extend IO only for Owner.
+- Owner enters extension cycles + reason.
+- Extension adds future interest cycles only.
+- Principal does not increase.
+- Projected repayment increases only by the added interest.
+- Backend independently blocks agents from extension.

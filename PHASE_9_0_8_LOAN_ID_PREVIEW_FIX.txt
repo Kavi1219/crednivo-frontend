@@ -1,0 +1,3 @@
+CREDNIVO Phase 9.0.8
+Loan Review no longer calculates the next Loan ID from frontend/local cached loans.
+It requests the authoritative next company-specific ID from the backend instead.

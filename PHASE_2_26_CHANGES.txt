@@ -1,0 +1,10 @@
+CREDNIVO Phase 2.26 - Historical Payment Date
+
+- Added Payment Date to Customer Profile > Record Loan Payment.
+- Payment date defaults to today.
+- Older dates can be selected for existing customers and historical payment entry.
+- Future dates are blocked; dates before the loan disbursed/start date are blocked.
+- Payment History and monthly reports now use the selected historical payment date.
+- Backdated payments reduce the correct loan/customer outstanding balance without incorrectly increasing Today's Collection.
+- If a backdated payment closes a loan, future collection rows for that loan are removed.
+- Customer recent payment history is sorted by transaction date.

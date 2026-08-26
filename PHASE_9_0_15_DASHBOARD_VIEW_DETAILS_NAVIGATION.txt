@@ -1,0 +1,18 @@
+CREDNIVO Phase 9.0.15 - Dashboard View Details Navigation
+
+Fixed:
+- All dashboard "View Details" buttons now work.
+
+Navigation:
+- Expected Today -> Collection / Today
+- Collected Today -> Payments / Collection / Today
+- Pending / Overdue -> Collection / Overdue
+- Upcoming 7 Days -> Collection / Upcoming
+- Active Loans -> Loans / Active
+- Available Capital -> Capital
+- Today's Expenses -> Expenses
+
+Also:
+- StatCard now disables View Details only when no navigation action exists.
+- Added hover feedback for clickable View Details buttons.
+- No backend/database change required.

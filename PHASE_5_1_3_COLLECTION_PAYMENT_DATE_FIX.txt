@@ -1,0 +1,16 @@
+CREDNIVO Phase 5.1.3 - Collection Report Payment-Date Fix
+
+Problem fixed:
+A collection payment could appear correctly in Payment History but not appear in Detailed Collection Report when it was paid before the scheduled due date.
+
+Example:
+- Payment received: 25 Aug 2026, Rs. 1,000
+- Weekly scheduled due date: later (for example 01 Sep 2026)
+- Old report filtered only collection_entries.due_date, so 01-25 Aug showed 0 rows and Rs. 0 collected.
+
+Correct behaviour in 5.1.3:
+- Expected / Pending = scheduled due dates inside the selected period.
+- Collected / Fine Collected = actual payment dates inside the selected period.
+- New "Collection Transactions" section shows every real collection payment received in the selected date range.
+- "Scheduled Collections" remains separate for expected/pending/overdue analysis.
+- Early payments are now visible on the day cash was actually received.

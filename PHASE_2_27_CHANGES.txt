@@ -1,0 +1,19 @@
+CREDNIVO Frontend Phase 2.27
+
+- Indian mobile-number handling added across customer/Jamin inputs and displays.
+  - Inputs are limited to 10 digits and shown with the +91 prefix.
+  - Display format: +91 - 98765 43210.
+  - Customer, Jamin, Create Loan selector, Agents and company profile use the same format.
+- IO (Interest Only) loan calculation corrected.
+  - Collection / Cycle = interest per cycle only.
+  - Principal remains outstanding until a principal payment is recorded.
+  - If interest is taken upfront, one interest cycle is deducted from amount given and is not counted twice in remaining repayment.
+- IO payment flow now separates:
+  - Interest Paid
+  - Principal Paid
+  - Fine Paid
+  - Payment Date
+- Interest payments do not reduce principal. Principal payments reduce outstanding principal.
+- IO-aware payment controls added to Customer Profile, Collections and Overview Today's Collection.
+- Existing IO loans receive a one-time frontend accounting migration to principal-based outstanding values.
+- Historical payment date behavior remains supported.

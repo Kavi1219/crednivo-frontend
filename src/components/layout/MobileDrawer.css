@@ -1,0 +1,68 @@
+.drawer-overlay { display: none; }
+.mobile-drawer { display: none; }
+@media (max-width: 767px) {
+  .drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 89;
+    background: rgba(5,22,43,.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s ease;
+  }
+  .drawer-overlay.show { opacity: 1; pointer-events: auto; }
+  .mobile-drawer {
+    display: flex;
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(84vw, 330px);
+    z-index: 90;
+    flex-direction: column;
+    padding: max(18px, env(safe-area-inset-top)) 18px 18px;
+    color: #fff;
+    background: linear-gradient(180deg, #062c53, #031d38);
+    transform: translateX(-105%);
+    transition: transform .24s ease;
+    box-shadow: 20px 0 50px rgba(0,0,0,.18);
+  }
+  .mobile-drawer.open { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .drawer-head div { display: flex; flex-direction: column; }
+  .drawer-head strong { font-size: 22px; }
+  .drawer-head small { margin-top: 3px; font-size: 9px; opacity: .8; }
+  .drawer-head button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; color: #fff; background: rgba(255,255,255,.08); }
+  .mobile-drawer nav { margin-top: 14px; display: grid; gap: 4px; }
+  .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 10px; }
+  .mobile-drawer nav a.active { background: #0b6ee8; }
+  .drawer-logout { margin-top: auto; min-height: 49px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid #4d9cff; border-radius: 10px; color: #fff; background: transparent; }
+}
+
+/* Phase 2.25 - Drawer branding */
+@media (max-width: 767px) {
+  .drawer-head .drawer-brand {
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .drawer-brand-mark {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    border: 2px solid #0a87ff;
+    border-radius: 50%;
+    color: #fff;
+    box-shadow: inset 0 0 0 4px rgba(0,132,255,.08), 0 0 18px rgba(0,123,255,.16);
+  }
+  .drawer-brand-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .drawer-brand-copy strong { font-size: 20px; letter-spacing: -.03em; }
+  .drawer-brand-copy small { margin-top: 4px; font-size: 8px; opacity: .82; white-space: nowrap; }
+}

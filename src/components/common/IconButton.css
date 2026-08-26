@@ -1,0 +1,20 @@
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+  color: #1a5ecc;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(41,74,116,.05);
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.icon-btn:hover { transform: translateY(-1px); background: var(--surface-hover); border-color: var(--line); box-shadow: 0 5px 14px rgba(41,74,116,.10); }
+.icon-btn:active { transform: translateY(0); }
+.icon-btn-sm { width: 36px; height: 32px; }
+.icon-btn-md { width: 40px; height: 40px; }
+.icon-btn-lg { width: 46px; height: 46px; border-radius: 13px; }
+
+.icon-btn svg { display:block; flex:0 0 auto; }

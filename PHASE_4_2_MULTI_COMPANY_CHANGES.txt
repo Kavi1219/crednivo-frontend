@@ -1,0 +1,12 @@
+CREDNIVO Phase 4.2 - Multi-Company Workspaces
+
+- Company registration no longer blocks after the first owner.
+- Every company creates an isolated workspace.
+- Company names may repeat; branch names must be unique.
+- Agent registration is matched by exact Company Name + Branch.
+- Existing single-company data is migrated to the first existing company by the backend.
+- Login remains Owner/Agent; same mobile can belong to multiple companies, but if credentials are ambiguous the user must use username/EMP ID.
+- No OTP or email acceptance in this phase.
+
+- Registration screens are compacted for 100% browser zoom on laptop/desktop.
+- Registration routes automatically scroll to the top when opened.
