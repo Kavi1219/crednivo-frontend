@@ -2,7 +2,7 @@ import {
   ArrowLeft, Building2, Camera, CheckCircle2, ChevronLeft, ChevronRight,
   Eye, EyeOff, LockKeyhole, Mail, MapPin, Phone, ShieldCheck, Upload, UserRound
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AuthLoading } from './Login';
@@ -33,11 +33,11 @@ export default function RegisterCompany() {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, []);
 
+  const companyMobile = String(form.companyMobile || '').replace(/\D/g, '');
+  const ownerMobile = String(form.ownerMobile || '').replace(/\D/g, '');
+
   if (loading) return <AuthLoading />;
   if (user) return <Navigate to="/" replace />;
-
-  const companyMobile = useMemo(() => String(form.companyMobile || '').replace(/\D/g, ''), [form.companyMobile]);
-  const ownerMobile = useMemo(() => String(form.ownerMobile || '').replace(/\D/g, ''), [form.ownerMobile]);
 
   const change = (key) => (event) => {
     const value = event.target.value;
