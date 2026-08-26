@@ -88,14 +88,14 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = async ({ identifier, password, role }) => {
+  const login = async ({ identifier, password, role, remember = true }) => {
     setError('');
     const result = await apiRequest('/auth/login', {
       method: 'POST',
       skipAuth: true,
       body: JSON.stringify({ identifier, password, role }),
     });
-    setAuthToken(result.token);
+    setAuthToken(result.token, { remember });
     setUser(normalizeUser(result));
     return result;
   };

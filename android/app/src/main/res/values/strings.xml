@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CREDNIVO</string>
+    <string name="title_activity_main">CREDNIVO</string>
+    <string name="package_name">com.crednivo.app</string>
+    <string name="custom_url_scheme">com.crednivo.app</string>
+</resources>

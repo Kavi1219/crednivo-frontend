@@ -10,17 +10,29 @@ export const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 const AUTH_TOKEN_KEY = 'crednivo-auth-token';
 
 export function getAuthToken() {
-  try { return localStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch { return ''; }
+  try {
+    return sessionStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  } catch {
+    return '';
+  }
 }
 
-export function setAuthToken(token) {
+export function setAuthToken(token, { remember = true } = {}) {
   try {
-    if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
-    else localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+    if (!token) return;
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem(AUTH_TOKEN_KEY, token);
   } catch { /* storage can be unavailable in private environments */ }
 }
 
-export function clearAuthToken() { setAuthToken(''); }
+export function clearAuthToken() {
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    sessionStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch { /* storage can be unavailable in private environments */ }
+}
 
 export function mediaUrl(value) {
   if (!value) return '';
