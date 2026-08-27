@@ -48,13 +48,44 @@ export function formatDate(date) {
 }
 
 export function toInputDate(date = new Date()) {
-  const value = new Date(date);
+  const value = date instanceof Date ? new Date(date.getTime()) : new Date(date);
+
+  // A date input can temporarily be blank/incomplete while the user is
+  // changing the day, month or year. Never call toISOString() on Invalid Date.
+  if (Number.isNaN(value.getTime())) return '';
+
   const offset = value.getTimezoneOffset();
-  return new Date(value.getTime() - offset * 60_000).toISOString().slice(0, 10);
+  const localValue = new Date(value.getTime() - offset * 60_000);
+  if (Number.isNaN(localValue.getTime())) return '';
+
+  return localValue.toISOString().slice(0, 10);
 }
 
 export function getFirstDueDate(startDate, cycle) {
-  const due = new Date(`${startDate}T12:00:00`);
+  if (!startDate) return '';
+
+  // Native date inputs may briefly emit an incomplete value while the user is
+  // editing individual day/month/year segments. Only calculate from a complete
+  // YYYY-MM-DD date so values such as a partially entered month cannot crash
+  // the page or be silently converted to the wrong day.
+  const rawDate = String(startDate).trim();
+  const match = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return '';
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const due = new Date(year, month - 1, day, 12, 0, 0, 0);
+
+  if (
+    Number.isNaN(due.getTime())
+    || due.getFullYear() !== year
+    || due.getMonth() !== month - 1
+    || due.getDate() !== day
+  ) {
+    return '';
+  }
+
   if (cycle === 'Daily') due.setDate(due.getDate() + 1);
   if (cycle === 'Weekly') due.setDate(due.getDate() + 7);
   if (cycle === 'Monthly') {
@@ -64,6 +95,7 @@ export function getFirstDueDate(startDate, cycle) {
     const lastDay = new Date(due.getFullYear(), due.getMonth() + 1, 0).getDate();
     due.setDate(Math.min(originalDay, lastDay));
   }
+
   return toInputDate(due);
 }
 

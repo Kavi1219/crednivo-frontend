@@ -15,7 +15,11 @@ import './CreateLoan.css';
 
 function cycleSummary(startDate, cycle) {
   const dueDate = getFirstDueDate(startDate, cycle);
+  if (!dueDate) return 'Select a valid disbursed date';
+
   const due = new Date(`${dueDate}T12:00:00`);
+  if (Number.isNaN(due.getTime())) return 'Select a valid disbursed date';
+
   if (cycle === 'Weekly') return `Weekly · Every ${new Intl.DateTimeFormat('en-IN', { weekday: 'long' }).format(due)}`;
   if (cycle === 'Monthly') return `Monthly · Pay date ${due.getDate()}`;
   return `Daily · First pay ${formatDate(dueDate)}`;
