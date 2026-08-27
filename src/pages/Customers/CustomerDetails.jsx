@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, HandCoins, Pencil, Phone, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -6,6 +6,7 @@ import MediaUploader from '../../components/common/MediaUploader';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
+import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
 import './CustomerDetails.css';
 
@@ -13,6 +14,66 @@ function openDocument(document) {
   if (!document?.data) return;
   const popup = window.open();
   if (popup) popup.location.href = document.data;
+}
+
+
+
+function ProtectedImage({ src, alt = '', fallback = null, className = '' }) {
+  const [resolvedSrc, setResolvedSrc] = useState(() => {
+    const value = String(src || '');
+    return /^(data:|blob:)/i.test(value) ? value : '';
+  });
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = '';
+    const value = String(src || '').trim();
+
+    setFailed(false);
+
+    if (!value) {
+      setResolvedSrc('');
+      return undefined;
+    }
+
+    if (/^(data:|blob:)/i.test(value)) {
+      setResolvedSrc(value);
+      return undefined;
+    }
+
+    const load = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await fetch(value, {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!response.ok) throw new Error(`Media request failed (${response.status})`);
+
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) setResolvedSrc(objectUrl);
+      } catch (error) {
+        console.error('CREDNIVO protected media load failed', error);
+        if (!cancelled) {
+          setResolvedSrc('');
+          setFailed(true);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
+  if (!src || failed || !resolvedSrc) return fallback;
+  return <img src={resolvedSrc} alt={alt} className={className} />;
 }
 
 function DetailRow({ label, value }) {
@@ -483,7 +544,7 @@ export default function CustomerDetails() {
           onClick={()=>customer.photo&&setPhotoViewer({src:customer.photo,label:'Customer Photo'})}
           title={customer.photo?'View customer photo':'Customer profile'}
         >
-          {customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}
+          {customer.photo ? <ProtectedImage src={customer.photo} alt={customer.name} fallback={customer.name.charAt(0)} /> : customer.name.charAt(0)}
         </button>
         <div className="customer-hero-copy">
           <div className="customer-name-line"><h2>{customer.name}</h2><span className="soft-chip green">{customer.status}</span></div>
@@ -556,7 +617,7 @@ export default function CustomerDetails() {
         </dl>
         <div className="detail-media-row">
           <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer')} disabled={!customer.photo&&!canEditMedia}>
-            {customer.photo?<img src={customer.photo} alt="Customer"/>:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
+            {customer.photo?<ProtectedImage src={customer.photo} alt="Customer" fallback={<UserRound size={21}/>} />:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
           </button>
           <button type="button" className={`detail-document-tile ${!customer.customerDocument?.data&&canEditMedia?'can-add':''}`} onClick={()=>customer.customerDocument?.data?openDocument(customer.customerDocument):canEditMedia&&openMediaEditor('customer')} disabled={!customer.customerDocument?.data&&!canEditMedia}>
             <FileText size={21}/><span>{customer.customerDocument?.name || (canEditMedia?'Add Document':'No document')}</span>{customer.customerDocument?.data&&<ExternalLink size={15}/>} 
@@ -583,7 +644,7 @@ export default function CustomerDetails() {
         </dl>
         <div className="detail-media-row">
           <button type="button" className={`detail-photo-tile ${!customer.jaminPhoto&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminPhoto?setPhotoViewer({src:customer.jaminPhoto,label:'Jamin Photo'}):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminPhoto&&(!canEditMedia||!customer.jaminName)}>
-            {customer.jaminPhoto?<img src={customer.jaminPhoto} alt="Jamin"/>:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
+            {customer.jaminPhoto?<ProtectedImage src={customer.jaminPhoto} alt="Jamin" fallback={<ShieldCheck size={21}/>} />:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
           </button>
           <button type="button" className={`detail-document-tile ${!customer.jaminDocument?.data&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminDocument?.data?openDocument(customer.jaminDocument):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminDocument?.data&&(!canEditMedia||!customer.jaminName)}>
             <FileText size={21}/><span>{customer.jaminDocument?.name || (canEditMedia&&customer.jaminName?'Add Document':'No document')}</span>{customer.jaminDocument?.data&&<ExternalLink size={15}/>} 
@@ -1015,7 +1076,7 @@ export default function CustomerDetails() {
 
     {photoViewer && <div className="customer-photo-viewer" onMouseDown={(event)=>event.target===event.currentTarget&&setPhotoViewer(null)}>
       <button type="button" onClick={()=>setPhotoViewer(null)} title="Close"><X size={21}/></button>
-      <div><img src={photoViewer.src} alt={photoViewer.label}/><span>{photoViewer.label}</span></div>
+      <div><ProtectedImage src={photoViewer.src} alt={photoViewer.label} fallback={<UserRound size={28}/>} /><span>{photoViewer.label}</span></div>
     </div>}
   </div>;
 }
