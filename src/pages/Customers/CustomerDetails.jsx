@@ -10,10 +10,41 @@ import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
 import './CustomerDetails.css';
 
-function openDocument(document) {
-  if (!document?.data) return;
-  const popup = window.open();
-  if (popup) popup.location.href = document.data;
+async function openDocument(document) {
+  const source = String(document?.data || '').trim();
+  if (!source) return;
+
+  // Open the tab immediately so browsers do not block it after the async fetch.
+  const popup = window.open('', '_blank');
+  if (!popup) return;
+
+  if (/^(data:|blob:)/i.test(source)) {
+    popup.location.href = source;
+    return;
+  }
+
+  try {
+    const token = getAuthToken();
+    const response = await fetch(source, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      throw new Error(`Document request failed (${response.status})`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    popup.location.href = objectUrl;
+
+    // Keep the object URL alive long enough for images/PDFs to finish loading.
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
+  } catch (error) {
+    console.error('CREDNIVO protected document load failed', error);
+    popup.close();
+    window.alert('Could not open this document. Please try again.');
+  }
 }
 
 
