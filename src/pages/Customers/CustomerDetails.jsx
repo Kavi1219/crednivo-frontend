@@ -100,10 +100,23 @@ export default function CustomerDetails() {
 
     const interestEarned = upfrontInterest + interestFromPayments;
     const profitEarned = interestEarned + fineCollected;
-    const actualRepayment = upfrontInterest + collectionCash;
+
+    // EMI upfront interest is deducted before disbursement, so it must not be
+    // added again to the amount the customer actually repaid through collections.
+    // Example: principal 5,000, upfront interest 1,000, collections 5,000
+    // => Actual Repayment = 5,000 (not 6,000), Profit = 1,000.
+    // IO keeps its existing realized-cash treatment because upfront IO interest
+    // is a separate earned interest cycle in the IO settlement flow.
+    const actualRepayment = loan.loanType === 'IO'
+      ? upfrontInterest + collectionCash
+      : collectionCash;
+
     const principalRepaid = loan.loanType === 'IO'
       ? loanPayments.reduce((sum, payment) => sum + Number(payment.principalPaid || 0), 0)
-      : Math.min(Number(loan.principal || 0), Math.max(0, actualRepayment - interestEarned));
+      : Math.min(
+          Number(loan.principal || 0),
+          Math.max(0, collectionCash - (loan.interestUpfront ? 0 : interestFromPayments)),
+        );
 
     // Cancelled schedule entries are intentionally hidden from the live
     // Collection list after sync, so derive cancelled IO interest from the
