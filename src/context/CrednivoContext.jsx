@@ -607,7 +607,11 @@ export function CrednivoProvider({ children }) {
     };
 
     const cashReceived = isIo ? payload.interestAmount + payload.principalAmount : payload.amount;
-    if (cashReceived <= 0) return false;
+    const fineReceived = payload.fine;
+
+    // Fine is a separate cash receipt. A payment with zero due/interest/principal
+    // is still valid when a positive fine amount is being collected.
+    if (cashReceived <= 0 && fineReceived <= 0) return false;
 
     await apiRequest(`/payments/loan/${loanId}`, { method: 'POST', body: JSON.stringify(payload) });
     await syncCoreData();

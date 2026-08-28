@@ -251,8 +251,18 @@ export default function Collection() {
   const submit = async () => {
     if (!paying) return;
     const isIo = paying.loan?.loanType === 'IO';
-    const total = isIo ? Number(interestAmount || 0) + Number(principalAmount || 0) : Number(amount || 0);
-    if (total <= 0) return;
+    const paymentTotal = isIo
+      ? Number(interestAmount || 0) + Number(principalAmount || 0)
+      : Number(amount || 0);
+    const fineTotal = Number(fine || 0);
+
+    // Allow a fine-only collection. We only reject the form when no money
+    // was entered in either the normal payment fields or the fine field.
+    if (paymentTotal <= 0 && fineTotal <= 0) {
+      setActionError('Enter an amount paid or a fine amount before saving.');
+      return;
+    }
+
     setActionError('');
     try {
       const saved = isIo
@@ -679,7 +689,8 @@ export default function Collection() {
               </div>
               <div className="form-field">
                 <label>Amount Paid</label>
-                <input autoFocus type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} />
+                <input autoFocus type="number" min="0" value={amount} onChange={(event) => setAmount(event.target.value)} />
+                <small className="field-help">Set this to 0 or leave it blank when collecting only a fine.</small>
               </div></>}
               {hasPermission('collections.fine') && <div className="form-field">
                 <label>Fine Paid</label>
