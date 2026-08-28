@@ -1267,8 +1267,8 @@
   transition:transform .15s ease,background .15s ease,border-color .15s ease;
 }
 .transaction-edit-button{
-  border:1px solid color-mix(in srgb,var(--brand-500) 30%,transparent);
-  background:color-mix(in srgb,var(--brand-500) 8%,transparent);color:var(--brand-600);
+  border:1px solid color-mix(in srgb,var(--brand-500, #1473e6) 30%,transparent);
+  background:color-mix(in srgb,var(--brand-500, #1473e6) 8%,transparent);color:var(--brand-600, #0b5fc7);
 }
 .transaction-delete-button{
   border:1px solid rgba(239,68,68,.24);background:rgba(239,68,68,.07);color:#dc2626;
@@ -1308,7 +1308,7 @@
   background:var(--surface);color:var(--ink-900);outline:none;
 }
 .transaction-editor-grid input:focus,.transaction-editor-grid select:focus{
-  border-color:var(--brand-500);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-500) 12%,transparent);
+  border-color:var(--brand-500, #1473e6);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand-500, #1473e6) 12%,transparent);
 }
 .transaction-editor-note{grid-column:1/-1}
 .transaction-editor-actions{
@@ -1318,7 +1318,7 @@
   min-height:40px;padding:0 16px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:7px;
 }
 .transaction-cancel-button{border:1px solid var(--border);background:var(--surface);color:var(--ink-700)}
-.transaction-save-button{border:1px solid var(--brand-500);background:var(--brand-500);color:#fff}
+.transaction-save-button{border:1px solid var(--brand-500, #1473e6);background:var(--brand-500, #1473e6);color:#fff}
 .transaction-confirm-delete-button{border:1px solid #dc2626;background:#dc2626;color:#fff}
 .transaction-save-button:disabled,.transaction-confirm-delete-button:disabled,.transaction-cancel-button:disabled{opacity:.6;cursor:not-allowed}
 
