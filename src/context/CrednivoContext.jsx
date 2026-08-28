@@ -562,6 +562,27 @@ export function CrednivoProvider({ children }) {
     return saved?.id || null;
   };
 
+  const updateLoan = async (loanId, form) => {
+    if (!loanId) return null;
+    const payload = {
+      amount: asNumber(form.amount),
+      cycle: form.cycle,
+      loanType: form.loanType,
+      interestRate: asNumber(form.interestRate),
+      duration: Math.max(1, Number(form.duration) || 1),
+      interestUpfront: Boolean(form.interestUpfront),
+      fineEnabled: Boolean(form.fineEnabled),
+      fineAmount: form.fineEnabled ? Math.max(0, asNumber(form.fineAmount)) : 0,
+      startDate: form.startDate || toInputDate(),
+    };
+    const saved = await apiRequest(`/loans/${loanId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    await syncCoreData();
+    return saved;
+  };
+
   const getIoSettlementPreview = async (loanId, paymentDate = toInputDate()) => {
     if (!loanId) return null;
     const date = normalizePaymentDate(paymentDate);
@@ -884,6 +905,7 @@ export function CrednivoProvider({ children }) {
       saveJaminProfile,
       saveCustomerMedia,
       addLoan,
+      updateLoan,
       getIoSettlementPreview,
       extendIoLoan,
       recordCollection,
