@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import RecordLoanPaymentModal from '../../components/payments/RecordLoanPaymentModal';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
@@ -22,18 +23,10 @@ function DetailRow({ label, value }) {
 export default function CustomerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { customers, loans, collections, payments, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
+  const { customers, loans, collections, payments, extendIoLoan, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
   const [photoViewer, setPhotoViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentInterest, setPaymentInterest] = useState('');
-  const [paymentPrincipal, setPaymentPrincipal] = useState('0');
-  const [paymentFine, setPaymentFine] = useState('0');
-  const [paymentDate, setPaymentDate] = useState(() => toInputDate());
-  const [paymentMode, setPaymentMode] = useState('Cash');
-  const [ioSettlementPreview, setIoSettlementPreview] = useState(null);
-  const [ioSettlementLoading, setIoSettlementLoading] = useState(false);
   const [extensionLoan, setExtensionLoan] = useState(null);
   const [extensionCycles, setExtensionCycles] = useState('1');
   const [extensionReason, setExtensionReason] = useState('');
@@ -419,62 +412,14 @@ export default function CustomerDetails() {
     }
   };
 
-  const loadIoSettlementPreview = async (loan, date) => {
-    if (!loan || loan.loanType !== 'IO') {
-      setIoSettlementPreview(null);
-      return null;
-    }
-    setIoSettlementLoading(true);
-    try {
-      const preview = await getIoSettlementPreview(loan.id, date);
-      setIoSettlementPreview(preview);
-      return preview;
-    } catch (apiError) {
-      setIoSettlementPreview(null);
-      setActionError(apiError?.message || 'Could not calculate the IO settlement amount.');
-      return null;
-    } finally {
-      setIoSettlementLoading(false);
-    }
-  };
-
-  const openLoanPayment = async (loan) => {
+  const openLoanPayment = (loan) => {
     if (!loan || Number(loan.outstanding) <= 0 || loan.status === 'Closed') return;
+    setActionError('');
     setPayingLoan(loan);
-    if (loan.loanType === 'IO') {
-      setPaymentAmount('');
-      setPaymentInterest(String(Number(loan.collectionAmount) || Number(loan.interestAmount) || 0));
-      setPaymentPrincipal('0');
-    } else {
-      setPaymentAmount(String(Math.min(Number(loan.collectionAmount) || 0, Number(loan.outstanding) || 0) || Number(loan.outstanding) || ''));
-      setPaymentInterest('');
-      setPaymentPrincipal('0');
-    }
-    setPaymentFine('0');
-    const today = toInputDate();
-    setPaymentDate(today);
-    setPaymentMode('Cash');
-    if (loan.loanType === 'IO') await loadIoSettlementPreview(loan, today);
-    else setIoSettlementPreview(null);
   };
 
   const closeLoanPayment = () => {
     setPayingLoan(null);
-    setPaymentAmount('');
-    setPaymentInterest('');
-    setPaymentPrincipal('0');
-    setPaymentFine('0');
-    setPaymentDate(toInputDate());
-    setPaymentMode('Cash');
-    setIoSettlementPreview(null);
-  };
-
-  const applyFullIoSettlement = async () => {
-    if (!payingLoan || payingLoan.loanType !== 'IO') return;
-    const preview = ioSettlementPreview || await loadIoSettlementPreview(payingLoan, paymentDate);
-    if (!preview) return;
-    setPaymentInterest(String(Number(preview.pendingInterest || 0)));
-    setPaymentPrincipal(String(Number(preview.principalOutstanding || payingLoan.outstanding || 0)));
   };
 
   const openIoExtension = (loan) => {
@@ -518,32 +463,6 @@ export default function CustomerDetails() {
     }
   };
 
-  const submitLoanPayment = async () => {
-    if (!payingLoan) return;
-    const isIo = payingLoan.loanType === 'IO';
-    const total = isIo ? Number(paymentInterest || 0) + Number(paymentPrincipal || 0) : Number(paymentAmount || 0);
-    if (total <= 0) return;
-    setActionError('');
-    try {
-      const saved = isIo
-        ? await recordLoanPayment(payingLoan.id, {
-            interestAmount: paymentInterest,
-            principalAmount: paymentPrincipal,
-            fine: paymentFine,
-            paymentDate,
-            paymentMode,
-          })
-        : await recordLoanPayment(payingLoan.id, {
-            amount: paymentAmount,
-            fine: paymentFine,
-            paymentDate,
-            paymentMode,
-          });
-      if (saved) closeLoanPayment();
-    } catch (apiError) {
-      setActionError(apiError?.message || 'Could not save the payment to the database.');
-    }
-  };
 
   return <div className="module-page customer-details-page">
     <ModuleHeader
@@ -1142,77 +1061,24 @@ export default function CustomerDetails() {
       </div>
     </div>}
 
-    {payingLoan && <div className="customer-loan-pay-backdrop" onMouseDown={closeLoanPayment}>
-      <div className="customer-loan-pay-modal" onMouseDown={(event)=>event.stopPropagation()}>
-        <div className="customer-loan-pay-head">
-          <div>
-            <strong>Record Loan Payment</strong>
-            <span>{payingLoan.id} · {payingLoan.cycle} · {customer.name}</span>
-          </div>
-          <button type="button" className="customer-loan-pay-close" onClick={closeLoanPayment} title="Close payment"><X size={18}/></button>
-        </div>
-        <div className="customer-loan-pay-body">
-          <div className="customer-loan-pay-summary">
-            <div><span>{payingLoan.loanType === 'IO' ? 'Interest / Cycle' : 'Collection / Cycle'}</span><strong>{formatCurrency(payingLoan.collectionAmount)}</strong></div>
-            <div><span>{payingLoan.loanType === 'IO' ? 'Principal Outstanding' : 'Outstanding'}</span><strong>{formatCurrency(payingLoan.outstanding)}</strong></div>
-            <small>{payingLoan.loanType === 'IO' ? 'Interest payments do not reduce principal. Enter principal separately when the customer returns part or all of the principal.' : 'Partial payment and overpayment are allowed. Fine is recorded separately.'}</small>
-          </div>
-
-          <div className="customer-loan-pay-fields">
-            <label className="customer-loan-payment-date">
-              <span>Payment Date</span>
-              <input
-                type="date"
-                min={payingLoan.startDate || undefined}
-                max={toInputDate()}
-                value={paymentDate}
-                onChange={(event)=>{
-                  const value = event.target.value;
-                  setPaymentDate(value);
-                  if (payingLoan?.loanType === 'IO') loadIoSettlementPreview(payingLoan, value);
-                }}
-              />
-              <small>Choose an earlier date when entering payments already received from an existing customer.</small>
-            </label>
-            {payingLoan.loanType === 'IO' ? <>
-              <label><span>Interest Paid</span><input autoFocus type="number" min="0" value={paymentInterest} onChange={(event)=>setPaymentInterest(event.target.value)}/></label>
-              <label><span>Principal Payment</span><input type="number" min="0" max={Number(payingLoan.outstanding) || undefined} value={paymentPrincipal} onChange={(event)=>setPaymentPrincipal(event.target.value)}/><small>Enter the amount the customer is returning now. Maximum: {formatCurrency(payingLoan.outstanding)}</small></label>
-              {Number(paymentPrincipal || 0) > 0 && Number(paymentPrincipal || 0) < Number(payingLoan.outstanding || 0) && <div className="io-principal-reprice-preview">
-                <div><span>Remaining Principal</span><strong>{formatCurrency(Math.max(0, Number(payingLoan.outstanding || 0) - Number(paymentPrincipal || 0)))}</strong></div>
-                <div><span>Next Interest / Cycle</span><strong>{formatCurrency(Math.max(0, Number(payingLoan.outstanding || 0) - Number(paymentPrincipal || 0)) * (Number(payingLoan.interestRate || 0) / 100))}</strong></div>
-                <small>Future cycles only will use the new interest. Interest already due/pending keeps its existing amount.</small>
-              </div>}
-            </> : <label><span>Amount Paid</span><input autoFocus type="number" min="1" value={paymentAmount} onChange={(event)=>setPaymentAmount(event.target.value)}/></label>}
-            {hasPermission('collections.fine') ? <label><span>Fine Paid</span><input type="number" min="0" value={paymentFine} onChange={(event)=>setPaymentFine(event.target.value)}/></label> : null}
-            <label><span>Payment Mode</span><select value={paymentMode} onChange={(event)=>setPaymentMode(event.target.value)}><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option><option>Other</option></select></label>
-          </div>
-
-          {payingLoan.loanType === 'IO' && <div className="io-settlement-panel">
-            <div className="io-settlement-head">
-              <div>
-                <strong>Full Principal Settlement</strong>
-                <small>Principal + only interest already due/pending. Future interest is cancelled.</small>
-              </div>
-              <button type="button" onClick={applyFullIoSettlement} disabled={ioSettlementLoading}>
-                {ioSettlementLoading ? 'Calculating...' : 'Use Settlement Amount'}
-              </button>
-            </div>
-            {ioSettlementPreview && <div className="io-settlement-grid">
-              <div><span>Principal</span><strong>{formatCurrency(ioSettlementPreview.principalOutstanding)}</strong></div>
-              <div><span>Pending Interest</span><strong>{formatCurrency(ioSettlementPreview.pendingInterest)}</strong><small>{ioSettlementPreview.pendingInterestCycles || 0} cycle(s)</small></div>
-              <div><span>Amount to Close</span><strong>{formatCurrency(ioSettlementPreview.settlementAmount)}</strong></div>
-              <div><span>Future Interest Cancelled</span><strong>{formatCurrency(ioSettlementPreview.futureInterestCancelled)}</strong><small>{ioSettlementPreview.futureInterestCyclesCancelled || 0} cycle(s)</small></div>
-            </div>}
-          </div>}
-        </div>
-
-        <div className="customer-loan-pay-footer">
-          <button type="button" className="customer-loan-save-payment" onClick={submitLoanPayment} disabled={payingLoan.loanType === 'IO' ? (Number(paymentInterest || 0) + Number(paymentPrincipal || 0) <= 0) : Number(paymentAmount)<=0}>
-            <Check size={17}/><span>Save Payment</span>
-          </button>
-        </div>
-      </div>
-    </div>}
+    <RecordLoanPaymentModal
+      open={Boolean(payingLoan)}
+      loan={payingLoan}
+      customerName={customer.name}
+      customerId={customer.id}
+      scheduledAmount={payingLoan?.collectionAmount}
+      initialAmount={
+        payingLoan
+          ? Math.min(
+              Number(payingLoan.collectionAmount || 0),
+              Number(payingLoan.outstanding || 0),
+            ) || Number(payingLoan.outstanding || 0)
+          : 0
+      }
+      initialFine={0}
+      title="Record Collection"
+      onClose={closeLoanPayment}
+    />
 
     {photoViewer && <div className="customer-photo-viewer" onMouseDown={(event)=>event.target===event.currentTarget&&setPhotoViewer(null)}>
       <button type="button" onClick={()=>setPhotoViewer(null)} title="Close"><X size={21}/></button>

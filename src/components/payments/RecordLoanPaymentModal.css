@@ -1,0 +1,286 @@
+.record-payment-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:460;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:rgba(10,24,40,.46);
+  backdrop-filter:blur(5px);
+}
+.record-payment-modal{
+  width:min(860px,100%);
+  max-height:calc(100vh - 48px);
+  overflow:auto;
+  border:1px solid var(--line);
+  border-radius:22px;
+  background:var(--surface);
+  box-shadow:0 28px 80px rgba(5,24,47,.24);
+}
+.record-payment-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding:22px 26px;
+  border-bottom:1px solid var(--line);
+}
+.record-payment-head h2{
+  margin:0;
+  color:var(--ink-950);
+  font-size:20px;
+  line-height:1.15;
+  letter-spacing:-.02em;
+}
+.record-payment-head p{
+  margin:5px 0 0;
+  color:var(--ink-500);
+  font-size:11px;
+}
+.record-payment-close{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  flex:0 0 46px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  color:var(--ink-600);
+  background:var(--surface);
+  cursor:pointer;
+}
+.record-payment-close:disabled{opacity:.55;cursor:not-allowed}
+.record-payment-body{padding:22px 26px}
+.record-payment-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px 22px;
+  padding:18px 20px;
+  border-radius:16px;
+  background:var(--blue-100);
+}
+.record-payment-summary>div{
+  min-width:0;
+  padding-bottom:12px;
+  border-bottom:1px solid color-mix(in srgb,var(--blue-600) 16%,transparent);
+}
+.record-payment-summary span,
+.record-payment-summary small{
+  display:block;
+  color:var(--ink-500);
+  font-size:10px;
+}
+.record-payment-summary strong{
+  display:block;
+  margin-top:5px;
+  color:var(--ink-950);
+  font-size:19px;
+}
+.record-payment-summary>small{
+  grid-column:1/-1;
+  line-height:1.5;
+}
+.record-payment-schedule-note{
+  margin-top:-4px;
+  color:var(--blue-600)!important;
+}
+.record-payment-error{
+  margin-top:14px;
+  padding:11px 13px;
+  border:1px solid color-mix(in srgb,var(--danger) 35%,var(--line));
+  border-radius:11px;
+  color:var(--danger);
+  background:var(--danger-soft);
+  font-size:11px;
+  font-weight:650;
+}
+.record-payment-fields{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  margin-top:20px;
+}
+.record-payment-fields label{
+  display:grid;
+  align-content:start;
+  gap:7px;
+  min-width:0;
+}
+.record-payment-fields label>span{
+  color:var(--ink-600);
+  font-size:11px;
+  font-weight:700;
+}
+.record-payment-fields input,
+.record-payment-fields select{
+  width:100%;
+  min-height:54px;
+  padding:0 15px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  outline:none;
+  color:var(--ink-950);
+  background:var(--surface);
+  font:inherit;
+  font-size:14px;
+}
+.record-payment-fields input:focus,
+.record-payment-fields select:focus{
+  border-color:#7eb5ff;
+  box-shadow:0 0 0 3px rgba(8,104,236,.08);
+}
+.record-payment-fields label>small{
+  color:var(--ink-500);
+  font-size:9px;
+  line-height:1.45;
+}
+.record-payment-date{grid-column:1/-1}
+.record-payment-reprice{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface-soft);
+}
+.record-payment-reprice span,
+.record-payment-reprice small{
+  display:block;
+  color:var(--ink-500);
+  font-size:9px;
+}
+.record-payment-reprice strong{
+  display:block;
+  margin-top:4px;
+  color:var(--ink-950);
+  font-size:13px;
+}
+.record-payment-reprice>small{grid-column:1/-1;line-height:1.45}
+.record-payment-settlement{
+  margin-top:20px;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:15px;
+  background:var(--surface-soft);
+}
+.record-payment-settlement-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+}
+.record-payment-settlement-head strong{
+  display:block;
+  color:var(--ink-950);
+  font-size:12px;
+}
+.record-payment-settlement-head small{
+  display:block;
+  margin-top:4px;
+  color:var(--ink-500);
+  font-size:9px;
+}
+.record-payment-settlement-head button{
+  min-height:36px;
+  padding:0 12px;
+  border:1px solid color-mix(in srgb,var(--blue-600) 28%,var(--line));
+  border-radius:9px;
+  color:var(--blue-600);
+  background:var(--surface);
+  cursor:pointer;
+  font-size:10px;
+  font-weight:750;
+}
+.record-payment-settlement-head button:disabled{opacity:.55;cursor:not-allowed}
+.record-payment-settlement-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:9px;
+  margin-top:13px;
+}
+.record-payment-settlement-grid>div{
+  padding:11px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+}
+.record-payment-settlement-grid span,
+.record-payment-settlement-grid small{
+  display:block;
+  color:var(--ink-500);
+  font-size:8.5px;
+}
+.record-payment-settlement-grid strong{
+  display:block;
+  margin-top:4px;
+  color:var(--ink-950);
+  font-size:12px;
+}
+.record-payment-footer{
+  display:flex;
+  justify-content:flex-end;
+  padding:18px 26px 22px;
+  border-top:1px solid var(--line);
+}
+.record-payment-save{
+  min-width:220px;
+  min-height:54px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:0 20px;
+  border-radius:13px;
+  color:#fff;
+  background:linear-gradient(135deg,#228bff,#0a6be6);
+  box-shadow:0 10px 24px rgba(15,113,230,.18);
+  cursor:pointer;
+  font-size:12px;
+  font-weight:800;
+}
+.record-payment-save:disabled{
+  cursor:not-allowed;
+  opacity:.62;
+  box-shadow:none;
+}
+html[data-theme='dark'] .record-payment-backdrop{background:rgba(1,8,18,.72)}
+html[data-theme='dark'] .record-payment-modal,
+html[data-theme='dark'] .record-payment-close,
+html[data-theme='dark'] .record-payment-fields input,
+html[data-theme='dark'] .record-payment-fields select,
+html[data-theme='dark'] .record-payment-settlement-head button,
+html[data-theme='dark'] .record-payment-settlement-grid>div{
+  background:var(--surface);
+  border-color:var(--line);
+  color:var(--ink-950);
+}
+html[data-theme='dark'] .record-payment-summary{
+  background:color-mix(in srgb,var(--blue-100) 66%,var(--surface));
+}
+@media(max-width:700px){
+  .record-payment-backdrop{padding:12px;align-items:end}
+  .record-payment-modal{
+    width:100%;
+    max-height:92vh;
+    border-radius:20px 20px 12px 12px;
+  }
+  .record-payment-head{padding:18px}
+  .record-payment-body{padding:18px}
+  .record-payment-summary{grid-template-columns:1fr 1fr;padding:15px}
+  .record-payment-summary strong{font-size:16px}
+  .record-payment-fields{grid-template-columns:1fr;gap:14px}
+  .record-payment-date{grid-column:auto}
+  .record-payment-reprice{grid-column:auto}
+  .record-payment-settlement-head{align-items:flex-start;flex-direction:column}
+  .record-payment-settlement-head button{width:100%}
+  .record-payment-settlement-grid{grid-template-columns:1fr 1fr}
+  .record-payment-footer{padding:14px 18px 18px}
+  .record-payment-save{width:100%;min-width:0}
+}
+@media(max-width:430px){
+  .record-payment-summary{grid-template-columns:1fr}
+  .record-payment-summary>small{grid-column:auto}
+  .record-payment-settlement-grid{grid-template-columns:1fr}
+}

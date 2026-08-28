@@ -1,9 +1,10 @@
-import { ArrowRight, Check, Eye, HandCoins, X } from 'lucide-react';
+import { ArrowRight, Eye, HandCoins } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { formatCurrency, toInputDate } from '../../utils/finance';
 import IconButton from '../common/IconButton';
+import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
 import StatusBadge from '../common/StatusBadge';
 import './CollectionTable.css';
 
@@ -12,13 +13,7 @@ const COLLECTION_TABS = ['Daily', 'Weekly', 'Monthly', 'Collected Today'];
 export default function CollectionTable() {
   const [tab, setTab] = useState('Daily');
   const [paying, setPaying] = useState(null);
-  const [amount, setAmount] = useState('');
-  const [interestAmount, setInterestAmount] = useState('');
-  const [principalAmount, setPrincipalAmount] = useState('0');
-  const [fine, setFine] = useState('0');
-  const [paymentMode, setPaymentMode] = useState('Cash');
-  const [paymentError, setPaymentError] = useState('');
-  const { collections, loans, recordLoanPayment } = useCrednivo();
+  const { collections, loans } = useCrednivo();
   const navigate = useNavigate();
   const today = toInputDate();
 
@@ -47,59 +42,20 @@ export default function CollectionTable() {
   const openPay = (row) => {
     const balance = Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0));
     const loan = loans.find((entry) => entry.id === row.loanId);
-    if (!loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0) {
-      setPaymentError('This loan is closed. No additional payment can be recorded.');
-      return;
-    }
-    setPaying({ ...row, loan });
-    if (loan?.loanType === 'IO') {
-      setAmount('');
-      setInterestAmount(String(balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0));
-      setPrincipalAmount('0');
-    } else {
-      setAmount(String(balance || row.dueAmount || 0));
-      setInterestAmount('');
-      setPrincipalAmount('0');
-    }
-    setFine(String(row.status === 'Overdue' ? row.fine || 0 : 0));
-    setPaymentMode('Cash');
+    if (!loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0) return;
+
+    setPaying({
+      ...row,
+      loan,
+      initialPaymentAmount: loan.loanType === 'IO'
+        ? (balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0)
+        : (balance || Number(row.dueAmount) || 0),
+      initialFine: row.status === 'Overdue' ? Number(row.fine || 0) : 0,
+    });
   };
 
   const closePay = () => {
     setPaying(null);
-    setAmount('');
-    setInterestAmount('');
-    setPrincipalAmount('0');
-    setFine('0');
-    setPaymentMode('Cash');
-    setPaymentError('');
-  };
-
-  const submitPayment = async () => {
-    if (!paying) return;
-    const isIo = paying.loan?.loanType === 'IO';
-    const total = isIo ? Number(interestAmount || 0) + Number(principalAmount || 0) : Number(amount || 0);
-    if (total <= 0) return;
-    setPaymentError('');
-    try {
-      const saved = isIo
-        ? await recordLoanPayment(paying.loanId, {
-            interestAmount,
-            principalAmount,
-            fine,
-            paymentDate: toInputDate(),
-            paymentMode,
-          })
-        : await recordLoanPayment(paying.loanId, {
-            amount,
-            fine,
-            paymentDate: toInputDate(),
-            paymentMode,
-          });
-      if (saved) closePay();
-    } catch (apiError) {
-      setPaymentError(apiError?.message || 'Could not save the payment to the database.');
-    }
   };
 
   return (
@@ -215,58 +171,18 @@ export default function CollectionTable() {
         View All Today's Collections <ArrowRight size={15} />
       </button>
 
-      {paying && (
-        <div className="dashboard-pay-backdrop" onMouseDown={closePay}>
-          <div className="dashboard-pay-modal" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="dashboard-pay-head">
-              <div>
-                <strong>Record Payment</strong>
-                <span>{paying.customerName} · {paying.customerId}</span>
-              </div>
-              <IconButton label="Close payment" size="sm" onClick={closePay}><X size={17} /></IconButton>
-            </div>
-
-            <div className="dashboard-pay-due">
-              <span>{paying.loan?.loanType === 'IO' ? 'Interest due today' : "Today's due"}</span>
-              <strong>{formatCurrency(paying.dueAmount)}</strong>
-              <small>{paying.loan?.loanType === 'IO' ? `Principal outstanding ${formatCurrency(paying.loan?.outstanding)}. Interest does not reduce principal.` : 'Partial payment and overpayment are allowed. Fine stays separate.'}</small>
-            </div>
-
-            <div className="dashboard-pay-fields">
-              {paying.loan?.loanType === 'IO' ? <>
-                <label>
-                  <span>Interest Paid</span>
-                  <input autoFocus type="number" min="0" value={interestAmount} onChange={(event) => setInterestAmount(event.target.value)} />
-                </label>
-                <label>
-                  <span>Principal Paid</span>
-                  <input type="number" min="0" max={Number(paying.loan?.outstanding) || undefined} value={principalAmount} onChange={(event) => setPrincipalAmount(event.target.value)} />
-                </label>
-              </> : <label>
-                <span>Amount Paid</span>
-                <input autoFocus type="number" min="1" value={amount} onChange={(event) => setAmount(event.target.value)} />
-              </label>}
-              <label>
-                <span>Fine Paid</span>
-                <input type="number" min="0" value={fine} onChange={(event) => setFine(event.target.value)} />
-              </label>
-              <label>
-                <span>Payment Mode</span>
-                <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value)}>
-                  <option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option><option>Other</option>
-                </select>
-              </label>
-            </div>
-
-            {paymentError && <div className="form-error">{paymentError}</div>}
-
-            <button className="dashboard-save-payment" onClick={submitPayment} disabled={paying.loan?.loanType === 'IO' ? (Number(interestAmount || 0) + Number(principalAmount || 0) <= 0) : Number(amount) <= 0}>
-              <Check size={17} />
-              <span>Save Payment</span>
-            </button>
-          </div>
-        </div>
-      )}
+      <RecordLoanPaymentModal
+        open={Boolean(paying)}
+        loan={paying?.loan}
+        customerName={paying?.customerName}
+        customerId={paying?.customerId}
+        scheduledAmount={paying?.dueAmount}
+        scheduleDate={paying?.date}
+        initialAmount={paying?.initialPaymentAmount}
+        initialFine={paying?.initialFine}
+        title="Record Collection"
+        onClose={closePay}
+      />
     </section>
   );
 }

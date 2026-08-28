@@ -1,9 +1,10 @@
 import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import RecordLoanPaymentModal from '../../components/payments/RecordLoanPaymentModal';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -40,7 +41,7 @@ function sortByDateThenCustomer(a, b) {
 }
 
 export default function Collection() {
-  const { collections, loans, payments, recordLoanPayment } = useCrednivo();
+  const { collections, loans, payments } = useCrednivo();
   const { hasPermission } = useAuth();
   const [searchParams] = useSearchParams();
   const initialView = (() => {
@@ -61,16 +62,8 @@ export default function Collection() {
   const [collectionView, setCollectionView] = useState(initialView);
   const [scheduleLoanId, setScheduleLoanId] = useState(null);
   const [paying, setPaying] = useState(null);
-  const [amount, setAmount] = useState('');
-  const [interestAmount, setInterestAmount] = useState('');
-  const [principalAmount, setPrincipalAmount] = useState('0');
-  const [fine, setFine] = useState('0');
-  const [paymentDate, setPaymentDate] = useState(() => toInputDate());
-  const [paymentMode, setPaymentMode] = useState('Cash');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [actionError, setActionError] = useState('');
-  const [paymentSaving, setPaymentSaving] = useState(false);
-  const paymentSubmitLockRef = useRef(false);
 
   const today = toInputDate();
 
@@ -228,79 +221,26 @@ export default function Collection() {
       setActionError('This loan is closed. No additional payment can be recorded.');
       return;
     }
+
     const balance = balanceOf(item);
-    setPaying({ ...item, loan });
-    if (loan?.loanType === 'IO') {
-      setAmount('');
-      setInterestAmount(String(balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0));
-      setPrincipalAmount('0');
-    } else {
-      setAmount(String(balance || item.dueAmount));
-      setInterestAmount('');
-      setPrincipalAmount('0');
-    }
     const displayStatus = getDisplayStatus(item, today);
     const defaultFine = displayStatus === 'Overdue'
       && loan?.fineEnabled
       && Number(item.fine || 0) <= 0
         ? Number(loan.fineAmount || 0)
         : 0;
-    setFine(String(defaultFine));
-    setPaymentDate(toInputDate());
-    setPaymentMode('Cash');
-  };
 
-  const submit = async () => {
-    if (!paying || paymentSubmitLockRef.current) return;
+    const initialPaymentAmount = loan.loanType === 'IO'
+      ? (balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0)
+      : (balance || Number(item.dueAmount) || 0);
 
-    const isIo = paying.loan?.loanType === 'IO';
-    const paymentTotal = isIo
-      ? Number(interestAmount || 0) + Number(principalAmount || 0)
-      : Number(amount || 0);
-    const fineTotal = Number(fine || 0);
-
-    // Allow a fine-only collection. Reject only when both normal payment
-    // and fine are zero.
-    if (paymentTotal <= 0 && fineTotal <= 0) {
-      setActionError('Enter an amount paid or a fine amount before saving.');
-      return;
-    }
-
-    // Synchronous lock prevents accidental double-click / double-submit
-    // before React has time to re-render the disabled button.
-    paymentSubmitLockRef.current = true;
-    setPaymentSaving(true);
     setActionError('');
-
-    try {
-      const saved = isIo
-        ? await recordLoanPayment(paying.loanId, {
-            interestAmount,
-            principalAmount,
-            fine,
-            paymentDate,
-            paymentMode,
-          })
-        : await recordLoanPayment(paying.loanId, {
-            amount,
-            fine,
-            paymentDate,
-            paymentMode,
-          });
-
-      if (saved) {
-        setPaying(null);
-        setAmount('');
-        setInterestAmount('');
-        setPrincipalAmount('0');
-        setFine('0');
-      }
-    } catch (apiError) {
-      setActionError(apiError?.message || 'Could not save the collection to the database.');
-    } finally {
-      paymentSubmitLockRef.current = false;
-      setPaymentSaving(false);
-    }
+    setPaying({
+      ...item,
+      loan,
+      initialPaymentAmount,
+      initialFine: defaultFine,
+    });
   };
 
   const loanForItem = (item) => loans.find((loan) => loan.id === item.loanId);
@@ -666,66 +606,18 @@ export default function Collection() {
         </div>
       )}
 
-      {paying && (
-        <div className="collection-modal-backdrop" onMouseDown={() => setPaying(null)}>
-          <div className="collection-modal module-card" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="collection-modal-head">
-              <div><strong>{paying.date > today ? 'Record Early Payment' : 'Record Collection'}</strong><span>{paying.customerName} · {paying.customerId}</span></div>
-              <IconButton label="Close" onClick={() => setPaying(null)}><X size={18} /></IconButton>
-            </div>
-            <div className="collection-due-banner">
-              <span>{paying.loan?.loanType === 'IO' ? 'Interest due' : paying.date > today ? 'Next scheduled amount' : 'Due amount'}</span>
-              <strong>{formatCurrency(paying.dueAmount)}</strong>
-              <small>{paying.loan?.loanType === 'IO' ? `Principal outstanding ${formatCurrency(paying.loan?.outstanding)}. Interest and principal are separate. Full principal settlement requires only already-due/pending interest; future interest is cancelled.` : paying.date > today ? `Scheduled for ${formatDate(paying.date)}. Payment will be recorded using the actual received date.` : 'Overpay is allowed. Fine is tracked separately.'}</small>
-            </div>
-            <div className="form-grid collection-modal-form">
-              {paying.loan?.loanType === 'IO' ? <>
-                <div className="form-field collection-date-field">
-                  <label>Payment Date</label>
-                  <input type="date" min={paying.loan?.startDate || undefined} max={toInputDate()} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
-                  <small className="field-help">Use the actual received date.</small>
-                </div>
-                <div className="form-field">
-                  <label>Interest Paid</label>
-                  <input autoFocus type="number" min="0" value={interestAmount} onChange={(event) => setInterestAmount(event.target.value)} />
-                </div>
-                <div className="form-field">
-                  <label>Principal Paid</label>
-                  <input type="number" min="0" max={Number(paying.loan?.outstanding) || undefined} value={principalAmount} onChange={(event) => setPrincipalAmount(event.target.value)} />
-                  <small className="field-help">Maximum principal: {formatCurrency(paying.loan?.outstanding)}</small>
-                </div>
-              </> : <>
-              <div className="form-field collection-date-field">
-                <label>Payment Date</label>
-                <input type="date" min={paying.loan?.startDate || undefined} max={toInputDate()} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
-                <small className="field-help">Use the actual received date.</small>
-              </div>
-              <div className="form-field">
-                <label>Amount Paid</label>
-                <input autoFocus type="number" min="0" value={amount} onChange={(event) => setAmount(event.target.value)} />
-                <small className="field-help">Set this to 0 or leave it blank when collecting only a fine.</small>
-              </div></>}
-              {hasPermission('collections.fine') && <div className="form-field">
-                <label>Fine Paid</label>
-                <input type="number" min="0" value={fine} onChange={(event) => setFine(event.target.value)} />
-              </div>}
-              <div className="form-field">
-                <label>Payment Mode</label>
-                <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value)}>
-                  <option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option><option>Other</option>
-                </select>
-              </div>
-            </div>
-            <ActionButton
-              icon={Check}
-              onClick={submit}
-              disabled={paymentSaving}
-            >
-              {paymentSaving ? 'Saving…' : 'Save Collection'}
-            </ActionButton>
-          </div>
-        </div>
-      )}
+      <RecordLoanPaymentModal
+        open={Boolean(paying)}
+        loan={paying?.loan}
+        customerName={paying?.customerName}
+        customerId={paying?.customerId}
+        scheduledAmount={paying?.dueAmount}
+        scheduleDate={paying?.date}
+        initialAmount={paying?.initialPaymentAmount}
+        initialFine={paying?.initialFine}
+        title={paying?.date > today ? 'Record Early Payment' : 'Record Collection'}
+        onClose={() => setPaying(null)}
+      />
     </div>
   );
 }
