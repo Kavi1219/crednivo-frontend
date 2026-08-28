@@ -125,6 +125,12 @@ export default function RecordLoanPaymentModal({
       return;
     }
 
+    const loanStartDate = loan.startDate || loan.disbursedDate || loan.loanDate || '';
+    if (loanStartDate && paymentDate < loanStartDate) {
+      setError(`Payment date cannot be before the loan disbursed date (${formatDate(loanStartDate)}).`);
+      return;
+    }
+
     submitLockRef.current = true;
     setSaving(true);
     setError('');
@@ -171,6 +177,12 @@ export default function RecordLoanPaymentModal({
 
   return (
     <div className="record-payment-backdrop" onMouseDown={close}>
+      {error && (
+        <div className="record-payment-error-toast" role="alert" aria-live="assertive">
+          <span className="record-payment-error-icon">!</span>
+          <span>{error}</span>
+        </div>
+      )}
       <section className="record-payment-modal" onMouseDown={(event) => event.stopPropagation()}>
         <header className="record-payment-head">
           <div>
@@ -204,7 +216,6 @@ export default function RecordLoanPaymentModal({
             )}
           </div>
 
-          {error && <div className="record-payment-error">{error}</div>}
 
           <div className="record-payment-fields">
             <label className="record-payment-date">
@@ -217,6 +228,7 @@ export default function RecordLoanPaymentModal({
                 onChange={(event) => {
                   const value = event.target.value;
                   setPaymentDate(value);
+                  setError('');
                   if (isIo) loadIoSettlementPreview(value);
                 }}
               />
@@ -232,7 +244,10 @@ export default function RecordLoanPaymentModal({
                     type="number"
                     min="0"
                     value={interestAmount}
-                    onChange={(event) => setInterestAmount(event.target.value)}
+                    onChange={(event) => {
+                    setInterestAmount(event.target.value);
+                    setError('');
+                  }}
                   />
                 </label>
 
@@ -243,7 +258,10 @@ export default function RecordLoanPaymentModal({
                     min="0"
                     max={Number(loan.outstanding) || undefined}
                     value={principalAmount}
-                    onChange={(event) => setPrincipalAmount(event.target.value)}
+                    onChange={(event) => {
+                    setPrincipalAmount(event.target.value);
+                    setError('');
+                  }}
                   />
                   <small>Maximum principal: {formatCurrency(loan.outstanding)}</small>
                 </label>
@@ -276,7 +294,10 @@ export default function RecordLoanPaymentModal({
                   type="number"
                   min="0"
                   value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
+                  onChange={(event) => {
+                    setAmount(event.target.value);
+                    setError('');
+                  }}
                 />
                 <small>Set this to 0 or leave it blank when collecting only a fine.</small>
               </label>
@@ -289,14 +310,23 @@ export default function RecordLoanPaymentModal({
                   type="number"
                   min="0"
                   value={fine}
-                  onChange={(event) => setFine(event.target.value)}
+                  onChange={(event) => {
+                    setFine(event.target.value);
+                    setError('');
+                  }}
                 />
               </label>
             )}
 
             <label>
               <span>Payment Mode</span>
-              <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value)}>
+              <select
+                value={paymentMode}
+                onChange={(event) => {
+                  setPaymentMode(event.target.value);
+                  setError('');
+                }}
+              >
                 <option>Cash</option>
                 <option>UPI</option>
                 <option>Bank</option>

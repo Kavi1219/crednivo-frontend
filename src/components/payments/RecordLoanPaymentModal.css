@@ -284,3 +284,56 @@ html[data-theme='dark'] .record-payment-summary{
   .record-payment-summary>small{grid-column:auto}
   .record-payment-settlement-grid{grid-template-columns:1fr}
 }
+
+
+.record-payment-error-toast{
+  position:fixed;
+  top:18px;
+  left:50%;
+  z-index:99999;
+  width:min(700px,calc(100vw - 32px));
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:13px 17px;
+  border:1px solid color-mix(in srgb,var(--danger) 42%,var(--line));
+  border-radius:15px;
+  color:var(--danger);
+  background:color-mix(in srgb,var(--danger-soft) 92%,var(--surface));
+  box-shadow:0 16px 40px rgba(18,30,45,.22);
+  transform:translateX(-50%);
+  font-size:12px;
+  font-weight:750;
+  line-height:1.4;
+  pointer-events:none;
+  animation:recordPaymentErrorIn .18s ease-out both;
+}
+.record-payment-error-icon{
+  width:26px;
+  height:26px;
+  display:grid;
+  place-items:center;
+  flex:0 0 26px;
+  border-radius:50%;
+  color:#fff;
+  background:var(--danger);
+  font-size:15px;
+  font-weight:900;
+}
+@keyframes recordPaymentErrorIn{
+  from{opacity:0;transform:translate(-50%,-8px)}
+  to{opacity:1;transform:translate(-50%,0)}
+}
+html[data-theme='dark'] .record-payment-error-toast{
+  background:color-mix(in srgb,var(--danger-soft) 78%,var(--surface));
+}
+@media(max-width:700px){
+  .record-payment-error-toast{
+    top:10px;
+    width:calc(100vw - 20px);
+    min-height:54px;
+    padding:11px 13px;
+    border-radius:13px;
+  }
+}
