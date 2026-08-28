@@ -618,6 +618,33 @@ export function CrednivoProvider({ children }) {
     return true;
   };
 
+
+  const updatePayment = async (paymentId, changes) => {
+    if (!paymentId) return null;
+    const payload = {
+      amount: Math.max(0, Number(changes?.amount) || 0),
+      interestAmount: Math.max(0, Number(changes?.interestAmount) || 0),
+      principalAmount: Math.max(0, Number(changes?.principalAmount) || 0),
+      fine: Math.max(0, Number(changes?.fine) || 0),
+      paymentDate: normalizePaymentDate(changes?.paymentDate || toInputDate()),
+      paymentMode: changes?.paymentMode || 'Cash',
+      note: String(changes?.note || '').trim(),
+    };
+    const saved = await apiRequest(`/payments/${paymentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    await syncCoreData();
+    return saved;
+  };
+
+  const deletePayment = async (paymentId) => {
+    if (!paymentId) return false;
+    await apiRequest(`/payments/${paymentId}`, { method: 'DELETE' });
+    await syncCoreData();
+    return true;
+  };
+
   const saveCapitalEntry = async (entry, existingId = null) => {
     const payload = {
       investorName: String(entry.investorName || '').trim(),
@@ -861,6 +888,8 @@ export function CrednivoProvider({ children }) {
       extendIoLoan,
       recordCollection,
       recordLoanPayment,
+      updatePayment,
+      deletePayment,
       saveCapitalEntry,
       deleteCapitalEntry,
       addExpense,

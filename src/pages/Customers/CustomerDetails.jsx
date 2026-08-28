@@ -1,110 +1,18 @@
-import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, HandCoins, Pencil, Phone, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
-import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
 import './CustomerDetails.css';
 
-async function openDocument(document) {
-  const source = String(document?.data || '').trim();
-  if (!source) return;
-
-  // Open the tab immediately so browsers do not block it after the async fetch.
-  const popup = window.open('', '_blank');
-  if (!popup) return;
-
-  if (/^(data:|blob:)/i.test(source)) {
-    popup.location.href = source;
-    return;
-  }
-
-  try {
-    const token = getAuthToken();
-    const response = await fetch(source, {
-      credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-
-    if (!response.ok) {
-      throw new Error(`Document request failed (${response.status})`);
-    }
-
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    popup.location.href = objectUrl;
-
-    // Keep the object URL alive long enough for images/PDFs to finish loading.
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
-  } catch (error) {
-    console.error('CREDNIVO protected document load failed', error);
-    popup.close();
-    window.alert('Could not open this document. Please try again.');
-  }
-}
-
-
-
-function ProtectedImage({ src, alt = '', fallback = null, className = '' }) {
-  const [resolvedSrc, setResolvedSrc] = useState(() => {
-    const value = String(src || '');
-    return /^(data:|blob:)/i.test(value) ? value : '';
-  });
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    let objectUrl = '';
-    const value = String(src || '').trim();
-
-    setFailed(false);
-
-    if (!value) {
-      setResolvedSrc('');
-      return undefined;
-    }
-
-    if (/^(data:|blob:)/i.test(value)) {
-      setResolvedSrc(value);
-      return undefined;
-    }
-
-    const load = async () => {
-      try {
-        const token = getAuthToken();
-        const response = await fetch(value, {
-          credentials: 'include',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-
-        if (!response.ok) throw new Error(`Media request failed (${response.status})`);
-
-        const blob = await response.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (!cancelled) setResolvedSrc(objectUrl);
-      } catch (error) {
-        console.error('CREDNIVO protected media load failed', error);
-        if (!cancelled) {
-          setResolvedSrc('');
-          setFailed(true);
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [src]);
-
-  if (!src || failed || !resolvedSrc) return fallback;
-  return <img src={resolvedSrc} alt={alt} className={className} />;
+function openDocument(document) {
+  if (!document?.data) return;
+  const popup = window.open();
+  if (popup) popup.location.href = document.data;
 }
 
 function DetailRow({ label, value }) {
@@ -114,7 +22,7 @@ function DetailRow({ label, value }) {
 export default function CustomerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { customers, loans, collections, payments, getIoSettlementPreview, extendIoLoan, recordLoanPayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
+  const { customers, loans, collections, payments, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
   const [photoViewer, setPhotoViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
@@ -154,7 +62,90 @@ export default function CustomerDetails() {
   });
   const [jaminSaving, setJaminSaving] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [deletingTransaction, setDeletingTransaction] = useState(null);
+  const [transactionDraft, setTransactionDraft] = useState({
+    amount: '0',
+    interestAmount: '0',
+    fine: '0',
+    paymentDate: toInputDate(),
+    paymentMode: 'Cash',
+    note: '',
+  });
+  const [transactionBusy, setTransactionBusy] = useState(false);
   const customer = customers.find((item) => item.id === id);
+
+  const canCorrectTransaction = (item) => (
+    isOwner
+    && item?.type === 'Collection'
+    && !(item?.loanType === 'IO' && Number(item?.principalPaid || 0) > 0)
+  );
+
+  const openTransactionEditor = (item) => {
+    if (!canCorrectTransaction(item)) return;
+    setActionError('');
+    setEditingTransaction(item);
+    setTransactionDraft({
+      amount: String(Number(item.collectionAmount || 0)),
+      interestAmount: String(Number(item.interestPaid || 0)),
+      fine: String(Number(item.fineAmount || 0)),
+      paymentDate: item.date || toInputDate(),
+      paymentMode: item.paymentMode || 'Cash',
+      note: item.note || '',
+    });
+  };
+
+  const closeTransactionEditor = () => {
+    if (transactionBusy) return;
+    setEditingTransaction(null);
+  };
+
+  const saveTransactionEdit = async () => {
+    if (!editingTransaction || transactionBusy) return;
+    const isIoTransaction = editingTransaction.loanType === 'IO';
+    const received = isIoTransaction
+      ? Number(transactionDraft.interestAmount || 0)
+      : Number(transactionDraft.amount || 0);
+    const fineReceived = Number(transactionDraft.fine || 0);
+
+    if (received <= 0 && fineReceived <= 0) {
+      setActionError('Enter an amount paid or a fine amount before saving.');
+      return;
+    }
+
+    try {
+      setTransactionBusy(true);
+      setActionError('');
+      await updatePayment(editingTransaction.id, {
+        amount: isIoTransaction ? 0 : received,
+        interestAmount: isIoTransaction ? received : 0,
+        principalAmount: 0,
+        fine: fineReceived,
+        paymentDate: transactionDraft.paymentDate,
+        paymentMode: transactionDraft.paymentMode,
+        note: transactionDraft.note,
+      });
+      setEditingTransaction(null);
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not update the transaction.');
+    } finally {
+      setTransactionBusy(false);
+    }
+  };
+
+  const confirmDeleteTransaction = async () => {
+    if (!deletingTransaction || transactionBusy) return;
+    try {
+      setTransactionBusy(true);
+      setActionError('');
+      await deletePayment(deletingTransaction.id);
+      setDeletingTransaction(null);
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not delete the transaction.');
+    } finally {
+      setTransactionBusy(false);
+    }
+  };
 
   if (!customer) {
     return <div className="empty-state module-card"><div><UserRound size={32}/><strong>Customer not found</strong><p>The requested customer is not available in this frontend data.</p></div></div>;
@@ -575,7 +566,7 @@ export default function CustomerDetails() {
           onClick={()=>customer.photo&&setPhotoViewer({src:customer.photo,label:'Customer Photo'})}
           title={customer.photo?'View customer photo':'Customer profile'}
         >
-          {customer.photo ? <ProtectedImage src={customer.photo} alt={customer.name} fallback={customer.name.charAt(0)} /> : customer.name.charAt(0)}
+          {customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}
         </button>
         <div className="customer-hero-copy">
           <div className="customer-name-line"><h2>{customer.name}</h2><span className="soft-chip green">{customer.status}</span></div>
@@ -648,7 +639,7 @@ export default function CustomerDetails() {
         </dl>
         <div className="detail-media-row">
           <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer')} disabled={!customer.photo&&!canEditMedia}>
-            {customer.photo?<ProtectedImage src={customer.photo} alt="Customer" fallback={<UserRound size={21}/>} />:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
+            {customer.photo?<img src={customer.photo} alt="Customer"/>:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
           </button>
           <button type="button" className={`detail-document-tile ${!customer.customerDocument?.data&&canEditMedia?'can-add':''}`} onClick={()=>customer.customerDocument?.data?openDocument(customer.customerDocument):canEditMedia&&openMediaEditor('customer')} disabled={!customer.customerDocument?.data&&!canEditMedia}>
             <FileText size={21}/><span>{customer.customerDocument?.name || (canEditMedia?'Add Document':'No document')}</span>{customer.customerDocument?.data&&<ExternalLink size={15}/>} 
@@ -675,7 +666,7 @@ export default function CustomerDetails() {
         </dl>
         <div className="detail-media-row">
           <button type="button" className={`detail-photo-tile ${!customer.jaminPhoto&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminPhoto?setPhotoViewer({src:customer.jaminPhoto,label:'Jamin Photo'}):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminPhoto&&(!canEditMedia||!customer.jaminName)}>
-            {customer.jaminPhoto?<ProtectedImage src={customer.jaminPhoto} alt="Jamin" fallback={<ShieldCheck size={21}/>} />:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
+            {customer.jaminPhoto?<img src={customer.jaminPhoto} alt="Jamin"/>:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
           </button>
           <button type="button" className={`detail-document-tile ${!customer.jaminDocument?.data&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminDocument?.data?openDocument(customer.jaminDocument):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminDocument?.data&&(!canEditMedia||!customer.jaminName)}>
             <FileText size={21}/><span>{customer.jaminDocument?.name || (canEditMedia&&customer.jaminName?'Add Document':'No document')}</span>{customer.jaminDocument?.data&&<ExternalLink size={15}/>} 
@@ -755,22 +746,140 @@ export default function CustomerDetails() {
     </section>
 
     <section className="module-card customer-payment-section">
-      <div className="detail-section-head"><h2>Recent Payment History</h2><span>{history.length} transactions</span></div>
+      <div className="detail-section-head">
+        <h2>Recent Payment History</h2>
+        <span>{history.length} transactions</span>
+      </div>
       <div className="module-table-wrap customer-detail-desktop-table">
         <table className="module-table">
-          <thead><tr><th>Date</th><th>Type</th><th>Note</th><th>Amount</th></tr></thead>
-          <tbody>{history.map(item=><tr key={item.id}><td>{formatDate(item.date)}</td><td>{item.type}</td><td>{item.note}</td><td className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</td></tr>)}</tbody>
+          <thead>
+            <tr>
+              <th>Date</th><th>Type</th><th>Note</th><th>Amount</th>
+              {isOwner && <th className="transaction-action-heading">Action</th>}
+            </tr>
+          </thead>
+          <tbody>{history.map((item) => {
+            const canCorrect = canCorrectTransaction(item);
+            return <tr key={item.id}>
+              <td>{formatDate(item.date)}</td>
+              <td>{item.type}</td>
+              <td>{item.note}</td>
+              <td className={item.direction==='in'?'money-in':'money-out'}>
+                {item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}
+              </td>
+              {isOwner && <td className="transaction-actions-cell">
+                {canCorrect ? <div className="transaction-row-actions">
+                  <button type="button" className="transaction-edit-button" onClick={()=>openTransactionEditor(item)} title="Edit transaction">
+                    <Pencil size={14}/><span>Edit</span>
+                  </button>
+                  <button type="button" className="transaction-delete-button" onClick={()=>setDeletingTransaction(item)} title="Delete transaction">
+                    <Trash2 size={14}/><span>Delete</span>
+                  </button>
+                </div> : <span className="transaction-locked-label">—</span>}
+              </td>}
+            </tr>;
+          })}</tbody>
         </table>
       </div>
       <div className="customer-payment-mobile-list">
         {history.length === 0 && <div className="customer-mobile-empty">No payment history yet.</div>}
-        {history.map((item) => <article className="customer-payment-mobile-card" key={item.id}>
-          <div className="customer-payment-mobile-head"><strong>{item.type}</strong><span className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</span></div>
-          <p>{item.note || 'Transaction'}</p>
-          <small>{formatDate(item.date)}</small>
-        </article>)}
+        {history.map((item) => {
+          const canCorrect = canCorrectTransaction(item);
+          return <article className="customer-payment-mobile-card" key={item.id}>
+            <div className="customer-payment-mobile-head">
+              <strong>{item.type}</strong>
+              <span className={item.direction==='in'?'money-in':'money-out'}>
+                {item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}
+              </span>
+            </div>
+            <p>{item.note || 'Transaction'}</p>
+            <small>{formatDate(item.date)}</small>
+            {canCorrect && <div className="transaction-mobile-actions">
+              <button type="button" className="transaction-edit-button" onClick={()=>openTransactionEditor(item)}>
+                <Pencil size={14}/><span>Edit</span>
+              </button>
+              <button type="button" className="transaction-delete-button" onClick={()=>setDeletingTransaction(item)}>
+                <Trash2 size={14}/><span>Delete</span>
+              </button>
+            </div>}
+          </article>;
+        })}
       </div>
     </section>
+
+    {editingTransaction && <div className="transaction-editor-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&closeTransactionEditor()}>
+      <section className="transaction-editor-modal" role="dialog" aria-modal="true" aria-label="Edit transaction">
+        <div className="transaction-editor-head">
+          <div>
+            <strong>Edit Transaction</strong>
+            <span>{editingTransaction.id} · {editingTransaction.loanId}</span>
+          </div>
+          <button type="button" onClick={closeTransactionEditor} disabled={transactionBusy} title="Close"><X size={18}/></button>
+        </div>
+        <div className="transaction-editor-body">
+          <div className="transaction-editor-notice">
+            <AlertTriangle size={17}/>
+            <span>Saving recalculates the linked loan, collection balances, fine and outstanding automatically.</span>
+          </div>
+          <div className="transaction-editor-grid">
+            <label>
+              <span>Payment Date *</span>
+              <input type="date" max={toInputDate()} value={transactionDraft.paymentDate}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,paymentDate:event.target.value}))}/>
+            </label>
+            {editingTransaction.loanType === 'IO' ? <label>
+              <span>Interest Paid</span>
+              <input type="number" min="0" step="0.01" value={transactionDraft.interestAmount}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,interestAmount:event.target.value}))}/>
+            </label> : <label>
+              <span>Amount Paid</span>
+              <input type="number" min="0" step="0.01" value={transactionDraft.amount}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,amount:event.target.value}))}/>
+            </label>}
+            <label>
+              <span>Fine Paid</span>
+              <input type="number" min="0" step="0.01" value={transactionDraft.fine}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,fine:event.target.value}))}/>
+            </label>
+            <label>
+              <span>Payment Mode</span>
+              <select value={transactionDraft.paymentMode}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,paymentMode:event.target.value}))}>
+                <option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option>
+              </select>
+            </label>
+            <label className="transaction-editor-note">
+              <span>Note</span>
+              <input type="text" value={transactionDraft.note}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,note:event.target.value}))}
+                placeholder="Optional transaction note"/>
+            </label>
+          </div>
+        </div>
+        <div className="transaction-editor-actions">
+          <button type="button" className="transaction-cancel-button" onClick={closeTransactionEditor} disabled={transactionBusy}>Cancel</button>
+          <button type="button" className="transaction-save-button" onClick={saveTransactionEdit} disabled={transactionBusy}>
+            <Save size={16}/><span>{transactionBusy?'Saving...':'Save Changes'}</span>
+          </button>
+        </div>
+      </section>
+    </div>}
+
+    {deletingTransaction && <div className="transaction-editor-backdrop">
+      <section className="transaction-delete-modal" role="dialog" aria-modal="true" aria-label="Delete transaction">
+        <span className="transaction-delete-icon"><Trash2 size={22}/></span>
+        <h2>Delete this transaction?</h2>
+        <p>{formatDate(deletingTransaction.date)} · {deletingTransaction.note || deletingTransaction.type}</p>
+        <strong>{formatCurrency(deletingTransaction.amount)}</strong>
+        <small>The linked loan and collection balances will be recalculated automatically. This action cannot be undone.</small>
+        <div>
+          <button type="button" className="transaction-cancel-button" onClick={()=>!transactionBusy&&setDeletingTransaction(null)} disabled={transactionBusy}>Cancel</button>
+          <button type="button" className="transaction-confirm-delete-button" onClick={confirmDeleteTransaction} disabled={transactionBusy}>
+            <Trash2 size={16}/><span>{transactionBusy?'Deleting...':'Delete Transaction'}</span>
+          </button>
+        </div>
+      </section>
+    </div>}
 
     {hasPermission('customers.delete') && <section className="customer-danger-zone module-card">
       <div className="customer-danger-copy">
@@ -1107,7 +1216,7 @@ export default function CustomerDetails() {
 
     {photoViewer && <div className="customer-photo-viewer" onMouseDown={(event)=>event.target===event.currentTarget&&setPhotoViewer(null)}>
       <button type="button" onClick={()=>setPhotoViewer(null)} title="Close"><X size={21}/></button>
-      <div><ProtectedImage src={photoViewer.src} alt={photoViewer.label} fallback={<UserRound size={28}/>} /><span>{photoViewer.label}</span></div>
+      <div><img src={photoViewer.src} alt={photoViewer.label}/><span>{photoViewer.label}</span></div>
     </div>}
   </div>;
 }
