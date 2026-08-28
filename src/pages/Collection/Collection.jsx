@@ -1,5 +1,5 @@
 import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
@@ -69,6 +69,8 @@ export default function Collection() {
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const paymentSubmitLockRef = useRef(false);
 
   const today = toInputDate();
 
@@ -249,21 +251,27 @@ export default function Collection() {
   };
 
   const submit = async () => {
-    if (!paying) return;
+    if (!paying || paymentSubmitLockRef.current) return;
+
     const isIo = paying.loan?.loanType === 'IO';
     const paymentTotal = isIo
       ? Number(interestAmount || 0) + Number(principalAmount || 0)
       : Number(amount || 0);
     const fineTotal = Number(fine || 0);
 
-    // Allow a fine-only collection. We only reject the form when no money
-    // was entered in either the normal payment fields or the fine field.
+    // Allow a fine-only collection. Reject only when both normal payment
+    // and fine are zero.
     if (paymentTotal <= 0 && fineTotal <= 0) {
       setActionError('Enter an amount paid or a fine amount before saving.');
       return;
     }
 
+    // Synchronous lock prevents accidental double-click / double-submit
+    // before React has time to re-render the disabled button.
+    paymentSubmitLockRef.current = true;
+    setPaymentSaving(true);
     setActionError('');
+
     try {
       const saved = isIo
         ? await recordLoanPayment(paying.loanId, {
@@ -279,14 +287,19 @@ export default function Collection() {
             paymentDate,
             paymentMode,
           });
+
       if (saved) {
         setPaying(null);
         setAmount('');
         setInterestAmount('');
         setPrincipalAmount('0');
+        setFine('0');
       }
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not save the collection to the database.');
+    } finally {
+      paymentSubmitLockRef.current = false;
+      setPaymentSaving(false);
     }
   };
 
@@ -703,7 +716,13 @@ export default function Collection() {
                 </select>
               </div>
             </div>
-            <ActionButton icon={Check} onClick={submit}>Save Collection</ActionButton>
+            <ActionButton
+              icon={Check}
+              onClick={submit}
+              disabled={paymentSaving}
+            >
+              {paymentSaving ? 'Saving…' : 'Save Collection'}
+            </ActionButton>
           </div>
         </div>
       )}
