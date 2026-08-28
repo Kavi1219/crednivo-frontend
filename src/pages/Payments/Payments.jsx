@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Payments.css';
@@ -171,7 +172,7 @@ export default function Payments() {
                       <span>{item.type}</span>
                     </div>
                   </td>
-                  <td>{item.customerName}</td>
+                  <td><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></td>
                   <td>{item.loanId || item.customerId}</td>
                   <td>{item.paymentMode || '—'}</td>
                   <td>{item.loanType === 'IO' && item.type === 'Collection' ? `Interest ${formatCurrency(item.interestPaid)} · Principal ${formatCurrency(item.principalPaid)}${Number(item.fineAmount) > 0 ? ` · Fine ${formatCurrency(item.fineAmount)}` : ''}` : item.note}</td>
@@ -186,7 +187,7 @@ export default function Payments() {
           {filtered.map((item) => (
             <article className="mobile-data-card" key={item.id}>
               <div className="mobile-data-top">
-                <div><strong>{item.customerName}</strong><small className="table-sub">{formatDate(item.date)} · {item.type}</small></div>
+                <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small className="table-sub">{formatDate(item.date)} · {item.type}</small></div>
                 <strong className={item.direction === 'in' ? 'money-in' : 'money-out'}>{item.direction === 'in' ? '+' : '−'} {formatCurrency(item.amount)}</strong>
               </div>
               <div className="mobile-data-meta">

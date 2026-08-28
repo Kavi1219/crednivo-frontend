@@ -22,6 +22,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
@@ -720,7 +721,7 @@ export default function Reports() {
                   {overview.overdueRows.slice(0, 5).map((item) => (
                     <div key={item.id}>
                       <span className="recovery-avatar">{String(item.customerName || 'C').charAt(0)}</span>
-                      <div><strong>{item.customerName}</strong><small>{item.customerId} · {item.loanId}</small></div>
+                      <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.loanId}</small></div>
                       <div><span>{formatDate(item.date)}</span><strong>{formatCurrency(Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount)))}</strong></div>
                     </div>
                   ))}
@@ -815,7 +816,7 @@ export default function Reports() {
                       {collectionReportPaymentRows.map((item) => (
                         <tr key={item.paymentId || `${item.loanId}-${item.paymentDate}-${item.totalReceived}`}>
                           <td>{formatDate(item.paymentDate)}</td>
-                          <td><div className="collection-report-customer"><strong>{item.customerName || 'Customer'}</strong><span>{item.customerId}</span></div></td>
+                          <td><div className="collection-report-customer"><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName || 'Customer'}</CustomerProfileLink></strong><span>{item.customerId}</span></div></td>
                           <td>{item.loanId || '—'}</td>
                           <td><span className={`collection-cycle-pill cycle-${String(item.cycle || '').toLowerCase()}`}>{item.cycle || '—'}</span></td>
                           <td className="collection-money-positive">{formatCurrency(item.collectionAmount)}</td>
@@ -833,7 +834,7 @@ export default function Reports() {
                 <div className="mobile-data-list collection-report-mobile">
                   {collectionReportPaymentRows.map((item) => (
                     <article className="mobile-data-card collection-report-mobile-card" key={`payment-mobile-${item.paymentId || `${item.loanId}-${item.paymentDate}`}`}>
-                      <div className="mobile-data-top"><div><strong>{item.customerName || 'Customer'}</strong><small>{item.customerId} · {item.loanId || '—'}</small></div><span className="collection-status-pill status-paid">Received</span></div>
+                      <div className="mobile-data-top"><div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName || 'Customer'}</CustomerProfileLink></strong><small>{item.customerId} · {item.loanId || '—'}</small></div><span className="collection-status-pill status-paid">Received</span></div>
                       <div className="collection-report-mobile-amounts"><div><span>Collection</span><strong className="collection-money-positive">{formatCurrency(item.collectionAmount)}</strong></div><div><span>Fine</span><strong>{formatCurrency(item.fineAmount)}</strong></div><div><span>Total</span><strong>{formatCurrency(item.totalReceived)}</strong></div></div>
                       <div className="collection-report-mobile-meta"><span>{formatDate(item.paymentDate)} · {item.cycle || '—'}</span><span>{item.paymentMode || 'Cash'}</span><span>{item.note || 'Collection payment'}</span></div>
                       {hasPermission('customers.view') && item.customerId && item.customerId !== '—' && <button type="button" className="collection-report-mobile-view" onClick={() => navigate(`/customers/${item.customerId}`)}><Eye size={15} />View Customer</button>}
@@ -861,7 +862,7 @@ export default function Reports() {
                       {collectionReportRows.map((item) => (
                         <tr key={item.id}>
                           <td>{formatDate(item.date)}</td>
-                          <td><div className="collection-report-customer"><strong>{item.customerName || 'Customer'}</strong><span>{item.customerId}</span></div></td>
+                          <td><div className="collection-report-customer"><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName || 'Customer'}</CustomerProfileLink></strong><span>{item.customerId}</span></div></td>
                           <td>{item.loanId}</td>
                           <td><span className={`collection-cycle-pill cycle-${String(item.cycle || '').toLowerCase()}`}>{item.cycle}</span></td>
                           <td>{formatCurrency(item.dueAmount)}</td>
@@ -880,7 +881,7 @@ export default function Reports() {
                 <div className="mobile-data-list collection-report-mobile">
                   {collectionReportRows.map((item) => (
                     <article className="mobile-data-card collection-report-mobile-card" key={`mobile-${item.id}`}>
-                      <div className="mobile-data-top"><div><strong>{item.customerName || 'Customer'}</strong><small>{item.customerId} · {item.loanId}</small></div><span className={`collection-status-pill status-${item.status.toLowerCase().replaceAll(' ', '-')}`}>{item.status}</span></div>
+                      <div className="mobile-data-top"><div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName || 'Customer'}</CustomerProfileLink></strong><small>{item.customerId} · {item.loanId}</small></div><span className={`collection-status-pill status-${item.status.toLowerCase().replaceAll(' ', '-')}`}>{item.status}</span></div>
                       <div className="collection-report-mobile-amounts"><div><span>Expected</span><strong>{formatCurrency(item.dueAmount)}</strong></div><div><span>Collected</span><strong className="collection-money-positive">{formatCurrency(item.paidAmount)}</strong></div><div><span>Balance</span><strong className={item.balance > 0 ? 'collection-money-pending' : ''}>{formatCurrency(item.balance)}</strong></div></div>
                       <div className="collection-report-mobile-meta"><span>{formatDate(item.date)} · {item.cycle}</span><span>Fine {formatCurrency(item.fine)}</span><span>{item.latestPaymentDate ? `Last payment ${formatDate(item.latestPaymentDate)} · ${item.paymentMode || 'Mode not recorded'}` : 'No payment recorded'}</span></div>
                       {hasPermission('customers.view') && <button type="button" className="collection-report-mobile-view" onClick={() => navigate(`/customers/${item.customerId}`)}><Eye size={15} />View Customer</button>}

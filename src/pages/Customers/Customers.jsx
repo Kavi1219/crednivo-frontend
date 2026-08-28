@@ -1,74 +1,14 @@
 import { Eye, Search, UserPlus, UsersRound, WalletCards, CalendarDays, BadgeIndianRupee } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
-import { BACKEND_ORIGIN, getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, normalizeIndianMobile } from '../../utils/finance';
 import './Customers.css';
-
-
-function ProtectedCustomerImage({ src, alt = '', fallback = null }) {
-  const [resolvedSrc, setResolvedSrc] = useState(() => {
-    const value = String(src || '');
-    return /^(data:|blob:)/i.test(value) ? value : '';
-  });
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    let objectUrl = '';
-    const value = String(src || '').trim();
-
-    setFailed(false);
-
-    if (!value) {
-      setResolvedSrc('');
-      return undefined;
-    }
-
-    if (/^(data:|blob:)/i.test(value)) {
-      setResolvedSrc(value);
-      return undefined;
-    }
-
-    const load = async () => {
-      try {
-        const token = getAuthToken();
-        const isCrednivoBackend = value.startsWith(BACKEND_ORIGIN);
-        const response = await fetch(value, {
-          credentials: isCrednivoBackend ? 'include' : 'same-origin',
-          headers: isCrednivoBackend && token ? { Authorization: `Bearer ${token}` } : {},
-        });
-
-        if (!response.ok) throw new Error(`Customer photo request failed (${response.status})`);
-
-        const blob = await response.blob();
-        objectUrl = URL.createObjectURL(blob);
-        if (!cancelled) setResolvedSrc(objectUrl);
-      } catch (error) {
-        console.error('CREDNIVO customer thumbnail load failed', error);
-        if (!cancelled) {
-          setResolvedSrc('');
-          setFailed(true);
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [src]);
-
-  if (!src || failed || !resolvedSrc) return fallback;
-  return <img src={resolvedSrc} alt={alt} />;
-}
 
 function routeCycle(pathname) {
   if (pathname.includes('/daily')) return 'Daily';
@@ -158,7 +98,7 @@ export default function Customers() {
             <thead><tr><th>Customer</th><th>Cycle</th><th>Active Loan</th><th>Collection</th><th>Outstanding</th><th>Next Due</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>{filtered.map((customer) => (
               <tr key={customer.id}>
-                <td><div className="row-title"><span className={`row-avatar ${customer.photo ? 'has-photo' : ''}`}><ProtectedCustomerImage src={customer.photo} alt={customer.name} fallback={customer.name.charAt(0)} /></span><div><strong>{customer.name}</strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div></td>
+                <td><div className="row-title"><span className={`row-avatar ${customer.photo ? 'has-photo' : ''}`}>{customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}</span><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div></td>
                 <td><span className="soft-chip blue">{customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—'}</span></td>
                 <td>{customerSummaries[customer.id]?.activeLoans.length || 0} active</td>
                 <td>{collectionText(customer)}</td>
@@ -174,7 +114,7 @@ export default function Customers() {
         <div className="mobile-data-list">
           {filtered.map((customer) => (
             <article className="mobile-data-card" key={customer.id}>
-              <div className="mobile-data-top"><div className="row-title"><span className={`row-avatar ${customer.photo ? 'has-photo' : ''}`}><ProtectedCustomerImage src={customer.photo} alt={customer.name} fallback={customer.name.charAt(0)} /></span><div><strong>{customer.name}</strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div><IconButton size="sm" label={`View ${customer.name}`} onClick={() => navigate(`/customers/${customer.id}`)}><Eye size={16}/></IconButton></div>
+              <div className="mobile-data-top"><div className="row-title"><span className={`row-avatar ${customer.photo ? 'has-photo' : ''}`}>{customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}</span><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div><IconButton size="sm" label={`View ${customer.name}`} onClick={() => navigate(`/customers/${customer.id}`)}><Eye size={16}/></IconButton></div>
               <div className="mobile-data-meta"><div><span>Cycle</span><strong>{customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—'}</strong></div><div><span>Collection</span><strong>{collectionText(customer)}</strong></div><div><span>Outstanding</span><strong>{formatCurrency(customerSummaries[customer.id]?.totalOutstanding || 0)}</strong></div><div><span>Status</span><strong>{customerSummaries[customer.id]?.status || customer.status}</strong></div></div>
             </article>
           ))}

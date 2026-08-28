@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { formatCurrency, toInputDate } from '../../utils/finance';
 import IconButton from '../common/IconButton';
+import CustomerProfileLink from '../common/CustomerProfileLink';
 import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
 import StatusBadge from '../common/StatusBadge';
 import './CollectionTable.css';
@@ -98,7 +99,7 @@ export default function CollectionTable() {
                 return (
                   <tr key={row.id}>
                     <td>{row.customerId}</td>
-                    <td>{row.customerName}</td>
+                    <td><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></td>
                     <td><span className="cycle-chip">{row.cycle}</span></td>
                     <td>{formatCurrency(isCollectedTab ? row.paidAmount : Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</td>
                     <td><StatusBadge status={row.status} /></td>
@@ -134,7 +135,7 @@ export default function CollectionTable() {
             return (
               <article className="mobile-collection-row" key={row.id}>
                 <div className="mobile-row-top">
-                  <div><strong>{row.customerName}</strong><span>{row.customerId}</span></div>
+                  <div><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId}</span></div>
                   <StatusBadge status={row.status} />
                 </div>
                 <div className="mobile-row-bottom">
