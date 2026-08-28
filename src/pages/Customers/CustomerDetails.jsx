@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -18,6 +18,90 @@ function openDocument(document) {
 
 function DetailRow({ label, value }) {
   return <div><dt>{label}</dt><dd>{value || '—'}</dd></div>;
+}
+
+function normalizeImageCandidates(values) {
+  return [...new Set(
+    values
+      .filter((value) => typeof value === 'string' && value.trim())
+      .map((value) => value.trim())
+  )];
+}
+
+function useProtectedImage(values) {
+  const candidatesKey = JSON.stringify(normalizeImageCandidates(values));
+  const [resolvedUrl, setResolvedUrl] = useState('');
+
+  useEffect(() => {
+    const candidates = JSON.parse(candidatesKey);
+    let active = true;
+    let objectUrl = '';
+
+    function clearObjectUrl() {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        objectUrl = '';
+      }
+    }
+
+    function canBrowserLoad(source) {
+      return new Promise((resolve) => {
+        const probe = new Image();
+        probe.onload = () => resolve(true);
+        probe.onerror = () => resolve(false);
+        probe.src = source;
+      });
+    }
+
+    async function resolveImage() {
+      clearObjectUrl();
+      setResolvedUrl('');
+
+      for (const source of candidates) {
+        if (!active) return;
+
+        if (source.startsWith('data:') || source.startsWith('blob:')) {
+          setResolvedUrl(source);
+          return;
+        }
+
+        // Protected /uploads media should be fetched with the logged-in cookie.
+        try {
+          const response = await fetch(source, {
+            credentials: 'include',
+            cache: 'no-store',
+          });
+
+          if (response.ok) {
+            const blob = await response.blob();
+            if (blob.type.startsWith('image/')) {
+              objectUrl = URL.createObjectURL(blob);
+              if (active) setResolvedUrl(objectUrl);
+              return;
+            }
+          }
+        } catch {
+          // Fall through and try normal browser image loading.
+        }
+
+        if (await canBrowserLoad(source)) {
+          if (active) setResolvedUrl(source);
+          return;
+        }
+      }
+
+      if (active) setResolvedUrl('');
+    }
+
+    resolveImage();
+
+    return () => {
+      active = false;
+      clearObjectUrl();
+    };
+  }, [candidatesKey]);
+
+  return resolvedUrl;
 }
 
 export default function CustomerDetails() {
@@ -67,6 +151,21 @@ export default function CustomerDetails() {
   });
   const [transactionBusy, setTransactionBusy] = useState(false);
   const customer = customers.find((item) => item.id === id);
+
+  const customerPhotoUrl = useProtectedImage([
+    customer?.photo,
+    customer?.customerPhoto,
+    customer?.profilePhoto,
+    customer?.profilePhotoUrl,
+    customer?.photoUrl,
+  ]);
+
+  const jaminPhotoUrl = useProtectedImage([
+    customer?.jaminPhoto,
+    customer?.jaminProfilePhoto,
+    customer?.jaminProfilePhotoUrl,
+    customer?.jaminPhotoUrl,
+  ]);
 
   const canCorrectTransaction = (item) => (
     isOwner
@@ -481,11 +580,15 @@ export default function CustomerDetails() {
       <div className="customer-hero-main">
         <button
           type="button"
-          className={`customer-big-avatar ${customer.photo?'with-photo':''}`}
-          onClick={()=>customer.photo&&setPhotoViewer({src:customer.photo,label:'Customer Photo'})}
-          title={customer.photo?'View customer photo':'Customer profile'}
+          className={`customer-big-avatar ${customerPhotoUrl ? 'with-photo' : ''}`}
+          onClick={() => customerPhotoUrl && setPhotoViewer({ src: customerPhotoUrl, label: 'Customer Photo' })}
+          title={customerPhotoUrl ? 'View customer photo' : 'Customer profile'}
         >
-          {customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}
+          {customerPhotoUrl ? (
+            <img src={customerPhotoUrl} alt="" aria-hidden="true"/>
+          ) : (
+            customer.name?.charAt(0)?.toUpperCase() || 'C'
+          )}
         </button>
         <div className="customer-hero-copy">
           <div className="customer-name-line"><h2>{customer.name}</h2><span className="soft-chip green">{customer.status}</span></div>
@@ -557,8 +660,16 @@ export default function CustomerDetails() {
           <DetailRow label="Address" value={customer.address || customer.area}/>
         </dl>
         <div className="detail-media-row">
-          <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer')} disabled={!customer.photo&&!canEditMedia}>
-            {customer.photo?<img src={customer.photo} alt="Customer"/>:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
+          <button
+            type="button"
+            className={`detail-photo-tile ${!customerPhotoUrl && canEditMedia ? 'can-add' : ''}`}
+            onClick={() => customerPhotoUrl
+              ? setPhotoViewer({ src: customerPhotoUrl, label: 'Customer Photo' })
+              : canEditMedia && openMediaEditor('customer')}
+            disabled={!customerPhotoUrl && !canEditMedia}
+          >
+            {customerPhotoUrl ? <img src={customerPhotoUrl} alt="" aria-hidden="true"/> : <UserRound size={21}/>}
+            <span>{customerPhotoUrl ? 'Profile Photo' : 'Add Profile Photo'}</span>
           </button>
           <button type="button" className={`detail-document-tile ${!customer.customerDocument?.data&&canEditMedia?'can-add':''}`} onClick={()=>customer.customerDocument?.data?openDocument(customer.customerDocument):canEditMedia&&openMediaEditor('customer')} disabled={!customer.customerDocument?.data&&!canEditMedia}>
             <FileText size={21}/><span>{customer.customerDocument?.name || (canEditMedia?'Add Document':'No document')}</span>{customer.customerDocument?.data&&<ExternalLink size={15}/>} 
@@ -584,8 +695,16 @@ export default function CustomerDetails() {
           <DetailRow label="Address" value={customer.jaminAddress}/>
         </dl>
         <div className="detail-media-row">
-          <button type="button" className={`detail-photo-tile ${!customer.jaminPhoto&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminPhoto?setPhotoViewer({src:customer.jaminPhoto,label:'Jamin Photo'}):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminPhoto&&(!canEditMedia||!customer.jaminName)}>
-            {customer.jaminPhoto?<img src={customer.jaminPhoto} alt="Jamin"/>:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
+          <button
+            type="button"
+            className={`detail-photo-tile ${!jaminPhotoUrl && canEditMedia && customer.jaminName ? 'can-add' : ''}`}
+            onClick={() => jaminPhotoUrl
+              ? setPhotoViewer({ src: jaminPhotoUrl, label: 'Jamin Photo' })
+              : (canEditMedia && customer.jaminName) && openMediaEditor('jamin')}
+            disabled={!jaminPhotoUrl && (!canEditMedia || !customer.jaminName)}
+          >
+            {jaminPhotoUrl ? <img src={jaminPhotoUrl} alt="" aria-hidden="true"/> : <ShieldCheck size={21}/>}
+            <span>{jaminPhotoUrl ? 'Jamin Photo' : canEditMedia && customer.jaminName ? 'Add Jamin Photo' : 'Jamin Photo'}</span>
           </button>
           <button type="button" className={`detail-document-tile ${!customer.jaminDocument?.data&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminDocument?.data?openDocument(customer.jaminDocument):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminDocument?.data&&(!canEditMedia||!customer.jaminName)}>
             <FileText size={21}/><span>{customer.jaminDocument?.name || (canEditMedia&&customer.jaminName?'Add Document':'No document')}</span>{customer.jaminDocument?.data&&<ExternalLink size={15}/>} 

@@ -1,6 +1,6 @@
 import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -43,6 +43,7 @@ function sortByDateThenCustomer(a, b) {
 export default function Collection() {
   const { collections, loans, payments } = useCrednivo();
   const { hasPermission } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialView = (() => {
     const view = String(searchParams.get('view') || 'today').toLowerCase();
@@ -260,6 +261,11 @@ export default function Collection() {
     return 'Collect';
   };
 
+  const openCustomerProfile = (customerId) => {
+    if (!customerId) return;
+    navigate(`/customers/${encodeURIComponent(customerId)}`);
+  };
+
   const emptyMessage = {
     Today: 'No collections are due today.',
     Overdue: 'No overdue collections. Great work.',
@@ -445,7 +451,24 @@ export default function Collection() {
                     <td>
                       <div className="row-title">
                         <span className="row-avatar">{item.customerName.charAt(0)}</span>
-                        <div><strong>{item.customerName}</strong><small>{item.customerId}</small></div>
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => openCustomerProfile(item.customerId)}
+                            title={`Open ${item.customerName} profile`}
+                            style={{
+                              all: 'unset',
+                              display: 'block',
+                              cursor: 'pointer',
+                              font: 'inherit',
+                              fontWeight: 700,
+                              color: 'inherit',
+                            }}
+                          >
+                            {item.customerName}
+                          </button>
+                          <small>{item.customerId}</small>
+                        </div>
                       </div>
                     </td>
                     <td>{item.loanId}</td>
@@ -506,7 +529,24 @@ export default function Collection() {
                 <div className="mobile-data-top">
                   <div className="row-title">
                     <span className="row-avatar">{item.customerName.charAt(0)}</span>
-                    <div><strong>{item.customerName}</strong><small>{item.customerId} · {item.cycle}</small></div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => openCustomerProfile(item.customerId)}
+                        title={`Open ${item.customerName} profile`}
+                        style={{
+                          all: 'unset',
+                          display: 'block',
+                          cursor: 'pointer',
+                          font: 'inherit',
+                          fontWeight: 700,
+                          color: 'inherit',
+                        }}
+                      >
+                        {item.customerName}
+                      </button>
+                      <small>{item.customerId} · {item.cycle}</small>
+                    </div>
                   </div>
                   <StatusBadge status={displayStatus} />
                 </div>
