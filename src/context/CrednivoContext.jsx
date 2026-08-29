@@ -313,6 +313,29 @@ function mapBackendCollection(item) {
   };
 }
 
+function deriveLoanScheduleStatus(loan, collections = []) {
+  const rawStatus = String(loan?.status || 'Active');
+  const rawStatusLower = rawStatus.toLowerCase();
+
+  // A fully settled/closed loan must never be shown as overdue.
+  if (rawStatusLower === 'closed' || rawStatusLower === 'preclosed' || Number(loan?.outstanding || 0) <= 0) {
+    return 'Closed';
+  }
+
+  const today = toInputDate();
+  const hasPastUnpaidBalance = collections.some((entry) => {
+    if (String(entry?.loanId || '') !== String(loan?.id || '')) return false;
+    if (!entry?.date || entry.date >= today) return false;
+    if (String(entry?.status || '').toLowerCase() === 'cancelled') return false;
+
+    const due = asNumber(entry?.dueAmount);
+    const paid = asNumber(entry?.paidAmount);
+    return Math.max(0, due - paid) > 0;
+  });
+
+  return hasPastUnpaidBalance ? 'Overdue' : 'Active';
+}
+
 function mapBackendPayment(item) {
   return {
     ...item,
@@ -430,10 +453,20 @@ export function CrednivoProvider({ children }) {
 
       const collectionRows = hasPermission('collections.view') ? await apiRequest('/collections') : [];
       const mappedDocuments = (documentRows || []).map(mapBackendDocument);
+      const mappedCollections = (collectionRows || [])
+        .filter((item) => item.status !== 'Cancelled')
+        .map(mapBackendCollection);
+      const canDeriveLoanScheduleStatus = hasPermission('collections.view');
+      const mappedLoans = (loanRows || []).map(mapBackendLoan).map((loan) => ({
+        ...loan,
+        status: canDeriveLoanScheduleStatus
+          ? deriveLoanScheduleStatus(loan, mappedCollections)
+          : loan.status,
+      }));
       const core = {
         customers: (customerRows || []).map((item) => mapBackendCustomer(item, documentRows || [])),
-        loans: (loanRows || []).map(mapBackendLoan),
-        collections: (collectionRows || []).filter((item) => item.status !== 'Cancelled').map(mapBackendCollection),
+        loans: mappedLoans,
+        collections: mappedCollections,
         payments: (paymentRows || []).map(mapBackendPayment),
         documents: mappedDocuments,
         expenses: (expenseRows || []).map(mapBackendExpense),
