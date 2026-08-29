@@ -13,8 +13,8 @@ import { calculateLoan, formatCurrency, formatDate, formatIndianMobile, formatIn
 import './NewCustomer.css';
 
 const initial = {
-  name: '', mobile: '', fatherName: '', date: toInputDate(), work: '', address: '', photo: '', customerDocument: null,
-  jaminName: '', jaminMobile: '', jaminFatherName: '', jaminWork: '', jaminAddress: '', jaminPhoto: '', jaminDocument: null,
+  name: '', mobile: '', fatherName: '', date: toInputDate(), work: '', address: '', photo: '', customerDocument: null, customerDocuments: [],
+  jaminName: '', jaminMobile: '', jaminFatherName: '', jaminWork: '', jaminAddress: '', jaminPhoto: '', jaminDocument: null, jaminDocuments: [],
   amount: 10000, cycle: 'Daily', loanType: 'EMI', interestRate: 15,
   duration: 100, interestUpfront: false, fineEnabled: false, fineAmount: 0, startDate: toInputDate(),
 };
@@ -29,11 +29,7 @@ function nextPreviewId(prefix, list, pad) {
 
 function cycleSummary(startDate, cycle) {
   const dueDate = getFirstDueDate(startDate, cycle);
-  if (!dueDate) return 'Select a valid disbursed date';
-
   const due = new Date(`${dueDate}T12:00:00`);
-  if (Number.isNaN(due.getTime())) return 'Select a valid disbursed date';
-
   if (cycle === 'Weekly') {
     return `Weekly · Every ${new Intl.DateTimeFormat('en-IN', { weekday: 'long' }).format(due)}`;
   }
@@ -164,9 +160,9 @@ export default function NewCustomer() {
           <MediaUploader
             title="Customer"
             photo={form.photo}
-            document={form.customerDocument}
+            documents={form.customerDocuments}
             onPhotoChange={(value) => change('photo', value)}
-            onDocumentChange={(value) => change('customerDocument', value)}
+            onDocumentsChange={(value) => setForm((current) => ({ ...current, customerDocuments: value, customerDocument: value[0] || null }))}
           />
           <div className="form-grid">
             <div className="form-field"><label>Name *</label><input value={form.name} onChange={(e)=>change('name',e.target.value)} placeholder="Customer full name"/></div>
@@ -186,9 +182,9 @@ export default function NewCustomer() {
           <MediaUploader
             title="Jamin"
             photo={form.jaminPhoto}
-            document={form.jaminDocument}
+            documents={form.jaminDocuments}
             onPhotoChange={(value) => change('jaminPhoto', value)}
-            onDocumentChange={(value) => change('jaminDocument', value)}
+            onDocumentsChange={(value) => setForm((current) => ({ ...current, jaminDocuments: value, jaminDocument: value[0] || null }))}
           />
           <div className="form-grid">
             <div className="form-field"><label>Name *</label><input value={form.jaminName} onChange={(e)=>change('jaminName',e.target.value)} placeholder="Jamin full name"/></div>
@@ -229,7 +225,7 @@ export default function NewCustomer() {
           <div className="review-summary-item accent"><span>Customer ID</span><strong>{customerId}</strong></div>
           <div className="review-summary-item"><span>Father’s Name</span><strong>{form.fatherName}</strong></div>
           <div className="review-summary-item"><span>Date</span><strong>{formatDate(form.date)}</strong></div>
-          <div className="review-summary-item"><span>Document</span><strong>{form.customerDocument?.name || 'Not added'}</strong></div>
+          <div className="review-summary-item"><span>Documents</span><strong>{form.customerDocuments?.length ? `${form.customerDocuments.length} added` : 'Not added'}</strong></div>
           <div className="review-summary-item full"><span>Address</span><strong>{form.address}</strong></div>
         </div>
       </ReviewModal>
@@ -247,7 +243,7 @@ export default function NewCustomer() {
         <div className="review-person"><span className="review-person-photo">{form.jaminPhoto ? <img src={form.jaminPhoto} alt="Jamin"/> : form.jaminName.charAt(0)?.toUpperCase()}</span><div><strong>{form.jaminName}</strong><small>{formatIndianMobile(form.jaminMobile)} · {form.jaminWork}</small></div></div>
         <div className="review-summary-grid">
           <div className="review-summary-item"><span>Father’s Name</span><strong>{form.jaminFatherName}</strong></div>
-          <div className="review-summary-item"><span>Document</span><strong>{form.jaminDocument?.name || 'Not added'}</strong></div>
+          <div className="review-summary-item"><span>Documents</span><strong>{form.jaminDocuments?.length ? `${form.jaminDocuments.length} added` : 'Not added'}</strong></div>
           <div className="review-summary-item full"><span>Address</span><strong>{form.jaminAddress}</strong></div>
         </div>
       </ReviewModal>

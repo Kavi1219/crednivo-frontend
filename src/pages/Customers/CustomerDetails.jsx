@@ -1,136 +1,139 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
 import ModuleHeader from '../../components/common/ModuleHeader';
-import RecordLoanPaymentModal from '../../components/payments/RecordLoanPaymentModal';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
+import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
 import './CustomerDetails.css';
 
-function openDocument(document) {
-  if (!document?.data) return;
-  const popup = window.open();
-  if (popup) popup.location.href = document.data;
+async function openDocument(document) {
+  const source = String(document?.data || '').trim();
+  if (!source) return;
+
+  // Open the tab immediately so browsers do not block it after the async fetch.
+  const popup = window.open('', '_blank');
+  if (!popup) return;
+
+  if (/^(data:|blob:)/i.test(source)) {
+    popup.location.href = source;
+    return;
+  }
+
+  try {
+    const token = getAuthToken();
+    const response = await fetch(source, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+
+    if (!response.ok) {
+      throw new Error(`Document request failed (${response.status})`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    popup.location.href = objectUrl;
+
+    // Keep the object URL alive long enough for images/PDFs to finish loading.
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
+  } catch (error) {
+    console.error('CREDNIVO protected document load failed', error);
+    popup.close();
+    window.alert('Could not open this document. Please try again.');
+  }
+}
+
+
+
+function ProtectedImage({ src, alt = '', fallback = null, className = '' }) {
+  const [resolvedSrc, setResolvedSrc] = useState(() => {
+    const value = String(src || '');
+    return /^(data:|blob:)/i.test(value) ? value : '';
+  });
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = '';
+    const value = String(src || '').trim();
+
+    setFailed(false);
+
+    if (!value) {
+      setResolvedSrc('');
+      return undefined;
+    }
+
+    if (/^(data:|blob:)/i.test(value)) {
+      setResolvedSrc(value);
+      return undefined;
+    }
+
+    const load = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await fetch(value, {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!response.ok) throw new Error(`Media request failed (${response.status})`);
+
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) setResolvedSrc(objectUrl);
+      } catch (error) {
+        console.error('CREDNIVO protected media load failed', error);
+        if (!cancelled) {
+          setResolvedSrc('');
+          setFailed(true);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
+  if (!src || failed || !resolvedSrc) return fallback;
+  return <img src={resolvedSrc} alt={alt} className={className} />;
 }
 
 function DetailRow({ label, value }) {
   return <div><dt>{label}</dt><dd>{value || '—'}</dd></div>;
 }
 
-function normalizeImageCandidates(values) {
-  return [...new Set(
-    values
-      .filter((value) => typeof value === 'string' && value.trim())
-      .map((value) => value.trim())
-  )];
-}
-
-function useProtectedImage(values) {
-  const candidatesKey = JSON.stringify(normalizeImageCandidates(values));
-  const [resolvedUrl, setResolvedUrl] = useState('');
-
-  useEffect(() => {
-    const candidates = JSON.parse(candidatesKey);
-    let active = true;
-    let objectUrl = '';
-
-    function clearObjectUrl() {
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-        objectUrl = '';
-      }
-    }
-
-    function canBrowserLoad(source) {
-      return new Promise((resolve) => {
-        const probe = new Image();
-        probe.onload = () => resolve(true);
-        probe.onerror = () => resolve(false);
-        probe.src = source;
-      });
-    }
-
-    async function resolveImage() {
-      clearObjectUrl();
-      setResolvedUrl('');
-
-      for (const source of candidates) {
-        if (!active) return;
-
-        if (source.startsWith('data:') || source.startsWith('blob:')) {
-          setResolvedUrl(source);
-          return;
-        }
-
-        // Protected /uploads media should be fetched with the logged-in cookie.
-        try {
-          const response = await fetch(source, {
-            credentials: 'include',
-            cache: 'no-store',
-          });
-
-          if (response.ok) {
-            const blob = await response.blob();
-            if (blob.type.startsWith('image/')) {
-              objectUrl = URL.createObjectURL(blob);
-              if (active) setResolvedUrl(objectUrl);
-              return;
-            }
-          }
-        } catch {
-          // Fall through and try normal browser image loading.
-        }
-
-        if (await canBrowserLoad(source)) {
-          if (active) setResolvedUrl(source);
-          return;
-        }
-      }
-
-      if (active) setResolvedUrl('');
-    }
-
-    resolveImage();
-
-    return () => {
-      active = false;
-      clearObjectUrl();
-    };
-  }, [candidatesKey]);
-
-  return resolvedUrl;
-}
-
 export default function CustomerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { customers, loans, collections, payments, updateLoan, extendIoLoan, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
+  const { customers, loans, collections, payments, getIoSettlementPreview, extendIoLoan, recordLoanPayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
   const [photoViewer, setPhotoViewer] = useState(null);
+  const [documentViewer, setDocumentViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
-  const [editingLoan, setEditingLoan] = useState(null);
-  const [loanEditBusy, setLoanEditBusy] = useState(false);
-  const [loanDraft, setLoanDraft] = useState({
-    amount: '',
-    cycle: 'Weekly',
-    loanType: 'EMI',
-    interestRate: '0',
-    duration: '10',
-    interestUpfront: false,
-    fineEnabled: false,
-    fineAmount: '0',
-    startDate: toInputDate(),
-  });
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentInterest, setPaymentInterest] = useState('');
+  const [paymentPrincipal, setPaymentPrincipal] = useState('0');
+  const [paymentFine, setPaymentFine] = useState('0');
+  const [paymentDate, setPaymentDate] = useState(() => toInputDate());
+  const [paymentMode, setPaymentMode] = useState('Cash');
+  const [ioSettlementPreview, setIoSettlementPreview] = useState(null);
+  const [ioSettlementLoading, setIoSettlementLoading] = useState(false);
   const [extensionLoan, setExtensionLoan] = useState(null);
   const [extensionCycles, setExtensionCycles] = useState('1');
   const [extensionReason, setExtensionReason] = useState('');
   const [extensionSaving, setExtensionSaving] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [mediaEditor, setMediaEditor] = useState(null);
-  const [mediaDraft, setMediaDraft] = useState({ photo: '', document: null });
+  const [mediaDraft, setMediaDraft] = useState({ photo: '', documents: [] });
   const [mediaSaving, setMediaSaving] = useState(false);
   const [customerEditorOpen, setCustomerEditorOpen] = useState(false);
   const [customerDraft, setCustomerDraft] = useState({
@@ -152,105 +155,7 @@ export default function CustomerDetails() {
   });
   const [jaminSaving, setJaminSaving] = useState(false);
   const [actionError, setActionError] = useState('');
-  const [editingTransaction, setEditingTransaction] = useState(null);
-  const [deletingTransaction, setDeletingTransaction] = useState(null);
-  const [transactionDraft, setTransactionDraft] = useState({
-    amount: '0',
-    interestAmount: '0',
-    fine: '0',
-    paymentDate: toInputDate(),
-    paymentMode: 'Cash',
-    note: '',
-  });
-  const [transactionBusy, setTransactionBusy] = useState(false);
   const customer = customers.find((item) => item.id === id);
-
-  const customerPhotoUrl = useProtectedImage([
-    customer?.photo,
-    customer?.customerPhoto,
-    customer?.profilePhoto,
-    customer?.profilePhotoUrl,
-    customer?.photoUrl,
-  ]);
-
-  const jaminPhotoUrl = useProtectedImage([
-    customer?.jaminPhoto,
-    customer?.jaminProfilePhoto,
-    customer?.jaminProfilePhotoUrl,
-    customer?.jaminPhotoUrl,
-  ]);
-
-  const canCorrectTransaction = (item) => (
-    isOwner
-    && item?.type === 'Collection'
-    && !(item?.loanType === 'IO' && Number(item?.principalPaid || 0) > 0)
-  );
-
-  const openTransactionEditor = (item) => {
-    if (!canCorrectTransaction(item)) return;
-    setActionError('');
-    setEditingTransaction(item);
-    setTransactionDraft({
-      amount: String(Number(item.collectionAmount || 0)),
-      interestAmount: String(Number(item.interestPaid || 0)),
-      fine: String(Number(item.fineAmount || 0)),
-      paymentDate: item.date || toInputDate(),
-      paymentMode: item.paymentMode || 'Cash',
-      note: item.note || '',
-    });
-  };
-
-  const closeTransactionEditor = () => {
-    if (transactionBusy) return;
-    setEditingTransaction(null);
-  };
-
-  const saveTransactionEdit = async () => {
-    if (!editingTransaction || transactionBusy) return;
-    const isIoTransaction = editingTransaction.loanType === 'IO';
-    const received = isIoTransaction
-      ? Number(transactionDraft.interestAmount || 0)
-      : Number(transactionDraft.amount || 0);
-    const fineReceived = Number(transactionDraft.fine || 0);
-
-    if (received <= 0 && fineReceived <= 0) {
-      setActionError('Enter an amount paid or a fine amount before saving.');
-      return;
-    }
-
-    try {
-      setTransactionBusy(true);
-      setActionError('');
-      await updatePayment(editingTransaction.id, {
-        amount: isIoTransaction ? 0 : received,
-        interestAmount: isIoTransaction ? received : 0,
-        principalAmount: 0,
-        fine: fineReceived,
-        paymentDate: transactionDraft.paymentDate,
-        paymentMode: transactionDraft.paymentMode,
-        note: transactionDraft.note,
-      });
-      setEditingTransaction(null);
-    } catch (apiError) {
-      setActionError(apiError?.message || 'Could not update the transaction.');
-    } finally {
-      setTransactionBusy(false);
-    }
-  };
-
-  const confirmDeleteTransaction = async () => {
-    if (!deletingTransaction || transactionBusy) return;
-    try {
-      setTransactionBusy(true);
-      setActionError('');
-      await deletePayment(deletingTransaction.id);
-      setDeletingTransaction(null);
-    } catch (apiError) {
-      setActionError(apiError?.message || 'Could not delete the transaction.');
-    } finally {
-      setTransactionBusy(false);
-    }
-  };
 
   if (!customer) {
     return <div className="empty-state module-card"><div><UserRound size={32}/><strong>Customer not found</strong><p>The requested customer is not available in this frontend data.</p></div></div>;
@@ -263,84 +168,6 @@ export default function CustomerDetails() {
   const paymentsForLoan = (loanId) => (payments || []).filter(
     (payment) => payment.loanId === loanId && payment.type === 'Collection' && payment.direction === 'in',
   );
-
-
-  const loanCoreTermsLocked = (loan) => (
-    paymentsForLoan(loan?.id).length > 0 || Number(loan?.extensionCycles || 0) > 0
-  );
-
-  const openLoanEditor = (loan) => {
-    if (!isOwner || !loan || loan.status === 'Closed') return;
-    setActionError('');
-    setEditingLoan(loan);
-    setLoanDraft({
-      amount: String(Number(loan.principal || 0)),
-      cycle: loan.cycle || 'Weekly',
-      loanType: loan.loanType || 'EMI',
-      interestRate: String(Number(loan.interestRate || 0)),
-      duration: String(Number(loan.duration || 1)),
-      interestUpfront: Boolean(loan.interestUpfront),
-      fineEnabled: Boolean(loan.fineEnabled),
-      fineAmount: String(Number(loan.fineAmount || 0)),
-      startDate: loan.startDate || toInputDate(),
-    });
-  };
-
-  const closeLoanEditor = () => {
-    if (loanEditBusy) return;
-    setEditingLoan(null);
-  };
-
-  const saveLoanEdit = async () => {
-    if (!editingLoan || loanEditBusy || !isOwner) return;
-
-    const amount = Number(loanDraft.amount || 0);
-    const interestRate = Number(loanDraft.interestRate || 0);
-    const duration = Number(loanDraft.duration || 0);
-    const fineAmount = Number(loanDraft.fineAmount || 0);
-
-    if (amount <= 0) {
-      setActionError('Loan amount must be greater than zero.');
-      return;
-    }
-    if (interestRate < 0) {
-      setActionError('Interest rate cannot be negative.');
-      return;
-    }
-    if (duration < 1) {
-      setActionError('Duration must be at least 1 cycle.');
-      return;
-    }
-    if (!loanDraft.startDate) {
-      setActionError('Select the disbursed date.');
-      return;
-    }
-    if (loanDraft.startDate > toInputDate()) {
-      setActionError('Disbursed date cannot be in the future.');
-      return;
-    }
-    if (loanDraft.fineEnabled && fineAmount <= 0) {
-      setActionError('Enter a fine amount greater than zero or turn Fine off.');
-      return;
-    }
-
-    try {
-      setLoanEditBusy(true);
-      setActionError('');
-      await updateLoan(editingLoan.id, {
-        ...loanDraft,
-        amount,
-        interestRate,
-        duration,
-        fineAmount: loanDraft.fineEnabled ? fineAmount : 0,
-      });
-      setEditingLoan(null);
-    } catch (apiError) {
-      setActionError(apiError?.message || 'Could not update the loan.');
-    } finally {
-      setLoanEditBusy(false);
-    }
-  };
 
   const upfrontInterestForLoan = (loan) => {
     if (!loan?.interestUpfront) return 0;
@@ -467,6 +294,8 @@ export default function CustomerDetails() {
   };
 
   const canEditMedia = hasPermission('customers.edit');
+  const customerDocuments = customer.customerDocuments || (customer.customerDocument ? [customer.customerDocument] : []);
+  const jaminDocuments = customer.jaminDocuments || (customer.jaminDocument ? [customer.jaminDocument] : []);
 
   const openCustomerEditor = () => {
     setCustomerDraft({
@@ -507,6 +336,7 @@ export default function CustomerDetails() {
         area: customerDraft.address,
         photo: customer.photo || '',
         customerDocument: customer.customerDocument || null,
+        customerDocuments: customer.customerDocuments || (customer.customerDocument ? [customer.customerDocument] : []),
       }, customer.id);
       setCustomerEditorOpen(false);
     } catch (apiError) {
@@ -556,6 +386,7 @@ export default function CustomerDetails() {
         jaminMobile: mobileDigits,
         jaminPhoto: customer.jaminPhoto || '',
         jaminDocument: customer.jaminDocument || null,
+        jaminDocuments: customer.jaminDocuments || (customer.jaminDocument ? [customer.jaminDocument] : []),
       });
       setJaminEditorOpen(false);
     } catch (apiError) {
@@ -567,9 +398,12 @@ export default function CustomerDetails() {
 
   const openMediaEditor = (kind) => {
     const isJamin = kind === 'jamin';
+    const existingDocuments = isJamin
+      ? (customer.jaminDocuments || (customer.jaminDocument ? [customer.jaminDocument] : []))
+      : (customer.customerDocuments || (customer.customerDocument ? [customer.customerDocument] : []));
     setMediaDraft({
       photo: isJamin ? (customer.jaminPhoto || '') : (customer.photo || ''),
-      document: isJamin ? (customer.jaminDocument || null) : (customer.customerDocument || null),
+      documents: existingDocuments,
     });
     setMediaEditor(kind);
     setActionError('');
@@ -578,13 +412,13 @@ export default function CustomerDetails() {
   const closeMediaEditor = () => {
     if (mediaSaving) return;
     setMediaEditor(null);
-    setMediaDraft({ photo: '', document: null });
+    setMediaDraft({ photo: '', documents: [] });
   };
 
   const saveMediaChanges = async () => {
     if (!mediaEditor || mediaSaving) return;
     const photoChanged = String(mediaDraft.photo || '').startsWith('data:');
-    const documentChanged = String(mediaDraft.document?.data || '').startsWith('data:');
+    const documentChanged = (mediaDraft.documents || []).some((doc) => String(doc?.data || '').startsWith('data:'));
     if (!photoChanged && !documentChanged) {
       closeMediaEditor();
       return;
@@ -594,7 +428,7 @@ export default function CustomerDetails() {
     try {
       await saveCustomerMedia(customer.id, mediaEditor, mediaDraft);
       setMediaEditor(null);
-      setMediaDraft({ photo: '', document: null });
+      setMediaDraft({ photo: '', documents: [] });
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not save the customer media to the database.');
     } finally {
@@ -602,14 +436,62 @@ export default function CustomerDetails() {
     }
   };
 
-  const openLoanPayment = (loan) => {
+  const loadIoSettlementPreview = async (loan, date) => {
+    if (!loan || loan.loanType !== 'IO') {
+      setIoSettlementPreview(null);
+      return null;
+    }
+    setIoSettlementLoading(true);
+    try {
+      const preview = await getIoSettlementPreview(loan.id, date);
+      setIoSettlementPreview(preview);
+      return preview;
+    } catch (apiError) {
+      setIoSettlementPreview(null);
+      setActionError(apiError?.message || 'Could not calculate the IO settlement amount.');
+      return null;
+    } finally {
+      setIoSettlementLoading(false);
+    }
+  };
+
+  const openLoanPayment = async (loan) => {
     if (!loan || Number(loan.outstanding) <= 0 || loan.status === 'Closed') return;
-    setActionError('');
     setPayingLoan(loan);
+    if (loan.loanType === 'IO') {
+      setPaymentAmount('');
+      setPaymentInterest(String(Number(loan.collectionAmount) || Number(loan.interestAmount) || 0));
+      setPaymentPrincipal('0');
+    } else {
+      setPaymentAmount(String(Math.min(Number(loan.collectionAmount) || 0, Number(loan.outstanding) || 0) || Number(loan.outstanding) || ''));
+      setPaymentInterest('');
+      setPaymentPrincipal('0');
+    }
+    setPaymentFine('0');
+    const today = toInputDate();
+    setPaymentDate(today);
+    setPaymentMode('Cash');
+    if (loan.loanType === 'IO') await loadIoSettlementPreview(loan, today);
+    else setIoSettlementPreview(null);
   };
 
   const closeLoanPayment = () => {
     setPayingLoan(null);
+    setPaymentAmount('');
+    setPaymentInterest('');
+    setPaymentPrincipal('0');
+    setPaymentFine('0');
+    setPaymentDate(toInputDate());
+    setPaymentMode('Cash');
+    setIoSettlementPreview(null);
+  };
+
+  const applyFullIoSettlement = async () => {
+    if (!payingLoan || payingLoan.loanType !== 'IO') return;
+    const preview = ioSettlementPreview || await loadIoSettlementPreview(payingLoan, paymentDate);
+    if (!preview) return;
+    setPaymentInterest(String(Number(preview.pendingInterest || 0)));
+    setPaymentPrincipal(String(Number(preview.principalOutstanding || payingLoan.outstanding || 0)));
   };
 
   const openIoExtension = (loan) => {
@@ -653,6 +535,32 @@ export default function CustomerDetails() {
     }
   };
 
+  const submitLoanPayment = async () => {
+    if (!payingLoan) return;
+    const isIo = payingLoan.loanType === 'IO';
+    const total = isIo ? Number(paymentInterest || 0) + Number(paymentPrincipal || 0) : Number(paymentAmount || 0);
+    if (total <= 0) return;
+    setActionError('');
+    try {
+      const saved = isIo
+        ? await recordLoanPayment(payingLoan.id, {
+            interestAmount: paymentInterest,
+            principalAmount: paymentPrincipal,
+            fine: paymentFine,
+            paymentDate,
+            paymentMode,
+          })
+        : await recordLoanPayment(payingLoan.id, {
+            amount: paymentAmount,
+            fine: paymentFine,
+            paymentDate,
+            paymentMode,
+          });
+      if (saved) closeLoanPayment();
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not save the payment to the database.');
+    }
+  };
 
   return <div className="module-page customer-details-page">
     <ModuleHeader
@@ -671,15 +579,11 @@ export default function CustomerDetails() {
       <div className="customer-hero-main">
         <button
           type="button"
-          className={`customer-big-avatar ${customerPhotoUrl ? 'with-photo' : ''}`}
-          onClick={() => customerPhotoUrl && setPhotoViewer({ src: customerPhotoUrl, label: 'Customer Photo' })}
-          title={customerPhotoUrl ? 'View customer photo' : 'Customer profile'}
+          className={`customer-big-avatar ${customer.photo?'with-photo':''}`}
+          onClick={()=>customer.photo&&setPhotoViewer({src:customer.photo,label:'Customer Photo'})}
+          title={customer.photo?'View customer photo':'Customer profile'}
         >
-          {customerPhotoUrl ? (
-            <img src={customerPhotoUrl} alt="" aria-hidden="true"/>
-          ) : (
-            customer.name?.charAt(0)?.toUpperCase() || 'C'
-          )}
+          {customer.photo ? <ProtectedImage src={customer.photo} alt={customer.name} fallback={customer.name.charAt(0)} /> : customer.name.charAt(0)}
         </button>
         <div className="customer-hero-copy">
           <div className="customer-name-line"><h2>{customer.name}</h2><span className="soft-chip green">{customer.status}</span></div>
@@ -751,19 +655,11 @@ export default function CustomerDetails() {
           <DetailRow label="Address" value={customer.address || customer.area}/>
         </dl>
         <div className="detail-media-row">
-          <button
-            type="button"
-            className={`detail-photo-tile ${!customerPhotoUrl && canEditMedia ? 'can-add' : ''}`}
-            onClick={() => customerPhotoUrl
-              ? setPhotoViewer({ src: customerPhotoUrl, label: 'Customer Photo' })
-              : canEditMedia && openMediaEditor('customer')}
-            disabled={!customerPhotoUrl && !canEditMedia}
-          >
-            {customerPhotoUrl ? <img src={customerPhotoUrl} alt="" aria-hidden="true"/> : <UserRound size={21}/>}
-            <span>{customerPhotoUrl ? 'Profile Photo' : 'Add Profile Photo'}</span>
+          <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer')} disabled={!customer.photo&&!canEditMedia}>
+            {customer.photo?<ProtectedImage src={customer.photo} alt="Customer" fallback={<UserRound size={21}/>} />:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
           </button>
-          <button type="button" className={`detail-document-tile ${!customer.customerDocument?.data&&canEditMedia?'can-add':''}`} onClick={()=>customer.customerDocument?.data?openDocument(customer.customerDocument):canEditMedia&&openMediaEditor('customer')} disabled={!customer.customerDocument?.data&&!canEditMedia}>
-            <FileText size={21}/><span>{customer.customerDocument?.name || (canEditMedia?'Add Document':'No document')}</span>{customer.customerDocument?.data&&<ExternalLink size={15}/>} 
+          <button type="button" className="detail-document-tile detail-view-documents" onClick={()=>customerDocuments.length&&setDocumentViewer({title:'Customer Documents',documents:customerDocuments})} disabled={!customerDocuments.length}>
+            <Files size={21}/><span>{customerDocuments.length ? `View Documents (${customerDocuments.length})` : 'No Documents'}</span>{customerDocuments.length>0&&<ExternalLink size={15}/>} 
           </button>
         </div>
       </article>
@@ -786,19 +682,11 @@ export default function CustomerDetails() {
           <DetailRow label="Address" value={customer.jaminAddress}/>
         </dl>
         <div className="detail-media-row">
-          <button
-            type="button"
-            className={`detail-photo-tile ${!jaminPhotoUrl && canEditMedia && customer.jaminName ? 'can-add' : ''}`}
-            onClick={() => jaminPhotoUrl
-              ? setPhotoViewer({ src: jaminPhotoUrl, label: 'Jamin Photo' })
-              : (canEditMedia && customer.jaminName) && openMediaEditor('jamin')}
-            disabled={!jaminPhotoUrl && (!canEditMedia || !customer.jaminName)}
-          >
-            {jaminPhotoUrl ? <img src={jaminPhotoUrl} alt="" aria-hidden="true"/> : <ShieldCheck size={21}/>}
-            <span>{jaminPhotoUrl ? 'Jamin Photo' : canEditMedia && customer.jaminName ? 'Add Jamin Photo' : 'Jamin Photo'}</span>
+          <button type="button" className={`detail-photo-tile ${!customer.jaminPhoto&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminPhoto?setPhotoViewer({src:customer.jaminPhoto,label:'Jamin Photo'}):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminPhoto&&(!canEditMedia||!customer.jaminName)}>
+            {customer.jaminPhoto?<ProtectedImage src={customer.jaminPhoto} alt="Jamin" fallback={<ShieldCheck size={21}/>} />:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
           </button>
-          <button type="button" className={`detail-document-tile ${!customer.jaminDocument?.data&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminDocument?.data?openDocument(customer.jaminDocument):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminDocument?.data&&(!canEditMedia||!customer.jaminName)}>
-            <FileText size={21}/><span>{customer.jaminDocument?.name || (canEditMedia&&customer.jaminName?'Add Document':'No document')}</span>{customer.jaminDocument?.data&&<ExternalLink size={15}/>} 
+          <button type="button" className="detail-document-tile detail-view-documents" onClick={()=>jaminDocuments.length&&setDocumentViewer({title:'Jamin Documents',documents:jaminDocuments})} disabled={!jaminDocuments.length}>
+            <Files size={21}/><span>{jaminDocuments.length ? `View Documents (${jaminDocuments.length})` : 'No Documents'}</span>{jaminDocuments.length>0&&<ExternalLink size={15}/>} 
           </button>
         </div>
       </article>
@@ -816,15 +704,6 @@ export default function CustomerDetails() {
             <div><span>Loan ID</span><strong>{loan.id}</strong></div>
             <div className="customer-loan-card-actions">
               <span className={`soft-chip ${loan.status==='Closed'?'gray':loan.status==='Overdue'?'red':'green'}`}>{loan.status}</span>
-              {isOwner && loan.status !== 'Closed' && <button
-                type="button"
-                className="customer-loan-edit-button"
-                onClick={() => openLoanEditor(loan)}
-                title={`Edit ${loan.id} · Owner only`}
-              >
-                <Pencil size={15}/>
-                <span>Edit</span>
-              </button>}
               {isOwner && loan.loanType === 'IO' && loan.status !== 'Closed' && Number(loan.outstanding) > 0 && <button
                 type="button"
                 className="customer-loan-extend-button"
@@ -884,140 +763,22 @@ export default function CustomerDetails() {
     </section>
 
     <section className="module-card customer-payment-section">
-      <div className="detail-section-head">
-        <h2>Recent Payment History</h2>
-        <span>{history.length} transactions</span>
-      </div>
+      <div className="detail-section-head"><h2>Recent Payment History</h2><span>{history.length} transactions</span></div>
       <div className="module-table-wrap customer-detail-desktop-table">
         <table className="module-table">
-          <thead>
-            <tr>
-              <th>Date</th><th>Type</th><th>Note</th><th>Amount</th>
-              {isOwner && <th className="transaction-action-heading">Action</th>}
-            </tr>
-          </thead>
-          <tbody>{history.map((item) => {
-            const canCorrect = canCorrectTransaction(item);
-            return <tr key={item.id}>
-              <td>{formatDate(item.date)}</td>
-              <td>{item.type}</td>
-              <td>{item.note}</td>
-              <td className={item.direction==='in'?'money-in':'money-out'}>
-                {item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}
-              </td>
-              {isOwner && <td className="transaction-actions-cell">
-                {canCorrect ? <div className="transaction-row-actions">
-                  <button type="button" className="transaction-edit-button" onClick={()=>openTransactionEditor(item)} title="Edit transaction">
-                    <Pencil size={14}/><span>Edit</span>
-                  </button>
-                  <button type="button" className="transaction-delete-button" onClick={()=>setDeletingTransaction(item)} title="Delete transaction">
-                    <Trash2 size={14}/><span>Delete</span>
-                  </button>
-                </div> : <span className="transaction-locked-label">—</span>}
-              </td>}
-            </tr>;
-          })}</tbody>
+          <thead><tr><th>Date</th><th>Type</th><th>Note</th><th>Amount</th></tr></thead>
+          <tbody>{history.map(item=><tr key={item.id}><td>{formatDate(item.date)}</td><td>{item.type}</td><td>{item.note}</td><td className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</td></tr>)}</tbody>
         </table>
       </div>
       <div className="customer-payment-mobile-list">
         {history.length === 0 && <div className="customer-mobile-empty">No payment history yet.</div>}
-        {history.map((item) => {
-          const canCorrect = canCorrectTransaction(item);
-          return <article className="customer-payment-mobile-card" key={item.id}>
-            <div className="customer-payment-mobile-head">
-              <strong>{item.type}</strong>
-              <span className={item.direction==='in'?'money-in':'money-out'}>
-                {item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}
-              </span>
-            </div>
-            <p>{item.note || 'Transaction'}</p>
-            <small>{formatDate(item.date)}</small>
-            {canCorrect && <div className="transaction-mobile-actions">
-              <button type="button" className="transaction-edit-button" onClick={()=>openTransactionEditor(item)}>
-                <Pencil size={14}/><span>Edit</span>
-              </button>
-              <button type="button" className="transaction-delete-button" onClick={()=>setDeletingTransaction(item)}>
-                <Trash2 size={14}/><span>Delete</span>
-              </button>
-            </div>}
-          </article>;
-        })}
+        {history.map((item) => <article className="customer-payment-mobile-card" key={item.id}>
+          <div className="customer-payment-mobile-head"><strong>{item.type}</strong><span className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</span></div>
+          <p>{item.note || 'Transaction'}</p>
+          <small>{formatDate(item.date)}</small>
+        </article>)}
       </div>
     </section>
-
-    {editingTransaction && <div className="transaction-editor-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&closeTransactionEditor()}>
-      <section className="transaction-editor-modal" role="dialog" aria-modal="true" aria-label="Edit transaction">
-        <div className="transaction-editor-head">
-          <div>
-            <strong>Edit Transaction</strong>
-            <span>{editingTransaction.id} · {editingTransaction.loanId}</span>
-          </div>
-          <button type="button" onClick={closeTransactionEditor} disabled={transactionBusy} title="Close"><X size={18}/></button>
-        </div>
-        <div className="transaction-editor-body">
-          <div className="transaction-editor-notice">
-            <AlertTriangle size={17}/>
-            <span>Saving recalculates the linked loan, collection balances, fine and outstanding automatically.</span>
-          </div>
-          <div className="transaction-editor-grid">
-            <label>
-              <span>Payment Date *</span>
-              <input type="date" max={toInputDate()} value={transactionDraft.paymentDate}
-                onChange={(event)=>setTransactionDraft((current)=>({...current,paymentDate:event.target.value}))}/>
-            </label>
-            {editingTransaction.loanType === 'IO' ? <label>
-              <span>Interest Paid</span>
-              <input type="number" min="0" step="0.01" value={transactionDraft.interestAmount}
-                onChange={(event)=>setTransactionDraft((current)=>({...current,interestAmount:event.target.value}))}/>
-            </label> : <label>
-              <span>Amount Paid</span>
-              <input type="number" min="0" step="0.01" value={transactionDraft.amount}
-                onChange={(event)=>setTransactionDraft((current)=>({...current,amount:event.target.value}))}/>
-            </label>}
-            <label>
-              <span>Fine Paid</span>
-              <input type="number" min="0" step="0.01" value={transactionDraft.fine}
-                onChange={(event)=>setTransactionDraft((current)=>({...current,fine:event.target.value}))}/>
-            </label>
-            <label>
-              <span>Payment Mode</span>
-              <select value={transactionDraft.paymentMode}
-                onChange={(event)=>setTransactionDraft((current)=>({...current,paymentMode:event.target.value}))}>
-                <option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option>
-              </select>
-            </label>
-            <label className="transaction-editor-note">
-              <span>Note</span>
-              <input type="text" value={transactionDraft.note}
-                onChange={(event)=>setTransactionDraft((current)=>({...current,note:event.target.value}))}
-                placeholder="Optional transaction note"/>
-            </label>
-          </div>
-        </div>
-        <div className="transaction-editor-actions">
-          <button type="button" className="transaction-cancel-button" onClick={closeTransactionEditor} disabled={transactionBusy}>Cancel</button>
-          <button type="button" className="transaction-save-button" onClick={saveTransactionEdit} disabled={transactionBusy}>
-            <Save size={16}/><span>{transactionBusy?'Saving...':'Save Changes'}</span>
-          </button>
-        </div>
-      </section>
-    </div>}
-
-    {deletingTransaction && <div className="transaction-editor-backdrop">
-      <section className="transaction-delete-modal" role="dialog" aria-modal="true" aria-label="Delete transaction">
-        <span className="transaction-delete-icon"><Trash2 size={22}/></span>
-        <h2>Delete this transaction?</h2>
-        <p>{formatDate(deletingTransaction.date)} · {deletingTransaction.note || deletingTransaction.type}</p>
-        <strong>{formatCurrency(deletingTransaction.amount)}</strong>
-        <small>The linked loan and collection balances will be recalculated automatically. This action cannot be undone.</small>
-        <div>
-          <button type="button" className="transaction-cancel-button" onClick={()=>!transactionBusy&&setDeletingTransaction(null)} disabled={transactionBusy}>Cancel</button>
-          <button type="button" className="transaction-confirm-delete-button" onClick={confirmDeleteTransaction} disabled={transactionBusy}>
-            <Trash2 size={16}/><span>{transactionBusy?'Deleting...':'Delete Transaction'}</span>
-          </button>
-        </div>
-      </section>
-    </div>}
 
     {hasPermission('customers.delete') && <section className="customer-danger-zone module-card">
       <div className="customer-danger-copy">
@@ -1201,9 +962,9 @@ export default function CustomerDetails() {
           <MediaUploader
             title={mediaEditor==='jamin'?'Jamin':'Customer'}
             photo={mediaDraft.photo}
-            document={mediaDraft.document}
+            documents={mediaDraft.documents}
             onPhotoChange={(value)=>setMediaDraft((current)=>({...current,photo:value}))}
-            onDocumentChange={(value)=>setMediaDraft((current)=>({...current,document:value}))}
+            onDocumentsChange={(value)=>setMediaDraft((current)=>({...current,documents:value}))}
           />
         </div>
         <div className="customer-media-editor-actions">
@@ -1233,85 +994,6 @@ export default function CustomerDetails() {
             }
           }}>
             <Trash2 size={16}/><span>Delete Permanently</span>
-          </button>
-        </div>
-      </div>
-    </div>}
-
-    {editingLoan && <div className="customer-loan-edit-backdrop" onMouseDown={closeLoanEditor}>
-      <div className="customer-loan-edit-modal" onMouseDown={(event)=>event.stopPropagation()}>
-        <div className="customer-loan-pay-head">
-          <div>
-            <strong>Edit Loan</strong>
-            <span>{editingLoan.id} · Owner only</span>
-          </div>
-          <button type="button" className="customer-loan-pay-close" onClick={closeLoanEditor} disabled={loanEditBusy} title="Close"><X size={18}/></button>
-        </div>
-
-        <div className={`customer-loan-edit-rule ${loanCoreTermsLocked(editingLoan) ? 'locked' : ''}`}>
-          <AlertTriangle size={17}/>
-          <div>
-            <strong>{loanCoreTermsLocked(editingLoan) ? 'Financial terms are locked' : 'Loan correction mode'}</strong>
-            <span>
-              {paymentsForLoan(editingLoan.id).length > 0
-                ? 'A collection has already been recorded. Only Fine settings can be changed so payment history stays correct.'
-                : Number(editingLoan.extensionCycles || 0) > 0
-                  ? 'This IO loan has extension history. Only Fine settings can be changed.'
-                  : 'No collection has been recorded yet. Saving will recalculate the loan, rebuild its unpaid schedule, and update the original disbursement transaction.'}
-            </span>
-          </div>
-        </div>
-
-        <div className="customer-loan-edit-fields">
-          <label>
-            <span>Loan Amount *</span>
-            <input type="number" min="0.01" step="0.01" value={loanDraft.amount} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,amount:event.target.value}))}/>
-          </label>
-          <label>
-            <span>Cycle *</span>
-            <select value={loanDraft.cycle} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,cycle:event.target.value}))}>
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
-              <option value="Monthly">Monthly</option>
-            </select>
-          </label>
-          <label>
-            <span>Loan Type *</span>
-            <select value={loanDraft.loanType} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,loanType:event.target.value}))}>
-              <option value="EMI">EMI</option>
-              <option value="IO">IO</option>
-            </select>
-          </label>
-          <label>
-            <span>Interest % *</span>
-            <input type="number" min="0" step="0.01" value={loanDraft.interestRate} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,interestRate:event.target.value}))}/>
-          </label>
-          <label>
-            <span>Duration *</span>
-            <input type="number" min="1" step="1" value={loanDraft.duration} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,duration:event.target.value}))}/>
-          </label>
-          <label>
-            <span>Disbursed Date *</span>
-            <input type="date" max={toInputDate()} value={loanDraft.startDate} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,startDate:event.target.value}))}/>
-          </label>
-          <label className="customer-loan-edit-check">
-            <input type="checkbox" checked={loanDraft.interestUpfront} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,interestUpfront:event.target.checked}))}/>
-            <span>Interest Taken Upfront</span>
-          </label>
-          <label className="customer-loan-edit-check">
-            <input type="checkbox" checked={loanDraft.fineEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,fineEnabled:event.target.checked}))}/>
-            <span>Fine Enabled</span>
-          </label>
-          <label className="customer-loan-edit-fine">
-            <span>Fine Amount</span>
-            <input type="number" min="0" step="0.01" value={loanDraft.fineAmount} disabled={!loanDraft.fineEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,fineAmount:event.target.value}))}/>
-          </label>
-        </div>
-
-        <div className="customer-loan-edit-actions">
-          <button type="button" className="customer-loan-edit-cancel" onClick={closeLoanEditor} disabled={loanEditBusy}>Cancel</button>
-          <button type="button" className="customer-loan-edit-save" onClick={saveLoanEdit} disabled={loanEditBusy}>
-            <Save size={16}/><span>{loanEditBusy ? 'Saving...' : 'Save Loan'}</span>
           </button>
         </div>
       </div>
@@ -1359,28 +1041,97 @@ export default function CustomerDetails() {
       </div>
     </div>}
 
-    <RecordLoanPaymentModal
-      open={Boolean(payingLoan)}
-      loan={payingLoan}
-      customerName={customer.name}
-      customerId={customer.id}
-      scheduledAmount={payingLoan?.collectionAmount}
-      initialAmount={
-        payingLoan
-          ? Math.min(
-              Number(payingLoan.collectionAmount || 0),
-              Number(payingLoan.outstanding || 0),
-            ) || Number(payingLoan.outstanding || 0)
-          : 0
-      }
-      initialFine={0}
-      title="Record Collection"
-      onClose={closeLoanPayment}
-    />
+    {payingLoan && <div className="customer-loan-pay-backdrop" onMouseDown={closeLoanPayment}>
+      <div className="customer-loan-pay-modal" onMouseDown={(event)=>event.stopPropagation()}>
+        <div className="customer-loan-pay-head">
+          <div>
+            <strong>Record Loan Payment</strong>
+            <span>{payingLoan.id} · {payingLoan.cycle} · {customer.name}</span>
+          </div>
+          <button type="button" className="customer-loan-pay-close" onClick={closeLoanPayment} title="Close payment"><X size={18}/></button>
+        </div>
+        <div className="customer-loan-pay-body">
+          <div className="customer-loan-pay-summary">
+            <div><span>{payingLoan.loanType === 'IO' ? 'Interest / Cycle' : 'Collection / Cycle'}</span><strong>{formatCurrency(payingLoan.collectionAmount)}</strong></div>
+            <div><span>{payingLoan.loanType === 'IO' ? 'Principal Outstanding' : 'Outstanding'}</span><strong>{formatCurrency(payingLoan.outstanding)}</strong></div>
+            <small>{payingLoan.loanType === 'IO' ? 'Interest payments do not reduce principal. Enter principal separately when the customer returns part or all of the principal.' : 'Partial payment and overpayment are allowed. Fine is recorded separately.'}</small>
+          </div>
+
+          <div className="customer-loan-pay-fields">
+            <label className="customer-loan-payment-date">
+              <span>Payment Date</span>
+              <input
+                type="date"
+                min={payingLoan.startDate || undefined}
+                max={toInputDate()}
+                value={paymentDate}
+                onChange={(event)=>{
+                  const value = event.target.value;
+                  setPaymentDate(value);
+                  if (payingLoan?.loanType === 'IO') loadIoSettlementPreview(payingLoan, value);
+                }}
+              />
+              <small>Choose an earlier date when entering payments already received from an existing customer.</small>
+            </label>
+            {payingLoan.loanType === 'IO' ? <>
+              <label><span>Interest Paid</span><input autoFocus type="number" min="0" value={paymentInterest} onChange={(event)=>setPaymentInterest(event.target.value)}/></label>
+              <label><span>Principal Payment</span><input type="number" min="0" max={Number(payingLoan.outstanding) || undefined} value={paymentPrincipal} onChange={(event)=>setPaymentPrincipal(event.target.value)}/><small>Enter the amount the customer is returning now. Maximum: {formatCurrency(payingLoan.outstanding)}</small></label>
+              {Number(paymentPrincipal || 0) > 0 && Number(paymentPrincipal || 0) < Number(payingLoan.outstanding || 0) && <div className="io-principal-reprice-preview">
+                <div><span>Remaining Principal</span><strong>{formatCurrency(Math.max(0, Number(payingLoan.outstanding || 0) - Number(paymentPrincipal || 0)))}</strong></div>
+                <div><span>Next Interest / Cycle</span><strong>{formatCurrency(Math.max(0, Number(payingLoan.outstanding || 0) - Number(paymentPrincipal || 0)) * (Number(payingLoan.interestRate || 0) / 100))}</strong></div>
+                <small>Future cycles only will use the new interest. Interest already due/pending keeps its existing amount.</small>
+              </div>}
+            </> : <label><span>Amount Paid</span><input autoFocus type="number" min="1" value={paymentAmount} onChange={(event)=>setPaymentAmount(event.target.value)}/></label>}
+            {hasPermission('collections.fine') ? <label><span>Fine Paid</span><input type="number" min="0" value={paymentFine} onChange={(event)=>setPaymentFine(event.target.value)}/></label> : null}
+            <label><span>Payment Mode</span><select value={paymentMode} onChange={(event)=>setPaymentMode(event.target.value)}><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option><option>Other</option></select></label>
+          </div>
+
+          {payingLoan.loanType === 'IO' && <div className="io-settlement-panel">
+            <div className="io-settlement-head">
+              <div>
+                <strong>Full Principal Settlement</strong>
+                <small>Principal + only interest already due/pending. Future interest is cancelled.</small>
+              </div>
+              <button type="button" onClick={applyFullIoSettlement} disabled={ioSettlementLoading}>
+                {ioSettlementLoading ? 'Calculating...' : 'Use Settlement Amount'}
+              </button>
+            </div>
+            {ioSettlementPreview && <div className="io-settlement-grid">
+              <div><span>Principal</span><strong>{formatCurrency(ioSettlementPreview.principalOutstanding)}</strong></div>
+              <div><span>Pending Interest</span><strong>{formatCurrency(ioSettlementPreview.pendingInterest)}</strong><small>{ioSettlementPreview.pendingInterestCycles || 0} cycle(s)</small></div>
+              <div><span>Amount to Close</span><strong>{formatCurrency(ioSettlementPreview.settlementAmount)}</strong></div>
+              <div><span>Future Interest Cancelled</span><strong>{formatCurrency(ioSettlementPreview.futureInterestCancelled)}</strong><small>{ioSettlementPreview.futureInterestCyclesCancelled || 0} cycle(s)</small></div>
+            </div>}
+          </div>}
+        </div>
+
+        <div className="customer-loan-pay-footer">
+          <button type="button" className="customer-loan-save-payment" onClick={submitLoanPayment} disabled={payingLoan.loanType === 'IO' ? (Number(paymentInterest || 0) + Number(paymentPrincipal || 0) <= 0) : Number(paymentAmount)<=0}>
+            <Check size={17}/><span>Save Payment</span>
+          </button>
+        </div>
+      </div>
+    </div>}
+
+    {documentViewer && <div className="customer-document-viewer-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&setDocumentViewer(null)}>
+      <div className="customer-document-viewer-modal">
+        <div className="customer-document-viewer-head">
+          <div><strong>{documentViewer.title}</strong><span>{documentViewer.documents.length} document(s)</span></div>
+          <button type="button" onClick={()=>setDocumentViewer(null)} title="Close"><X size={19}/></button>
+        </div>
+        <div className="customer-document-viewer-grid">
+          {documentViewer.documents.map((doc,index)=><button type="button" className="customer-document-viewer-item" key={`${doc.backendId||doc.name||'doc'}-${index}`} onClick={()=>openDocument(doc)}>
+            <span className="customer-document-viewer-icon"><FileText size={24}/></span>
+            <span className="customer-document-viewer-copy"><strong>Document {index+1}</strong><small>{doc.name||'Supporting document'}</small></span>
+            <ExternalLink size={16}/>
+          </button>)}
+        </div>
+      </div>
+    </div>}
 
     {photoViewer && <div className="customer-photo-viewer" onMouseDown={(event)=>event.target===event.currentTarget&&setPhotoViewer(null)}>
       <button type="button" onClick={()=>setPhotoViewer(null)} title="Close"><X size={21}/></button>
-      <div><img src={photoViewer.src} alt={photoViewer.label}/><span>{photoViewer.label}</span></div>
+      <div><ProtectedImage src={photoViewer.src} alt={photoViewer.label} fallback={<UserRound size={28}/>} /><span>{photoViewer.label}</span></div>
     </div>}
   </div>;
 }

@@ -1,9 +1,11 @@
-import { useRef, useState } from 'react';
-import { AlertTriangle, Camera, ExternalLink, FileImage, FileText, FolderOpen, Maximize2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, Camera, FileText, FolderOpen, Maximize2, Plus, X } from 'lucide-react';
+import { getAuthToken } from '../../services/api';
 import './MediaUploader.css';
 
 const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024;
+const MAX_DOCUMENTS = 4;
 
 function readFile(file, done, onError, maxBytes, label) {
   if (!file) return;
@@ -17,19 +19,87 @@ function readFile(file, done, onError, maxBytes, label) {
   reader.readAsDataURL(file);
 }
 
+function isMobileLike() {
+  if (typeof navigator === 'undefined' || typeof window === 'undefined') return false;
+  const uaMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
+  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches;
+  return uaMobile || (coarse && window.innerWidth <= 900);
+}
+
+async function openProtectedFile(document) {
+  const source = String(document?.data || '').trim();
+  if (!source) return;
+
+  const popup = window.open('', '_blank');
+  if (!popup) return;
+
+  if (/^(data:|blob:)/i.test(source)) {
+    popup.location.href = source;
+    return;
+  }
+
+  try {
+    const token = getAuthToken();
+    const response = await fetch(source, {
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error(`Document request failed (${response.status})`);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    popup.location.href = objectUrl;
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
+  } catch (error) {
+    console.error('CREDNIVO protected document load failed', error);
+    popup.close();
+    window.alert('Could not open this document. Please try again.');
+  }
+}
+
+function imageLike(document) {
+  return String(document?.type || '').startsWith('image/') || /^data:image\//i.test(String(document?.data || ''));
+}
+
 export default function MediaUploader({
   title,
   photo,
   document,
+  documents,
   onPhotoChange,
   onDocumentChange,
+  onDocumentsChange,
+  maxDocuments = MAX_DOCUMENTS,
 }) {
   const photoCameraRef = useRef(null);
   const documentCameraRef = useRef(null);
   const photoFileRef = useRef(null);
-  const documentRef = useRef(null);
+  const documentFileRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
   const [viewerOpen, setViewerOpen] = useState(false);
   const [mediaError, setMediaError] = useState('');
+  const [cameraMode, setCameraMode] = useState(null);
+
+  const documentList = useMemo(() => {
+    if (Array.isArray(documents)) return documents.filter(Boolean).slice(0, maxDocuments);
+    return document ? [document] : [];
+  }, [documents, document, maxDocuments]);
+
+  const emitDocuments = (next) => {
+    const limited = next.filter(Boolean).slice(0, maxDocuments);
+    if (onDocumentsChange) onDocumentsChange(limited);
+    if (onDocumentChange) onDocumentChange(limited[0] || null);
+  };
+
+  const addDocument = (file) => {
+    if (!file) return;
+    if (documentList.length >= maxDocuments) {
+      setMediaError(`You can add up to ${maxDocuments} documents.`);
+      return;
+    }
+    emitDocuments([...documentList, file]);
+  };
 
   const pickPhoto = (event) => {
     setMediaError('');
@@ -43,11 +113,30 @@ export default function MediaUploader({
     event.target.value = '';
   };
 
-  const pickDocument = (event) => {
+  const pickDocuments = (event) => {
+    setMediaError('');
+    const selected = Array.from(event.target.files || []);
+    const remaining = Math.max(0, maxDocuments - documentList.length);
+    selected.slice(0, remaining).forEach((file) => {
+      readFile(
+        file,
+        addDocument,
+        setMediaError,
+        MAX_DOCUMENT_BYTES,
+        `${title} document`,
+      );
+    });
+    if (selected.length > remaining) {
+      setMediaError(`Only ${maxDocuments} documents can be added.`);
+    }
+    event.target.value = '';
+  };
+
+  const pickDocumentCamera = (event) => {
     setMediaError('');
     readFile(
       event.target.files?.[0],
-      (file) => onDocumentChange?.(file),
+      addDocument,
       setMediaError,
       MAX_DOCUMENT_BYTES,
       `${title} document`,
@@ -55,52 +144,156 @@ export default function MediaUploader({
     event.target.value = '';
   };
 
-  const openDocument = () => {
-    if (!document?.data) return;
-    const popup = window.open();
-    if (popup) popup.location.href = document.data;
+  const stopCamera = () => {
+    streamRef.current?.getTracks?.().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraMode(null);
+  };
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks?.().forEach((track) => track.stop());
+  }, []);
+
+  useEffect(() => {
+    if (cameraMode && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play?.().catch(() => {});
+    }
+  }, [cameraMode]);
+
+  const startDesktopCamera = async (mode) => {
+    setMediaError('');
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMediaError('This browser cannot access the PC camera. Try Chrome or Edge and allow camera permission.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraMode(mode);
+    } catch (error) {
+      console.error('CREDNIVO camera access failed', error);
+      setMediaError('Camera could not be opened. Check Windows/browser camera permission and try again.');
+    }
+  };
+
+  const requestCamera = (mode) => {
+    if (isMobileLike()) {
+      if (mode === 'photo') photoCameraRef.current?.click();
+      else documentCameraRef.current?.click();
+      return;
+    }
+    startDesktopCamera(mode);
+  };
+
+  const captureCamera = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setMediaError('Camera is still starting. Try Capture again in a moment.');
+      return;
+    }
+
+    const canvas = window.document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const data = canvas.toDataURL('image/jpeg', 0.9);
+
+    if (cameraMode === 'photo') {
+      onPhotoChange?.(data);
+    } else if (cameraMode === 'document') {
+      addDocument({
+        name: `${String(title || 'document').toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.jpg`,
+        type: 'image/jpeg',
+        size: Math.round((data.length * 3) / 4),
+        data,
+      });
+    }
+    stopCamera();
+  };
+
+  const removeDocument = (index) => {
+    const target = documentList[index];
+    // Existing server documents are intentionally view-only here. Deletion should
+    // happen through the Documents module so live records are not removed accidentally.
+    if (target?.backendId && !String(target?.data || '').startsWith('data:')) return;
+    emitDocuments(documentList.filter((_, itemIndex) => itemIndex !== index));
   };
 
   return (
-    <div className="media-uploader">
+    <div className="media-uploader media-uploader-simple">
       {mediaError && <div className="media-upload-error"><AlertTriangle size={15}/><span>{mediaError}</span></div>}
 
-      <div className="profile-media-card">
-        <button type="button" className={`profile-photo ${photo ? 'has-photo' : ''}`} onClick={() => photo && setViewerOpen(true)} title={photo ? `View ${title} photo` : `${title} photo`}>
-          {photo ? <img src={photo} alt={`${title} profile`} /> : <Camera size={25} />}
-          {photo && <span className="photo-expand"><Maximize2 size={13}/></span>}
-        </button>
-        <div className="profile-media-copy">
-          <strong>{title} Photo</strong>
-          <p>The selected photo becomes the profile photo. Camera and gallery images up to 12 MB are supported.</p>
-          <div className="media-actions">
-            <button type="button" onClick={() => photoCameraRef.current?.click()}><Camera size={15}/> Camera</button>
+      <div className="simple-media-photo-block">
+        <div className="simple-media-heading">
+          <div><strong>{title} Photo</strong><span>Profile photo</span></div>
+          <div className="media-actions simple-photo-actions">
+            <button type="button" onClick={() => requestCamera('photo')}><Camera size={15}/> Camera</button>
             <button type="button" onClick={() => photoFileRef.current?.click()}><FolderOpen size={15}/> Files</button>
           </div>
         </div>
+        <button type="button" className={`simple-profile-photo ${photo ? 'has-photo' : ''}`} onClick={() => photo && setViewerOpen(true)} title={photo ? `View ${title} photo` : `${title} photo`}>
+          {photo ? <img src={photo} alt={`${title} profile`} /> : <Camera size={27}/>} 
+          {photo && <span className="photo-expand"><Maximize2 size={12}/></span>}
+        </button>
       </div>
 
-      <div className="document-media-card">
-        <span className="document-icon">{document?.type?.includes('pdf') ? <FileText size={21}/> : <FileImage size={21}/>}</span>
-        <div>
-          <strong>Document Photo / PDF</strong>
-          <p>{document?.name || 'Add ID proof or another supporting document from camera or files. Images/PDFs up to 20 MB.'}</p>
+      <div className="simple-documents-block">
+        <div className="simple-media-heading">
+          <div><strong>Documents</strong><span>Up to {maxDocuments} images or PDFs</span></div>
+          {documentList.length < maxDocuments && <div className="media-actions simple-document-actions">
+            <button type="button" onClick={() => requestCamera('document')}><Camera size={15}/> Camera</button>
+            <button type="button" onClick={() => documentFileRef.current?.click()}><FolderOpen size={15}/> Files</button>
+          </div>}
         </div>
-        <div className="media-actions document-actions">
-          <button type="button" onClick={() => documentCameraRef.current?.click()}><Camera size={15}/><span>Camera</span></button>
-          <button type="button" onClick={() => documentRef.current?.click()}><FolderOpen size={15}/><span>Files</span></button>
-          {document?.data && <button type="button" className="media-open" onClick={openDocument}><ExternalLink size={15}/><span>Open</span></button>}
+
+        <div className="simple-document-grid">
+          {documentList.map((item, index) => {
+            const localImage = imageLike(item) && /^(data:|blob:)/i.test(String(item?.data || ''));
+            const removable = !item?.backendId || String(item?.data || '').startsWith('data:');
+            return <div className="simple-document-tile-wrap" key={`${item?.backendId || item?.name || 'document'}-${index}`}>
+              <button type="button" className="simple-document-tile" onClick={() => openProtectedFile(item)} title={`View document ${index + 1}`}>
+                {localImage ? <img src={item.data} alt={`Document ${index + 1}`} /> : <FileText size={26}/>} 
+                <span>{index + 1}</span>
+              </button>
+              {removable && <button type="button" className="simple-document-remove" onClick={() => removeDocument(index)} title="Remove document"><X size={13}/></button>}
+            </div>;
+          })}
+
+          {documentList.length < maxDocuments && <button type="button" className="simple-document-tile simple-document-add" onClick={() => documentFileRef.current?.click()} title="Add document">
+            <Plus size={30}/><span>Add</span>
+          </button>}
         </div>
       </div>
 
       <input ref={photoCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickPhoto} />
-      <input ref={documentCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickDocument} />
+      <input ref={documentCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickDocumentCamera} />
       <input ref={photoFileRef} className="hidden-media-input" type="file" accept="image/*" onChange={pickPhoto} />
-      <input ref={documentRef} className="hidden-media-input" type="file" accept="image/*,.pdf,application/pdf" onChange={pickDocument} />
+      <input ref={documentFileRef} className="hidden-media-input" type="file" accept="image/*,.pdf,application/pdf" onChange={pickDocuments} />
 
       {viewerOpen && photo && <div className="media-viewer" onMouseDown={(event) => event.target === event.currentTarget && setViewerOpen(false)}>
         <button type="button" className="media-viewer-close" onClick={() => setViewerOpen(false)} title="Close"><X size={20}/></button>
         <img src={photo} alt={`${title} full size`} />
+      </div>}
+
+      {cameraMode && <div className="webcam-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && stopCamera()}>
+        <div className="webcam-modal">
+          <div className="webcam-modal-head">
+            <div><strong>{cameraMode === 'photo' ? `${title} Photo` : `${title} Document`}</strong><span>Live PC camera</span></div>
+            <button type="button" onClick={stopCamera} title="Close"><X size={19}/></button>
+          </div>
+          <div className="webcam-preview"><video ref={videoRef} autoPlay playsInline muted /></div>
+          <div className="webcam-actions">
+            <button type="button" className="webcam-cancel" onClick={stopCamera}>Cancel</button>
+            <button type="button" className="webcam-capture" onClick={captureCamera}><Camera size={17}/> Capture</button>
+          </div>
+        </div>
       </div>}
     </div>
   );

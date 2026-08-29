@@ -198,6 +198,17 @@ function asNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function dataUrlToBrowserFile(dataUrl, fileName = 'document') {
+  if (!String(dataUrl || '').startsWith('data:')) return null;
+  const [header, encoded] = String(dataUrl).split(',', 2);
+  if (!encoded) return null;
+  const mime = header.match(/^data:([^;]+)/)?.[1] || 'application/octet-stream';
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new File([bytes], fileName, { type: mime });
+}
+
 function mapBackendDocument(item) {
   return {
     ...item,
@@ -206,29 +217,53 @@ function mapBackendDocument(item) {
   };
 }
 
+function dedupeMediaDocuments(list = []) {
+  const seen = new Set();
+  return list.filter(Boolean).filter((doc) => {
+    const key = String(doc.data || doc.backendId || `${doc.name || ''}:${doc.type || ''}`);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function mappedCustomerDocuments(item, documents = [], owner = 'customer') {
+  const expectedType = owner === 'jamin' ? 'Jamin KYC' : 'Customer KYC';
+  const embeddedDocuments = owner === 'jamin' ? item.jaminDocuments : item.customerDocuments;
+
+  const rows = [
+    ...(Array.isArray(embeddedDocuments) ? embeddedDocuments : []).map((doc) => ({
+      name: doc.documentName || doc.fileName || doc.name || `${owner} document`,
+      type: doc.mimeType || doc.contentType || doc.file?.type || '',
+      data: mediaUrl(doc.fileUrl || doc.data),
+      backendId: doc.id || doc.backendId || null,
+    })),
+    ...documents
+      .filter((doc) => doc.customerId === item.id && doc.type === expectedType)
+      .map((doc) => ({
+        name: doc.fileName || doc.name || `${owner} document`,
+        type: doc.contentType || doc.file?.type || '',
+        data: mediaUrl(doc.fileUrl || doc.data),
+        backendId: doc.id || doc.backendId || null,
+      })),
+  ];
+
+  const directUrl = owner === 'jamin' ? item.jaminDocumentUrl : item.customerDocumentUrl;
+  if (directUrl) {
+    rows.unshift({
+      name: (owner === 'jamin' ? item.jaminDocumentName : item.customerDocumentName) || `${owner === 'jamin' ? 'Jamin' : 'Customer'} document`,
+      type: (owner === 'jamin' ? item.jaminDocumentContentType : item.customerDocumentContentType) || '',
+      data: mediaUrl(directUrl),
+      backendId: (owner === 'jamin' ? item.jaminDocumentId : item.customerDocumentId) || null,
+    });
+  }
+
+  return dedupeMediaDocuments(rows);
+}
+
 function mapBackendCustomer(item, documents = []) {
-  const customerDoc = documents.find((doc) => doc.customerId === item.id && doc.type === 'Customer KYC');
-  const jaminDoc = documents.find((doc) => doc.customerId === item.id && doc.type === 'Jamin KYC');
-  const customerDocument = item.customerDocumentUrl
-    ? {
-        name: item.customerDocumentName || 'Customer document',
-        type: item.customerDocumentContentType || '',
-        data: mediaUrl(item.customerDocumentUrl),
-        backendId: item.customerDocumentId || null,
-      }
-    : customerDoc
-      ? { name: customerDoc.fileName || customerDoc.name, type: customerDoc.contentType || '', data: mediaUrl(customerDoc.fileUrl), backendId: customerDoc.id }
-      : null;
-  const jaminDocument = item.jaminDocumentUrl
-    ? {
-        name: item.jaminDocumentName || 'Jamin document',
-        type: item.jaminDocumentContentType || '',
-        data: mediaUrl(item.jaminDocumentUrl),
-        backendId: item.jaminDocumentId || null,
-      }
-    : jaminDoc
-      ? { name: jaminDoc.fileName || jaminDoc.name, type: jaminDoc.contentType || '', data: mediaUrl(jaminDoc.fileUrl), backendId: jaminDoc.id }
-      : null;
+  const customerDocuments = mappedCustomerDocuments(item, documents, 'customer');
+  const jaminDocuments = mappedCustomerDocuments(item, documents, 'jamin');
   return {
     ...item,
     mobile: normalizeIndianMobile(item.mobile),
@@ -238,8 +273,10 @@ function mapBackendCustomer(item, documents = []) {
     outstanding: asNumber(item.outstanding),
     collectionAmount: asNumber(item.collectionAmount),
     rating: item.rating ?? 5,
-    customerDocument,
-    jaminDocument,
+    customerDocuments,
+    jaminDocuments,
+    customerDocument: customerDocuments[0] || null,
+    jaminDocument: jaminDocuments[0] || null,
   };
 }
 
@@ -460,6 +497,19 @@ export function CrednivoProvider({ children }) {
   };
 
 
+  const uploadAdditionalCustomerDocument = async (customerId, type, document) => {
+    if (!document?.data || !String(document.data).startsWith('data:')) return null;
+
+    // The document vault is the preferred storage for document 2..4. Agents that
+    // only have Customer Add/Edit can still use the customer document endpoint.
+    if (isOwner || hasPermission('documents.upload')) {
+      const file = dataUrlToBrowserFile(document.data, document.name || 'customer-document');
+      if (file) return uploadVaultDocument({ customerId, type, file });
+    }
+
+    return uploadCustomerDocument(customerId, type, document);
+  };
+
   const saveCustomerProfile = async (form, existingCustomerId = null) => {
     const payload = {
       name: String(form.name || '').trim(),
@@ -481,8 +531,16 @@ export function CrednivoProvider({ children }) {
     if (String(form.photo || '').startsWith('data:')) {
       await uploadProfilePhoto(customerId, form.photo, 'customer');
     }
-    if (form.customerDocument?.data && String(form.customerDocument.data).startsWith('data:')) {
-      await uploadCustomerDocument(customerId, 'Customer KYC', form.customerDocument);
+
+    const customerDocuments = Array.isArray(form.customerDocuments)
+      ? form.customerDocuments
+      : form.customerDocument ? [form.customerDocument] : [];
+    const newCustomerDocuments = customerDocuments.filter((doc) => doc?.data && String(doc.data).startsWith('data:'));
+    if (newCustomerDocuments[0]) {
+      await uploadCustomerDocument(customerId, 'Customer KYC', newCustomerDocuments[0]);
+    }
+    for (const extraDocument of newCustomerDocuments.slice(1)) {
+      await uploadAdditionalCustomerDocument(customerId, 'Customer KYC', extraDocument);
     }
 
     await syncCoreData();
@@ -504,8 +562,16 @@ export function CrednivoProvider({ children }) {
     if (String(form.jaminPhoto || '').startsWith('data:')) {
       await uploadProfilePhoto(customerId, form.jaminPhoto, 'jamin');
     }
-    if (form.jaminDocument?.data && String(form.jaminDocument.data).startsWith('data:')) {
-      await uploadCustomerDocument(customerId, 'Jamin KYC', form.jaminDocument);
+
+    const jaminDocuments = Array.isArray(form.jaminDocuments)
+      ? form.jaminDocuments
+      : form.jaminDocument ? [form.jaminDocument] : [];
+    const newJaminDocuments = jaminDocuments.filter((doc) => doc?.data && String(doc.data).startsWith('data:'));
+    if (newJaminDocuments[0]) {
+      await uploadCustomerDocument(customerId, 'Jamin KYC', newJaminDocuments[0]);
+    }
+    for (const extraDocument of newJaminDocuments.slice(1)) {
+      await uploadAdditionalCustomerDocument(customerId, 'Jamin KYC', extraDocument);
     }
 
     await syncCoreData();
@@ -516,13 +582,28 @@ export function CrednivoProvider({ children }) {
     if (!customerId) return false;
     const isJamin = kind === 'jamin';
     const photo = media.photo || '';
-    const document = media.document || null;
+    const mediaDocuments = Array.isArray(media.documents)
+      ? media.documents
+      : media.document ? [media.document] : [];
+    const newDocuments = mediaDocuments.filter((doc) => doc?.data && String(doc.data).startsWith('data:'));
+    const existingDocuments = mediaDocuments.filter((doc) => doc?.data && !String(doc.data).startsWith('data:'));
+    const type = isJamin ? 'Jamin KYC' : 'Customer KYC';
 
     if (String(photo).startsWith('data:')) {
       await uploadProfilePhoto(customerId, photo, isJamin ? 'jamin' : 'customer');
     }
-    if (document?.data && String(document.data).startsWith('data:')) {
-      await uploadCustomerDocument(customerId, isJamin ? 'Jamin KYC' : 'Customer KYC', document);
+
+    if (newDocuments.length > 0) {
+      let startIndex = 0;
+      // Keep the original customer/jamin direct document field populated when a
+      // customer does not have any document yet. Extra documents go to the vault.
+      if (existingDocuments.length === 0) {
+        await uploadCustomerDocument(customerId, type, newDocuments[0]);
+        startIndex = 1;
+      }
+      for (const extraDocument of newDocuments.slice(startIndex)) {
+        await uploadAdditionalCustomerDocument(customerId, type, extraDocument);
+      }
     }
 
     await syncCoreData();
@@ -560,27 +641,6 @@ export function CrednivoProvider({ children }) {
     const saved = await apiRequest('/loans', { method: 'POST', body: JSON.stringify(payload) });
     await syncCoreData();
     return saved?.id || null;
-  };
-
-  const updateLoan = async (loanId, form) => {
-    if (!loanId) return null;
-    const payload = {
-      amount: asNumber(form.amount),
-      cycle: form.cycle,
-      loanType: form.loanType,
-      interestRate: asNumber(form.interestRate),
-      duration: Math.max(1, Number(form.duration) || 1),
-      interestUpfront: Boolean(form.interestUpfront),
-      fineEnabled: Boolean(form.fineEnabled),
-      fineAmount: form.fineEnabled ? Math.max(0, asNumber(form.fineAmount)) : 0,
-      startDate: form.startDate || toInputDate(),
-    };
-    const saved = await apiRequest(`/loans/${loanId}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-    await syncCoreData();
-    return saved;
   };
 
   const getIoSettlementPreview = async (loanId, paymentDate = toInputDate()) => {
@@ -628,40 +688,9 @@ export function CrednivoProvider({ children }) {
     };
 
     const cashReceived = isIo ? payload.interestAmount + payload.principalAmount : payload.amount;
-    const fineReceived = payload.fine;
-
-    // Fine is a separate cash receipt. A payment with zero due/interest/principal
-    // is still valid when a positive fine amount is being collected.
-    if (cashReceived <= 0 && fineReceived <= 0) return false;
+    if (cashReceived <= 0) return false;
 
     await apiRequest(`/payments/loan/${loanId}`, { method: 'POST', body: JSON.stringify(payload) });
-    await syncCoreData();
-    return true;
-  };
-
-
-  const updatePayment = async (paymentId, changes) => {
-    if (!paymentId) return null;
-    const payload = {
-      amount: Math.max(0, Number(changes?.amount) || 0),
-      interestAmount: Math.max(0, Number(changes?.interestAmount) || 0),
-      principalAmount: Math.max(0, Number(changes?.principalAmount) || 0),
-      fine: Math.max(0, Number(changes?.fine) || 0),
-      paymentDate: normalizePaymentDate(changes?.paymentDate || toInputDate()),
-      paymentMode: changes?.paymentMode || 'Cash',
-      note: String(changes?.note || '').trim(),
-    };
-    const saved = await apiRequest(`/payments/${paymentId}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-    await syncCoreData();
-    return saved;
-  };
-
-  const deletePayment = async (paymentId) => {
-    if (!paymentId) return false;
-    await apiRequest(`/payments/${paymentId}`, { method: 'DELETE' });
     await syncCoreData();
     return true;
   };
@@ -905,13 +934,10 @@ export function CrednivoProvider({ children }) {
       saveJaminProfile,
       saveCustomerMedia,
       addLoan,
-      updateLoan,
       getIoSettlementPreview,
       extendIoLoan,
       recordCollection,
       recordLoanPayment,
-      updatePayment,
-      deletePayment,
       saveCapitalEntry,
       deleteCapitalEntry,
       addExpense,
