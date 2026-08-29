@@ -60,6 +60,66 @@ function imageLike(document) {
   return String(document?.type || '').startsWith('image/') || /^data:image\//i.test(String(document?.data || ''));
 }
 
+function ProtectedMediaImage({ src, alt = '', className = '', fallback = null }) {
+  const [resolvedSrc, setResolvedSrc] = useState(() => {
+    const value = String(src || '').trim();
+    return /^(data:|blob:)/i.test(value) ? value : '';
+  });
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = '';
+    const value = String(src || '').trim();
+
+    setFailed(false);
+
+    if (!value) {
+      setResolvedSrc('');
+      return undefined;
+    }
+
+    if (/^(data:|blob:)/i.test(value)) {
+      setResolvedSrc(value);
+      return undefined;
+    }
+
+    setResolvedSrc('');
+
+    const load = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await fetch(value, {
+          credentials: 'include',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!response.ok) throw new Error(`Media request failed (${response.status})`);
+
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (!cancelled) setResolvedSrc(objectUrl);
+      } catch (error) {
+        console.error('CREDNIVO protected media preview failed', error);
+        if (!cancelled) {
+          setResolvedSrc('');
+          setFailed(true);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [src]);
+
+  if (!src || failed || !resolvedSrc) return fallback;
+  return <img src={resolvedSrc} alt={alt} className={className} />;
+}
+
 export default function MediaUploader({
   title,
   photo,
@@ -239,7 +299,7 @@ export default function MediaUploader({
           </div>
         </div>
         <button type="button" className={`simple-profile-photo ${photo ? 'has-photo' : ''}`} onClick={() => photo && setViewerOpen(true)} title={photo ? `View ${title} photo` : `${title} photo`}>
-          {photo ? <img src={photo} alt={`${title} profile`} /> : <Camera size={27}/>} 
+          {photo ? <ProtectedMediaImage src={photo} alt={`${title} profile`} fallback={<Camera size={27}/>} /> : <Camera size={27}/>} 
           {photo && <span className="photo-expand"><Maximize2 size={12}/></span>}
         </button>
       </div>
@@ -279,7 +339,7 @@ export default function MediaUploader({
 
       {viewerOpen && photo && <div className="media-viewer" onMouseDown={(event) => event.target === event.currentTarget && setViewerOpen(false)}>
         <button type="button" className="media-viewer-close" onClick={() => setViewerOpen(false)} title="Close"><X size={20}/></button>
-        <img src={photo} alt={`${title} full size`} />
+        <ProtectedMediaImage src={photo} alt={`${title} full size`} fallback={<div className="media-viewer-loading"><Camera size={30}/><span>Loading photo...</span></div>} />
       </div>}
 
       {cameraMode && <div className="webcam-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && stopCamera()}>
