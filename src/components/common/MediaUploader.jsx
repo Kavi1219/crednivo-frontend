@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Camera, FileText, FolderOpen, Maximize2, Plus, X } from 'lucide-react';
+import { AlertTriangle, Camera, FileText, Maximize2, Plus, X } from 'lucide-react';
 import { getAuthToken } from '../../services/api';
 import './MediaUploader.css';
 
@@ -287,55 +287,65 @@ export default function MediaUploader({
   };
 
   return (
-    <div className="media-uploader media-uploader-simple">
+    <div className="media-uploader media-uploader-compact">
       {mediaError && <div className="media-upload-error"><AlertTriangle size={15}/><span>{mediaError}</span></div>}
 
-      <div className="simple-media-photo-block">
-        <div className="simple-media-heading">
-          <div><strong>{title} Photo</strong><span>Profile photo</span></div>
-          <div className="media-actions simple-photo-actions">
-            <button type="button" onClick={() => requestCamera('photo')}><Camera size={15}/> Camera</button>
-            <button type="button" onClick={() => photoFileRef.current?.click()}><FolderOpen size={15}/> Files</button>
-          </div>
-        </div>
-        <button type="button" className={`simple-profile-photo ${photo ? 'has-photo' : ''}`} onClick={() => photo && setViewerOpen(true)} title={photo ? `View ${title} photo` : `${title} photo`}>
-          {photo ? <ProtectedMediaImage src={photo} alt={`${title} profile`} fallback={<Camera size={27}/>} /> : <Camera size={27}/>} 
-          {photo && <span className="photo-expand"><Maximize2 size={12}/></span>}
-        </button>
-      </div>
+      <div className="compact-media-strip">
+        <div className="compact-photo-wrap">
+          <button
+            type="button"
+            className={`compact-media-tile compact-photo-tile ${photo ? 'has-photo' : ''}`}
+            onClick={() => photo ? setViewerOpen(true) : requestCamera('photo')}
+            title={photo ? `View ${title} photo` : `Take ${title} photo`}
+          >
+            {photo
+              ? <ProtectedMediaImage src={photo} alt={`${title} profile`} fallback={<Camera size={27}/>} />
+              : <Camera size={27}/>
+            }
+            {photo && <span className="compact-photo-expand"><Maximize2 size={11}/></span>}
+          </button>
 
-      <div className="simple-documents-block">
-        <div className="simple-media-heading">
-          <div><strong>Documents</strong><span>Up to {maxDocuments} images or PDFs</span></div>
-          {documentList.length < maxDocuments && <div className="media-actions simple-document-actions">
-            <button type="button" onClick={() => requestCamera('document')}><Camera size={15}/> Camera</button>
-            <button type="button" onClick={() => documentFileRef.current?.click()}><FolderOpen size={15}/> Files</button>
-          </div>}
+          <button
+            type="button"
+            className="compact-camera-badge"
+            onClick={() => requestCamera('photo')}
+            title={photo ? `Replace ${title} photo` : `Take ${title} photo`}
+          >
+            <Camera size={14}/>
+          </button>
         </div>
 
-        <div className="simple-document-grid">
-          {documentList.map((item, index) => {
-            const localImage = imageLike(item) && /^(data:|blob:)/i.test(String(item?.data || ''));
-            const removable = !item?.backendId || String(item?.data || '').startsWith('data:');
-            return <div className="simple-document-tile-wrap" key={`${item?.backendId || item?.name || 'document'}-${index}`}>
-              <button type="button" className="simple-document-tile" onClick={() => openProtectedFile(item)} title={`View document ${index + 1}`}>
-                {localImage ? <img src={item.data} alt={`Document ${index + 1}`} /> : <FileText size={26}/>} 
-                <span>{index + 1}</span>
-              </button>
-              {removable && <button type="button" className="simple-document-remove" onClick={() => removeDocument(index)} title="Remove document"><X size={13}/></button>}
-            </div>;
-          })}
+        {documentList.map((item, index) => {
+          const localImage = imageLike(item) && /^(data:|blob:)/i.test(String(item?.data || ''));
+          const removable = !item?.backendId || String(item?.data || '').startsWith('data:');
+          return <div className="compact-document-wrap" key={`${item?.backendId || item?.name || 'document'}-${index}`}>
+            <button
+              type="button"
+              className="compact-media-tile compact-document-tile"
+              onClick={() => openProtectedFile(item)}
+              title={`View document ${index + 1}`}
+            >
+              {localImage ? <img src={item.data} alt={`Document ${index + 1}`} /> : <FileText size={24}/>} 
+              <span className="compact-document-number">{index + 1}</span>
+            </button>
+            {removable && <button type="button" className="compact-remove" onClick={() => removeDocument(index)} title="Remove document"><X size={12}/></button>}
+          </div>;
+        })}
 
-          {documentList.length < maxDocuments && <button type="button" className="simple-document-tile simple-document-add" onClick={() => documentFileRef.current?.click()} title="Add document">
-            <Plus size={30}/><span>Add</span>
-          </button>}
-        </div>
+        {documentList.length < maxDocuments && <button
+          type="button"
+          className="compact-media-tile compact-add-tile"
+          onClick={() => documentFileRef.current?.click()}
+          title="Add document"
+        >
+          <Plus size={31}/>
+        </button>}
       </div>
 
       <input ref={photoCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickPhoto} />
       <input ref={documentCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickDocumentCamera} />
       <input ref={photoFileRef} className="hidden-media-input" type="file" accept="image/*" onChange={pickPhoto} />
-      <input ref={documentFileRef} className="hidden-media-input" type="file" accept="image/*,.pdf,application/pdf" onChange={pickDocuments} />
+      <input ref={documentFileRef} className="hidden-media-input" type="file" accept="image/*,.pdf,application/pdf" multiple onChange={pickDocuments} />
 
       {viewerOpen && photo && <div className="media-viewer" onMouseDown={(event) => event.target === event.currentTarget && setViewerOpen(false)}>
         <button type="button" className="media-viewer-close" onClick={() => setViewerOpen(false)} title="Close"><X size={20}/></button>
@@ -355,6 +365,5 @@ export default function MediaUploader({
           </div>
         </div>
       </div>}
-    </div>
-  );
+    </div>  );
 }

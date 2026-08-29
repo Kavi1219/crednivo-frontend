@@ -267,9 +267,11 @@ function mapBackendCustomer(item, documents = []) {
   return {
     ...item,
     mobile: normalizeIndianMobile(item.mobile),
-    photo: mediaUrl(item.photo),
+    // Accept both the current API aliases and the original backend field names.
+    // This keeps saved customer/Jamin photos visible after media/UI updates.
+    photo: mediaUrl(item.photo || item.profilePhotoUrl || item.customerPhoto || item.customerPhotoUrl || item.photoUrl),
     jaminMobile: normalizeIndianMobile(item.jaminMobile),
-    jaminPhoto: mediaUrl(item.jaminPhoto),
+    jaminPhoto: mediaUrl(item.jaminPhoto || item.jaminProfilePhotoUrl || item.jaminProfilePhoto || item.jaminPhotoUrl),
     outstanding: asNumber(item.outstanding),
     collectionAmount: asNumber(item.collectionAmount),
     rating: item.rating ?? 5,
