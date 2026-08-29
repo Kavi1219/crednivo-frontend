@@ -678,6 +678,27 @@ export function CrednivoProvider({ children }) {
     return saved?.id || null;
   };
 
+  const updateLoan = async (loanId, form) => {
+    if (!loanId) return null;
+    const payload = {
+      amount: asNumber(form.amount),
+      cycle: form.cycle,
+      loanType: form.loanType,
+      interestRate: asNumber(form.interestRate),
+      duration: Math.max(1, Number(form.duration) || 1),
+      interestUpfront: Boolean(form.interestUpfront),
+      fineEnabled: Boolean(form.fineEnabled),
+      fineAmount: form.fineEnabled ? Math.max(0, asNumber(form.fineAmount)) : 0,
+      startDate: form.startDate || toInputDate(),
+    };
+    const saved = await apiRequest(`/loans/${loanId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    await syncCoreData();
+    return saved;
+  };
+
   const getIoSettlementPreview = async (loanId, paymentDate = toInputDate()) => {
     if (!loanId) return null;
     const date = normalizePaymentDate(paymentDate);
@@ -723,9 +744,36 @@ export function CrednivoProvider({ children }) {
     };
 
     const cashReceived = isIo ? payload.interestAmount + payload.principalAmount : payload.amount;
-    if (cashReceived <= 0) return false;
+    const fineReceived = payload.fine;
+    if (cashReceived <= 0 && fineReceived <= 0) return false;
 
     await apiRequest(`/payments/loan/${loanId}`, { method: 'POST', body: JSON.stringify(payload) });
+    await syncCoreData();
+    return true;
+  };
+
+  const updatePayment = async (paymentId, changes) => {
+    if (!paymentId) return null;
+    const payload = {
+      amount: Math.max(0, Number(changes?.amount) || 0),
+      interestAmount: Math.max(0, Number(changes?.interestAmount) || 0),
+      principalAmount: Math.max(0, Number(changes?.principalAmount) || 0),
+      fine: Math.max(0, Number(changes?.fine) || 0),
+      paymentDate: normalizePaymentDate(changes?.paymentDate || toInputDate()),
+      paymentMode: changes?.paymentMode || 'Cash',
+      note: String(changes?.note || '').trim(),
+    };
+    const saved = await apiRequest(`/payments/${paymentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    await syncCoreData();
+    return saved;
+  };
+
+  const deletePayment = async (paymentId) => {
+    if (!paymentId) return false;
+    await apiRequest(`/payments/${paymentId}`, { method: 'DELETE' });
     await syncCoreData();
     return true;
   };
@@ -969,10 +1017,13 @@ export function CrednivoProvider({ children }) {
       saveJaminProfile,
       saveCustomerMedia,
       addLoan,
+      updateLoan,
       getIoSettlementPreview,
       extendIoLoan,
       recordCollection,
       recordLoanPayment,
+      updatePayment,
+      deletePayment,
       saveCapitalEntry,
       deleteCapitalEntry,
       addExpense,

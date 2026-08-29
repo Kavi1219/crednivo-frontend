@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
@@ -114,13 +114,26 @@ function DetailRow({ label, value }) {
 export default function CustomerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { customers, loans, collections, payments, getIoSettlementPreview, extendIoLoan, recordLoanPayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
+  const { customers, loans, collections, payments, updateLoan, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
   const [photoViewer, setPhotoViewer] = useState(null);
   const [documentViewer, setDocumentViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
   const [loanTab, setLoanTab] = useState('Active');
   const [scheduleLoan, setScheduleLoan] = useState(null);
+  const [editingLoan, setEditingLoan] = useState(null);
+  const [loanEditBusy, setLoanEditBusy] = useState(false);
+  const [loanDraft, setLoanDraft] = useState({
+    amount: '',
+    cycle: 'Weekly',
+    loanType: 'EMI',
+    interestRate: '0',
+    duration: '10',
+    interestUpfront: false,
+    fineEnabled: false,
+    fineAmount: '0',
+    startDate: toInputDate(),
+  });
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentInterest, setPaymentInterest] = useState('');
   const [paymentPrincipal, setPaymentPrincipal] = useState('0');
@@ -157,6 +170,90 @@ export default function CustomerDetails() {
   });
   const [jaminSaving, setJaminSaving] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [editingTransaction, setEditingTransaction] = useState(null);
+  const [deletingTransaction, setDeletingTransaction] = useState(null);
+  const [transactionDraft, setTransactionDraft] = useState({
+    amount: '0',
+    interestAmount: '0',
+    fine: '0',
+    paymentDate: toInputDate(),
+    paymentMode: 'Cash',
+    note: '',
+  });
+  const [transactionBusy, setTransactionBusy] = useState(false);
+
+  const canCorrectTransaction = (item) => (
+    isOwner
+    && item?.type === 'Collection'
+    && !(item?.loanType === 'IO' && Number(item?.principalPaid || 0) > 0)
+  );
+
+  const openTransactionEditor = (item) => {
+    if (!canCorrectTransaction(item)) return;
+    setActionError('');
+    setEditingTransaction(item);
+    setTransactionDraft({
+      amount: String(Number(item.collectionAmount || 0)),
+      interestAmount: String(Number(item.interestPaid || 0)),
+      fine: String(Number(item.fineAmount || 0)),
+      paymentDate: item.date || toInputDate(),
+      paymentMode: item.paymentMode || 'Cash',
+      note: item.note || '',
+    });
+  };
+
+  const closeTransactionEditor = () => {
+    if (transactionBusy) return;
+    setEditingTransaction(null);
+  };
+
+  const saveTransactionEdit = async () => {
+    if (!editingTransaction || transactionBusy) return;
+    const isIoTransaction = editingTransaction.loanType === 'IO';
+    const received = isIoTransaction
+      ? Number(transactionDraft.interestAmount || 0)
+      : Number(transactionDraft.amount || 0);
+    const fineReceived = Number(transactionDraft.fine || 0);
+
+    if (received <= 0 && fineReceived <= 0) {
+      setActionError('Enter an amount paid or a fine amount before saving.');
+      return;
+    }
+
+    try {
+      setTransactionBusy(true);
+      setActionError('');
+      await updatePayment(editingTransaction.id, {
+        amount: isIoTransaction ? 0 : received,
+        interestAmount: isIoTransaction ? received : 0,
+        principalAmount: 0,
+        fine: fineReceived,
+        paymentDate: transactionDraft.paymentDate,
+        paymentMode: transactionDraft.paymentMode,
+        note: transactionDraft.note,
+      });
+      setEditingTransaction(null);
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not update the transaction.');
+    } finally {
+      setTransactionBusy(false);
+    }
+  };
+
+  const confirmDeleteTransaction = async () => {
+    if (!deletingTransaction || transactionBusy) return;
+    try {
+      setTransactionBusy(true);
+      setActionError('');
+      await deletePayment(deletingTransaction.id);
+      setDeletingTransaction(null);
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not delete the transaction.');
+    } finally {
+      setTransactionBusy(false);
+    }
+  };
+
   const customer = customers.find((item) => item.id === id);
 
   if (!customer) {
@@ -193,6 +290,84 @@ export default function CustomerDetails() {
   const paymentsForLoan = (loanId) => (payments || []).filter(
     (payment) => payment.loanId === loanId && payment.type === 'Collection' && payment.direction === 'in',
   );
+
+
+  const loanCoreTermsLocked = (loan) => (
+    paymentsForLoan(loan?.id).length > 0 || Number(loan?.extensionCycles || 0) > 0
+  );
+
+  const openLoanEditor = (loan) => {
+    if (!isOwner || !loan || isClosedLoan(loan)) return;
+    setActionError('');
+    setEditingLoan(loan);
+    setLoanDraft({
+      amount: String(Number(loan.principal || 0)),
+      cycle: loan.cycle || 'Weekly',
+      loanType: loan.loanType || 'EMI',
+      interestRate: String(Number(loan.interestRate || 0)),
+      duration: String(Number(loan.duration || 1)),
+      interestUpfront: Boolean(loan.interestUpfront),
+      fineEnabled: Boolean(loan.fineEnabled),
+      fineAmount: String(Number(loan.fineAmount || 0)),
+      startDate: loan.startDate || toInputDate(),
+    });
+  };
+
+  const closeLoanEditor = () => {
+    if (loanEditBusy) return;
+    setEditingLoan(null);
+  };
+
+  const saveLoanEdit = async () => {
+    if (!editingLoan || loanEditBusy || !isOwner) return;
+
+    const amount = Number(loanDraft.amount || 0);
+    const interestRate = Number(loanDraft.interestRate || 0);
+    const duration = Number(loanDraft.duration || 0);
+    const fineAmount = Number(loanDraft.fineAmount || 0);
+
+    if (amount <= 0) {
+      setActionError('Loan amount must be greater than zero.');
+      return;
+    }
+    if (interestRate < 0) {
+      setActionError('Interest rate cannot be negative.');
+      return;
+    }
+    if (duration < 1) {
+      setActionError('Duration must be at least 1 cycle.');
+      return;
+    }
+    if (!loanDraft.startDate) {
+      setActionError('Select the disbursed date.');
+      return;
+    }
+    if (loanDraft.startDate > toInputDate()) {
+      setActionError('Disbursed date cannot be in the future.');
+      return;
+    }
+    if (loanDraft.fineEnabled && fineAmount <= 0) {
+      setActionError('Enter a fine amount greater than zero or turn Fine off.');
+      return;
+    }
+
+    try {
+      setLoanEditBusy(true);
+      setActionError('');
+      await updateLoan(editingLoan.id, {
+        ...loanDraft,
+        amount,
+        interestRate,
+        duration,
+        fineAmount: loanDraft.fineEnabled ? fineAmount : 0,
+      });
+      setEditingLoan(null);
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not update the loan.');
+    } finally {
+      setLoanEditBusy(false);
+    }
+  };
 
   const upfrontInterestForLoan = (loan) => {
     if (!loan?.interestUpfront) return 0;
@@ -760,6 +935,15 @@ export default function CustomerDetails() {
             <div><span>Loan ID</span><strong>{loan.id}</strong></div>
             <div className="customer-loan-card-actions">
               <span className={`soft-chip ${loanClosed?'gray':loan.status==='Overdue'?'red':'green'}`}>{loanClosed ? 'Closed' : loan.status}</span>
+              {isOwner && !loanClosed && <button
+                type="button"
+                className="customer-loan-edit-button"
+                onClick={() => openLoanEditor(loan)}
+                title={`Edit ${loan.id} · Owner only`}
+              >
+                <Pencil size={15}/>
+                <span>Edit Loan</span>
+              </button>}
               {isOwner && loan.loanType === 'IO' && !loanClosed && Number(loan.outstanding) > 0 && <button
                 type="button"
                 className="customer-loan-extend-button"
@@ -832,17 +1016,51 @@ export default function CustomerDetails() {
       <div className="detail-section-head"><h2>Recent Payment History</h2><span>{history.length} transactions</span></div>
       <div className="module-table-wrap customer-detail-desktop-table">
         <table className="module-table">
-          <thead><tr><th>Date</th><th>Type</th><th>Note</th><th>Amount</th></tr></thead>
-          <tbody>{history.map(item=><tr key={item.id}><td>{formatDate(item.date)}</td><td>{item.type}</td><td>{item.note}</td><td className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</td></tr>)}</tbody>
+          <thead>
+            <tr>
+              <th>Date</th><th>Type</th><th>Note</th><th>Amount</th>
+              {isOwner && <th className="transaction-action-heading">Action</th>}
+            </tr>
+          </thead>
+          <tbody>{history.map((item) => {
+            const canCorrect = canCorrectTransaction(item);
+            return <tr key={item.id}>
+              <td>{formatDate(item.date)}</td>
+              <td>{item.type}</td>
+              <td>{item.note}</td>
+              <td className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</td>
+              {isOwner && <td className="transaction-actions-cell">
+                {canCorrect ? <div className="transaction-row-actions">
+                  <button type="button" className="transaction-edit-button" onClick={()=>openTransactionEditor(item)} title="Edit payment entry">
+                    <Pencil size={14}/><span>Edit Entry</span>
+                  </button>
+                  <button type="button" className="transaction-delete-button" onClick={()=>setDeletingTransaction(item)} title="Delete payment entry">
+                    <Trash2 size={14}/><span>Delete</span>
+                  </button>
+                </div> : <span className="transaction-locked-label">—</span>}
+              </td>}
+            </tr>;
+          })}</tbody>
         </table>
       </div>
       <div className="customer-payment-mobile-list">
         {history.length === 0 && <div className="customer-mobile-empty">No payment history yet.</div>}
-        {history.map((item) => <article className="customer-payment-mobile-card" key={item.id}>
-          <div className="customer-payment-mobile-head"><strong>{item.type}</strong><span className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</span></div>
-          <p>{item.note || 'Transaction'}</p>
-          <small>{formatDate(item.date)}</small>
-        </article>)}
+        {history.map((item) => {
+          const canCorrect = canCorrectTransaction(item);
+          return <article className="customer-payment-mobile-card" key={item.id}>
+            <div className="customer-payment-mobile-head"><strong>{item.type}</strong><span className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</span></div>
+            <p>{item.note || 'Transaction'}</p>
+            <small>{formatDate(item.date)}</small>
+            {canCorrect && <div className="transaction-mobile-actions">
+              <button type="button" className="transaction-edit-button" onClick={()=>openTransactionEditor(item)}>
+                <Pencil size={14}/><span>Edit Entry</span>
+              </button>
+              <button type="button" className="transaction-delete-button" onClick={()=>setDeletingTransaction(item)}>
+                <Trash2 size={14}/><span>Delete</span>
+              </button>
+            </div>}
+          </article>;
+        })}
       </div>
     </section>
 
@@ -1042,6 +1260,80 @@ export default function CustomerDetails() {
       </div>
     </div>}
 
+    {editingTransaction && <div className="transaction-editor-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&closeTransactionEditor()}>
+      <section className="transaction-editor-modal" role="dialog" aria-modal="true" aria-label="Edit payment entry">
+        <div className="transaction-editor-head">
+          <div>
+            <strong>Edit Entry</strong>
+            <span>{editingTransaction.id} · {editingTransaction.loanId}</span>
+          </div>
+          <button type="button" onClick={closeTransactionEditor} disabled={transactionBusy} title="Close"><X size={18}/></button>
+        </div>
+        <div className="transaction-editor-body">
+          <div className="transaction-editor-notice">
+            <AlertTriangle size={17}/>
+            <span>Saving recalculates the linked loan, collection balances, fine and outstanding automatically.</span>
+          </div>
+          <div className="transaction-editor-grid">
+            <label>
+              <span>Payment Date *</span>
+              <input type="date" max={toInputDate()} value={transactionDraft.paymentDate}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,paymentDate:event.target.value}))}/>
+            </label>
+            {editingTransaction.loanType === 'IO' ? <label>
+              <span>Interest Paid</span>
+              <input type="number" min="0" step="0.01" value={transactionDraft.interestAmount}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,interestAmount:event.target.value}))}/>
+            </label> : <label>
+              <span>Amount Paid</span>
+              <input type="number" min="0" step="0.01" value={transactionDraft.amount}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,amount:event.target.value}))}/>
+            </label>}
+            <label>
+              <span>Fine Paid</span>
+              <input type="number" min="0" step="0.01" value={transactionDraft.fine}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,fine:event.target.value}))}/>
+            </label>
+            <label>
+              <span>Payment Mode</span>
+              <select value={transactionDraft.paymentMode}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,paymentMode:event.target.value}))}>
+                <option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option>
+              </select>
+            </label>
+            <label className="transaction-editor-note">
+              <span>Note</span>
+              <input type="text" value={transactionDraft.note}
+                onChange={(event)=>setTransactionDraft((current)=>({...current,note:event.target.value}))}
+                placeholder="Optional transaction note"/>
+            </label>
+          </div>
+        </div>
+        <div className="transaction-editor-actions">
+          <button type="button" className="transaction-cancel-button" onClick={closeTransactionEditor} disabled={transactionBusy}>Cancel</button>
+          <button type="button" className="transaction-save-button" onClick={saveTransactionEdit} disabled={transactionBusy}>
+            <Save size={16}/><span>{transactionBusy?'Saving...':'Save Changes'}</span>
+          </button>
+        </div>
+      </section>
+    </div>}
+
+    {deletingTransaction && <div className="transaction-editor-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&!transactionBusy&&setDeletingTransaction(null)}>
+      <section className="transaction-delete-modal" role="dialog" aria-modal="true" aria-label="Delete payment entry">
+        <div className="transaction-delete-icon"><Trash2 size={22}/></div>
+        <h2>Delete this entry?</h2>
+        <p>This correction will recalculate the linked loan and schedule.</p>
+        <strong>{formatCurrency(deletingTransaction.amount)}</strong>
+        <small>{formatDate(deletingTransaction.date)} · {deletingTransaction.loanId}</small>
+        <div>
+          <button type="button" className="transaction-cancel-button" onClick={()=>setDeletingTransaction(null)} disabled={transactionBusy}>Cancel</button>
+          <button type="button" className="transaction-confirm-delete-button" onClick={confirmDeleteTransaction} disabled={transactionBusy}>
+            <Trash2 size={15}/><span>{transactionBusy?'Deleting...':'Delete Entry'}</span>
+          </button>
+        </div>
+      </section>
+    </div>}
+
     {hasPermission('customers.delete') && deleteConfirmOpen && <div className="customer-delete-backdrop" onMouseDown={()=>setDeleteConfirmOpen(false)}>
       <div className="customer-delete-modal" onMouseDown={(event)=>event.stopPropagation()}>
         <div className="customer-delete-modal-icon"><AlertTriangle size={24}/></div>
@@ -1060,6 +1352,82 @@ export default function CustomerDetails() {
             }
           }}>
             <Trash2 size={16}/><span>Delete Permanently</span>
+          </button>
+        </div>
+      </div>
+    </div>}
+
+    {editingLoan && <div className="customer-loan-edit-backdrop" onMouseDown={closeLoanEditor}>
+      <div className="customer-loan-edit-modal" onMouseDown={(event)=>event.stopPropagation()}>
+        <div className="customer-loan-pay-head">
+          <div>
+            <strong>Edit Loan</strong>
+            <span>{editingLoan.id} · Owner only</span>
+          </div>
+          <button type="button" className="customer-loan-pay-close" onClick={closeLoanEditor} disabled={loanEditBusy} title="Close"><X size={18}/></button>
+        </div>
+
+        <div className={`customer-loan-edit-rule ${loanCoreTermsLocked(editingLoan) ? 'locked' : ''}`}>
+          <AlertTriangle size={17}/>
+          <div>
+            <strong>{loanCoreTermsLocked(editingLoan) ? 'Financial terms are locked' : 'Loan correction mode'}</strong>
+            <span>
+              {paymentsForLoan(editingLoan.id).length > 0
+                ? 'A collection has already been recorded. Only Fine settings can be changed so payment history stays correct.'
+                : Number(editingLoan.extensionCycles || 0) > 0
+                  ? 'This IO loan has extension history. Only Fine settings can be changed.'
+                  : 'No collection has been recorded yet. Saving will recalculate the loan, rebuild its unpaid schedule, and update the original disbursement transaction.'}
+            </span>
+          </div>
+        </div>
+
+        <div className="customer-loan-edit-fields">
+          <label>
+            <span>Loan Amount *</span>
+            <input type="number" min="0.01" step="0.01" value={loanDraft.amount} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,amount:event.target.value}))}/>
+          </label>
+          <label>
+            <span>Cycle *</span>
+            <select value={loanDraft.cycle} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,cycle:event.target.value}))}>
+              <option value="Daily">Daily</option><option value="Weekly">Weekly</option><option value="Monthly">Monthly</option>
+            </select>
+          </label>
+          <label>
+            <span>Loan Type *</span>
+            <select value={loanDraft.loanType} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,loanType:event.target.value}))}>
+              <option value="EMI">EMI</option><option value="IO">IO</option>
+            </select>
+          </label>
+          <label>
+            <span>Interest % *</span>
+            <input type="number" min="0" step="0.01" value={loanDraft.interestRate} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,interestRate:event.target.value}))}/>
+          </label>
+          <label>
+            <span>Duration *</span>
+            <input type="number" min="1" step="1" value={loanDraft.duration} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,duration:event.target.value}))}/>
+          </label>
+          <label>
+            <span>Disbursed Date *</span>
+            <input type="date" max={toInputDate()} value={loanDraft.startDate} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,startDate:event.target.value}))}/>
+          </label>
+          <label className="customer-loan-edit-check">
+            <input type="checkbox" checked={loanDraft.interestUpfront} disabled={loanCoreTermsLocked(editingLoan)} onChange={(event)=>setLoanDraft((current)=>({...current,interestUpfront:event.target.checked}))}/>
+            <span>Interest Taken Upfront</span>
+          </label>
+          <label className="customer-loan-edit-check">
+            <input type="checkbox" checked={loanDraft.fineEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,fineEnabled:event.target.checked}))}/>
+            <span>Fine Enabled</span>
+          </label>
+          <label className="customer-loan-edit-fine">
+            <span>Fine Amount</span>
+            <input type="number" min="0" step="0.01" value={loanDraft.fineAmount} disabled={!loanDraft.fineEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,fineAmount:event.target.value}))}/>
+          </label>
+        </div>
+
+        <div className="customer-loan-edit-actions">
+          <button type="button" className="customer-loan-edit-cancel" onClick={closeLoanEditor} disabled={loanEditBusy}>Cancel</button>
+          <button type="button" className="customer-loan-edit-save" onClick={saveLoanEdit} disabled={loanEditBusy}>
+            <Save size={16}/><span>{loanEditBusy ? 'Saving...' : 'Save Loan'}</span>
           </button>
         </div>
       </div>
