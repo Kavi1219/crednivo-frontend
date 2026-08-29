@@ -119,6 +119,8 @@ export default function CustomerDetails() {
   const [photoViewer, setPhotoViewer] = useState(null);
   const [documentViewer, setDocumentViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
+  const [loanTab, setLoanTab] = useState('Active');
+  const [scheduleLoan, setScheduleLoan] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentInterest, setPaymentInterest] = useState('');
   const [paymentPrincipal, setPaymentPrincipal] = useState('0');
@@ -162,8 +164,31 @@ export default function CustomerDetails() {
   }
 
   const customerLoans = loans.filter((loan) => loan.customerId === id);
-  const activeCustomerLoans = customerLoans.filter((loan) => loan.status !== 'Closed' && Number(loan.outstanding) > 0);
+  const isClosedLoan = (loan) => loan.status === 'Closed' || Number(loan.outstanding) <= 0;
+  const activeCustomerLoans = customerLoans.filter((loan) => !isClosedLoan(loan));
+  const closedCustomerLoans = customerLoans.filter((loan) => isClosedLoan(loan));
+  const visibleCustomerLoans = loanTab === 'Closed' ? closedCustomerLoans : activeCustomerLoans;
   const customerLoanIds = new Set(customerLoans.map((loan) => loan.id));
+
+  const scheduleRowsForLoan = (loanId) => (collections || [])
+    .filter((entry) => entry.loanId === loanId)
+    .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+
+  const scheduleBalanceOf = (entry) => Math.max(0, Number(entry?.dueAmount || 0) - Number(entry?.paidAmount || 0));
+
+  const scheduleDisplayStatus = (entry) => {
+    const due = Number(entry?.dueAmount || 0);
+    const paid = Number(entry?.paidAmount || 0);
+    const balance = Math.max(0, due - paid);
+    const today = toInputDate();
+
+    if (String(entry?.status || '').toLowerCase() === 'cancelled') return 'Cancelled';
+    if (String(entry?.status || '').toLowerCase() === 'paid' || paid >= due) return 'Paid';
+    if (String(entry?.date || '') < today && balance > 0) return 'Overdue';
+    if (paid > 0 && balance > 0) return 'Partial';
+    if (String(entry?.date || '') === today) return 'Due';
+    return 'Upcoming';
+  };
 
   const paymentsForLoan = (loanId) => (payments || []).filter(
     (payment) => payment.loanId === loanId && payment.type === 'Collection' && payment.direction === 'in',
@@ -693,18 +718,49 @@ export default function CustomerDetails() {
     </section>
 
     <section className="module-card customer-loans-section">
-      <div className="detail-section-head"><h2>Loan Details</h2><span>{customerLoans.length} loan(s)</span></div>
+      <div className="detail-section-head customer-loan-section-head">
+        <div>
+          <h2>Loan Slots</h2>
+          <span>{customerLoans.length} total loan(s)</span>
+        </div>
+        <div className="customer-loan-tabs" role="tablist" aria-label="Loan status">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={loanTab === 'Active'}
+            className={loanTab === 'Active' ? 'active' : ''}
+            onClick={() => setLoanTab('Active')}
+          >
+            Active <b>{activeCustomerLoans.length}</b>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={loanTab === 'Closed'}
+            className={loanTab === 'Closed' ? 'active' : ''}
+            onClick={() => setLoanTab('Closed')}
+          >
+            Closed <b>{closedCustomerLoans.length}</b>
+          </button>
+        </div>
+      </div>
 
       <div className="customer-loan-mobile-list">
-        {customerLoans.length === 0 && <div className="customer-mobile-empty">No loans added yet.</div>}
-        {customerLoans.map((loan) => {
+        {visibleCustomerLoans.length === 0 && (
+          <div className="customer-mobile-empty customer-loan-tab-empty">
+            {loanTab === 'Active' ? 'No active loans for this customer.' : 'No closed loans for this customer.'}
+          </div>
+        )}
+        {visibleCustomerLoans.map((loan) => {
           const realized = realizedLoanFigures(loan);
+          const loanClosed = isClosedLoan(loan);
+          const loanScheduleCount = scheduleRowsForLoan(loan.id).length;
           return <article className="customer-loan-mobile-card" key={loan.id}>
           <div className="customer-loan-mobile-head">
             <div><span>Loan ID</span><strong>{loan.id}</strong></div>
             <div className="customer-loan-card-actions">
-              <span className={`soft-chip ${loan.status==='Closed'?'gray':loan.status==='Overdue'?'red':'green'}`}>{loan.status}</span>
-              {isOwner && loan.loanType === 'IO' && loan.status !== 'Closed' && Number(loan.outstanding) > 0 && <button
+              <span className={`soft-chip ${loanClosed?'gray':loan.status==='Overdue'?'red':'green'}`}>{loanClosed ? 'Closed' : loan.status}</span>
+              {isOwner && loan.loanType === 'IO' && !loanClosed && Number(loan.outstanding) > 0 && <button
                 type="button"
                 className="customer-loan-extend-button"
                 onClick={() => openIoExtension(loan)}
@@ -713,12 +769,22 @@ export default function CustomerDetails() {
                 <CalendarDays size={15}/>
                 <span>Extend IO</span>
               </button>}
+              <button
+                type="button"
+                className="customer-loan-schedule-button"
+                onClick={() => setScheduleLoan(loan)}
+                title={`View schedule for ${loan.id}`}
+              >
+                <CalendarDays size={16}/>
+                <span>Schedule</span>
+                {loanScheduleCount > 0 && <b>{loanScheduleCount}</b>}
+              </button>
               {hasPermission('payments.record') && <button
                 type="button"
                 className="customer-loan-pay-button"
                 onClick={() => openLoanPayment(loan)}
-                disabled={loan.status === 'Closed' || Number(loan.outstanding) <= 0}
-                title={loan.status === 'Closed' || Number(loan.outstanding) <= 0 ? 'Loan closed' : `Pay ${loan.id}`}
+                disabled={loanClosed}
+                title={loanClosed ? 'Loan closed' : `Pay ${loan.id}`}
               >
                 <HandCoins size={16}/>
                 <span>Pay</span>
@@ -740,11 +806,11 @@ export default function CustomerDetails() {
             <div><span>Disbursed</span><strong>{formatDate(loan.startDate)}</strong></div>
             <div><span>Duration</span><strong>{loan.duration} {loan.cycle==='Daily'?'days':loan.cycle==='Weekly'?'weeks':'months'}{loan.extensionCycles > 0 ? ` · +${loan.extensionCycles} extended` : ''}</strong></div>
             <div><span>{loan.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(loan.totalRepayment)}</strong></div>
-            {loan.loanType === 'IO' && loan.status !== 'Closed' && Number(loan.outstanding) < Number(loan.principal) && <div className="loan-current-projection-item"><span>Current Projected Remaining</span><strong>{formatCurrency(currentIoProjectedRemaining(loan))}</strong></div>}
-            {loan.status === 'Closed' && <div className="loan-actual-repayment-item"><span>Actual Repayment</span><strong>{formatCurrency(realized.actualRepayment)}</strong></div>}
+            {loan.loanType === 'IO' && !loanClosed && Number(loan.outstanding) < Number(loan.principal) && <div className="loan-current-projection-item"><span>Current Projected Remaining</span><strong>{formatCurrency(currentIoProjectedRemaining(loan))}</strong></div>}
+            {loanClosed && <div className="loan-actual-repayment-item"><span>Actual Repayment</span><strong>{formatCurrency(realized.actualRepayment)}</strong></div>}
           </div>
 
-          {loan.status === 'Closed' && <div className="loan-closure-summary">
+          {loanClosed && <div className="loan-closure-summary">
             <div className="loan-closure-summary-title">
               <strong>Closure Summary</strong>
               <span>Actual figures after loan closure</span>
@@ -995,6 +1061,64 @@ export default function CustomerDetails() {
           }}>
             <Trash2 size={16}/><span>Delete Permanently</span>
           </button>
+        </div>
+      </div>
+    </div>}
+
+    {scheduleLoan && <div className="customer-loan-schedule-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&setScheduleLoan(null)}>
+      <div className="customer-loan-schedule-modal" onMouseDown={(event)=>event.stopPropagation()}>
+        <div className="customer-loan-schedule-head">
+          <div>
+            <strong>Loan Schedule</strong>
+            <span>{scheduleLoan.id} · {scheduleLoan.cycle} · {customer.name}</span>
+          </div>
+          <button type="button" onClick={()=>setScheduleLoan(null)} title="Close schedule"><X size={18}/></button>
+        </div>
+
+        <div className="customer-loan-schedule-summary">
+          <div><span>Installments</span><strong>{scheduleRowsForLoan(scheduleLoan.id).length}</strong></div>
+          <div><span>Collection / Cycle</span><strong>{formatCurrency(scheduleLoan.loanType === 'IO' ? currentIoInterestPerCycle(scheduleLoan) : scheduleLoan.collectionAmount)}</strong></div>
+          <div><span>Outstanding</span><strong>{formatCurrency(scheduleLoan.outstanding)}</strong></div>
+        </div>
+
+        <div className="customer-loan-schedule-table-wrap">
+          <table className="customer-loan-schedule-table">
+            <thead>
+              <tr><th>#</th><th>Due Date</th><th>Due</th><th>Paid</th><th>Pending</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {scheduleRowsForLoan(scheduleLoan.id).map((entry, index) => {
+                const rowStatus = scheduleDisplayStatus(entry);
+                return <tr key={entry.id || `${scheduleLoan.id}-${index}`}>
+                  <td>{index + 1}</td>
+                  <td>{formatDate(entry.date)}</td>
+                  <td>{formatCurrency(entry.dueAmount)}</td>
+                  <td>{formatCurrency(entry.paidAmount)}</td>
+                  <td><strong>{formatCurrency(scheduleBalanceOf(entry))}</strong></td>
+                  <td><span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span></td>
+                </tr>;
+              })}
+              {scheduleRowsForLoan(scheduleLoan.id).length === 0 && <tr><td colSpan="6"><div className="customer-loan-schedule-empty">No schedule entries are available for this loan.</div></td></tr>}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="customer-loan-schedule-mobile-list">
+          {scheduleRowsForLoan(scheduleLoan.id).map((entry, index) => {
+            const rowStatus = scheduleDisplayStatus(entry);
+            return <article key={entry.id || `mobile-${scheduleLoan.id}-${index}`}>
+              <div className="customer-loan-schedule-mobile-top">
+                <strong>#{index + 1} · {formatDate(entry.date)}</strong>
+                <span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span>
+              </div>
+              <div className="customer-loan-schedule-mobile-grid">
+                <div><span>Due</span><strong>{formatCurrency(entry.dueAmount)}</strong></div>
+                <div><span>Paid</span><strong>{formatCurrency(entry.paidAmount)}</strong></div>
+                <div><span>Pending</span><strong>{formatCurrency(scheduleBalanceOf(entry))}</strong></div>
+              </div>
+            </article>;
+          })}
+          {scheduleRowsForLoan(scheduleLoan.id).length === 0 && <div className="customer-loan-schedule-empty">No schedule entries are available for this loan.</div>}
         </div>
       </div>
     </div>}
