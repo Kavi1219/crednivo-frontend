@@ -136,6 +136,7 @@ export default function MediaUploader({
   const documentFileRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const errorRef = useRef(null);
 
   const [viewerOpen, setViewerOpen] = useState(false);
   const [mediaError, setMediaError] = useState('');
@@ -216,6 +217,24 @@ export default function MediaUploader({
   }, []);
 
   useEffect(() => {
+    if (!mediaError) return undefined;
+
+    const dismissOnOutsideClick = (event) => {
+      if (errorRef.current && !errorRef.current.contains(event.target)) {
+        setMediaError('');
+      }
+    };
+
+    document.addEventListener('mousedown', dismissOnOutsideClick);
+    document.addEventListener('touchstart', dismissOnOutsideClick, { passive: true });
+
+    return () => {
+      document.removeEventListener('mousedown', dismissOnOutsideClick);
+      document.removeEventListener('touchstart', dismissOnOutsideClick);
+    };
+  }, [mediaError]);
+
+  useEffect(() => {
     if (cameraMode && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
       videoRef.current.play?.().catch(() => {});
@@ -288,7 +307,7 @@ export default function MediaUploader({
 
   return (
     <div className="media-uploader media-uploader-compact">
-      {mediaError && <div className="media-upload-error"><AlertTriangle size={15}/><span>{mediaError}</span></div>}
+      {mediaError && <div ref={errorRef} className="media-upload-error"><AlertTriangle size={15}/><span>{mediaError}</span></div>}
 
       <div className="compact-media-strip">
         <div className="compact-photo-wrap">
