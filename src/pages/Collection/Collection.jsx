@@ -1,10 +1,9 @@
 import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
-import RecordLoanPaymentModal from '../../components/payments/RecordLoanPaymentModal';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -40,10 +39,50 @@ function sortByDateThenCustomer(a, b) {
   return String(a.customerName || '').localeCompare(String(b.customerName || ''));
 }
 
+function keyOf(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function loanIdentityKeys(loan) {
+  return [
+    loan?.id,
+    loan?.loanId,
+    loan?.loanCode,
+    loan?.code,
+    loan?.loanDbId,
+    loan?.dbLoanId,
+  ].map(keyOf).filter(Boolean);
+}
+
+function collectionLoanIdentityKeys(item) {
+  return [
+    item?.loanId,
+    item?.loanCode,
+    item?.loanDbId,
+    item?.dbLoanId,
+    item?.loan?.id,
+    item?.loan?.loanId,
+    item?.loan?.loanCode,
+  ].map(keyOf).filter(Boolean);
+}
+
+function collectionMatchesLoanKeySet(item, keySet) {
+  return collectionLoanIdentityKeys(item).some((key) => keySet.has(key));
+}
+
+function isPrecloseMarker(value) {
+  const marker = String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '');
+
+  return marker === 'PRECLOSE' || marker === 'PRECLOSED';
+}
+
 export default function Collection() {
-  const { collections, loans, payments } = useCrednivo();
+  const { collections, loans, payments, recordLoanPayment } = useCrednivo();
   const { hasPermission } = useAuth();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialView = (() => {
     const view = String(searchParams.get('view') || 'today').toLowerCase();
@@ -63,28 +102,66 @@ export default function Collection() {
   const [collectionView, setCollectionView] = useState(initialView);
   const [scheduleLoanId, setScheduleLoanId] = useState(null);
   const [paying, setPaying] = useState(null);
+  const [amount, setAmount] = useState('');
+  const [interestAmount, setInterestAmount] = useState('');
+  const [principalAmount, setPrincipalAmount] = useState('0');
+  const [fine, setFine] = useState('0');
+  const [paymentDate, setPaymentDate] = useState(() => toInputDate());
+  const [paymentMode, setPaymentMode] = useState('Cash');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [paymentSaving, setPaymentSaving] = useState(false);
+  const paymentSubmitLockRef = useRef(false);
 
   const today = toInputDate();
 
-  // Preclosed loans are finished immediately. Their remaining schedule rows
-  // stay in the database for history, but they must not appear as collection
-  // work that still needs to be collected.
-  const preclosedLoanIds = useMemo(
-    () => new Set(
-      (loans || [])
-        .filter((loan) => String(loan.status || '').toLowerCase() === 'preclosed')
-        .map((loan) => loan.id),
-    ),
-    [loans],
-  );
+  // A preclosed loan is finished immediately, even when its original due date
+  // is today. Detect it from BOTH the loan record and the PRE-CLOSE transaction.
+  // This is intentional: depending on API normalization, a collection row may
+  // carry SFCLN-00053 while the loan record also has a numeric database id, and
+  // some screens can normalize the final loan status to Closed. The transaction
+  // still tells us that the close type was PRE-CLOSE.
+  const preclosedLoanKeys = useMemo(() => {
+    const keys = new Set();
+
+    (loans || []).forEach((loan) => {
+      const status = String(loan?.status || '').trim().toUpperCase();
+      const closeType = String(loan?.closeType || '').trim().toUpperCase();
+
+      const isPreclosed =
+        isPrecloseMarker(status) ||
+        isPrecloseMarker(closeType) ||
+        Boolean(loan?.preclosedAt);
+
+      if (!isPreclosed) return;
+      loanIdentityKeys(loan).forEach((key) => keys.add(key));
+    });
+
+    (payments || []).forEach((payment) => {
+      const isPreclosePayment = [
+        payment?.type,
+        payment?.rawType,
+        payment?.transactionType,
+        payment?.paymentType,
+        payment?.closeType,
+      ].some(isPrecloseMarker);
+
+      if (!isPreclosePayment) return;
+      collectionLoanIdentityKeys(payment).forEach((key) => keys.add(key));
+    });
+
+    return keys;
+  }, [loans, payments]);
+
+  const isPreclosedCollection = (item) =>
+    collectionMatchesLoanKeySet(item, preclosedLoanKeys);
 
   // Summary cards intentionally stay focused on today's workload.
-  // A loan preclosed today is no longer a due for today.
+  // A preclosed loan is NOT a normal due anymore, even if its old schedule row
+  // was already paid/filled during the preclose operation.
   const todayCollections = useMemo(
-    () => collections.filter((item) => item.date === today && !preclosedLoanIds.has(item.loanId)),
-    [collections, today, preclosedLoanIds],
+    () => collections.filter((item) => item.date === today && !collectionMatchesLoanKeySet(item, preclosedLoanKeys)),
+    [collections, today, preclosedLoanKeys],
   );
 
   const todayExpected = todayCollections.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
@@ -108,9 +185,9 @@ export default function Collection() {
   // Previous unpaid/partial entries remain in Overdue.
   const overdueCollections = useMemo(
     () => collections
-      .filter((item) => !preclosedLoanIds.has(item.loanId) && item.date < today && balanceOf(item) > 0)
+      .filter((item) => !collectionMatchesLoanKeySet(item, preclosedLoanKeys) && item.date < today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer),
-    [collections, today, preclosedLoanIds],
+    [collections, today, preclosedLoanKeys],
   );
 
   // Upcoming only shows ONE next unpaid installment per active loan.
@@ -118,13 +195,13 @@ export default function Collection() {
   const upcomingCollections = useMemo(() => {
     const nextByLoan = new Map();
     collections
-      .filter((item) => !preclosedLoanIds.has(item.loanId) && item.date > today && balanceOf(item) > 0)
+      .filter((item) => !collectionMatchesLoanKeySet(item, preclosedLoanKeys) && item.date > today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer)
       .forEach((item) => {
         if (!nextByLoan.has(item.loanId)) nextByLoan.set(item.loanId, item);
       });
     return Array.from(nextByLoan.values()).sort(sortByDateThenCustomer);
-  }, [collections, today, preclosedLoanIds]);
+  }, [collections, today, preclosedLoanKeys]);
 
   const activeCollections = useMemo(() => {
     const merged = [...overdueCollections, ...todayCollections, ...upcomingCollections];
@@ -154,68 +231,6 @@ export default function Collection() {
     const matchesSearch = !q || `${item.customerName} ${item.customerId} ${item.loanId}`.toLowerCase().includes(q);
     return matchesCycle && matchesStatus && matchesSearch;
   }), [viewRows, cycle, statusFilter, search, today]);
-
-  // Keep the Overdue badge/count as the number of overdue installments, but
-  // show only one summary row per customer + loan in the Overdue list.
-  const displayRows = useMemo(() => {
-    if (collectionView !== 'Overdue') return filtered;
-
-    const grouped = new Map();
-
-    filtered.forEach((item) => {
-      const key = `${item.customerId || item.customerName}-${item.loanId || ''}`;
-      const existing = grouped.get(key);
-
-      if (!existing) {
-        grouped.set(key, {
-          ...item,
-          id: `overdue-group-${key}`,
-          overdueCount: 1,
-          dueAmount: Number(item.dueAmount || 0),
-          paidAmount: Number(item.paidAmount || 0),
-          fine: Number(item.fine || 0),
-          firstOverdueDate: item.date,
-          lastOverdueDate: item.date,
-          groupedOverdue: true,
-        });
-        return;
-      }
-
-      existing.overdueCount += 1;
-      existing.dueAmount += Number(item.dueAmount || 0);
-      existing.paidAmount += Number(item.paidAmount || 0);
-      existing.fine += Number(item.fine || 0);
-
-      if (!existing.firstOverdueDate || String(item.date || '') < String(existing.firstOverdueDate || '')) {
-        existing.firstOverdueDate = item.date;
-        existing.date = item.date;
-      }
-
-      if (!existing.lastOverdueDate || String(item.date || '') > String(existing.lastOverdueDate || '')) {
-        existing.lastOverdueDate = item.date;
-      }
-    });
-
-    return Array.from(grouped.values()).map((item) => {
-      const loan = loans.find((entry) => entry.id === item.loanId);
-      const loanPaid = (payments || [])
-        .filter((payment) =>
-          payment.loanId === item.loanId &&
-          payment.type === 'Collection' &&
-          payment.direction !== 'out'
-        )
-        .reduce(
-          (sum, payment) => sum + Number(payment.collectionAmount ?? payment.amount ?? 0),
-          0,
-        );
-
-      return {
-        ...item,
-        loanPaid,
-        loanOutstanding: Number(loan?.outstanding || 0),
-      };
-    }).sort(sortByDateThenCustomer);
-  }, [collectionView, filtered, loans, payments]);
 
   const scheduleRows = useMemo(() => {
     if (!scheduleLoanId) return [];
@@ -292,39 +307,100 @@ export default function Collection() {
   }, [scheduleLoanId, scheduleRows, scheduleLoan?.loanType, payments]);
 
   const openPay = (item) => {
-    const loan = loans.find((entry) => entry.id === item.loanId);
-    if (!loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0) {
+    const itemKeys = new Set(collectionLoanIdentityKeys(item));
+    const loan = (loans || []).find((entry) =>
+      loanIdentityKeys(entry).some((key) => itemKeys.has(key)),
+    );
+    if (!loan || isPreclosedCollection(item) || String(loan.status || '').toLowerCase() === 'closed' || String(loan.status || '').toLowerCase() === 'preclosed' || Number(loan.outstanding) <= 0) {
       setActionError('This loan is closed. No additional payment can be recorded.');
       return;
     }
-
     const balance = balanceOf(item);
+    setPaying({ ...item, loan });
+    if (loan?.loanType === 'IO') {
+      setAmount('');
+      setInterestAmount(String(balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0));
+      setPrincipalAmount('0');
+    } else {
+      setAmount(String(balance || item.dueAmount));
+      setInterestAmount('');
+      setPrincipalAmount('0');
+    }
     const displayStatus = getDisplayStatus(item, today);
     const defaultFine = displayStatus === 'Overdue'
       && loan?.fineEnabled
       && Number(item.fine || 0) <= 0
         ? Number(loan.fineAmount || 0)
         : 0;
-
-    const initialPaymentAmount = loan.loanType === 'IO'
-      ? (balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0)
-      : (balance || Number(item.dueAmount) || 0);
-
-    setActionError('');
-    setPaying({
-      ...item,
-      loan,
-      initialPaymentAmount,
-      initialFine: defaultFine,
-    });
+    setFine(String(defaultFine));
+    setPaymentDate(toInputDate());
+    setPaymentMode('Cash');
   };
 
-  const loanForItem = (item) => loans.find((loan) => loan.id === item.loanId);
+  const submit = async () => {
+    if (!paying || paymentSubmitLockRef.current) return;
+
+    const isIo = paying.loan?.loanType === 'IO';
+    const paymentTotal = isIo
+      ? Number(interestAmount || 0) + Number(principalAmount || 0)
+      : Number(amount || 0);
+    const fineTotal = Number(fine || 0);
+
+    // Allow a fine-only collection. Reject only when both normal payment
+    // and fine are zero.
+    if (paymentTotal <= 0 && fineTotal <= 0) {
+      setActionError('Enter an amount paid or a fine amount before saving.');
+      return;
+    }
+
+    // Synchronous lock prevents accidental double-click / double-submit
+    // before React has time to re-render the disabled button.
+    paymentSubmitLockRef.current = true;
+    setPaymentSaving(true);
+    setActionError('');
+
+    try {
+      const saved = isIo
+        ? await recordLoanPayment(paying.loanId, {
+            interestAmount,
+            principalAmount,
+            fine,
+            paymentDate,
+            paymentMode,
+          })
+        : await recordLoanPayment(paying.loanId, {
+            amount,
+            fine,
+            paymentDate,
+            paymentMode,
+          });
+
+      if (saved) {
+        setPaying(null);
+        setAmount('');
+        setInterestAmount('');
+        setPrincipalAmount('0');
+        setFine('0');
+      }
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not save the collection to the database.');
+    } finally {
+      paymentSubmitLockRef.current = false;
+      setPaymentSaving(false);
+    }
+  };
+
+  const loanForItem = (item) => {
+    const itemKeys = new Set(collectionLoanIdentityKeys(item));
+    return (loans || []).find((loan) =>
+      loanIdentityKeys(loan).some((key) => itemKeys.has(key)),
+    );
+  };
 
   const isLoanClosed = (item) => {
     const loan = loanForItem(item);
-    const status = String(loan?.status || '').toLowerCase();
-    return !loan || status === 'closed' || status === 'preclosed' || Number(loan.outstanding) <= 0;
+    const status = String(loan?.status || '').trim().toLowerCase();
+    return !loan || isPreclosedCollection(item) || status === 'closed' || status === 'preclosed' || Number(loan.outstanding) <= 0;
   };
 
   const actionLabel = (item) => {
@@ -335,11 +411,6 @@ export default function Collection() {
     if (item.date > today && displayStatus !== 'Paid') return 'Pay Early';
     if (displayStatus === 'Paid') return 'Add Payment';
     return 'Collect';
-  };
-
-  const openCustomerProfile = (customerId) => {
-    if (!customerId) return;
-    navigate(`/customers/${encodeURIComponent(customerId)}`);
   };
 
   const emptyMessage = {
@@ -504,7 +575,7 @@ export default function Collection() {
 
         <div className="collection-view-note">
           {collectionView === 'Today' && 'Collections due today, including entries already paid today.'}
-          {collectionView === 'Overdue' && 'Previous unpaid and partial installments are grouped into one row per customer loan.'}
+          {collectionView === 'Overdue' && 'Previous unpaid and partial collections that still need recovery.'}
           {collectionView === 'Upcoming' && 'Only the next unpaid installment for each active loan is shown.'}
           {collectionView === 'All' && 'Overdue + today + one next upcoming installment per active loan.'}
         </div>
@@ -512,81 +583,32 @@ export default function Collection() {
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table">
             <thead>
-              {collectionView === 'Overdue' ? (
-                <tr>
-                  <th>Customer</th><th>Loan</th><th>Cycle</th><th>Overdue Dues</th><th>Paid</th><th>Pending</th><th>Outstanding</th><th>Fine</th><th>Oldest Due</th><th>Status</th><th>Action</th>
-                </tr>
-              ) : (
-                <tr>
-                  <th>Customer</th><th>Loan</th><th>Cycle</th><th>Due</th><th>Paid</th><th>Balance</th><th>Fine</th><th>Date</th><th>Status</th><th>Action</th>
-                </tr>
-              )}
+              <tr>
+                <th>Customer</th><th>Loan</th><th>Cycle</th><th>Due</th><th>Paid</th><th>Balance</th><th>Fine</th><th>Date</th><th>Status</th><th>Action</th>
+              </tr>
             </thead>
             <tbody>
-              {displayRows.map((item) => {
+              {filtered.map((item) => {
                 const displayStatus = getDisplayStatus(item, today);
                 const balance = balanceOf(item);
                 const isFuture = item.date > today;
                 const loanClosed = isLoanClosed(item);
-                const currentLoan = loanForItem(item);
-                const outstanding = item.groupedOverdue
-                  ? Number(item.loanOutstanding || currentLoan?.outstanding || 0)
-                  : Number(currentLoan?.outstanding || 0);
-
                 return (
                   <tr key={item.id}>
                     <td>
                       <div className="row-title">
                         <span className="row-avatar">{item.customerName.charAt(0)}</span>
-                        <div>
-                          <button
-                            type="button"
-                            onClick={() => openCustomerProfile(item.customerId)}
-                            title={`Open ${item.customerName} profile`}
-                            style={{
-                              all: 'unset',
-                              display: 'block',
-                              cursor: 'pointer',
-                              font: 'inherit',
-                              fontWeight: 700,
-                              color: 'inherit',
-                            }}
-                          >
-                            {item.customerName}
-                          </button>
-                          <small>{item.customerId}</small>
-                        </div>
+                        <div><strong>{item.customerName}</strong><small>{item.customerId}</small></div>
                       </div>
                     </td>
                     <td>{item.loanId}</td>
                     <td><span className="soft-chip blue">{item.cycle}</span></td>
-
-                    {collectionView === 'Overdue' ? (
-                      <>
-                        <td>
-                          <strong>{item.overdueCount || 1}</strong>
-                          <small style={{ display: 'block', marginTop: 3 }}>
-                            {formatCurrency(item.dueAmount)}
-                          </small>
-                        </td>
-                        <td>{formatCurrency(item.loanPaid || 0)}</td>
-                        <td><strong>{formatCurrency(balance)}</strong></td>
-                        <td><strong>{formatCurrency(outstanding)}</strong></td>
-                        <td>{formatCurrency(item.fine)}</td>
-                        <td>{formatDate(item.firstOverdueDate || item.date)}</td>
-                        <td><StatusBadge status="Overdue" /></td>
-                      </>
-                    ) : (
-                      <>
-                        <td>{formatCurrency(item.dueAmount)}</td>
-                        <td>{formatCurrency(item.paidAmount)}</td>
-                        <td><strong>{formatCurrency(balance)}</strong></td>
-                        <td>{formatCurrency(item.fine)}</td>
-                        <td>{formatDate(item.date)}</td>
-                        <td><StatusBadge status={displayStatus} /></td>
-                      </>
-                    )}
-
+                    <td>{formatCurrency(item.dueAmount)}</td>
+                    <td>{formatCurrency(item.paidAmount)}</td>
+                    <td><strong>{formatCurrency(balance)}</strong></td>
+                    <td>{formatCurrency(item.fine)}</td>
+                    <td>{formatDate(item.date)}</td>
+                    <td><StatusBadge status={displayStatus} /></td>
                     <td>
                       <div className="collection-row-actions">
                         {isFuture && (
@@ -611,9 +633,9 @@ export default function Collection() {
                   </tr>
                 );
               })}
-              {displayRows.length === 0 && (
+              {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={collectionView === 'Overdue' ? 11 : 10}>
+                  <td colSpan="10">
                     <div className="collection-empty-state">
                       <CalendarDays size={22} />
                       <strong>{emptyMessage}</strong>
@@ -627,69 +649,27 @@ export default function Collection() {
         </div>
 
         <div className="mobile-data-list">
-          {displayRows.map((item) => {
+          {filtered.map((item) => {
             const displayStatus = getDisplayStatus(item, today);
             const balance = balanceOf(item);
             const isFuture = item.date > today;
             const loanClosed = isLoanClosed(item);
-            const currentLoan = loanForItem(item);
-            const outstanding = item.groupedOverdue
-              ? Number(item.loanOutstanding || currentLoan?.outstanding || 0)
-              : Number(currentLoan?.outstanding || 0);
-
             return (
               <article className="mobile-data-card" key={item.id}>
                 <div className="mobile-data-top">
                   <div className="row-title">
                     <span className="row-avatar">{item.customerName.charAt(0)}</span>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => openCustomerProfile(item.customerId)}
-                        title={`Open ${item.customerName} profile`}
-                        style={{
-                          all: 'unset',
-                          display: 'block',
-                          cursor: 'pointer',
-                          font: 'inherit',
-                          fontWeight: 700,
-                          color: 'inherit',
-                        }}
-                      >
-                        {item.customerName}
-                      </button>
-                      <small>{item.customerId} · {item.cycle}</small>
-                    </div>
+                    <div><strong>{item.customerName}</strong><small>{item.customerId} · {item.cycle}</small></div>
                   </div>
-                  <StatusBadge status={collectionView === 'Overdue' ? 'Overdue' : displayStatus} />
+                  <StatusBadge status={displayStatus} />
                 </div>
-
-                {collectionView === 'Overdue' ? (
-                  <>
-                    <div className="collection-mobile-date">
-                      <CalendarDays size={14} />
-                      {item.overdueCount || 1} overdue due{Number(item.overdueCount || 1) > 1 ? 's' : ''}
-                      {' · '}Oldest {formatDate(item.firstOverdueDate || item.date)}
-                    </div>
-                    <div className="mobile-data-meta">
-                      <div><span>Paid</span><strong>{formatCurrency(item.loanPaid || 0)}</strong></div>
-                      <div><span>Pending</span><strong>{formatCurrency(balance)}</strong></div>
-                      <div><span>Outstanding</span><strong>{formatCurrency(outstanding)}</strong></div>
-                      <div><span>Fine</span><strong>{formatCurrency(item.fine)}</strong></div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="collection-mobile-date"><CalendarDays size={14} /> {formatDate(item.date)}</div>
-                    <div className="mobile-data-meta">
-                      <div><span>Due</span><strong>{formatCurrency(item.dueAmount)}</strong></div>
-                      <div><span>Paid</span><strong>{formatCurrency(item.paidAmount)}</strong></div>
-                      <div><span>Pending</span><strong>{formatCurrency(balance)}</strong></div>
-                      <div><span>Fine</span><strong>{formatCurrency(item.fine)}</strong></div>
-                    </div>
-                  </>
-                )}
-
+                <div className="collection-mobile-date"><CalendarDays size={14} /> {formatDate(item.date)}</div>
+                <div className="mobile-data-meta">
+                  <div><span>Due</span><strong>{formatCurrency(item.dueAmount)}</strong></div>
+                  <div><span>Paid</span><strong>{formatCurrency(item.paidAmount)}</strong></div>
+                  <div><span>Pending</span><strong>{formatCurrency(balance)}</strong></div>
+                  <div><span>Fine</span><strong>{formatCurrency(item.fine)}</strong></div>
+                </div>
                 <div className="collection-mobile-action">
                   {isFuture && (
                     <button type="button" className="collection-schedule-button" onClick={() => setScheduleLoanId(item.loanId)}>
@@ -712,7 +692,7 @@ export default function Collection() {
               </article>
             );
           })}
-          {displayRows.length === 0 && (
+          {filtered.length === 0 && (
             <div className="collection-empty-state mobile">
               <CalendarDays size={22} />
               <strong>{emptyMessage}</strong>
@@ -779,18 +759,66 @@ export default function Collection() {
         </div>
       )}
 
-      <RecordLoanPaymentModal
-        open={Boolean(paying)}
-        loan={paying?.loan}
-        customerName={paying?.customerName}
-        customerId={paying?.customerId}
-        scheduledAmount={paying?.dueAmount}
-        scheduleDate={paying?.date}
-        initialAmount={paying?.initialPaymentAmount}
-        initialFine={paying?.initialFine}
-        title={paying?.date > today ? 'Record Early Payment' : 'Record Collection'}
-        onClose={() => setPaying(null)}
-      />
+      {paying && (
+        <div className="collection-modal-backdrop" onMouseDown={() => setPaying(null)}>
+          <div className="collection-modal module-card" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="collection-modal-head">
+              <div><strong>{paying.date > today ? 'Record Early Payment' : 'Record Collection'}</strong><span>{paying.customerName} · {paying.customerId}</span></div>
+              <IconButton label="Close" onClick={() => setPaying(null)}><X size={18} /></IconButton>
+            </div>
+            <div className="collection-due-banner">
+              <span>{paying.loan?.loanType === 'IO' ? 'Interest due' : paying.date > today ? 'Next scheduled amount' : 'Due amount'}</span>
+              <strong>{formatCurrency(paying.dueAmount)}</strong>
+              <small>{paying.loan?.loanType === 'IO' ? `Principal outstanding ${formatCurrency(paying.loan?.outstanding)}. Interest and principal are separate. Full principal settlement requires only already-due/pending interest; future interest is cancelled.` : paying.date > today ? `Scheduled for ${formatDate(paying.date)}. Payment will be recorded using the actual received date.` : 'Overpay is allowed. Fine is tracked separately.'}</small>
+            </div>
+            <div className="form-grid collection-modal-form">
+              {paying.loan?.loanType === 'IO' ? <>
+                <div className="form-field collection-date-field">
+                  <label>Payment Date</label>
+                  <input type="date" min={paying.loan?.startDate || undefined} max={toInputDate()} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
+                  <small className="field-help">Use the actual received date.</small>
+                </div>
+                <div className="form-field">
+                  <label>Interest Paid</label>
+                  <input autoFocus type="number" min="0" value={interestAmount} onChange={(event) => setInterestAmount(event.target.value)} />
+                </div>
+                <div className="form-field">
+                  <label>Principal Paid</label>
+                  <input type="number" min="0" max={Number(paying.loan?.outstanding) || undefined} value={principalAmount} onChange={(event) => setPrincipalAmount(event.target.value)} />
+                  <small className="field-help">Maximum principal: {formatCurrency(paying.loan?.outstanding)}</small>
+                </div>
+              </> : <>
+              <div className="form-field collection-date-field">
+                <label>Payment Date</label>
+                <input type="date" min={paying.loan?.startDate || undefined} max={toInputDate()} value={paymentDate} onChange={(event) => setPaymentDate(event.target.value)} />
+                <small className="field-help">Use the actual received date.</small>
+              </div>
+              <div className="form-field">
+                <label>Amount Paid</label>
+                <input autoFocus type="number" min="0" value={amount} onChange={(event) => setAmount(event.target.value)} />
+                <small className="field-help">Set this to 0 or leave it blank when collecting only a fine.</small>
+              </div></>}
+              {hasPermission('collections.fine') && <div className="form-field">
+                <label>Fine Paid</label>
+                <input type="number" min="0" value={fine} onChange={(event) => setFine(event.target.value)} />
+              </div>}
+              <div className="form-field">
+                <label>Payment Mode</label>
+                <select value={paymentMode} onChange={(event) => setPaymentMode(event.target.value)}>
+                  <option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option><option>Other</option>
+                </select>
+              </div>
+            </div>
+            <ActionButton
+              icon={Check}
+              onClick={submit}
+              disabled={paymentSaving}
+            >
+              {paymentSaving ? 'Saving…' : 'Save Collection'}
+            </ActionButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
