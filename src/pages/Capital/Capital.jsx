@@ -7,6 +7,7 @@ import {
   Plus,
   Search,
   Trash2,
+  TrendingUp,
   Wallet,
   X,
 } from 'lucide-react';
@@ -133,6 +134,8 @@ export default function Capital() {
   const {
     capital = [],
     capitalMetrics,
+    loans = [],
+    payments = [],
     company,
     saveCapitalEntry,
     deleteCapitalEntry,
@@ -199,11 +202,92 @@ export default function Capital() {
     }
   };
 
+  const actualProfitMetrics = useMemo(() => {
+    let interestEarned = 0;
+    let finesCollected = 0;
+
+    loans.forEach((loan) => {
+      const loanPayments = payments.filter(
+        (payment) => payment.loanId === loan.id
+          && payment.type === 'Collection'
+          && payment.direction === 'in',
+      );
+
+      const collectionCash = loanPayments.reduce(
+        (sum, payment) => sum + Number(payment.collectionAmount || 0),
+        0,
+      );
+
+      const fineCollected = loanPayments.reduce(
+        (sum, payment) => sum + Number(payment.fineAmount || 0),
+        0,
+      );
+
+      const upfrontInterest = loan.interestUpfront
+        ? (loan.loanType === 'IO'
+            ? Number(loan.interestAmount || 0)
+            : Number(loan.totalInterest ?? loan.interestAmount ?? 0))
+        : 0;
+
+      let interestFromPayments = 0;
+
+      if (loan.loanType === 'IO') {
+        interestFromPayments = loanPayments.reduce(
+          (sum, payment) => sum + Number(payment.interestPaid || 0),
+          0,
+        );
+      } else if (!loan.interestUpfront) {
+        const totalInterest = Math.max(
+          0,
+          Number(loan.totalInterest ?? loan.interestAmount ?? 0),
+        );
+        const plannedRepayment = Math.max(
+          0,
+          Number(loan.principal || 0) + totalInterest,
+        );
+        const interestShare = plannedRepayment > 0
+          ? totalInterest / plannedRepayment
+          : 0;
+
+        interestFromPayments = Math.min(
+          totalInterest,
+          collectionCash * interestShare,
+        );
+      }
+
+      interestEarned += upfrontInterest + interestFromPayments;
+      finesCollected += fineCollected;
+    });
+
+    const expensesPaid = Number(capitalMetrics.expensesPaid || 0);
+    const actualProfit = interestEarned + finesCollected - expensesPaid;
+    const totalInvestment = Number(capitalMetrics.totalInvestment || 0);
+    const roiPercent = totalInvestment > 0
+      ? (actualProfit / totalInvestment) * 100
+      : 0;
+
+    return {
+      interestEarned,
+      finesCollected,
+      expensesPaid,
+      actualProfit,
+      roiPercent,
+    };
+  }, [loans, payments, capitalMetrics.expensesPaid, capitalMetrics.totalInvestment]);
+
   const metrics = [
     { label: 'Total Investment', value: formatCurrency(capitalMetrics.totalInvestment), note: 'Investment + additional investment', icon: Landmark, tone: 'blue' },
     { label: 'Available Capital', value: formatCurrency(capitalMetrics.availableCapital), note: 'Capital + collections − loans − expenses', icon: Wallet, tone: capitalMetrics.availableCapital < 0 ? 'red' : 'green' },
     { label: 'Loan Book Outstanding', value: formatCurrency(capitalMetrics.loanBookOutstanding), note: 'Outstanding across active loans', icon: Banknote, tone: 'purple' },
     { label: 'Capital Withdrawn', value: formatCurrency(capitalMetrics.totalWithdrawn), note: 'Partner / investor withdrawals', icon: ArrowUpFromLine, tone: 'orange' },
+    {
+      label: 'Actual Profit Earned',
+      value: formatCurrency(actualProfitMetrics.actualProfit),
+      note: `Interest + fines − expenses · ${actualProfitMetrics.roiPercent.toFixed(2)}% ROI`,
+      icon: TrendingUp,
+      tone: actualProfitMetrics.actualProfit < 0 ? 'red' : 'green',
+      className: 'capital-profit-metric',
+    },
   ];
 
   return (
@@ -216,8 +300,8 @@ export default function Capital() {
       />
 
       <section className="capital-metrics" aria-label="Capital summary">
-        {metrics.map(({ label, value, note, icon: Icon, tone }) => (
-          <article key={label} className={`capital-metric app-card capital-tone-${tone}`}>
+        {metrics.map(({ label, value, note, icon: Icon, tone, className = '' }) => (
+          <article key={label} className={`capital-metric app-card capital-tone-${tone} ${className}`.trim()}>
             <span className="capital-metric-icon"><Icon size={22} /></span>
             <div>
               <span>{label}</span>
