@@ -182,6 +182,23 @@ export default function CustomerDetails() {
   });
   const [transactionBusy, setTransactionBusy] = useState(false);
 
+  // Error toasts should never remain stuck on the customer profile.
+  // Clear the current error automatically after the user has had time to read it.
+  useEffect(() => {
+    if (!actionError) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setActionError('');
+    }, 4500);
+
+    return () => window.clearTimeout(timer);
+  }, [actionError]);
+
+  const changeLoanTab = (nextTab) => {
+    setActionError('');
+    setLoanTab(nextTab);
+  };
+
   const canCorrectTransaction = (item) => (
     isOwner
     && item?.type === 'Collection'
@@ -676,6 +693,7 @@ export default function CustomerDetails() {
   };
 
   const closeLoanPayment = () => {
+    setActionError('');
     setPayingLoan(null);
     setPaymentAmount('');
     setPaymentInterest('');
@@ -738,8 +756,16 @@ export default function CustomerDetails() {
   const submitLoanPayment = async () => {
     if (!payingLoan) return;
     const isIo = payingLoan.loanType === 'IO';
-    const total = isIo ? Number(paymentInterest || 0) + Number(paymentPrincipal || 0) : Number(paymentAmount || 0);
-    if (total <= 0) return;
+    const finePaid = Number(paymentFine || 0);
+    const normalPaid = isIo
+      ? Number(paymentInterest || 0) + Number(paymentPrincipal || 0)
+      : Number(paymentAmount || 0);
+    const totalReceived = normalPaid + finePaid;
+
+    if (totalReceived <= 0) {
+      setActionError('Enter a payment amount or a fine amount.');
+      return;
+    }
     setActionError('');
     try {
       const saved = isIo
@@ -904,7 +930,7 @@ export default function CustomerDetails() {
             role="tab"
             aria-selected={loanTab === 'Active'}
             className={loanTab === 'Active' ? 'active' : ''}
-            onClick={() => setLoanTab('Active')}
+            onClick={() => changeLoanTab('Active')}
           >
             Active <b>{activeCustomerLoans.length}</b>
           </button>
@@ -913,7 +939,7 @@ export default function CustomerDetails() {
             role="tab"
             aria-selected={loanTab === 'Closed'}
             className={loanTab === 'Closed' ? 'active' : ''}
-            onClick={() => setLoanTab('Closed')}
+            onClick={() => changeLoanTab('Closed')}
           >
             Closed <b>{closedCustomerLoans.length}</b>
           </button>
@@ -1573,7 +1599,7 @@ export default function CustomerDetails() {
                 <div><span>Next Interest / Cycle</span><strong>{formatCurrency(Math.max(0, Number(payingLoan.outstanding || 0) - Number(paymentPrincipal || 0)) * (Number(payingLoan.interestRate || 0) / 100))}</strong></div>
                 <small>Future cycles only will use the new interest. Interest already due/pending keeps its existing amount.</small>
               </div>}
-            </> : <label><span>Amount Paid</span><input autoFocus type="number" min="1" value={paymentAmount} onChange={(event)=>setPaymentAmount(event.target.value)}/></label>}
+            </> : <label><span>Amount Paid</span><input autoFocus type="number" min="0" value={paymentAmount} onChange={(event)=>setPaymentAmount(event.target.value)}/><small>Use 0 when collecting only a fine.</small></label>}
             {hasPermission('collections.fine') ? <label><span>Fine Paid</span><input type="number" min="0" value={paymentFine} onChange={(event)=>setPaymentFine(event.target.value)}/></label> : null}
             <label><span>Payment Mode</span><select value={paymentMode} onChange={(event)=>setPaymentMode(event.target.value)}><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option><option>Other</option></select></label>
           </div>
@@ -1598,7 +1624,9 @@ export default function CustomerDetails() {
         </div>
 
         <div className="customer-loan-pay-footer">
-          <button type="button" className="customer-loan-save-payment" onClick={submitLoanPayment} disabled={payingLoan.loanType === 'IO' ? (Number(paymentInterest || 0) + Number(paymentPrincipal || 0) <= 0) : Number(paymentAmount)<=0}>
+          <button type="button" className="customer-loan-save-payment" onClick={submitLoanPayment} disabled={payingLoan.loanType === 'IO'
+            ? (Number(paymentInterest || 0) + Number(paymentPrincipal || 0) + Number(paymentFine || 0) <= 0)
+            : (Number(paymentAmount || 0) + Number(paymentFine || 0) <= 0)}>
             <Check size={17}/><span>Save Payment</span>
           </button>
         </div>
