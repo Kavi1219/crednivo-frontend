@@ -68,10 +68,23 @@ export default function Collection() {
 
   const today = toInputDate();
 
+  // Preclosed loans are finished immediately. Their remaining schedule rows
+  // stay in the database for history, but they must not appear as collection
+  // work that still needs to be collected.
+  const preclosedLoanIds = useMemo(
+    () => new Set(
+      (loans || [])
+        .filter((loan) => String(loan.status || '').toLowerCase() === 'preclosed')
+        .map((loan) => loan.id),
+    ),
+    [loans],
+  );
+
   // Summary cards intentionally stay focused on today's workload.
+  // A loan preclosed today is no longer a due for today.
   const todayCollections = useMemo(
-    () => collections.filter((item) => item.date === today),
-    [collections, today],
+    () => collections.filter((item) => item.date === today && !preclosedLoanIds.has(item.loanId)),
+    [collections, today, preclosedLoanIds],
   );
 
   const todayExpected = todayCollections.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
@@ -95,9 +108,9 @@ export default function Collection() {
   // Previous unpaid/partial entries remain in Overdue.
   const overdueCollections = useMemo(
     () => collections
-      .filter((item) => item.date < today && balanceOf(item) > 0)
+      .filter((item) => !preclosedLoanIds.has(item.loanId) && item.date < today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer),
-    [collections, today],
+    [collections, today, preclosedLoanIds],
   );
 
   // Upcoming only shows ONE next unpaid installment per active loan.
@@ -105,13 +118,13 @@ export default function Collection() {
   const upcomingCollections = useMemo(() => {
     const nextByLoan = new Map();
     collections
-      .filter((item) => item.date > today && balanceOf(item) > 0)
+      .filter((item) => !preclosedLoanIds.has(item.loanId) && item.date > today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer)
       .forEach((item) => {
         if (!nextByLoan.has(item.loanId)) nextByLoan.set(item.loanId, item);
       });
     return Array.from(nextByLoan.values()).sort(sortByDateThenCustomer);
-  }, [collections, today]);
+  }, [collections, today, preclosedLoanIds]);
 
   const activeCollections = useMemo(() => {
     const merged = [...overdueCollections, ...todayCollections, ...upcomingCollections];
@@ -310,7 +323,8 @@ export default function Collection() {
 
   const isLoanClosed = (item) => {
     const loan = loanForItem(item);
-    return !loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0;
+    const status = String(loan?.status || '').toLowerCase();
+    return !loan || status === 'closed' || status === 'preclosed' || Number(loan.outstanding) <= 0;
   };
 
   const actionLabel = (item) => {
