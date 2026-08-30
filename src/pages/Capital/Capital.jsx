@@ -323,7 +323,7 @@ export default function Capital() {
         <div className="capital-position-grid">
           <div><span>Net Capital</span><strong>{formatCurrency(capitalMetrics.netCapital)}</strong><small>Investment − withdrawals</small></div>
           <b>+</b>
-          <div><span>Collections Received</span><strong>{formatCurrency(capitalMetrics.collectionsReceived)}</strong><small>Recorded customer collections</small></div>
+          <div><span>Collections Received</span><strong>{formatCurrency(capitalMetrics.collectionsReceived)}</strong><small>Customer collections + fines received</small></div>
           <b>−</b>
           <div><span>Loans Disbursed</span><strong>{formatCurrency(capitalMetrics.loanDisbursed)}</strong><small>Actual amounts given to customers</small></div>
           <b>−</b>

@@ -949,7 +949,14 @@ export function CrednivoProvider({ children }) {
     const netCapital = totalInvestment - totalWithdrawn;
     const collectionsReceived = data.payments
       .filter((item) => item.type === 'Collection' && item.direction === 'in')
-      .reduce((sum, item) => sum + (Number(item.collectionAmount ?? item.amount) || 0), 0);
+      .reduce((sum, item) => {
+        // payment.amount from the backend is collection cash + fine. Prefer it
+        // so fines increase available capital too; keep a legacy fallback.
+        if (item.amount != null) return sum + (Number(item.amount) || 0);
+        return sum
+          + (Number(item.collectionAmount) || 0)
+          + (Number(item.fineAmount) || 0);
+      }, 0);
     const loanDisbursed = data.loans.reduce((sum, item) => sum + (Number(item.disbursedAmount) || 0), 0);
     const expensesPaid = data.expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const loanBookOutstanding = data.loans
