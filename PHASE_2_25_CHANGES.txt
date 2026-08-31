@@ -1,7 +1,0 @@
-CREDNIVO Phase 2.25
-
-- Customer and Loan sidebar groups now start collapsed by default.
-- Added the CREDNIVO circular chart logo to the mobile app header.
-- Mobile header now uses CREDNIVO brand identity instead of the generic Business Workspace title.
-- Added the same CREDNIVO logo treatment to the mobile drawer header.
-- Desktop header/page behavior remains unchanged.

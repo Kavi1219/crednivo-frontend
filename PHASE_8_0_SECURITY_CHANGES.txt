@@ -1,3 +1,0 @@
-Phase 8.0 frontend security change:
-- API fetches now include credentials so the HttpOnly media session cookie is accepted/sent.
-- Existing route and action permission guards are preserved.

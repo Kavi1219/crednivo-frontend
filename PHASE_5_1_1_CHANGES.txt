@@ -1,6 +1,0 @@
-CREDNIVO PHASE 5.1.1 - REPORT CARD CLICK FIX
-
-- Collection Report card at the bottom of Reports Overview is now clickable.
-- Overview and Monthly Statement cards are clickable too.
-- Clicking a card switches to the requested report and scrolls to the top.
-- No backend or database change required.
