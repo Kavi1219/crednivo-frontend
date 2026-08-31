@@ -5,3 +5,146 @@
 @media(max-width:767px){.expense-metric-strip{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:480px){.expense-form{grid-template-columns:1fr}.expense-form .span-2{grid-column:auto}.expense-metric-strip{grid-template-columns:1fr}}
 .expense-creator-note { margin-top: 4px; color: var(--ink-500); font-size: 9px; line-height: 1.4; }
+
+/* =========================================================
+   Expense History category filter tabs
+   All / General / Travel / Office / Food / Other
+   ========================================================= */
+.expense-section-title{
+  gap:16px;
+}
+.expense-section-title>div:first-child{
+  min-width:0;
+}
+.expense-section-title>div:first-child span{
+  display:block;
+  margin-top:3px;
+}
+.expense-filter-summary{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+}
+.expense-filter-summary span{
+  color:var(--ink-500);
+  font-size:9px;
+  font-weight:650;
+}
+.expense-filter-summary strong{
+  color:var(--ink-950);
+  font-size:11px;
+  font-weight:800;
+}
+.expense-category-filter-wrap{
+  padding:0 15px 14px;
+  border-bottom:1px solid var(--line);
+  overflow:hidden;
+}
+.expense-category-filter{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  overflow-x:auto;
+  padding:1px 1px 4px;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.expense-category-filter::-webkit-scrollbar{display:none}
+.expense-category-filter button{
+  min-height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  flex:0 0 auto;
+  padding:0 11px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:var(--surface);
+  color:var(--ink-700);
+  font:inherit;
+  font-size:10px;
+  font-weight:750;
+  cursor:pointer;
+  transition:background .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.expense-category-filter button:hover{
+  border-color:#b9d3f6;
+  background:#f5f9ff;
+  color:#1268dc;
+}
+.expense-category-filter button b{
+  min-width:21px;
+  height:21px;
+  display:inline-grid;
+  place-items:center;
+  padding:0 5px;
+  margin:0;
+  border-radius:999px;
+  background:var(--surface-soft);
+  color:var(--ink-600);
+  font-size:8px;
+  font-weight:800;
+  line-height:1;
+}
+.expense-category-filter button.active{
+  border-color:#1776ec;
+  background:#1776ec;
+  color:#fff;
+  box-shadow:0 5px 14px rgba(23,118,236,.18);
+}
+.expense-category-filter button.active b{
+  background:#fff;
+  color:#1268dc;
+}
+.expense-filter-empty{
+  height:92px;
+  text-align:center!important;
+  color:var(--ink-500)!important;
+  font-size:10px!important;
+  font-weight:650;
+}
+.expense-mobile-filter-empty{
+  padding:28px 16px;
+  text-align:center;
+  color:var(--ink-500);
+  font-size:10px;
+  font-weight:650;
+}
+
+@media(max-width:767px){
+  .expense-section-title{
+    align-items:flex-start;
+  }
+  .expense-filter-summary{
+    flex-direction:column;
+    align-items:flex-end;
+    gap:3px;
+  }
+  .expense-category-filter-wrap{
+    padding:0 12px 12px;
+  }
+  .expense-category-filter{
+    gap:6px;
+  }
+  .expense-category-filter button{
+    min-height:34px;
+    padding:0 10px;
+    font-size:9.5px;
+  }
+}
+
+[data-theme="dark"] .expense-category-filter button,
+.dark .expense-category-filter button{
+  background:var(--surface);
+  border-color:var(--line);
+  color:var(--ink-700);
+}
+[data-theme="dark"] .expense-category-filter button.active,
+.dark .expense-category-filter button.active{
+  background:#1776ec;
+  border-color:#1776ec;
+  color:#fff;
+}
+

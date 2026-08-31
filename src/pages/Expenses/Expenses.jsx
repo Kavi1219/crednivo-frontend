@@ -8,6 +8,8 @@ import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Expenses.css';
 
+const EXPENSE_CATEGORY_FILTERS = ['All', 'General', 'Travel', 'Office', 'Food', 'Other'];
+
 export default function Expenses() {
   const { expenses, addExpense, updateExpense, deleteExpense } = useCrednivo();
   const { user, hasPermission } = useAuth();
@@ -15,12 +17,39 @@ export default function Expenses() {
   const [edit, setEdit] = useState(null);
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [form, setForm] = useState({ purpose: '', amount: '', category: 'General', date: toInputDate(), createdBy: '' });
 
   const today = toInputDate();
   const todays = useMemo(() => expenses.filter((item) => item.date === today), [expenses, today]);
   const total = todays.reduce((sum, item) => sum + item.amount, 0);
   const overall = expenses.reduce((sum, item) => sum + item.amount, 0);
+
+  const categoryCounts = useMemo(() => {
+    const counts = { All: expenses.length, General: 0, Travel: 0, Office: 0, Food: 0, Other: 0 };
+
+    expenses.forEach((item) => {
+      const category = String(item?.category || 'General').trim();
+      const matched = EXPENSE_CATEGORY_FILTERS.find(
+        (value) => value !== 'All' && value.toLowerCase() === category.toLowerCase()
+      );
+      if (matched) counts[matched] += 1;
+    });
+
+    return counts;
+  }, [expenses]);
+
+  const filteredExpenses = useMemo(() => {
+    if (categoryFilter === 'All') return expenses;
+    return expenses.filter(
+      (item) => String(item?.category || 'General').trim().toLowerCase() === categoryFilter.toLowerCase()
+    );
+  }, [expenses, categoryFilter]);
+
+  const filteredExpenseTotal = useMemo(
+    () => filteredExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [filteredExpenses]
+  );
 
   const startAdd = () => {
     setEdit(null);
@@ -84,15 +113,39 @@ export default function Expenses() {
 
       <section className="module-card">
         <div className="expense-section-title">
-          <h2>Expense History</h2>
-          <span>Latest entries first</span>
+          <div>
+            <h2>Expense History</h2>
+            <span>Latest entries first</span>
+          </div>
+          <div className="expense-filter-summary">
+            <span>{filteredExpenses.length} {filteredExpenses.length === 1 ? 'entry' : 'entries'}</span>
+            <strong>{formatCurrency(filteredExpenseTotal)}</strong>
+          </div>
+        </div>
+
+        <div className="expense-category-filter-wrap">
+          <div className="expense-category-filter" role="tablist" aria-label="Filter expenses by category">
+            {EXPENSE_CATEGORY_FILTERS.map((category) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={categoryFilter === category}
+                className={categoryFilter === category ? 'active' : ''}
+                onClick={() => setCategoryFilter(category)}
+                key={category}
+              >
+                <span>{category}</span>
+                <b>{categoryCounts[category] || 0}</b>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table">
             <thead><tr><th>Date</th><th>Purpose</th><th>Category</th><th>Created By</th><th>Amount</th><th>Actions</th></tr></thead>
             <tbody>
-              {expenses.map((item) => (
+              {filteredExpenses.map((item) => (
                 <tr key={item.id}>
                   <td>{formatDate(item.date)}</td>
                   <td><strong>{item.purpose}</strong><small className="table-sub">{item.id}</small></td>
@@ -112,12 +165,19 @@ export default function Expenses() {
                   </td>
                 </tr>
               ))}
+              {filteredExpenses.length === 0 && (
+                <tr>
+                  <td className="expense-filter-empty" colSpan="6">
+                    No {categoryFilter === 'All' ? '' : `${categoryFilter} `}expenses found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="mobile-data-list">
-          {expenses.map((item) => (
+          {filteredExpenses.map((item) => (
             <article className="mobile-data-card" key={item.id}>
               <div className="mobile-data-top">
                 <div><strong>{item.purpose}</strong><small className="table-sub">{formatDate(item.date)} · {item.category}</small></div>
@@ -133,6 +193,11 @@ export default function Expenses() {
               </div>
             </article>
           ))}
+          {filteredExpenses.length === 0 && (
+            <div className="expense-mobile-filter-empty">
+              No {categoryFilter === 'All' ? '' : `${categoryFilter} `}expenses found.
+            </div>
+          )}
         </div>
       </section>
 
