@@ -269,3 +269,129 @@ html[data-theme='dark'] :is(
     font-size: 12px !important;
   }
 }
+
+
+/* =============================================================
+   CREDNIVO GLOBAL POPUP / DETAIL SCROLL CLEARANCE FIX
+   -------------------------------------------------------------
+   Fixes:
+   - popup content stopping before the final row
+   - bottom rows being clipped by the viewport
+   - schedule/detail/payment popups losing the last scroll area
+   - keeps ~6 mm (23 px) visible clearance at the bottom
+   - supports desktop, mobile and safe-area devices
+   ============================================================= */
+
+:root {
+  --crednivo-popup-bottom-clearance: 23px; /* ~6 mm on a 96dpi screen */
+}
+
+/* Modal/detail backdrops must be allowed to scroll when the viewport
+   is shorter than the popup. The extra bottom padding keeps the popup
+   away from the physical bottom edge of the screen. */
+:is(
+  [class*="modal-backdrop"],
+  .record-payment-backdrop,
+  .customer-loan-pay-backdrop,
+  .customer-media-editor-backdrop,
+  .customer-io-extension-backdrop,
+  .dashboard-detail-backdrop
+) {
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: max(
+    var(--crednivo-popup-bottom-clearance),
+    calc(var(--crednivo-popup-bottom-clearance) + env(safe-area-inset-bottom))
+  ) !important;
+  scroll-padding-bottom: var(--crednivo-popup-bottom-clearance);
+}
+
+/* Keep large popup cards inside the usable viewport.
+   This is especially important for 100-row Daily schedules. */
+:is(
+  .collection-schedule-modal,
+  .collection-modal,
+  .record-payment-modal,
+  .customer-loan-pay-modal,
+  .customer-media-editor-modal,
+  .customer-io-extension-modal,
+  .dashboard-detail-sheet,
+  .review-modal,
+  .preclose-modal
+) {
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  max-height: calc(
+    100dvh - var(--crednivo-popup-bottom-clearance) - 18px
+  ) !important;
+}
+
+/* The actual scrolling areas get their own bottom breathing room.
+   The Collection schedule in particular uses collection-schedule-scroll. */
+:is(
+  .collection-schedule-scroll,
+  .customer-loan-pay-body,
+  .customer-media-editor-body,
+  .record-payment-modal,
+  .dashboard-detail-sheet,
+  [class$="-modal-body"],
+  [class*="-modal-body "],
+  [class$="-modal-scroll"],
+  [class*="-modal-scroll "],
+  [class$="-schedule-scroll"],
+  [class*="-schedule-scroll "]
+) {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  padding-bottom: max(
+    var(--crednivo-popup-bottom-clearance),
+    calc(var(--crednivo-popup-bottom-clearance) + env(safe-area-inset-bottom))
+  ) !important;
+  scroll-padding-bottom: var(--crednivo-popup-bottom-clearance) !important;
+}
+
+/* The schedule table must not sit directly on the popup edge. */
+.collection-schedule-scroll > table,
+.collection-schedule-scroll > .module-table {
+  margin-bottom: var(--crednivo-popup-bottom-clearance) !important;
+}
+
+/* Mobile bottom-sheet popups previously used only 12px at the bottom.
+   Keep a full ~6mm clearance and still allow the entire sheet to scroll. */
+@media (max-width: 767px) {
+  :is(
+    [class*="modal-backdrop"],
+    .record-payment-backdrop,
+    .customer-loan-pay-backdrop,
+    .customer-media-editor-backdrop,
+    .customer-io-extension-backdrop,
+    .dashboard-detail-backdrop
+  ) {
+    padding-bottom: max(
+      var(--crednivo-popup-bottom-clearance),
+      calc(var(--crednivo-popup-bottom-clearance) + env(safe-area-inset-bottom))
+    ) !important;
+  }
+
+  :is(
+    .collection-schedule-modal,
+    .collection-modal,
+    .record-payment-modal,
+    .customer-loan-pay-modal,
+    .customer-media-editor-modal,
+    .customer-io-extension-modal,
+    .dashboard-detail-sheet,
+    .review-modal,
+    .preclose-modal
+  ) {
+    max-height: calc(
+      100dvh - var(--crednivo-popup-bottom-clearance) - 12px
+    ) !important;
+  }
+}
+
