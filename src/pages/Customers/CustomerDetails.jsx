@@ -128,7 +128,7 @@ export default function CustomerDetails() {
     cycle: 'Weekly',
     loanType: 'EMI',
     interestRate: '0',
-    duration: '10',
+    duration: '0',
     interestUpfront: false,
     fineEnabled: false,
     fineAmount: '0',
@@ -274,8 +274,9 @@ export default function CustomerDetails() {
   const customer = customers.find((item) => item.id === id);
 
   if (!customer) {
-    return <div className="empty-state module-card"><div><UserRound size={32}/><strong>Customer not found</strong><p>The requested customer is not available in this frontend data.</p></div></div>;
-  }
+    return <div className="empty-state module-card"><div><UserRound size={32}/><strong>Customer not found</strong>
+    <p>The requested customer is not available in this frontend data.</p></div></div>;
+  } 
 
   const customerLoans = loans.filter((loan) => loan.customerId === id);
   const isClosedLoan = (loan) => loan.status === 'Closed' || Number(loan.outstanding) <= 0;
@@ -968,7 +969,7 @@ export default function CustomerDetails() {
                 title={`Edit ${loan.id} · Owner only`}
               >
                 <Pencil size={15}/>
-                <span>Edit Loan</span>
+                <span>Edit</span>
               </button>}
               {isOwner && loan.loanType === 'IO' && !loanClosed && Number(loan.outstanding) > 0 && <button
                 type="button"
@@ -1010,7 +1011,7 @@ export default function CustomerDetails() {
             <div><span>Cycle</span><strong>{loan.cycle}</strong></div>
             <div><span>Collection / Cycle</span><strong>{formatCurrency(loan.loanType === 'IO' ? currentIoInterestPerCycle(loan) : loan.collectionAmount)}</strong></div>
             <div><span>Loan Type</span><strong>{loan.loanType}</strong></div>
-            <div><span>{loan.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{loan.interestRate}% · {formatCurrency(loan.interestAmount ?? (loan.principal * (Number(loan.interestRate) || 0) / 100))}</strong></div>
+            <div><span>{loan.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{loan.interestRate}%</strong></div>
             <div><span>Interest Taken</span><strong>{loan.interestUpfront?'Yes':'No'}</strong></div>
             <div><span>Fine</span><strong>{loan.fineEnabled ? formatCurrency(loan.fineAmount) : 'No'}</strong></div>
             <div><span>Disbursed</span><strong>{formatDate(loan.startDate)}</strong></div>
