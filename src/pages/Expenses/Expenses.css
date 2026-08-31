@@ -148,3 +148,92 @@
   color:#fff;
 }
 
+
+
+/* =========================================================
+   Expense History search
+   Works together with category tabs and existing totals.
+   ========================================================= */
+.expense-history-tools{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  padding:0 15px 12px;
+}
+.expense-search-box{
+  width:min(420px,100%);
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 10px 0 12px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--surface);
+  transition:border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.expense-search-box:focus-within{
+  border-color:#8ab8f5;
+  box-shadow:0 0 0 3px rgba(23,118,236,.09);
+}
+.expense-search-box>svg{
+  flex:0 0 auto;
+  color:var(--ink-500);
+}
+.expense-search-box input{
+  width:100%;
+  min-width:0;
+  height:36px;
+  padding:0;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  color:var(--ink-900);
+  font:inherit;
+  font-size:10.5px;
+  box-shadow:none!important;
+}
+.expense-search-box input::placeholder{
+  color:var(--ink-400);
+}
+.expense-search-box input::-webkit-search-cancel-button{
+  display:none;
+}
+.expense-search-box button{
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  display:inline-grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:8px;
+  background:var(--surface-soft);
+  color:var(--ink-600);
+  cursor:pointer;
+}
+.expense-search-box button:hover{
+  color:#1268dc;
+  background:#edf5ff;
+}
+
+@media(max-width:767px){
+  .expense-history-tools{
+    justify-content:stretch;
+    padding:0 12px 10px;
+  }
+  .expense-search-box{
+    width:100%;
+    min-height:40px;
+  }
+  .expense-search-box input{
+    height:38px;
+    font-size:10px;
+  }
+}
+
+[data-theme="dark"] .expense-search-box,
+.dark .expense-search-box{
+  background:var(--surface);
+  border-color:var(--line);
+}

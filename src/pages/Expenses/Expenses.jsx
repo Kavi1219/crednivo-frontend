@@ -1,4 +1,4 @@
-import { Check, Pencil, Plus, ReceiptText, Trash2, UserRound, X } from 'lucide-react';
+import { Check, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
@@ -18,6 +18,7 @@ export default function Expenses() {
   const [deleteItem, setDeleteItem] = useState(null);
   const [saving, setSaving] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [search, setSearch] = useState('');
   const [form, setForm] = useState({ purpose: '', amount: '', category: 'General', date: toInputDate(), createdBy: '' });
 
   const today = toInputDate();
@@ -40,11 +41,31 @@ export default function Expenses() {
   }, [expenses]);
 
   const filteredExpenses = useMemo(() => {
-    if (categoryFilter === 'All') return expenses;
-    return expenses.filter(
-      (item) => String(item?.category || 'General').trim().toLowerCase() === categoryFilter.toLowerCase()
-    );
-  }, [expenses, categoryFilter]);
+    const query = search.trim().toLowerCase();
+
+    return expenses.filter((item) => {
+      const matchesCategory =
+        categoryFilter === 'All' ||
+        String(item?.category || 'General').trim().toLowerCase() === categoryFilter.toLowerCase();
+
+      if (!matchesCategory) return false;
+      if (!query) return true;
+
+      const searchable = [
+        item?.purpose,
+        item?.category,
+        item?.createdBy,
+        item?.amount,
+        item?.date,
+        item?.id,
+      ]
+        .filter((value) => value !== null && value !== undefined)
+        .join(' ')
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+  }, [expenses, categoryFilter, search]);
 
   const filteredExpenseTotal = useMemo(
     () => filteredExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0),
@@ -123,6 +144,24 @@ export default function Expenses() {
           </div>
         </div>
 
+        <div className="expense-history-tools">
+          <div className="expense-search-box">
+            <Search size={16} aria-hidden="true" />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search purpose, category, creator, amount or date"
+              aria-label="Search expense history"
+            />
+            {search && (
+              <button type="button" onClick={() => setSearch('')} aria-label="Clear expense search">
+                <X size={15} />
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="expense-category-filter-wrap">
           <div className="expense-category-filter" role="tablist" aria-label="Filter expenses by category">
             {EXPENSE_CATEGORY_FILTERS.map((category) => (
@@ -168,7 +207,9 @@ export default function Expenses() {
               {filteredExpenses.length === 0 && (
                 <tr>
                   <td className="expense-filter-empty" colSpan="6">
-                    No {categoryFilter === 'All' ? '' : `${categoryFilter} `}expenses found.
+                    {search
+                      ? `No expenses found for “${search}”.`
+                      : `No ${categoryFilter === 'All' ? '' : `${categoryFilter} `}expenses found.`}
                   </td>
                 </tr>
               )}
@@ -195,7 +236,9 @@ export default function Expenses() {
           ))}
           {filteredExpenses.length === 0 && (
             <div className="expense-mobile-filter-empty">
-              No {categoryFilter === 'All' ? '' : `${categoryFilter} `}expenses found.
+              {search
+                ? `No expenses found for “${search}”.`
+                : `No ${categoryFilter === 'All' ? '' : `${categoryFilter} `}expenses found.`}
             </div>
           )}
         </div>
