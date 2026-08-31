@@ -277,7 +277,7 @@ export default function Capital() {
 
   const metrics = [
     { label: 'Total Investment', value: formatCurrency(capitalMetrics.totalInvestment), note: 'Investment + additional investment', icon: Landmark, tone: 'blue' },
-    { label: 'Available Capital', value: formatCurrency(capitalMetrics.availableCapital), note: 'Capital + collections − loans − expenses', icon: Wallet, tone: capitalMetrics.availableCapital < 0 ? 'red' : 'green' },
+    { label: 'Available Capital', value: formatCurrency(capitalMetrics.availableCapital), note: 'Capital + collections − loans − expenses − savings', icon: Wallet, tone: capitalMetrics.availableCapital < 0 ? 'red' : 'green' },
     { label: 'Loan Book Outstanding', value: formatCurrency(capitalMetrics.loanBookOutstanding), note: 'Outstanding across active loans', icon: Banknote, tone: 'purple' },
     { label: 'Capital Withdrawn', value: formatCurrency(capitalMetrics.totalWithdrawn), note: 'Partner / investor withdrawals', icon: ArrowUpFromLine, tone: 'orange' },
     {
@@ -328,8 +328,10 @@ export default function Capital() {
           <div><span>Loans Disbursed</span><strong>{formatCurrency(capitalMetrics.loanDisbursed)}</strong><small>Actual amounts given to customers</small></div>
           <b>−</b>
           <div><span>Expenses</span><strong>{formatCurrency(capitalMetrics.expensesPaid)}</strong><small>Recorded business expenses</small></div>
+          <b>−</b>
+          <div><span>Savings</span><strong>{formatCurrency(capitalMetrics.savingsTotal || 0)}</strong><small>Owner reserve · not an expense</small></div>
           <b>=</b>
-          <div className="capital-position-result"><span>Available Capital</span><strong>{formatCurrency(capitalMetrics.availableCapital)}</strong><small>Current calculated business cash</small></div>
+          <div className="capital-position-result"><span>Available Capital</span><strong>{formatCurrency(capitalMetrics.availableCapital)}</strong><small>Current calculated business cash after Savings</small></div>
         </div>
       </section>
 

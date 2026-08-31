@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   BarChart3, ChevronDown, CircleDollarSign, FileText, Gauge,
-  HandCoins, Landmark, LogOut, ReceiptText, Settings, Users, UserRound, WalletCards
+  HandCoins, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Users, UserRound, WalletCards
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -13,6 +13,7 @@ const simpleItems = [
   { label: 'Collection', path: '/collection', icon: HandCoins, permission: 'collections.view' },
   { label: 'Payments', path: '/payments', icon: WalletCards, permission: 'payments.view' },
   { label: 'Capital', path: '/capital', icon: Landmark, permission: 'capital.view' },
+  { label: 'Savings', path: '/savings', icon: PiggyBank, ownerOnly: true },
   { label: 'Expenses', path: '/expenses', icon: ReceiptText, permission: 'expenses.view' },
   { label: 'Reports', path: '/reports', icon: BarChart3, permission: 'reports.full' },
   { label: 'Agents', path: '/agents', icon: Users, ownerOnly: true },

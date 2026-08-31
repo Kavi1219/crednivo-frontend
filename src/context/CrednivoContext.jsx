@@ -45,6 +45,7 @@ const seedData = {
   ],
 
   capital: [],
+  savings: [],
   expenses: [
     { id: 'EXP-3001', purpose: 'Fuel', amount: 1250, date: toInputDate(), category: 'Travel', createdBy: 'Arun Kumar' },
     { id: 'EXP-3002', purpose: 'Office stationery', amount: 850, date: toInputDate(), category: 'Office', createdBy: 'Praveen S' },
@@ -363,6 +364,13 @@ function mapBackendCapital(item) {
   };
 }
 
+function mapBackendSaving(item) {
+  return {
+    ...item,
+    amount: asNumber(item.amount),
+  };
+}
+
 function mapBackendAgent(item) {
   return {
     ...item,
@@ -441,7 +449,7 @@ export function CrednivoProvider({ children }) {
       // stale schedule rows.
       const loanRows = hasPermission('loans.view') ? await apiRequest('/loans') : [];
 
-      const [customerRows, paymentRows, documentRows, expenseRows, capitalRows, dashboardRow, capitalMetricRow, agentRows, companyRow] = await Promise.all([
+      const [customerRows, paymentRows, documentRows, expenseRows, capitalRows, dashboardRow, capitalMetricRow, savingImpactRow, savingSummaryRow, agentRows, companyRow] = await Promise.all([
         hasPermission('customers.view') ? apiRequest('/customers') : Promise.resolve([]),
         hasPermission('payments.view') ? apiRequest('/payments') : Promise.resolve([]),
         hasPermission('documents.view') ? apiRequest('/documents') : Promise.resolve([]),
@@ -449,6 +457,8 @@ export function CrednivoProvider({ children }) {
         hasPermission('capital.view') ? apiRequest('/capital') : Promise.resolve([]),
         (hasPermission('overview.view') || hasPermission('todayReport.view')) ? apiRequest('/dashboard/today') : Promise.resolve(null),
         hasPermission('capital.view') ? apiRequest('/capital/metrics') : Promise.resolve(null),
+        hasPermission('capital.view') ? apiRequest('/capital/savings-impact') : Promise.resolve(null),
+        isOwner ? apiRequest('/company/savings') : Promise.resolve(null),
         isOwner ? apiRequest('/agents') : Promise.resolve([]),
         apiRequest('/company'),
       ]);
@@ -473,6 +483,8 @@ export function CrednivoProvider({ children }) {
         documents: mappedDocuments,
         expenses: (expenseRows || []).map(mapBackendExpense),
         capital: (capitalRows || []).map(mapBackendCapital),
+        savings: isOwner ? (savingSummaryRow?.history || []).map(mapBackendSaving) : [],
+        savingsImpactApi: savingImpactRow ? { totalSavings: asNumber(savingImpactRow.totalSavings), source: 'backend' } : null,
         agents: (agentRows || []).map(mapBackendAgent),
         company: mapBackendCompany(companyRow),
         dashboardMetrics: dashboardRow ? mapBackendDashboard(dashboardRow) : null,
@@ -806,6 +818,31 @@ export function CrednivoProvider({ children }) {
     return true;
   };
 
+  const saveSavingEntry = async (entry, existingId = null) => {
+    if (!isOwner) throw new Error('Owner access is required for Savings.');
+    const payload = {
+      amount: Math.max(0, Number(entry?.amount) || 0),
+      date: entry?.date || toInputDate(),
+      note: String(entry?.note || '').trim(),
+    };
+    if (payload.amount <= 0) return null;
+
+    const saved = await apiRequest(existingId ? `/company/savings/${existingId}` : '/company/savings', {
+      method: existingId ? 'PUT' : 'POST',
+      body: JSON.stringify(payload),
+    });
+    await syncCoreData();
+    return saved?.id || null;
+  };
+
+  const deleteSavingEntry = async (id) => {
+    if (!isOwner) throw new Error('Owner access is required for Savings.');
+    if (!id) return false;
+    await apiRequest(`/company/savings/${id}`, { method: 'DELETE' });
+    await syncCoreData();
+    return true;
+  };
+
   const addExpense = async (expense) => {
     const payload = {
       purpose: String(expense.purpose || '').trim(),
@@ -938,8 +975,21 @@ export function CrednivoProvider({ children }) {
     try { await syncCoreData(); } catch { /* backend status already records the error */ }
   };
 
+  const savingsTotal = useMemo(() => {
+    if (data.savingsImpactApi?.source === 'backend') {
+      return asNumber(data.savingsImpactApi.totalSavings);
+    }
+    return (data.savings || []).reduce((sum, item) => sum + asNumber(item.amount), 0);
+  }, [data.savingsImpactApi, data.savings]);
+
   const capitalMetrics = useMemo(() => {
-    if (data.capitalMetricsApi?.source === 'backend') return data.capitalMetricsApi;
+    if (data.capitalMetricsApi?.source === 'backend') {
+      return {
+        ...data.capitalMetricsApi,
+        savingsTotal,
+        availableCapital: asNumber(data.capitalMetricsApi.availableCapital) - savingsTotal,
+      };
+    }
 
     const records = data.capital || [];
     const investments = records.filter((item) => item.type !== 'Capital Withdrawal');
@@ -969,15 +1019,21 @@ export function CrednivoProvider({ children }) {
       collectionsReceived,
       loanDisbursed,
       expensesPaid,
+      savingsTotal,
       loanBookOutstanding,
-      availableCapital: netCapital + collectionsReceived - loanDisbursed - expensesPaid,
+      availableCapital: netCapital + collectionsReceived - loanDisbursed - expensesPaid - savingsTotal,
       entries: records.length,
       source: 'fallback',
     };
-  }, [data]);
+  }, [data, savingsTotal]);
 
   const metrics = useMemo(() => {
-    if (data.dashboardMetrics?.source === 'backend') return data.dashboardMetrics;
+    if (data.dashboardMetrics?.source === 'backend') {
+      return {
+        ...data.dashboardMetrics,
+        availableCapital: asNumber(data.dashboardMetrics.availableCapital) - savingsTotal,
+      };
+    }
 
     const today = toInputDate();
     const todayCollections = data.collections.filter((item) => item.date === today);
@@ -1011,7 +1067,7 @@ export function CrednivoProvider({ children }) {
       upcomingCustomers: 0,
       source: 'fallback',
     };
-  }, [data, capitalMetrics.availableCapital]);
+  }, [data, capitalMetrics.availableCapital, savingsTotal]);
 
   return (
     <CrednivoContext.Provider value={{
@@ -1033,6 +1089,9 @@ export function CrednivoProvider({ children }) {
       deletePayment,
       saveCapitalEntry,
       deleteCapitalEntry,
+      savingsTotal,
+      saveSavingEntry,
+      deleteSavingEntry,
       addExpense,
       updateExpense,
       deleteExpense,

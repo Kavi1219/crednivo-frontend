@@ -15,6 +15,7 @@ import CreateLoan from '../pages/Loans/CreateLoan';
 import Collection from '../pages/Collection/Collection';
 import Payments from '../pages/Payments/Payments';
 import Capital from '../pages/Capital/Capital';
+import Savings from '../pages/Savings/Savings';
 import Expenses from '../pages/Expenses/Expenses';
 import Reports from '../pages/Reports/Reports';
 import Agents from '../pages/Agents/Agents';
@@ -68,6 +69,7 @@ export default function AppRoutes() {
         <Route element={<PermissionOnly permission="expenses.view" />}><Route path="/expenses" element={<Expenses />} /></Route>
         <Route element={<PermissionOnly permission="documents.view" />}><Route path="/documents" element={<Documents />} /></Route>
         <Route element={<PermissionOnly permission="capital.view" />}><Route path="/capital" element={<Capital />} /></Route>
+        <Route element={<OwnerOnly />}><Route path="/savings" element={<Savings />} /></Route>
         <Route element={<PermissionOnly permission="reports.full" />}><Route path="/reports" element={<Reports />} /></Route>
         <Route element={<OwnerOnly />}><Route path="/agents" element={<Agents />} /></Route>
         {/* Personal Settings are intentionally available to both Owner and Agent. */}
