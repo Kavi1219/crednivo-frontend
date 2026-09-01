@@ -141,6 +141,7 @@ export default function MediaUploader({
   const [viewerOpen, setViewerOpen] = useState(false);
   const [mediaError, setMediaError] = useState('');
   const [cameraMode, setCameraMode] = useState(null);
+  const [cameraOpening, setCameraOpening] = useState(false);
 
   const documentList = useMemo(() => {
     if (Array.isArray(documents)) return documents.filter(Boolean).slice(0, maxDocuments);
@@ -209,6 +210,7 @@ export default function MediaUploader({
     streamRef.current?.getTracks?.().forEach((track) => track.stop());
     streamRef.current = null;
     if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraOpening(false);
     setCameraMode(null);
   };
 
@@ -225,12 +227,15 @@ export default function MediaUploader({
       }
     };
 
-    document.addEventListener('mousedown', dismissOnOutsideClick);
-    document.addEventListener('touchstart', dismissOnOutsideClick, { passive: true });
+    const browserDocument = typeof window !== 'undefined' ? window.document : null;
+    if (!browserDocument) return undefined;
+
+    browserDocument.addEventListener('mousedown', dismissOnOutsideClick);
+    browserDocument.addEventListener('touchstart', dismissOnOutsideClick, { passive: true });
 
     return () => {
-      document.removeEventListener('mousedown', dismissOnOutsideClick);
-      document.removeEventListener('touchstart', dismissOnOutsideClick);
+      browserDocument.removeEventListener('mousedown', dismissOnOutsideClick);
+      browserDocument.removeEventListener('touchstart', dismissOnOutsideClick);
     };
   }, [mediaError]);
 
@@ -265,8 +270,9 @@ export default function MediaUploader({
     return undefined;
   }, [cameraMode]);
 
-  const startDesktopCamera = async (mode) => {
+  const startCamera = async (mode) => {
     setMediaError('');
+    setCameraOpening(true);
 
     try {
       const mediaDevices = typeof navigator !== 'undefined' ? navigator.mediaDevices : null;
@@ -275,8 +281,7 @@ export default function MediaUploader({
         : null;
 
       if (!getUserMedia) {
-        // Never throw an app-level error just because live camera is unavailable.
-        // Fall back to the browser's image capture / file picker.
+        setCameraOpening(false);
         if (mode === 'photo') photoCameraRef.current?.click();
         else documentCameraRef.current?.click();
         return;
@@ -286,40 +291,46 @@ export default function MediaUploader({
         video: {
           width: { ideal: 1280 },
           height: { ideal: 720 },
-          facingMode: { ideal: 'environment' },
+          facingMode: isMobileLike() ? { ideal: 'environment' } : undefined,
         },
         audio: false,
       });
 
-      if (!stream || typeof stream.getTracks !== 'function') {
+      if (!stream || typeof stream.getTracks !== 'function' || stream.getVideoTracks?.().length === 0) {
         throw new Error('Camera returned an invalid media stream');
       }
 
       streamRef.current?.getTracks?.().forEach((track) => track.stop());
       streamRef.current = stream;
       setCameraMode(mode);
+      setCameraOpening(false);
     } catch (error) {
       console.error('CREDNIVO camera access failed', error);
       streamRef.current?.getTracks?.().forEach((track) => track.stop());
       streamRef.current = null;
       setCameraMode(null);
+      setCameraOpening(false);
 
-      const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
+      const denied = error?.name === 'NotAllowedError'
+        || error?.name === 'PermissionDeniedError'
+        || error?.name === 'SecurityError';
+      const unavailable = error?.name === 'NotFoundError'
+        || error?.name === 'DevicesNotFoundError'
+        || error?.name === 'NotReadableError';
+
       setMediaError(
         denied
-          ? 'Camera permission was blocked. Allow camera access in the browser, then try again.'
-          : 'Camera could not be opened. You can retry or choose a photo from files.',
+          ? 'Camera permission is blocked. Click the camera/lock icon in the browser address bar, allow Camera, then try again.'
+          : unavailable
+            ? 'No usable camera was found. Check that another app is not using the camera, or choose a photo from files.'
+            : 'Camera could not be opened. Check browser camera permission and try again.',
       );
     }
   };
 
   const requestCamera = (mode) => {
-    if (isMobileLike()) {
-      if (mode === 'photo') photoCameraRef.current?.click();
-      else documentCameraRef.current?.click();
-      return;
-    }
-    startDesktopCamera(mode);
+    if (cameraOpening) return;
+    startCamera(mode);
   };
 
   const captureCamera = () => {
@@ -363,6 +374,7 @@ export default function MediaUploader({
 
   return (
     <div className="media-uploader media-uploader-compact">
+      {cameraOpening && <div className="media-camera-opening"><Camera size={15}/><span>Opening camera...</span></div>}
       {mediaError && <div ref={errorRef} className="media-upload-error"><AlertTriangle size={15}/><span>{mediaError}</span></div>}
 
       <div className="compact-media-strip">
@@ -371,7 +383,9 @@ export default function MediaUploader({
             type="button"
             className={`compact-media-tile compact-photo-tile ${photo ? 'has-photo' : ''}`}
             onClick={() => photo ? setViewerOpen(true) : requestCamera('photo')}
-            title={photo ? `View ${title} photo` : `Take ${title} photo`}
+            disabled={cameraOpening}
+            aria-busy={cameraOpening}
+            title={photo ? `View ${title} photo` : (cameraOpening ? 'Opening camera...' : `Take ${title} photo`)}
           >
             {photo
               ? <ProtectedMediaImage src={photo} alt={`${title} profile`} fallback={<Camera size={27}/>} />
@@ -384,7 +398,9 @@ export default function MediaUploader({
             type="button"
             className="compact-camera-badge"
             onClick={() => requestCamera('photo')}
-            title={photo ? `Replace ${title} photo` : `Take ${title} photo`}
+            disabled={cameraOpening}
+            aria-busy={cameraOpening}
+            title={cameraOpening ? 'Opening camera...' : (photo ? `Replace ${title} photo` : `Take ${title} photo`)}
           >
             <Camera size={14}/>
           </button>
