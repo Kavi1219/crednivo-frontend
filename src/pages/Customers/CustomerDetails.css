@@ -1559,3 +1559,196 @@
   background: rgba(45, 133, 255, .10);
 }
 
+/* =========================================================
+   MOBILE LOAN SLOT COMPACT LAYOUT FIX
+   Added: 2026-09-01
+   Scope: mobile only — desktop/tablet desktop layout unchanged
+   ========================================================= */
+@media (max-width: 767px) {
+  /* Loan Slots heading + Active/Closed tabs */
+  .customer-details-page .customer-loan-section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 12px;
+  }
+
+  .customer-details-page .customer-loan-section-head > div:first-child {
+    min-width: 0;
+  }
+
+  .customer-details-page .customer-loan-section-head > div:first-child h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .customer-details-page .customer-loan-section-head > div:first-child span {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+
+  .customer-details-page .customer-loan-tabs {
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    background: var(--surface-soft);
+  }
+
+  .customer-details-page .customer-loan-tabs button {
+    min-width: 72px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-600);
+    font: inherit;
+    font-size: 10px;
+    font-weight: 750;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .customer-details-page .customer-loan-tabs button b {
+    font-size: 11px;
+  }
+
+  .customer-details-page .customer-loan-tabs button.active {
+    background: var(--surface);
+    color: #0b63d1;
+    box-shadow: 0 1px 4px rgba(15, 40, 72, .10);
+  }
+
+  /* Compact loan card header */
+  .customer-details-page .customer-loan-mobile-card {
+    padding: 13px;
+    min-height: 0;
+  }
+
+  .customer-details-page .customer-loan-mobile-head {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+
+  .customer-details-page .customer-loan-mobile-head > div:first-child {
+    min-width: 0;
+    padding-right: 82px; /* keeps Loan ID clear of the status badge */
+  }
+
+  .customer-details-page .customer-loan-mobile-head > div:first-child strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  /* Actions become one compact horizontal row instead of a tall right column */
+  .customer-details-page .customer-loan-card-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* Keep status at top-right, independent from the action row */
+  .customer-details-page .customer-loan-card-actions > .soft-chip {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 68px;
+    min-height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .customer-details-page .customer-loan-edit-button,
+  .customer-details-page .customer-loan-extend-button,
+  .customer-details-page .customer-loan-schedule-button,
+  .customer-details-page .customer-loan-pay-button {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 7px;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 750;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  /* Override older <=440px rules that hid labels */
+  .customer-details-page .customer-loan-edit-button span,
+  .customer-details-page .customer-loan-extend-button span,
+  .customer-details-page .customer-loan-schedule-button span,
+  .customer-details-page .customer-loan-pay-button span {
+    display: inline;
+  }
+
+  .customer-details-page .customer-loan-schedule-button b {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  /* Remove the visual gap created by the old stacked control column */
+  .customer-details-page .customer-loan-mobile-amount {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .customer-details-page .customer-loan-section-head {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .customer-details-page .customer-loan-tabs {
+    width: 100%;
+  }
+
+  .customer-details-page .customer-loan-tabs button {
+    min-width: 0;
+  }
+
+  .customer-details-page .customer-loan-card-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
