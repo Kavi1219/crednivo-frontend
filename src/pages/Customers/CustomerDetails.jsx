@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -181,6 +181,7 @@ export default function CustomerDetails() {
     note: '',
   });
   const [transactionBusy, setTransactionBusy] = useState(false);
+  const transactionActionLockRef = useRef(false);
 
   // Error toasts should never remain stuck on the customer profile.
   // Clear the current error automatically after the user has had time to read it.
@@ -225,7 +226,8 @@ export default function CustomerDetails() {
   };
 
   const saveTransactionEdit = async () => {
-    if (!editingTransaction || transactionBusy) return;
+    if (!editingTransaction || transactionBusy || transactionActionLockRef.current) return;
+    transactionActionLockRef.current = true;
     const isIoTransaction = editingTransaction.loanType === 'IO';
     const received = isIoTransaction
       ? Number(transactionDraft.interestAmount || 0)
@@ -233,6 +235,7 @@ export default function CustomerDetails() {
     const fineReceived = Number(transactionDraft.fine || 0);
 
     if (received <= 0 && fineReceived <= 0) {
+      transactionActionLockRef.current = false;
       setActionError('Enter an amount paid or a fine amount before saving.');
       return;
     }
@@ -253,12 +256,14 @@ export default function CustomerDetails() {
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not update the transaction.');
     } finally {
+      transactionActionLockRef.current = false;
       setTransactionBusy(false);
     }
   };
 
   const confirmDeleteTransaction = async () => {
-    if (!deletingTransaction || transactionBusy) return;
+    if (!deletingTransaction || transactionBusy || transactionActionLockRef.current) return;
+    transactionActionLockRef.current = true;
     try {
       setTransactionBusy(true);
       setActionError('');
@@ -267,6 +272,7 @@ export default function CustomerDetails() {
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not delete the transaction.');
     } finally {
+      transactionActionLockRef.current = false;
       setTransactionBusy(false);
     }
   };
@@ -1337,7 +1343,13 @@ export default function CustomerDetails() {
         </div>
         <div className="transaction-editor-actions">
           <button type="button" className="transaction-cancel-button" onClick={closeTransactionEditor} disabled={transactionBusy}>Cancel</button>
-          <button type="button" className="transaction-save-button" onClick={saveTransactionEdit} disabled={transactionBusy}>
+          <button
+            type="button"
+            className="transaction-save-button"
+            onClick={saveTransactionEdit}
+            disabled={transactionBusy}
+            aria-busy={transactionBusy}
+          >
             <Save size={16}/><span>{transactionBusy?'Saving...':'Save Changes'}</span>
           </button>
         </div>
@@ -1353,7 +1365,13 @@ export default function CustomerDetails() {
         <small>{formatDate(deletingTransaction.date)} · {deletingTransaction.loanId}</small>
         <div>
           <button type="button" className="transaction-cancel-button" onClick={()=>setDeletingTransaction(null)} disabled={transactionBusy}>Cancel</button>
-          <button type="button" className="transaction-confirm-delete-button" onClick={confirmDeleteTransaction} disabled={transactionBusy}>
+          <button
+            type="button"
+            className="transaction-confirm-delete-button"
+            onClick={confirmDeleteTransaction}
+            disabled={transactionBusy}
+            aria-busy={transactionBusy}
+          >
             <Trash2 size={15}/><span>{transactionBusy?'Deleting...':'Delete Entry'}</span>
           </button>
         </div>
