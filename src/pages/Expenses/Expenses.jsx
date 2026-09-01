@@ -1,5 +1,5 @@
 import { Check, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -11,6 +11,8 @@ import './Expenses.css';
 const EXPENSE_CATEGORY_FILTERS = ['All', 'General', 'Travel', 'Office', 'Food', 'Other'];
 
 export default function Expenses() {
+  const actionLocksRef = useRef(new Set());
+
   const { expenses, addExpense, updateExpense, deleteExpense } = useCrednivo();
   const { user, hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
@@ -85,6 +87,9 @@ export default function Expenses() {
   };
 
   const save = async () => {
+    if (actionLocksRef.current.has('save')) return;
+    actionLocksRef.current.add('save');
+    try {
     if (!form.purpose || Number(form.amount) <= 0 || saving) return;
     try {
       setSaving(true);
@@ -97,9 +102,16 @@ export default function Expenses() {
     } finally {
       setSaving(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('save');
+    }
   };
 
   const removeExpense = async () => {
+    if (actionLocksRef.current.has('removeExpense')) return;
+    actionLocksRef.current.add('removeExpense');
+    try {
     if (!deleteItem || saving) return;
     try {
       setSaving(true);
@@ -109,6 +121,10 @@ export default function Expenses() {
       window.alert(error?.message || 'Unable to delete expense');
     } finally {
       setSaving(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('removeExpense');
     }
   };
 

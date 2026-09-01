@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, UserRound, WalletCards } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -38,6 +38,8 @@ function cycleSummary(startDate, cycle) {
 }
 
 export default function NewCustomer() {
+  const actionLocksRef = useRef(new Set());
+
   const { saveCustomerProfile, saveJaminProfile, addLoan, customers, loans } = useCrednivo();
   const { hasPermission } = useAuth();
   const canCreateLoan = hasPermission('loans.create');
@@ -100,6 +102,9 @@ export default function NewCustomer() {
   };
 
   const confirmReview = async () => {
+    if (actionLocksRef.current.has('confirmReview')) return;
+    actionLocksRef.current.add('confirmReview');
+    try {
     if (saving) return;
     setSaving(true);
     setError('');
@@ -128,6 +133,10 @@ export default function NewCustomer() {
       setReview(null);
     } finally {
       setSaving(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('confirmReview');
     }
   };
 
@@ -218,6 +227,7 @@ export default function NewCustomer() {
         icon={UserRound}
         onClose={()=>setReview(null)}
         onConfirm={confirmReview}
+        busy={saving}
         confirmLabel={saving ? "Saving..." : "Confirm & Continue to Jamin"}
       >
         <div className="review-person"><span className="review-person-photo">{form.photo ? <img src={form.photo} alt="Customer"/> : form.name.charAt(0)?.toUpperCase()}</span><div><strong>{form.name}</strong><small>{formatIndianMobile(form.mobile)} · {form.work}</small></div></div>
@@ -238,6 +248,7 @@ export default function NewCustomer() {
         icon={ShieldCheck}
         onClose={()=>setReview(null)}
         onConfirm={confirmReview}
+        busy={saving}
         confirmLabel={saving ? "Saving..." : "Confirm & Continue to Loan"}
       >
         <div className="review-person"><span className="review-person-photo">{form.jaminPhoto ? <img src={form.jaminPhoto} alt="Jamin"/> : form.jaminName.charAt(0)?.toUpperCase()}</span><div><strong>{form.jaminName}</strong><small>{formatIndianMobile(form.jaminMobile)} · {form.jaminWork}</small></div></div>
@@ -256,6 +267,7 @@ export default function NewCustomer() {
         icon={WalletCards}
         onClose={()=>setReview(null)}
         onConfirm={confirmReview}
+        busy={saving}
         confirmLabel={saving ? "Saving..." : "Confirm & Add Loan"}
       >
         <div className="review-summary-grid">

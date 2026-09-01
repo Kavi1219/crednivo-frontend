@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { CalendarDays, Pencil, PiggyBank, Plus, Trash2, Wallet, X } from 'lucide-react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
@@ -10,6 +10,8 @@ import './Savings.css';
 const emptyDraft = () => ({ amount: '', date: toInputDate(), note: '' });
 
 export default function Savings() {
+  const actionLocksRef = useRef(new Set());
+
   const {
     savings = [],
     savingsTotal = 0,
@@ -56,6 +58,9 @@ export default function Savings() {
   };
 
   const save = async (event) => {
+    if (actionLocksRef.current.has('save')) return;
+    actionLocksRef.current.add('save');
+    try {
     event.preventDefault();
     if (busy || !editor) return;
 
@@ -96,9 +101,16 @@ export default function Savings() {
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('save');
+    }
   };
 
   const confirmDelete = async () => {
+    if (actionLocksRef.current.has('confirmDelete')) return;
+    actionLocksRef.current.add('confirmDelete');
+    try {
     if (!deleteTarget || busy) return;
     try {
       setBusy(true);
@@ -109,6 +121,10 @@ export default function Savings() {
       setError(apiError?.message || 'Could not delete the savings entry.');
     } finally {
       setBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('confirmDelete');
     }
   };
 

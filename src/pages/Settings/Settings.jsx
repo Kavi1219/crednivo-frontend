@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Check, KeyRound, Languages, Monitor, Moon, ShieldCheck, Sun } from 'lucide-react';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -18,6 +18,8 @@ const languageOptions = [
 ];
 
 export default function Settings() {
+  const actionLocksRef = useRef(new Set());
+
   const { uiSettings, resolvedTheme, updateUiSettings } = useCrednivo();
   const { isOwner, changePassword } = useAuth();
   const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -25,6 +27,9 @@ export default function Settings() {
   const [passwordBusy, setPasswordBusy] = useState(false);
 
   const savePassword = async (event) => {
+    if (actionLocksRef.current.has('savePassword')) return;
+    actionLocksRef.current.add('savePassword');
+    try {
     event.preventDefault();
     setPasswordError('');
     if (passwords.newPassword.length < 8) return setPasswordError('New password must contain at least 8 characters.');
@@ -37,6 +42,10 @@ export default function Settings() {
       setPasswordError(error?.message || 'Could not change password.');
     } finally {
       setPasswordBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('savePassword');
     }
   };
 

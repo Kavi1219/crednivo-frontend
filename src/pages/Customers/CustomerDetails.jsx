@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -112,6 +112,8 @@ function DetailRow({ label, value }) {
 }
 
 export default function CustomerDetails() {
+  const actionLocksRef = useRef(new Set());
+
   const { id } = useParams();
   const navigate = useNavigate();
   const { customers, loans, collections, payments, updateLoan, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
@@ -181,7 +183,7 @@ export default function CustomerDetails() {
     note: '',
   });
   const [transactionBusy, setTransactionBusy] = useState(false);
-  const transactionActionLockRef = useRef(false);
+  const [paymentSaving, setPaymentSaving] = useState(false);
 
   // Error toasts should never remain stuck on the customer profile.
   // Clear the current error automatically after the user has had time to read it.
@@ -226,8 +228,10 @@ export default function CustomerDetails() {
   };
 
   const saveTransactionEdit = async () => {
-    if (!editingTransaction || transactionBusy || transactionActionLockRef.current) return;
-    transactionActionLockRef.current = true;
+    if (actionLocksRef.current.has('saveTransactionEdit')) return;
+    actionLocksRef.current.add('saveTransactionEdit');
+    try {
+    if (!editingTransaction || transactionBusy) return;
     const isIoTransaction = editingTransaction.loanType === 'IO';
     const received = isIoTransaction
       ? Number(transactionDraft.interestAmount || 0)
@@ -235,7 +239,6 @@ export default function CustomerDetails() {
     const fineReceived = Number(transactionDraft.fine || 0);
 
     if (received <= 0 && fineReceived <= 0) {
-      transactionActionLockRef.current = false;
       setActionError('Enter an amount paid or a fine amount before saving.');
       return;
     }
@@ -256,14 +259,19 @@ export default function CustomerDetails() {
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not update the transaction.');
     } finally {
-      transactionActionLockRef.current = false;
       setTransactionBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('saveTransactionEdit');
     }
   };
 
   const confirmDeleteTransaction = async () => {
-    if (!deletingTransaction || transactionBusy || transactionActionLockRef.current) return;
-    transactionActionLockRef.current = true;
+    if (actionLocksRef.current.has('confirmDeleteTransaction')) return;
+    actionLocksRef.current.add('confirmDeleteTransaction');
+    try {
+    if (!deletingTransaction || transactionBusy) return;
     try {
       setTransactionBusy(true);
       setActionError('');
@@ -272,8 +280,11 @@ export default function CustomerDetails() {
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not delete the transaction.');
     } finally {
-      transactionActionLockRef.current = false;
       setTransactionBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('confirmDeleteTransaction');
     }
   };
 
@@ -342,6 +353,9 @@ export default function CustomerDetails() {
   };
 
   const saveLoanEdit = async () => {
+    if (actionLocksRef.current.has('saveLoanEdit')) return;
+    actionLocksRef.current.add('saveLoanEdit');
+    try {
     if (!editingLoan || loanEditBusy || !isOwner) return;
 
     const amount = Number(loanDraft.amount || 0);
@@ -389,6 +403,10 @@ export default function CustomerDetails() {
       setActionError(apiError?.message || 'Could not update the loan.');
     } finally {
       setLoanEditBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('saveLoanEdit');
     }
   };
 
@@ -539,6 +557,9 @@ export default function CustomerDetails() {
   };
 
   const saveCustomerDetails = async () => {
+    if (actionLocksRef.current.has('saveCustomerDetails')) return;
+    actionLocksRef.current.add('saveCustomerDetails');
+    try {
     if (customerSaving) return;
     if (!String(customerDraft.name || '').trim()) {
       setActionError('Customer name is required.');
@@ -567,6 +588,10 @@ export default function CustomerDetails() {
     } finally {
       setCustomerSaving(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('saveCustomerDetails');
+    }
   };
 
   const openJaminEditor = () => {
@@ -587,6 +612,9 @@ export default function CustomerDetails() {
   };
 
   const saveJaminDetails = async () => {
+    if (actionLocksRef.current.has('saveJaminDetails')) return;
+    actionLocksRef.current.add('saveJaminDetails');
+    try {
     if (jaminSaving) return;
 
     if (!String(jaminDraft.jaminName || '').trim()) {
@@ -617,6 +645,10 @@ export default function CustomerDetails() {
     } finally {
       setJaminSaving(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('saveJaminDetails');
+    }
   };
 
   const openMediaEditor = (kind) => {
@@ -639,6 +671,9 @@ export default function CustomerDetails() {
   };
 
   const saveMediaChanges = async () => {
+    if (actionLocksRef.current.has('saveMediaChanges')) return;
+    actionLocksRef.current.add('saveMediaChanges');
+    try {
     if (!mediaEditor || mediaSaving) return;
     const photoChanged = String(mediaDraft.photo || '').startsWith('data:');
     const documentChanged = (mediaDraft.documents || []).some((doc) => String(doc?.data || '').startsWith('data:'));
@@ -656,6 +691,10 @@ export default function CustomerDetails() {
       setActionError(apiError?.message || 'Could not save the customer media to the database.');
     } finally {
       setMediaSaving(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('saveMediaChanges');
     }
   };
 
@@ -734,6 +773,9 @@ export default function CustomerDetails() {
   };
 
   const saveIoExtension = async () => {
+    if (actionLocksRef.current.has('saveIoExtension')) return;
+    actionLocksRef.current.add('saveIoExtension');
+    try {
     if (!extensionLoan || extensionSaving) return;
     const cycles = Math.max(0, Number(extensionCycles) || 0);
     if (cycles <= 0) {
@@ -757,9 +799,16 @@ export default function CustomerDetails() {
     } finally {
       setExtensionSaving(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('saveIoExtension');
+    }
   };
 
   const submitLoanPayment = async () => {
+    if (actionLocksRef.current.has('submitLoanPayment')) return;
+    actionLocksRef.current.add('submitLoanPayment');
+    try {
     if (!payingLoan) return;
     const isIo = payingLoan.loanType === 'IO';
     const finePaid = Number(paymentFine || 0);
@@ -772,6 +821,7 @@ export default function CustomerDetails() {
       setActionError('Enter a payment amount or a fine amount.');
       return;
     }
+    setPaymentSaving(true);
     setActionError('');
     try {
       const saved = isIo
@@ -791,6 +841,12 @@ export default function CustomerDetails() {
       if (saved) closeLoanPayment();
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not save the payment to the database.');
+    } finally {
+      setPaymentSaving(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('submitLoanPayment');
     }
   };
 
@@ -1343,13 +1399,7 @@ export default function CustomerDetails() {
         </div>
         <div className="transaction-editor-actions">
           <button type="button" className="transaction-cancel-button" onClick={closeTransactionEditor} disabled={transactionBusy}>Cancel</button>
-          <button
-            type="button"
-            className="transaction-save-button"
-            onClick={saveTransactionEdit}
-            disabled={transactionBusy}
-            aria-busy={transactionBusy}
-          >
+          <button type="button" className="transaction-save-button" onClick={saveTransactionEdit} disabled={transactionBusy}>
             <Save size={16}/><span>{transactionBusy?'Saving...':'Save Changes'}</span>
           </button>
         </div>
@@ -1365,13 +1415,7 @@ export default function CustomerDetails() {
         <small>{formatDate(deletingTransaction.date)} · {deletingTransaction.loanId}</small>
         <div>
           <button type="button" className="transaction-cancel-button" onClick={()=>setDeletingTransaction(null)} disabled={transactionBusy}>Cancel</button>
-          <button
-            type="button"
-            className="transaction-confirm-delete-button"
-            onClick={confirmDeleteTransaction}
-            disabled={transactionBusy}
-            aria-busy={transactionBusy}
-          >
+          <button type="button" className="transaction-confirm-delete-button" onClick={confirmDeleteTransaction} disabled={transactionBusy}>
             <Trash2 size={15}/><span>{transactionBusy?'Deleting...':'Delete Entry'}</span>
           </button>
         </div>
@@ -1577,14 +1621,14 @@ export default function CustomerDetails() {
       </div>
     </div>}
 
-    {payingLoan && <div className="customer-loan-pay-backdrop" onMouseDown={closeLoanPayment}>
+    {payingLoan && <div className="customer-loan-pay-backdrop" onMouseDown={()=>!paymentSaving&&closeLoanPayment()}>
       <div className="customer-loan-pay-modal" onMouseDown={(event)=>event.stopPropagation()}>
         <div className="customer-loan-pay-head">
           <div>
             <strong>Record Loan Payment</strong>
             <span>{payingLoan.id} · {payingLoan.cycle} · {customer.name}</span>
           </div>
-          <button type="button" className="customer-loan-pay-close" onClick={closeLoanPayment} title="Close payment"><X size={18}/></button>
+          <button type="button" className="customer-loan-pay-close" onClick={closeLoanPayment} disabled={paymentSaving} title="Close payment"><X size={18}/></button>
         </div>
         <div className="customer-loan-pay-body">
           <div className="customer-loan-pay-summary">
@@ -1642,10 +1686,10 @@ export default function CustomerDetails() {
         </div>
 
         <div className="customer-loan-pay-footer">
-          <button type="button" className="customer-loan-save-payment" onClick={submitLoanPayment} disabled={payingLoan.loanType === 'IO'
+          <button type="button" className="customer-loan-save-payment" onClick={submitLoanPayment} disabled={paymentSaving || (payingLoan.loanType === 'IO'
             ? (Number(paymentInterest || 0) + Number(paymentPrincipal || 0) + Number(paymentFine || 0) <= 0)
-            : (Number(paymentAmount || 0) + Number(paymentFine || 0) <= 0)}>
-            <Check size={17}/><span>Save Payment</span>
+            : (Number(paymentAmount || 0) + Number(paymentFine || 0) <= 0))}>
+            <Check size={17}/><span>{paymentSaving ? 'Saving...' : 'Save Payment'}</span>
           </button>
         </div>
       </div>

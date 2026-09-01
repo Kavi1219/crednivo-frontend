@@ -395,3 +395,18 @@ html[data-theme='dark'] :is(
   }
 }
 
+
+
+/* =========================================================
+   ONE-CLICK SAVE / MUTATION SAFETY
+   Disabled actions must be visibly and physically inactive.
+   ========================================================= */
+button:disabled,
+.action-button:disabled {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+button[aria-busy="true"],
+.action-button[aria-busy="true"] {
+  pointer-events: none !important;
+}

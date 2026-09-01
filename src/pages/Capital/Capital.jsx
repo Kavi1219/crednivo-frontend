@@ -11,7 +11,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
@@ -131,6 +131,8 @@ function CapitalModal({ open, onClose, onSave, company, editing, saving = false 
 }
 
 export default function Capital() {
+  const actionLocksRef = useRef(new Set());
+
   const {
     capital = [],
     capitalMetrics,
@@ -178,6 +180,9 @@ export default function Capital() {
   };
 
   const save = async (form) => {
+    if (actionLocksRef.current.has('save')) return;
+    actionLocksRef.current.add('save');
+    try {
     if (saving) return;
     try {
       setSaving(true);
@@ -191,14 +196,25 @@ export default function Capital() {
     } finally {
       setSaving(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('save');
+    }
   };
 
   const remove = async (item) => {
+    if (actionLocksRef.current.has('remove')) return;
+    actionLocksRef.current.add('remove');
+    try {
     if (!window.confirm(`Delete ${item.id} - ${item.investorName} ${formatCurrency(item.amount)}?`)) return;
     try {
       await deleteCapitalEntry(item.id);
     } catch (error) {
       window.alert(error?.message || 'Unable to delete capital entry');
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('remove');
     }
   };
 

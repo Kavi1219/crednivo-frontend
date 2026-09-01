@@ -2,7 +2,7 @@ import {
   ArrowLeft, Building2, Camera, CheckCircle2, ChevronLeft, ChevronRight,
   Eye, EyeOff, LockKeyhole, Mail, MapPin, Phone, ShieldCheck, Upload, UserRound
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AuthLoading } from './Login';
@@ -21,6 +21,8 @@ const steps = [
 ];
 
 export default function RegisterCompany() {
+  const actionLocksRef = useRef(new Set());
+
   const { loading, user, registerCompany } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
@@ -100,6 +102,9 @@ export default function RegisterCompany() {
   };
 
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     const finalError = validateStep(1) || validateStep(2) || validateStep(3);
     if (finalError) {
@@ -126,6 +131,10 @@ export default function RegisterCompany() {
       setError(err?.message || 'Could not register company.');
     } finally {
       setBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
     }
   };
 

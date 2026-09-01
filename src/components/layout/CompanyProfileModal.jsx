@@ -1,5 +1,5 @@
 import { Building2, Camera, Save, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import ActionButton from '../common/ActionButton';
 import IconButton from '../common/IconButton';
@@ -7,6 +7,8 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import './CompanyProfileModal.css';
 
 export default function CompanyProfileModal({ open, onClose }) {
+  const actionLocksRef = useRef(new Set());
+
   const { company, updateCompany } = useCrednivo();
   const [form, setForm] = useState(company);
   const [logoFile, setLogoFile] = useState(null);
@@ -48,6 +50,9 @@ export default function CompanyProfileModal({ open, onClose }) {
   };
 
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     setError('');
     if (!form.name?.trim() || !form.owner?.trim() || !form.branch?.trim()) {
@@ -62,6 +67,10 @@ export default function CompanyProfileModal({ open, onClose }) {
       setError(err?.message || 'Could not update company profile.');
     } finally {
       setSaving(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
     }
   };
 

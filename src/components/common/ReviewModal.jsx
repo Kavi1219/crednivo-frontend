@@ -14,23 +14,24 @@ export default function ReviewModal({
   cancelLabel = 'Edit Details',
   onConfirm,
   onClose,
+  busy = false,
 }) {
   useEffect(() => {
     if (!open) return undefined;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (event) => event.key === 'Escape' && onClose?.();
+    const onKey = (event) => event.key === 'Escape' && !busy && onClose?.();
     window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = previous;
       window.removeEventListener('keydown', onKey);
     };
-  }, [open, onClose]);
+  }, [open, onClose, busy]);
 
   if (!open) return null;
 
   return (
-    <div className="review-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose?.()}>
+    <div className="review-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && !busy && onClose?.()}>
       <section className="review-modal" role="dialog" aria-modal="true" aria-label={title}>
         <header className="review-modal-head">
           <span className="review-modal-icon"><Icon size={21} /></span>
@@ -41,12 +42,12 @@ export default function ReviewModal({
             </div>
             {subtitle && <p>{subtitle}</p>}
           </div>
-          <button type="button" className="review-close" onClick={onClose} title="Close"><X size={18} /></button>
+          <button type="button" className="review-close" onClick={onClose} disabled={busy} title="Close"><X size={18} /></button>
         </header>
         <div className="review-modal-body">{children}</div>
         <footer className="review-modal-actions">
-          <ActionButton type="button" tone="secondary" onClick={onClose}>{cancelLabel}</ActionButton>
-          <ActionButton type="button" icon={CheckCircle2} onClick={onConfirm}>{confirmLabel}</ActionButton>
+          <ActionButton type="button" tone="secondary" onClick={onClose} disabled={busy}>{cancelLabel}</ActionButton>
+          <ActionButton type="button" icon={CheckCircle2} onClick={onConfirm} disabled={busy}>{confirmLabel}</ActionButton>
         </footer>
       </section>
     </div>

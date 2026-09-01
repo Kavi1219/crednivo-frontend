@@ -2,7 +2,7 @@ import {
   Camera, CheckCircle2, Clock3, Edit3, Search, ShieldCheck, SlidersHorizontal, Trash2,
   UserCheck, UserPlus, UserX, UsersRound, WalletCards, X
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -42,6 +42,8 @@ const permissionGroups = [
 ];
 
 export default function Agents() {
+  const actionLocksRef = useRef(new Set());
+
   const { agents, company, saveAgent, setAgentStatus, deleteAgent, saveAgentPermissions } = useCrednivo();
   const [search, setSearch] = useState('');
   const [editor, setEditor] = useState(null);
@@ -77,6 +79,9 @@ export default function Agents() {
   };
 
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     setError('');
     const digits = String(form.mobile || '').replace(/\D/g, '');
@@ -98,27 +103,48 @@ export default function Agents() {
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
+    }
   };
 
   const approve = async (agent) => {
+    if (actionLocksRef.current.has('approve')) return;
+    actionLocksRef.current.add('approve');
+    try {
     try {
       setBusy(true);
       await setAgentStatus(agent.id, 'Active');
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('approve');
+    }
   };
 
   const reject = async (agent) => {
+    if (actionLocksRef.current.has('reject')) return;
+    actionLocksRef.current.add('reject');
+    try {
     try {
       setBusy(true);
       await setAgentStatus(agent.id, 'Rejected');
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('reject');
+    }
   };
 
   const remove = async () => {
+    if (actionLocksRef.current.has('remove')) return;
+    actionLocksRef.current.add('remove');
+    try {
     if (!deleting) return;
     try {
       setBusy(true);
@@ -126,6 +152,10 @@ export default function Agents() {
       setDeleting(null);
     } finally {
       setBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('remove');
     }
   };
 
@@ -141,6 +171,9 @@ export default function Agents() {
   };
 
   const savePermissions = async () => {
+    if (actionLocksRef.current.has('savePermissions')) return;
+    actionLocksRef.current.add('savePermissions');
+    try {
     if (!permissionAgent) return;
     try {
       setPermissionBusy(true);
@@ -151,6 +184,10 @@ export default function Agents() {
       setPermissionError(err?.message || 'Could not update agent permissions.');
     } finally {
       setPermissionBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('savePermissions');
     }
   };
 

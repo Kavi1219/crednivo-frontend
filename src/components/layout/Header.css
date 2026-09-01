@@ -374,17 +374,3 @@ html[data-theme='dark'] .profile-dropdown-heading {
 .password-modal-backdrop{z-index:5000;overflow-y:auto;overscroll-behavior:contain}
 .password-modal{max-height:calc(100dvh - 36px);overflow-y:auto;background:var(--surface)}
 @media(max-width:767px){.password-modal-backdrop{align-items:flex-end;padding:0}.password-modal{width:100%;max-height:calc(100dvh - 10px);padding:20px 16px;border-radius:18px 18px 0 0}}
-
-.mobile-header-brand-mark-approved{
-  padding:0 !important;
-  border:0 !important;
-  background:transparent !important;
-  box-shadow:none !important;
-  overflow:visible !important;
-}
-.mobile-header-brand-mark-approved img{
-  width:38px;
-  height:38px;
-  display:block;
-  object-fit:contain;
-}

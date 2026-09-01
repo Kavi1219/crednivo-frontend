@@ -1,5 +1,5 @@
 import { CheckCircle2, Eye, EyeOff, KeyRound, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../services/api';
@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import IconButton from '../common/IconButton';
 
 export default function ChangePasswordModal({ open, onClose }) {
+  const actionLocksRef = useRef(new Set());
+
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirm: '' });
@@ -30,6 +32,9 @@ export default function ChangePasswordModal({ open, onClose }) {
 
   const change = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     setError('');
     if (form.newPassword.length < 8) { setError('New password must contain at least 8 characters.'); return; }
@@ -44,6 +49,10 @@ export default function ChangePasswordModal({ open, onClose }) {
       setError(err?.message || 'Could not change password.');
     } finally {
       setBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
     }
   };
 

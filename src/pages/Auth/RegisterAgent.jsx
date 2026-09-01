@@ -13,15 +13,16 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
 import { AuthLoading } from './Login';
 import './Auth.css';
-import crednivoApprovedMark from '../../assets/brand/crednivo-approved-mark.png';
 
 export default function RegisterAgent() {
+  const actionLocksRef = useRef(new Set());
+
   const { loading, user, status, registerAgent } = useAuth();
   const [form, setForm] = useState({
     name: '', mobile: '', companyName: '', branch: '',
@@ -67,6 +68,9 @@ export default function RegisterAgent() {
   };
 
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     setError('');
     const mobile = String(form.mobile || '').replace(/\D/g, '');
@@ -85,13 +89,17 @@ export default function RegisterAgent() {
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
+    }
   };
 
   if (submitted) {
     return (
       <main className="auth-page auth-registration-page auth-registration-v2">
         <header className="auth-site-header">
-          <div className="auth-site-brand"><span className="auth-site-mark auth-site-mark-approved"><img src={crednivoApprovedMark} alt="" /></span><strong>CREDNIVO</strong></div>
+          <div className="auth-site-brand"><span className="auth-site-mark"><BarChart3 size={23} /></span><strong>CREDNIVO</strong></div>
           <span className="auth-secure-badge"><ShieldCheck size={16} /> Secure &amp; Encrypted</span>
         </header>
         <section className="auth-registration-shell auth-agent-success-shell">
@@ -113,7 +121,7 @@ export default function RegisterAgent() {
     <main className="auth-page auth-registration-page auth-registration-v2">
       <header className="auth-site-header">
         <div className="auth-site-brand">
-          <span className="auth-site-mark auth-site-mark-approved"><img src={crednivoApprovedMark} alt="" /></span>
+          <span className="auth-site-mark"><BarChart3 size={23} /></span>
           <strong>CREDNIVO</strong>
         </div>
         <span className="auth-secure-badge"><ShieldCheck size={16} /> Secure &amp; Encrypted</span>

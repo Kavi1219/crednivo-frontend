@@ -8,7 +8,6 @@ import IconButton from '../common/IconButton';
 import CompanyProfileModal from './CompanyProfileModal';
 import ChangePasswordModal from './ChangePasswordModal';
 import './Header.css';
-import crednivoApprovedMark from '../../assets/brand/crednivo-approved-mark.png';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -98,7 +97,7 @@ export default function Header({ onOpenMenu }) {
     <header className="app-header">
       <div className="header-title-wrap">
         <IconButton label="Open menu" onClick={onOpenMenu} className="mobile-menu-button"><Menu size={22} /></IconButton>
-        <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark mobile-header-brand-mark-approved"><img src={crednivoApprovedMark} alt="" /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
+        <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark"><BarChart3 size={21} strokeWidth={2.2} /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
         <div className="desktop-header-identity">
           <h1>{title}</h1>
           {isOverview ? (

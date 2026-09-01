@@ -1,5 +1,5 @@
 import { Download, Eye, FileCheck2, FileText, FolderOpen, Search, Trash2, Upload, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -19,6 +19,8 @@ function fileSize(value) {
 }
 
 export default function Documents() {
+  const actionLocksRef = useRef(new Set());
+
   const { documents, customers, saveDocument, deleteDocument } = useCrednivo();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
@@ -31,6 +33,9 @@ export default function Documents() {
   const filtered = useMemo(() => documents.filter((d) => `${d.name} ${d.customerId} ${d.type} ${d.fileName}`.toLowerCase().includes(search.toLowerCase().trim())), [documents, search]);
 
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     setError('');
     if (!form.file) {
@@ -47,9 +52,16 @@ export default function Documents() {
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
+    }
   };
 
   const remove = async () => {
+    if (actionLocksRef.current.has('remove')) return;
+    actionLocksRef.current.add('remove');
+    try {
     if (!deleting) return;
     try {
       setBusy(true);
@@ -57,6 +69,10 @@ export default function Documents() {
       setDeleting(null);
     } finally {
       setBusy(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('remove');
     }
   };
 

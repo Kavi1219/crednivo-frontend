@@ -1,5 +1,5 @@
 import { CheckCircle2, Search, UserPlus, UserRound, WalletCards } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -26,6 +26,8 @@ function cycleSummary(startDate, cycle) {
 }
 
 export default function CreateLoan() {
+  const actionLocksRef = useRef(new Set());
+
   const { customers, loans, addLoan } = useCrednivo();
   const { hasPermission } = useAuth();
   const canAddCustomer = hasPermission('customers.add');
@@ -95,6 +97,9 @@ export default function CreateLoan() {
     setReviewOpen(true);
   };
   const confirmCreate=async()=>{
+    if (actionLocksRef.current.has('confirmCreate')) return;
+    actionLocksRef.current.add('confirmCreate');
+    try {
     if (saving) return;
     setSaving(true);
     setError('');
@@ -107,6 +112,10 @@ export default function CreateLoan() {
       setError(apiError?.message || 'Could not create the loan in the CREDNIVO database.');
     } finally {
       setSaving(false);
+    }
+  
+    } finally {
+      actionLocksRef.current.delete('confirmCreate');
     }
   };
 
@@ -225,7 +234,7 @@ export default function CreateLoan() {
       </div>
     </LoanPreview>
 
-    <ReviewModal open={reviewOpen} title="Review Loan Summary" subtitle={`Confirm the loan for ${selectedCustomer?.name || 'selected customer'}.`} badge={loanId} icon={WalletCards} onClose={()=>setReviewOpen(false)} onConfirm={confirmCreate} confirmLabel={saving ? "Saving..." : "Confirm & Add Loan"}>
+    <ReviewModal open={reviewOpen} title="Review Loan Summary" subtitle={`Confirm the loan for ${selectedCustomer?.name || 'selected customer'}.`} badge={loanId} icon={WalletCards} onClose={()=>setReviewOpen(false)} onConfirm={confirmCreate} busy={saving} confirmLabel={saving ? "Saving..." : "Confirm & Add Loan"}>
       <div className="review-summary-grid">
         <div className="review-summary-item accent"><span>Loan ID</span><strong>{loanId}</strong></div>
         <div className="review-summary-item accent"><span>Loan Amount</span><strong>{formatCurrency(terms.principal)}</strong></div>

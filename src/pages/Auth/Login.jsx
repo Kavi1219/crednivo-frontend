@@ -9,10 +9,9 @@ import {
   UsersRound,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import crednivoApprovedMark from '../../assets/brand/crednivo-approved-mark.png';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -26,6 +25,8 @@ function readLoginPreferences() {
 }
 
 export default function Login() {
+  const actionLocksRef = useRef(new Set());
+
   const { loading, user, login } = useAuth();
   const navigate = useNavigate();
   const saved = readLoginPreferences();
@@ -51,6 +52,9 @@ export default function Login() {
   if (user) return <Navigate to="/" replace />;
 
   const submit = async (event) => {
+    if (actionLocksRef.current.has('submit')) return;
+    actionLocksRef.current.add('submit');
+    try {
     event.preventDefault();
     setError('');
 
@@ -84,6 +88,10 @@ export default function Login() {
     } finally {
       setBusy(false);
     }
+  
+    } finally {
+      actionLocksRef.current.delete('submit');
+    }
   };
 
   return (
@@ -92,11 +100,19 @@ export default function Login() {
         <aside className="auth-login-brand-side" aria-label="CREDNIVO">
           <div className="crednivo-cinematic-brand" aria-label="CREDNIVO Finance Management Platform">
             <div className="crednivo-cinematic-symbol" aria-hidden="true">
-              <img
-                className="crednivo-approved-mark crednivo-approved-mark-login"
-                src={crednivoApprovedMark}
-                alt=""
-              />
+              <div className="crednivo-c-ring" />
+
+              <div className="crednivo-growth-bars">
+                <span className="crednivo-growth-bar crednivo-growth-bar-1" />
+                <span className="crednivo-growth-bar crednivo-growth-bar-2" />
+                <span className="crednivo-growth-bar crednivo-growth-bar-3" />
+              </div>
+
+              <div className="crednivo-growth-arrow">
+                <span className="crednivo-growth-arrow-line" />
+                <span className="crednivo-growth-arrow-head" />
+                <span className="crednivo-growth-arrow-glow" />
+              </div>
             </div>
 
             <div className="crednivo-cinematic-copy">
@@ -247,11 +263,12 @@ export function AuthLoading() {
   return (
     <main className="auth-loading auth-loading-classic">
       <div className="auth-loading-new-logo" aria-hidden="true">
-        <img
-          className="crednivo-approved-mark crednivo-approved-mark-loader"
-          src={crednivoApprovedMark}
-          alt=""
-        />
+        <span className="auth-loading-c-shape" />
+        <span className="auth-loading-bar auth-loading-bar-1" />
+        <span className="auth-loading-bar auth-loading-bar-2" />
+        <span className="auth-loading-bar auth-loading-bar-3" />
+        <span className="auth-loading-arrow-line" />
+        <span className="auth-loading-arrow-head" />
       </div>
 
       <strong>CREDNIVO</strong>
