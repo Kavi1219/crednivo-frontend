@@ -1,21 +1,25 @@
 .customer-profile-link {
-  color: inherit;
-  text-decoration: none;
+  color: inherit !important;
+  text-decoration: none !important;
   font: inherit;
   font-weight: inherit;
   cursor: pointer;
   border-radius: 4px;
-  transition: color 0.16s ease, text-decoration-color 0.16s ease;
 }
 
+/* Keep customer names visually identical to normal text.
+   The link remains clickable but does not turn blue or underline. */
 .customer-profile-link:hover,
-.customer-profile-link:focus-visible {
-  color: var(--primary, #0b6ffb);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.customer-profile-link:active,
+.customer-profile-link:visited,
+.customer-profile-link:focus {
+  color: inherit !important;
+  text-decoration: none !important;
 }
 
 .customer-profile-link:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary, #0b6ffb) 45%, transparent);
+  color: inherit !important;
+  text-decoration: none !important;
+  outline: 1px solid color-mix(in srgb, currentColor 32%, transparent);
   outline-offset: 2px;
 }

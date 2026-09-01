@@ -2,6 +2,7 @@ import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, S
 import { useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
+import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -676,7 +677,7 @@ export default function Collection() {
                     <td>
                       <div className="row-title">
                         <span className="row-avatar">{item.customerName.charAt(0)}</span>
-                        <div><strong>{item.customerName}</strong><small>{item.customerId}</small></div>
+                        <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId}</small></div>
                       </div>
                     </td>
                     <td>{item.loanId}</td>
@@ -760,7 +761,7 @@ export default function Collection() {
                 <div className="mobile-data-top">
                   <div className="row-title">
                     <span className="row-avatar">{item.customerName.charAt(0)}</span>
-                    <div><strong>{item.customerName}</strong><small>{item.customerId} · {item.cycle}</small></div>
+                    <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.cycle}</small></div>
                   </div>
                   <StatusBadge status={collectionView === 'Overdue' ? 'Overdue' : displayStatus} />
                 </div>
