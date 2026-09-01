@@ -1752,3 +1752,97 @@
   }
 }
 
+/* =========================================================
+   MOBILE LOAN ACTION CLICK/TAP FIX
+   Added: 2026-09-01
+   Keeps the compact structure and makes every action tappable.
+   ========================================================= */
+@media (max-width: 767px) {
+  .customer-details-page .customer-loan-mobile-card {
+    isolation: isolate;
+  }
+
+  .customer-details-page .customer-loan-mobile-card::before {
+    pointer-events: none !important;
+    z-index: 0;
+  }
+
+  .customer-details-page .customer-loan-mobile-head {
+    position: relative;
+    z-index: 2;
+  }
+
+  .customer-details-page .customer-loan-mobile-head::before,
+  .customer-details-page .customer-loan-mobile-head::after {
+    pointer-events: none !important;
+  }
+
+  .customer-details-page .customer-loan-card-actions {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto !important;
+  }
+
+  .customer-details-page .customer-loan-card-actions > .soft-chip {
+    z-index: 1;
+    pointer-events: none !important;
+    user-select: none;
+  }
+
+  .customer-details-page .customer-loan-edit-button,
+  .customer-details-page .customer-loan-extend-button,
+  .customer-details-page .customer-loan-schedule-button,
+  .customer-details-page .customer-loan-pay-button {
+    position: relative;
+    z-index: 12;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(45, 133, 255, .12);
+    cursor: pointer !important;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Explicit visual styles so Edit and Schedule don't look disabled */
+  .customer-details-page .customer-loan-edit-button {
+    border: 1px solid #cfd9e7;
+    background: var(--surface-soft);
+    color: var(--ink-700);
+  }
+
+  .customer-details-page .customer-loan-edit-button:hover,
+  .customer-details-page .customer-loan-edit-button:active {
+    border-color: #aebed3;
+    background: var(--surface);
+    color: var(--ink-950);
+  }
+
+  .customer-details-page .customer-loan-schedule-button {
+    border: 1px solid #c7d8ee;
+    background: var(--surface-soft);
+    color: #35618e;
+  }
+
+  .customer-details-page .customer-loan-schedule-button:hover,
+  .customer-details-page .customer-loan-schedule-button:active {
+    border-color: #8eb6e9;
+    background: color-mix(in srgb, #2d85ff 7%, var(--surface));
+    color: #0b63d1;
+  }
+
+  .customer-details-page .customer-loan-edit-button svg,
+  .customer-details-page .customer-loan-schedule-button svg,
+  .customer-details-page .customer-loan-extend-button svg,
+  .customer-details-page .customer-loan-pay-button svg {
+    pointer-events: none;
+  }
+
+  .customer-details-page .customer-loan-edit-button span,
+  .customer-details-page .customer-loan-schedule-button span,
+  .customer-details-page .customer-loan-extend-button span,
+  .customer-details-page .customer-loan-pay-button span,
+  .customer-details-page .customer-loan-schedule-button b {
+    pointer-events: none;
+  }
+}
+
