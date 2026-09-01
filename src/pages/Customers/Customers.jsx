@@ -9,6 +9,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, formatIndianMobile, normalizeIndianMobile } from '../../utils/finance';
 import './Customers.css';
+import CustomerAvatar from '../../components/common/CustomerAvatar';
 
 function routeCycle(pathname) {
   if (pathname.includes('/daily')) return 'Daily';
@@ -98,7 +99,7 @@ export default function Customers() {
             <thead><tr><th>Customer</th><th>Cycle</th><th>Active Loan</th><th>Collection</th><th>Outstanding</th><th>Next Due</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>{filtered.map((customer) => (
               <tr key={customer.id}>
-                <td><div className="row-title"><span className={`row-avatar ${customer.photo ? 'has-photo' : ''}`}>{customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}</span><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div></td>
+                <td><div className="row-title"><CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} /><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div></td>
                 <td><span className="soft-chip blue">{customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—'}</span></td>
                 <td>{customerSummaries[customer.id]?.activeLoans.length || 0} active</td>
                 <td>{collectionText(customer)}</td>
@@ -114,7 +115,7 @@ export default function Customers() {
         <div className="mobile-data-list">
           {filtered.map((customer) => (
             <article className="mobile-data-card" key={customer.id}>
-              <div className="mobile-data-top"><div className="row-title"><span className={`row-avatar ${customer.photo ? 'has-photo' : ''}`}>{customer.photo ? <img src={customer.photo} alt={customer.name}/> : customer.name.charAt(0)}</span><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div><IconButton size="sm" label={`View ${customer.name}`} onClick={() => navigate(`/customers/${customer.id}`)}><Eye size={16}/></IconButton></div>
+              <div className="mobile-data-top"><div className="row-title"><CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} /><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div><IconButton size="sm" label={`View ${customer.name}`} onClick={() => navigate(`/customers/${customer.id}`)}><Eye size={16}/></IconButton></div>
               <div className="mobile-data-meta"><div><span>Cycle</span><strong>{customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—'}</strong></div><div><span>Collection</span><strong>{collectionText(customer)}</strong></div><div><span>Outstanding</span><strong>{formatCurrency(customerSummaries[customer.id]?.totalOutstanding || 0)}</strong></div><div><span>Status</span><strong>{customerSummaries[customer.id]?.status || customer.status}</strong></div></div>
             </article>
           ))}

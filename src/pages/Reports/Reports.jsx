@@ -28,6 +28,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Reports.css';
+import CustomerAvatar from '../../components/common/CustomerAvatar';
 
 const CYCLES = ['All', 'Daily', 'Weekly', 'Monthly'];
 
@@ -210,6 +211,10 @@ export default function Reports() {
     agents = [],
     capitalMetrics,
   } = useCrednivo();
+  const customerPhotoById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
+    [customers],
+  );
   const { isOwner, user, hasPermission } = useAuth();
   const navigate = useNavigate();
 
@@ -720,7 +725,7 @@ export default function Reports() {
                 <div className="reports-recovery-list">
                   {overview.overdueRows.slice(0, 5).map((item) => (
                     <div key={item.id}>
-                      <span className="recovery-avatar">{String(item.customerName || 'C').charAt(0)}</span>
+                      <CustomerAvatar className="recovery-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName || 'Customer'} />
                       <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.loanId}</small></div>
                       <div><span>{formatDate(item.date)}</span><strong>{formatCurrency(Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount)))}</strong></div>
                     </div>

@@ -262,3 +262,7 @@ html[data-theme='dark'] .dashboard-pay-modal { background: var(--surface); borde
   filter: saturate(.3);
   transform: none !important;
 }
+
+.dashboard-customer-cell,.dashboard-mobile-customer{display:flex;align-items:center;gap:8px;min-width:0}
+.dashboard-customer-avatar{width:34px;height:34px;border-radius:11px;background:#eaf2ff;color:#0868ec;font-size:10px;font-weight:850}
+.dashboard-mobile-customer>div{min-width:0;display:grid;gap:2px}

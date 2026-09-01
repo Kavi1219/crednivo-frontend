@@ -10,6 +10,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Collection.css';
+import CustomerAvatar from '../../components/common/CustomerAvatar';
 
 function balanceOf(item) {
   return Math.max(0, Number(item?.dueAmount || 0) - Number(item?.paidAmount || 0));
@@ -82,7 +83,7 @@ function isPrecloseMarker(value) {
 }
 
 export default function Collection() {
-  const { collections, loans, payments, recordLoanPayment } = useCrednivo();
+  const { customers, collections, loans, payments, recordLoanPayment } = useCrednivo();
   const { hasPermission } = useAuth();
   const [searchParams] = useSearchParams();
   const initialView = (() => {
@@ -115,6 +116,11 @@ export default function Collection() {
   const paymentSubmitLockRef = useRef(false);
 
   const today = toInputDate();
+
+  const customerPhotoById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
+    [customers],
+  );
 
   // A preclosed loan is finished immediately, even when its original due date
   // is today. Detect it from BOTH the loan record and the PRE-CLOSE transaction.
@@ -676,7 +682,7 @@ export default function Collection() {
                   <tr key={item.id}>
                     <td>
                       <div className="row-title">
-                        <span className="row-avatar">{item.customerName.charAt(0)}</span>
+                        <CustomerAvatar className="row-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
                         <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId}</small></div>
                       </div>
                     </td>
@@ -760,7 +766,7 @@ export default function Collection() {
               <article className="mobile-data-card" key={item.id}>
                 <div className="mobile-data-top">
                   <div className="row-title">
-                    <span className="row-avatar">{item.customerName.charAt(0)}</span>
+                    <CustomerAvatar className="row-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
                     <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.cycle}</small></div>
                   </div>
                   <StatusBadge status={collectionView === 'Overdue' ? 'Overdue' : displayStatus} />

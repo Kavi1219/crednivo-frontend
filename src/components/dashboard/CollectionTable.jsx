@@ -8,15 +8,21 @@ import CustomerProfileLink from '../common/CustomerProfileLink';
 import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
 import StatusBadge from '../common/StatusBadge';
 import './CollectionTable.css';
+import CustomerAvatar from '../common/CustomerAvatar';
 
 const COLLECTION_TABS = ['Daily', 'Weekly', 'Monthly', 'Collected Today'];
 
 export default function CollectionTable() {
   const [tab, setTab] = useState('Daily');
   const [paying, setPaying] = useState(null);
-  const { collections, loans } = useCrednivo();
+  const { customers, collections, loans } = useCrednivo();
   const navigate = useNavigate();
   const today = toInputDate();
+
+  const customerPhotoById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
+    [customers],
+  );
 
   const todayRows = useMemo(
     () => collections.filter((item) => item.date === today),
@@ -99,7 +105,7 @@ export default function CollectionTable() {
                 return (
                   <tr key={row.id}>
                     <td>{row.customerId}</td>
-                    <td><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></td>
+                    <td><div className="dashboard-customer-cell"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></div></td>
                     <td><span className="cycle-chip">{row.cycle}</span></td>
                     <td>{formatCurrency(isCollectedTab ? row.paidAmount : Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</td>
                     <td><StatusBadge status={row.status} /></td>
@@ -135,7 +141,7 @@ export default function CollectionTable() {
             return (
               <article className="mobile-collection-row" key={row.id}>
                 <div className="mobile-row-top">
-                  <div><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId}</span></div>
+                  <div className="dashboard-mobile-customer"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><div><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId}</span></div></div>
                   <StatusBadge status={row.status} />
                 </div>
                 <div className="mobile-row-bottom">

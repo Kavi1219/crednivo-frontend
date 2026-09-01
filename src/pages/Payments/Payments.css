@@ -14,3 +14,7 @@
   .payments-page .module-header,.payments-page .metric-strip,.payment-date-toolbar,.payment-list-toolbar,.payment-export-actions{display:none!important}
   .payment-history-card{border:0;box-shadow:none}.payment-history-head{padding:0 0 14px;border:0}.desktop-data-table{display:block!important}.mobile-data-list{display:none!important}
 }
+
+.payment-customer-identity{display:flex;align-items:center;gap:8px;min-width:0}
+.payment-customer-identity>div{min-width:0;display:grid;gap:2px}
+.payment-customer-avatar{width:34px;height:34px;border-radius:11px;background:#eaf2ff;color:#0868ec;font-size:10px;font-weight:850}

@@ -19,9 +19,10 @@ import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Payments.css';
+import CustomerAvatar from '../../components/common/CustomerAvatar';
 
 export default function Payments() {
-  const { payments } = useCrednivo();
+  const { customers, payments } = useCrednivo();
   const [searchParams] = useSearchParams();
   const requestedFilter = searchParams.get('filter');
   const todayRequested = searchParams.get('today') === '1';
@@ -34,6 +35,11 @@ export default function Payments() {
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState(initialDate);
   const [toDate, setToDate] = useState(initialDate);
+
+  const customerPhotoById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
+    [customers],
+  );
 
   const dateFiltered = useMemo(() => payments.filter((item) => {
     if (fromDate && item.date < fromDate) return false;
@@ -172,7 +178,7 @@ export default function Payments() {
                       <span>{item.type}</span>
                     </div>
                   </td>
-                  <td><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></td>
+                  <td><div className="payment-customer-identity"><CustomerAvatar className="payment-customer-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName}/><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></div></td>
                   <td>{item.loanId || item.customerId}</td>
                   <td>{item.paymentMode || '—'}</td>
                   <td>{item.loanType === 'IO' && item.type === 'Collection' ? `Interest ${formatCurrency(item.interestPaid)} · Principal ${formatCurrency(item.principalPaid)}${Number(item.fineAmount) > 0 ? ` · Fine ${formatCurrency(item.fineAmount)}` : ''}` : item.note}</td>
@@ -187,7 +193,7 @@ export default function Payments() {
           {filtered.map((item) => (
             <article className="mobile-data-card" key={item.id}>
               <div className="mobile-data-top">
-                <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small className="table-sub">{formatDate(item.date)} · {item.type}</small></div>
+                <div className="payment-customer-identity"><CustomerAvatar className="payment-customer-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName}/><div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small className="table-sub">{formatDate(item.date)} · {item.type}</small></div></div>
                 <strong className={item.direction === 'in' ? 'money-in' : 'money-out'}>{item.direction === 'in' ? '+' : '−'} {formatCurrency(item.amount)}</strong>
               </div>
               <div className="mobile-data-meta">

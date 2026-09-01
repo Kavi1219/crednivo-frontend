@@ -1,2 +1,6 @@
 .table-sub { display:block; margin-top:3px; color:var(--ink-500); font-size:9px; }
 .loans-page .module-table td:first-child { color:#145fbf; }
+
+.loan-customer-identity{display:flex;align-items:center;gap:8px;min-width:0}
+.loan-customer-identity>div{min-width:0;display:grid;gap:2px}
+.loan-customer-avatar{width:34px;height:34px;border-radius:11px;background:#eaf2ff;color:#0868ec;font-size:10px;font-weight:850}
