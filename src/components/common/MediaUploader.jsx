@@ -235,29 +235,81 @@ export default function MediaUploader({
   }, [mediaError]);
 
   useEffect(() => {
-    if (cameraMode && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play?.().catch(() => {});
+    if (!cameraMode) return undefined;
+
+    const video = videoRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream) return undefined;
+
+    try {
+      video.srcObject = stream;
+
+      // autoPlay normally starts the preview. Some browsers return undefined
+      // from play(), so never call .catch directly on an unknown value.
+      const playPromise = typeof video.play === 'function' ? video.play() : null;
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((error) => {
+          // A blocked autoplay must not crash the whole Customer Details page.
+          console.warn('CREDNIVO camera preview autoplay was blocked', error);
+        });
+      }
+    } catch (error) {
+      console.error('CREDNIVO camera preview setup failed', error);
+      stream.getTracks?.().forEach((track) => track.stop());
+      streamRef.current = null;
+      try { video.srcObject = null; } catch {}
+      setCameraMode(null);
+      setMediaError('Camera preview could not be started. Please retry or choose a photo from files.');
     }
+
+    return undefined;
   }, [cameraMode]);
 
   const startDesktopCamera = async (mode) => {
     setMediaError('');
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setMediaError('This browser cannot access the PC camera. Try Chrome or Edge and allow camera permission.');
-      return;
-    }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+      const mediaDevices = typeof navigator !== 'undefined' ? navigator.mediaDevices : null;
+      const getUserMedia = mediaDevices && typeof mediaDevices.getUserMedia === 'function'
+        ? mediaDevices.getUserMedia.bind(mediaDevices)
+        : null;
+
+      if (!getUserMedia) {
+        // Never throw an app-level error just because live camera is unavailable.
+        // Fall back to the browser's image capture / file picker.
+        if (mode === 'photo') photoCameraRef.current?.click();
+        else documentCameraRef.current?.click();
+        return;
+      }
+
+      const stream = await getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: { ideal: 'environment' },
+        },
         audio: false,
       });
+
+      if (!stream || typeof stream.getTracks !== 'function') {
+        throw new Error('Camera returned an invalid media stream');
+      }
+
+      streamRef.current?.getTracks?.().forEach((track) => track.stop());
       streamRef.current = stream;
       setCameraMode(mode);
     } catch (error) {
       console.error('CREDNIVO camera access failed', error);
-      setMediaError('Camera could not be opened. Check Windows/browser camera permission and try again.');
+      streamRef.current?.getTracks?.().forEach((track) => track.stop());
+      streamRef.current = null;
+      setCameraMode(null);
+
+      const denied = error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError';
+      setMediaError(
+        denied
+          ? 'Camera permission was blocked. Allow camera access in the browser, then try again.'
+          : 'Camera could not be opened. You can retry or choose a photo from files.',
+      );
     }
   };
 
@@ -281,6 +333,10 @@ export default function MediaUploader({
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
+    if (!context) {
+      setMediaError('Camera capture is not supported by this browser.');
+      return;
+    }
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     const data = canvas.toDataURL('image/jpeg', 0.9);
 

@@ -510,11 +510,16 @@ export function CrednivoProvider({ children }) {
   }, [user?.companyId]);
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    // Some browsers/webviews expose matchMedia inconsistently. Never allow a
+    // missing MediaQueryList to crash the whole application.
+    const media = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null;
 
     const applyTheme = () => {
+      const systemDark = Boolean(media?.matches);
       const theme = uiSettings.theme === 'system'
-        ? (media.matches ? 'dark' : 'light')
+        ? (systemDark ? 'dark' : 'light')
         : uiSettings.theme;
       setResolvedTheme(theme);
       document.documentElement.dataset.theme = theme;
@@ -522,8 +527,20 @@ export function CrednivoProvider({ children }) {
     };
 
     applyTheme();
-    if (uiSettings.theme === 'system') media.addEventListener?.('change', applyTheme);
-    return () => media.removeEventListener?.('change', applyTheme);
+
+    if (uiSettings.theme === 'system' && media) {
+      if (typeof media.addEventListener === 'function') {
+        media.addEventListener('change', applyTheme);
+        return () => media.removeEventListener?.('change', applyTheme);
+      }
+      // Safari / older webview fallback.
+      if (typeof media.addListener === 'function') {
+        media.addListener(applyTheme);
+        return () => media.removeListener?.(applyTheme);
+      }
+    }
+
+    return undefined;
   }, [uiSettings.theme]);
 
   useEffect(() => {
