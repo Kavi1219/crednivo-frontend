@@ -1,0 +1,767 @@
+:root{
+  --bg-1:#041117;
+  --bg-2:#071a20;
+  --metal-1:#f4f3d8;
+  --metal-2:#b9bea1;
+  --metal-3:#7d856d;
+  --glow:#eef8c7;
+  --accent:#d8dfb7;
+  --duration:4.2s;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#041117}
+body{font-family:Inter,Segoe UI,Arial,sans-serif}
+
+.splash{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(40,82,78,.26), transparent 30%),
+    radial-gradient(circle at 50% 100%, rgba(49,88,81,.18), transparent 34%),
+    linear-gradient(180deg,var(--bg-2),var(--bg-1) 62%,#020b0f 100%);
+}
+
+.ambient{
+  position:absolute;
+  border-radius:999px;
+  filter:blur(70px);
+  opacity:.28;
+}
+.ambient-a{width:34vw;height:34vw;left:5vw;top:15vh;background:#183b37}
+.ambient-b{width:42vw;height:42vw;right:-8vw;bottom:-10vh;background:#1f5048}
+
+.logo-stage{
+  position:relative;
+  width:min(1120px,92vw);
+  height:min(420px,54vw);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:34px;
+  transform:translateY(-1vh);
+}
+
+.symbol-wrap{
+  position:relative;
+  width:240px;
+  height:240px;
+  flex:0 0 240px;
+  opacity:0;
+  animation:symbolAppear var(--duration) ease both;
+}
+
+/* C ring reveal */
+.c-ring{
+  position:absolute;
+  inset:8px;
+  border-radius:50%;
+  background:
+    conic-gradient(
+      from 47deg,
+      transparent 0 12deg,
+      var(--metal-1) 12deg 29deg,
+      var(--metal-2) 29deg 265deg,
+      var(--metal-3) 265deg 292deg,
+      transparent 292deg 360deg
+    );
+  filter:
+    drop-shadow(0 0 6px rgba(233,242,199,.28))
+    drop-shadow(0 12px 18px rgba(0,0,0,.38));
+  transform:rotate(-12deg) scale(.88);
+  clip-path:inset(100% 0 0 0);
+  animation:cFill var(--duration) cubic-bezier(.2,.8,.2,1) both;
+}
+.c-ring::after{
+  content:"";
+  position:absolute;
+  inset:32px;
+  border-radius:50%;
+  background:#07171b;
+  box-shadow:inset 0 0 18px rgba(0,0,0,.75);
+}
+
+/* Bars rise */
+.bars{
+  position:absolute;
+  left:70px;
+  bottom:54px;
+  width:98px;
+  height:98px;
+  display:flex;
+  align-items:flex-end;
+  gap:9px;
+  transform:rotate(-1deg);
+}
+.bar{
+  width:20px;
+  border-radius:2px 2px 0 0;
+  background:linear-gradient(90deg,#8d9578 0%,#f3f0ce 55%,#939b7e 100%);
+  box-shadow:0 0 10px rgba(238,244,198,.12);
+  transform-origin:bottom;
+  transform:scaleY(0);
+}
+.b1{height:42px;animation:bar1 var(--duration) ease both}
+.b2{height:64px;animation:bar2 var(--duration) ease both}
+.b3{height:88px;animation:bar3 var(--duration) ease both}
+
+/* Arrow sweeps upward */
+.growth-arrow{
+  position:absolute;
+  left:57px;
+  bottom:51px;
+  width:146px;
+  height:126px;
+  pointer-events:none;
+}
+.arrow-line{
+  position:absolute;
+  left:9px;
+  bottom:17px;
+  width:128px;
+  height:8px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#818b71,#f6f2cf 70%,#fffbe2);
+  transform-origin:left center;
+  transform:rotate(-38deg) scaleX(0);
+  box-shadow:0 0 14px rgba(241,247,203,.42);
+  animation:arrowSweep var(--duration) cubic-bezier(.2,.8,.2,1) both;
+}
+.arrow-head{
+  position:absolute;
+  right:0;
+  top:4px;
+  width:0;height:0;
+  border-left:20px solid #f8f3cf;
+  border-top:13px solid transparent;
+  border-bottom:13px solid transparent;
+  transform:rotate(-38deg) scale(0);
+  filter:drop-shadow(0 0 8px rgba(244,250,211,.58));
+  animation:arrowHead var(--duration) ease both;
+}
+.arrow-glow{
+  position:absolute;
+  right:4px;
+  top:2px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#fbffd9;
+  filter:blur(8px);
+  opacity:0;
+  animation:arrowGlow var(--duration) ease both;
+}
+
+/* Word reveal */
+.wordmark-wrap{
+  position:relative;
+  min-width:0;
+  flex:1 1 auto;
+  transform:translateY(8px);
+}
+.wordmark{
+  display:flex;
+  align-items:flex-end;
+  gap:.015em;
+  white-space:nowrap;
+  font-weight:900;
+  font-size:clamp(42px,6.2vw,95px);
+  line-height:.95;
+  letter-spacing:-.04em;
+  color:#d4d7ba;
+  text-shadow:
+    0 2px 0 #717760,
+    0 8px 14px rgba(0,0,0,.34),
+    0 0 10px rgba(232,241,199,.08);
+}
+.wordmark span{
+  display:inline-block;
+  opacity:0;
+  transform:translateX(-18px);
+  filter:blur(3px);
+}
+.wordmark span:nth-child(1){animation:letterIn var(--duration) .00s ease both}
+.wordmark span:nth-child(2){animation:letterIn var(--duration) .05s ease both}
+.wordmark span:nth-child(3){animation:letterIn var(--duration) .10s ease both}
+.wordmark span:nth-child(4){animation:letterIn var(--duration) .15s ease both}
+.wordmark span:nth-child(5){animation:letterIn var(--duration) .20s ease both}
+.wordmark span:nth-child(6){animation:letterIn var(--duration) .25s ease both}
+.wordmark span:nth-child(7){animation:letterIn var(--duration) .30s ease both}
+.wordmark span:nth-child(8){animation:letterIn var(--duration) .35s ease both}
+
+.tagline{
+  margin-top:18px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  color:#f0f0dc;
+  opacity:0;
+  transform:translateY(8px);
+  animation:taglineIn var(--duration) ease both;
+}
+.tagline span{
+  font-size:clamp(14px,1.75vw,26px);
+  letter-spacing:.01em;
+  white-space:nowrap;
+}
+.tagline i{
+  display:block;
+  width:74px;
+  height:2px;
+  background:linear-gradient(90deg,transparent,#dadcbe 40%,#dadcbe);
+}
+
+/* Exact final raster fades in at the end */
+.final-logo{
+  position:absolute;
+  inset:50% auto auto 50%;
+  width:min(1180px,91vw);
+  max-height:72vh;
+  object-fit:contain;
+  transform:translate(-50%,-50%) scale(.985);
+  opacity:0;
+  filter:drop-shadow(0 16px 30px rgba(0,0,0,.25));
+  animation:finalReveal var(--duration) ease both;
+  pointer-events:none;
+}
+
+.floor-glow{
+  position:absolute;
+  left:50%;
+  bottom:10vh;
+  width:min(820px,72vw);
+  height:90px;
+  transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(199,217,176,.22),rgba(111,142,119,.08) 42%,transparent 72%);
+  filter:blur(18px);
+  opacity:0;
+  animation:floorIn var(--duration) ease both;
+}
+
+@keyframes symbolAppear{
+  0%,6%{opacity:0}
+  10%,78%{opacity:1}
+  86%,100%{opacity:0}
+}
+@keyframes cFill{
+  0%,7%{clip-path:inset(100% 0 0 0);transform:rotate(-12deg) scale(.88)}
+  34%{clip-path:inset(0 0 0 0);transform:rotate(-12deg) scale(1)}
+  78%{opacity:1}
+  86%,100%{opacity:0}
+}
+@keyframes bar1{
+  0%,28%{transform:scaleY(0)}
+  40%,78%{transform:scaleY(1)}
+  86%,100%{opacity:0}
+}
+@keyframes bar2{
+  0%,32%{transform:scaleY(0)}
+  45%,78%{transform:scaleY(1)}
+  86%,100%{opacity:0}
+}
+@keyframes bar3{
+  0%,36%{transform:scaleY(0)}
+  50%,78%{transform:scaleY(1)}
+  86%,100%{opacity:0}
+}
+@keyframes arrowSweep{
+  0%,43%{transform:rotate(-38deg) scaleX(0);opacity:0}
+  48%{opacity:1}
+  64%,78%{transform:rotate(-38deg) scaleX(1);opacity:1}
+  86%,100%{opacity:0}
+}
+@keyframes arrowHead{
+  0%,56%{transform:rotate(-38deg) scale(0);opacity:0}
+  64%,78%{transform:rotate(-38deg) scale(1);opacity:1}
+  86%,100%{opacity:0}
+}
+@keyframes arrowGlow{
+  0%,58%{opacity:0;transform:scale(.4)}
+  64%{opacity:1;transform:scale(1.6)}
+  70%{opacity:.35;transform:scale(1)}
+  78%{opacity:.2}
+  86%,100%{opacity:0}
+}
+@keyframes letterIn{
+  0%,52%{opacity:0;transform:translateX(-18px);filter:blur(3px)}
+  64%,78%{opacity:1;transform:translateX(0);filter:blur(0)}
+  86%,100%{opacity:0}
+}
+@keyframes taglineIn{
+  0%,66%{opacity:0;transform:translateY(8px)}
+  75%,80%{opacity:1;transform:translateY(0)}
+  87%,100%{opacity:0}
+}
+@keyframes finalReveal{
+  0%,79%{opacity:0;transform:translate(-50%,-50%) scale(.985)}
+  89%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@keyframes floorIn{
+  0%,22%{opacity:0}
+  45%,100%{opacity:1}
+}
+
+@media(max-width:760px){
+  .logo-stage{
+    width:94vw;
+    height:76vh;
+    flex-direction:column;
+    gap:16px;
+  }
+  .symbol-wrap{
+    width:180px;height:180px;flex-basis:180px;
+    transform:scale(.78);
+  }
+  .wordmark-wrap{flex:0 0 auto;text-align:center}
+  .wordmark{font-size:clamp(34px,11vw,62px);justify-content:center}
+  .tagline{justify-content:center;margin-top:12px}
+  .tagline i{width:32px}
+  .tagline span{font-size:clamp(12px,3.6vw,18px)}
+  .final-logo{width:96vw}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .symbol-wrap,.c-ring,.bar,.arrow-line,.arrow-head,.arrow-glow,
+  .wordmark span,.tagline,.final-logo,.floor-glow{
+    animation:none !important;
+  }
+  .symbol-wrap,.wordmark-wrap{display:none}
+  .final-logo{opacity:1;transform:translate(-50%,-50%)}
+  .floor-glow{opacity:1}
+}
+
+/* =========================================================
+   FINAL LOGO FULLSCREEN BLEND FIX
+   Removes the visible rectangular/boxed final-logo area.
+   ========================================================= */
+
+.logo-stage{
+  width:100vw !important;
+  height:100vh !important;
+  max-width:none !important;
+  max-height:none !important;
+}
+
+/* Fill the complete splash viewport so the final logo image
+   does not appear inside a separate rectangle. */
+.final-logo{
+  position:fixed !important;
+  inset:0 !important;
+  width:100vw !important;
+  height:100vh !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center center !important;
+  transform:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  filter:none !important;
+  background:transparent !important;
+  animation:finalRevealFullscreen var(--duration) ease both !important;
+  z-index:4;
+}
+
+@keyframes finalRevealFullscreen{
+  0%,79%{
+    opacity:0;
+    transform:scale(1.015);
+  }
+  89%,100%{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+.symbol-wrap,
+.wordmark-wrap{
+  position:relative;
+  z-index:2;
+}
+
+.floor-glow{
+  z-index:0;
+}
+
+@media(max-width:760px){
+  .logo-stage{
+    width:100vw !important;
+    height:100vh !important;
+  }
+
+  .final-logo{
+    width:100vw !important;
+    height:100vh !important;
+    object-fit:cover !important;
+    object-position:center center !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .final-logo{
+    opacity:1 !important;
+    transform:none !important;
+    animation:none !important;
+  }
+}
+
+/* =========================================================
+   MOBILE LOGO SIZE FIX
+   Keeps desktop unchanged. Makes the animation/logo smaller
+   and fully visible on phone screens without cropping.
+   ========================================================= */
+@media (max-width: 760px) {
+  .logo-stage{
+    width:100vw !important;
+    height:100vh !important;
+    flex-direction:column;
+    justify-content:center;
+    gap:10px;
+    padding:0 18px;
+  }
+
+  /* Smaller animated C icon */
+  .symbol-wrap{
+    width:145px !important;
+    height:145px !important;
+    flex:0 0 145px !important;
+    transform:scale(.72) !important;
+    transform-origin:center center;
+  }
+
+  /* Smaller CREDNIVO text during animation */
+  .wordmark-wrap{
+    width:100%;
+    flex:0 0 auto;
+    text-align:center;
+    transform:translateY(0);
+  }
+
+  .wordmark{
+    justify-content:center;
+    font-size:clamp(28px,9vw,46px) !important;
+    letter-spacing:-.035em;
+  }
+
+  .tagline{
+    justify-content:center;
+    gap:8px;
+    margin-top:9px;
+  }
+
+  .tagline span{
+    font-size:clamp(10px,3vw,14px) !important;
+  }
+
+  .tagline i{
+    width:24px !important;
+  }
+
+  /* Important:
+     use CONTAIN on phones instead of COVER.
+     COVER was zooming/cropping the landscape logo on portrait screens. */
+  .final-logo{
+    position:fixed !important;
+    inset:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    max-width:none !important;
+    max-height:none !important;
+    object-fit:contain !important;
+    object-position:center center !important;
+    transform:none !important;
+  }
+
+  .floor-glow{
+    width:66vw !important;
+    height:58px !important;
+    bottom:17vh !important;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 430px) {
+  .symbol-wrap{
+    width:126px !important;
+    height:126px !important;
+    flex-basis:126px !important;
+    transform:scale(.63) !important;
+  }
+
+  .wordmark{
+    font-size:clamp(25px,8.4vw,38px) !important;
+  }
+
+  .tagline span{
+    font-size:clamp(9px,2.8vw,12px) !important;
+  }
+
+  .tagline i{
+    width:18px !important;
+  }
+
+  .logo-stage{
+    padding:0 14px;
+  }
+}
+
+/* =========================================================
+   MOBILE FINAL STATE FIX
+   Keep mobile layout: symbol on top, CREDNIVO below.
+   Do NOT fade in the separate final logo image after animation.
+   End with the CSS-built animated logo itself.
+   Desktop behavior is unchanged.
+   ========================================================= */
+@media (max-width: 760px) {
+  .final-logo{
+    display:none !important;
+    opacity:0 !important;
+    animation:none !important;
+  }
+
+  /* Keep animated elements visible at the end instead of fading away */
+  .symbol-wrap{
+    animation:mobileSymbolStay var(--duration) ease both !important;
+  }
+
+  .c-ring{
+    animation:mobileCFillStay var(--duration) cubic-bezier(.2,.8,.2,1) both !important;
+  }
+
+  .b1{animation:mobileBar1Stay var(--duration) ease both !important;}
+  .b2{animation:mobileBar2Stay var(--duration) ease both !important;}
+  .b3{animation:mobileBar3Stay var(--duration) ease both !important;}
+
+  .arrow-line{
+    animation:mobileArrowSweepStay var(--duration) cubic-bezier(.2,.8,.2,1) both !important;
+  }
+
+  .arrow-head{
+    animation:mobileArrowHeadStay var(--duration) ease both !important;
+  }
+
+  .arrow-glow{
+    animation:mobileArrowGlowStay var(--duration) ease both !important;
+  }
+
+  .wordmark span:nth-child(1){animation:mobileLetterStay var(--duration) .00s ease both !important}
+  .wordmark span:nth-child(2){animation:mobileLetterStay var(--duration) .05s ease both !important}
+  .wordmark span:nth-child(3){animation:mobileLetterStay var(--duration) .10s ease both !important}
+  .wordmark span:nth-child(4){animation:mobileLetterStay var(--duration) .15s ease both !important}
+  .wordmark span:nth-child(5){animation:mobileLetterStay var(--duration) .20s ease both !important}
+  .wordmark span:nth-child(6){animation:mobileLetterStay var(--duration) .25s ease both !important}
+  .wordmark span:nth-child(7){animation:mobileLetterStay var(--duration) .30s ease both !important}
+  .wordmark span:nth-child(8){animation:mobileLetterStay var(--duration) .35s ease both !important}
+
+  .tagline{
+    animation:mobileTaglineStay var(--duration) ease both !important;
+  }
+}
+
+@keyframes mobileSymbolStay{
+  0%,6%{opacity:0}
+  10%,100%{opacity:1}
+}
+
+@keyframes mobileCFillStay{
+  0%,7%{
+    clip-path:inset(100% 0 0 0);
+    transform:rotate(-12deg) scale(.88)
+  }
+  34%,100%{
+    clip-path:inset(0 0 0 0);
+    transform:rotate(-12deg) scale(1);
+    opacity:1
+  }
+}
+
+@keyframes mobileBar1Stay{
+  0%,28%{transform:scaleY(0)}
+  40%,100%{transform:scaleY(1);opacity:1}
+}
+
+@keyframes mobileBar2Stay{
+  0%,32%{transform:scaleY(0)}
+  45%,100%{transform:scaleY(1);opacity:1}
+}
+
+@keyframes mobileBar3Stay{
+  0%,36%{transform:scaleY(0)}
+  50%,100%{transform:scaleY(1);opacity:1}
+}
+
+@keyframes mobileArrowSweepStay{
+  0%,43%{
+    transform:rotate(-38deg) scaleX(0);
+    opacity:0
+  }
+  48%{opacity:1}
+  64%,100%{
+    transform:rotate(-38deg) scaleX(1);
+    opacity:1
+  }
+}
+
+@keyframes mobileArrowHeadStay{
+  0%,56%{
+    transform:rotate(-38deg) scale(0);
+    opacity:0
+  }
+  64%,100%{
+    transform:rotate(-38deg) scale(1);
+    opacity:1
+  }
+}
+
+@keyframes mobileArrowGlowStay{
+  0%,58%{opacity:0;transform:scale(.4)}
+  64%{opacity:1;transform:scale(1.6)}
+  72%,100%{opacity:.22;transform:scale(1)}
+}
+
+@keyframes mobileLetterStay{
+  0%,52%{
+    opacity:0;
+    transform:translateX(-18px);
+    filter:blur(3px)
+  }
+  64%,100%{
+    opacity:1;
+    transform:translateX(0);
+    filter:blur(0)
+  }
+}
+
+@keyframes mobileTaglineStay{
+  0%,66%{
+    opacity:0;
+    transform:translateY(8px)
+  }
+  75%,100%{
+    opacity:1;
+    transform:translateY(0)
+  }
+}
+
+/* =========================================================
+   MOBILE STAY-VISIBLE FIX
+   Completed CSS animation remains visible.
+   ========================================================= */
+@media (max-width: 760px) {
+  .final-logo{
+    display:none !important;
+    opacity:0 !important;
+    visibility:hidden !important;
+    animation:none !important;
+  }
+
+  .symbol-wrap,
+  .c-ring,
+  .b1,.b2,.b3,
+  .arrow-line,
+  .arrow-head,
+  .arrow-glow,
+  .wordmark span,
+  .tagline,
+  .floor-glow{
+    animation-fill-mode:forwards !important;
+    animation-iteration-count:1 !important;
+  }
+
+  .symbol-wrap{
+    animation:crednivoMobileSymbolFinal 4.2s ease 0s 1 forwards !important;
+  }
+  .c-ring{
+    animation:crednivoMobileCFinal 4.2s cubic-bezier(.2,.8,.2,1) 0s 1 forwards !important;
+  }
+  .b1{animation:crednivoMobileBar1Final 4.2s ease 0s 1 forwards !important}
+  .b2{animation:crednivoMobileBar2Final 4.2s ease 0s 1 forwards !important}
+  .b3{animation:crednivoMobileBar3Final 4.2s ease 0s 1 forwards !important}
+  .arrow-line{animation:crednivoMobileArrowLineFinal 4.2s ease 0s 1 forwards !important}
+  .arrow-head{animation:crednivoMobileArrowHeadFinal 4.2s ease 0s 1 forwards !important}
+  .arrow-glow{animation:crednivoMobileArrowGlowFinal 4.2s ease 0s 1 forwards !important}
+
+  .wordmark span{
+    animation:crednivoMobileLetterFinal 4.2s ease 0s 1 forwards !important;
+  }
+  .wordmark span:nth-child(2){animation-delay:.05s !important}
+  .wordmark span:nth-child(3){animation-delay:.10s !important}
+  .wordmark span:nth-child(4){animation-delay:.15s !important}
+  .wordmark span:nth-child(5){animation-delay:.20s !important}
+  .wordmark span:nth-child(6){animation-delay:.25s !important}
+  .wordmark span:nth-child(7){animation-delay:.30s !important}
+  .wordmark span:nth-child(8){animation-delay:.35s !important}
+
+  .tagline{
+    animation:crednivoMobileTaglineFinal 4.2s ease 0s 1 forwards !important;
+  }
+  .floor-glow{
+    animation:crednivoMobileFloorFinal 4.2s ease 0s 1 forwards !important;
+  }
+}
+
+@keyframes crednivoMobileSymbolFinal{
+  0%,6%{opacity:0}
+  10%,100%{opacity:1}
+}
+@keyframes crednivoMobileCFinal{
+  0%,7%{clip-path:inset(100% 0 0 0);transform:rotate(-12deg) scale(.88);opacity:1}
+  34%,100%{clip-path:inset(0 0 0 0);transform:rotate(-12deg) scale(1);opacity:1}
+}
+@keyframes crednivoMobileBar1Final{
+  0%,28%{transform:scaleY(0);opacity:1}
+  40%,100%{transform:scaleY(1);opacity:1}
+}
+@keyframes crednivoMobileBar2Final{
+  0%,32%{transform:scaleY(0);opacity:1}
+  45%,100%{transform:scaleY(1);opacity:1}
+}
+@keyframes crednivoMobileBar3Final{
+  0%,36%{transform:scaleY(0);opacity:1}
+  50%,100%{transform:scaleY(1);opacity:1}
+}
+@keyframes crednivoMobileArrowLineFinal{
+  0%,43%{transform:rotate(-38deg) scaleX(0);opacity:0}
+  48%{opacity:1}
+  64%,100%{transform:rotate(-38deg) scaleX(1);opacity:1}
+}
+@keyframes crednivoMobileArrowHeadFinal{
+  0%,56%{transform:rotate(-38deg) scale(0);opacity:0}
+  64%,100%{transform:rotate(-38deg) scale(1);opacity:1}
+}
+@keyframes crednivoMobileArrowGlowFinal{
+  0%,58%{opacity:0;transform:scale(.4)}
+  64%{opacity:1;transform:scale(1.6)}
+  72%,100%{opacity:.22;transform:scale(1)}
+}
+@keyframes crednivoMobileLetterFinal{
+  0%,52%{opacity:0;transform:translateX(-18px);filter:blur(3px)}
+  64%,100%{opacity:1;transform:translateX(0);filter:blur(0)}
+}
+@keyframes crednivoMobileTaglineFinal{
+  0%,66%{opacity:0;transform:translateY(8px)}
+  75%,100%{opacity:1;transform:translateY(0)}
+}
+@keyframes crednivoMobileFloorFinal{
+  0%,22%{opacity:0}
+  45%,100%{opacity:1}
+}
+
+
+/* =========================================================
+   ANIMATION ONLY MODE
+   No PNG/image fallback is used anywhere.
+   ========================================================= */
+.final-logo{
+  display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
+  pointer-events:none !important;
+  animation:none !important;
+}

@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  BarChart3,
   Building2,
   ChevronRight,
   Eye,
@@ -13,6 +12,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import crednivoApprovedMark from '../../assets/brand/crednivo-approved-mark.png';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -90,11 +90,27 @@ export default function Login() {
     <main className="auth-page auth-login-page auth-login-mirror">
       <section className="auth-login-split">
         <aside className="auth-login-brand-side" aria-label="CREDNIVO">
-          <div className="auth-login-brand-lockup">
-            <span className="auth-login-brand-mark"><BarChart3 size={34} /></span>
-            <div>
-              <strong>CREDNIVO</strong>
-              <small>Manage Better. Grow Smarter.</small>
+          <div className="crednivo-cinematic-brand" aria-label="CREDNIVO Finance Management Platform">
+            <div className="crednivo-cinematic-symbol" aria-hidden="true">
+              <img
+                className="crednivo-approved-mark crednivo-approved-mark-login"
+                src={crednivoApprovedMark}
+                alt=""
+              />
+            </div>
+
+            <div className="crednivo-cinematic-copy">
+              <div className="crednivo-cinematic-wordmark" aria-hidden="true">
+                {'CREDNIVO'.split('').map((letter, index) => (
+                  <span key={`${letter}-${index}`}>{letter}</span>
+                ))}
+              </div>
+
+              <div className="crednivo-cinematic-tagline">
+                <i aria-hidden="true" />
+                <span>Finance Management Platform</span>
+                <i aria-hidden="true" />
+              </div>
             </div>
           </div>
         </aside>
@@ -229,8 +245,15 @@ export default function Login() {
 
 export function AuthLoading() {
   return (
-    <main className="auth-loading">
-      <span className="auth-loading-mark"><BarChart3 size={30} /></span>
+    <main className="auth-loading auth-loading-classic">
+      <div className="auth-loading-new-logo" aria-hidden="true">
+        <img
+          className="crednivo-approved-mark crednivo-approved-mark-loader"
+          src={crednivoApprovedMark}
+          alt=""
+        />
+      </div>
+
       <strong>CREDNIVO</strong>
       <small>Securing workspace...</small>
     </main>
