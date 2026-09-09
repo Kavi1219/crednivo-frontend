@@ -233,6 +233,7 @@ export default function Reports() {
   const [collectionApiReport, setCollectionApiReport] = useState(null);
   const [collectionApiLoading, setCollectionApiLoading] = useState(false);
   const [collectionApiError, setCollectionApiError] = useState('');
+  const [selectedOverviewCycle, setSelectedOverviewCycle] = useState('Daily');
 
   useEffect(() => {
     if (view !== 'statement') return undefined;
@@ -380,6 +381,121 @@ export default function Reports() {
     };
   }, [filteredCollections, filteredPayments, filteredExpenses]);
 
+  // Overview cycle cards intentionally use the selected date range but do not
+  // inherit the Cycle dropdown. This keeps Daily / Weekly / Monthly visible
+  // together as a true breakdown of customer money received for the period.
+  const overviewRangeCollections = useMemo(() => collections.filter(
+    (item) => inRange(item.date, fromDate, toDate),
+  ), [collections, fromDate, toDate]);
+
+  const overviewRangeCollectionPayments = useMemo(() => payments.filter((item) => (
+    inRange(item.date, fromDate, toDate)
+    && item.type === 'Collection'
+    && item.direction === 'in'
+  )), [payments, fromDate, toDate]);
+
+  const overviewCycleCollections = useMemo(() => ['Daily', 'Weekly', 'Monthly'].map((itemCycle) => {
+    const paymentRows = overviewRangeCollectionPayments.filter((payment) => {
+      const paymentCycle = payment.cycle || loanMap[payment.loanId]?.cycle || '';
+      return String(paymentCycle).toLowerCase() === itemCycle.toLowerCase();
+    });
+    const scheduleRows = overviewRangeCollections.filter(
+      (item) => String(item.cycle || '').toLowerCase() === itemCycle.toLowerCase(),
+    );
+
+    const amount = paymentRows.reduce(
+      (sum, item) => sum + numberValue(item.collectionAmount ?? item.amount),
+      0,
+    );
+    const customerIds = new Set([
+      ...paymentRows.map((item) => item.customerId).filter(Boolean),
+      ...scheduleRows.map((item) => item.customerId).filter(Boolean),
+    ]);
+
+    return {
+      cycle: itemCycle,
+      amount,
+      customerCount: customerIds.size,
+      paymentCount: paymentRows.length,
+    };
+  }), [overviewRangeCollectionPayments, overviewRangeCollections, loanMap]);
+
+  const overviewCycleCustomerRows = useMemo(() => {
+    const selected = String(selectedOverviewCycle || 'Daily').toLowerCase();
+    const grouped = new Map();
+
+    const ensureRow = ({ customerId, customerName, loanId, itemCycle }) => {
+      const key = `${customerId || 'unknown'}::${loanId || 'unknown'}`;
+      if (!grouped.has(key)) {
+        const linkedLoan = loanMap[loanId] || {};
+        grouped.set(key, {
+          key,
+          customerId: customerId || linkedLoan.customerId || '',
+          customerName: customerName || linkedLoan.customerName || 'Customer',
+          loanId: loanId || linkedLoan.id || '',
+          cycle: itemCycle || linkedLoan.cycle || selectedOverviewCycle,
+          collectionPerCycle: numberValue(linkedLoan.collectionAmount),
+          expected: 0,
+          received: 0,
+          pending: 0,
+          outstanding: numberValue(linkedLoan.outstanding),
+          hasOverdue: false,
+          dueEntries: 0,
+          paymentCount: 0,
+        });
+      }
+      return grouped.get(key);
+    };
+
+    overviewRangeCollections
+      .filter((item) => String(item.cycle || '').toLowerCase() === selected)
+      .forEach((item) => {
+        const row = ensureRow({
+          customerId: item.customerId,
+          customerName: item.customerName,
+          loanId: item.loanId,
+          itemCycle: item.cycle,
+        });
+        const due = numberValue(item.dueAmount);
+        const paid = numberValue(item.paidAmount);
+        row.expected += due;
+        row.pending += Math.max(0, due - paid);
+        row.dueEntries += 1;
+        if (String(item.date || '') < toInputDate() && paid < due) row.hasOverdue = true;
+      });
+
+    overviewRangeCollectionPayments
+      .filter((item) => {
+        const paymentCycle = item.cycle || loanMap[item.loanId]?.cycle || '';
+        return String(paymentCycle).toLowerCase() === selected;
+      })
+      .forEach((item) => {
+        const linkedLoan = loanMap[item.loanId] || {};
+        const row = ensureRow({
+          customerId: item.customerId || linkedLoan.customerId,
+          customerName: item.customerName || linkedLoan.customerName,
+          loanId: item.loanId,
+          itemCycle: item.cycle || linkedLoan.cycle,
+        });
+        row.received += numberValue(item.collectionAmount ?? item.amount);
+        row.paymentCount += 1;
+      });
+
+    return [...grouped.values()]
+      .map((row) => ({
+        ...row,
+        status: row.pending <= 0
+          ? (row.expected > 0 ? 'Paid' : 'Received')
+          : (row.hasOverdue ? 'Overdue' : 'Pending'),
+      }))
+      .sort((a, b) => String(a.customerName || '').localeCompare(String(b.customerName || ''))
+        || String(a.loanId || '').localeCompare(String(b.loanId || '')));
+  }, [selectedOverviewCycle, overviewRangeCollections, overviewRangeCollectionPayments, loanMap]);
+
+  const selectedOverviewCycleSummary = overviewCycleCollections.find(
+    (item) => item.cycle === selectedOverviewCycle,
+  ) || overviewCycleCollections[0];
+
   const latestCollectionPaymentByLoan = useMemo(() => {
     const map = new Map();
     filteredPayments
@@ -525,6 +641,7 @@ export default function Reports() {
       ['Summary', 'Value'],
       ['Expected Collection', overview.expected],
       ['Customer Money Received', overview.collected],
+      ...overviewCycleCollections.map((item) => [`${item.cycle} Collection Received`, item.amount]),
       ['Scheduled Collection Collected', overview.scheduledCollected],
       ['Pending', overview.pending],
       ['Overdue', overview.overdue],
@@ -671,6 +788,127 @@ export default function Reports() {
             <MetricCard icon={CircleDollarSign} label="New Loans Given" value={formatCurrency(overview.loanGiven)} sub={`${filteredLoans.length} loans in period`} tone="purple" />
             <MetricCard icon={ReceiptText} label="Expenses" value={formatCurrency(overview.expenseTotal)} sub={`${filteredExpenses.length} expense entries`} tone="red" />
             <MetricCard icon={Landmark} label="Net Cash Flow" value={formatCurrency(overview.netCash)} sub={`${formatCurrency(overview.incoming)} in · ${formatCurrency(overview.outgoing)} out`} tone={overview.netCash < 0 ? 'red' : 'teal'} />
+          </section>
+
+          <section className="reports-cycle-collection-section app-card">
+            <div className="reports-cycle-collection-head">
+              <div>
+                <strong>Collection by Cycle</strong>
+                <span>Actual customer collection money received for {rangeLabel}. Click a cycle to view only those customer details.</span>
+              </div>
+              <span className="reports-cycle-selected-badge">{selectedOverviewCycle} customers</span>
+            </div>
+
+            <div className="reports-cycle-collection-tabs" role="tablist" aria-label="Collection cycle customer details">
+              {overviewCycleCollections.map((item) => {
+                const active = selectedOverviewCycle === item.cycle;
+                return (
+                  <button
+                    key={item.cycle}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={`reports-cycle-collection-tab cycle-${item.cycle.toLowerCase()} ${active ? 'active' : ''}`}
+                    onClick={() => setSelectedOverviewCycle(item.cycle)}
+                  >
+                    <span className="reports-cycle-tab-icon"><HandCoins size={20} /></span>
+                    <span className="reports-cycle-tab-copy">
+                      <small>{item.cycle} Collection</small>
+                      <strong>{formatCurrency(item.amount)}</strong>
+                      <em>{item.customerCount} customer${item.customerCount === 1 ? '' : 's'} · {item.paymentCount} payment${item.paymentCount === 1 ? '' : 's'}</em>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="reports-cycle-customer-panel">
+              <div className="reports-cycle-customer-panel-head">
+                <div>
+                  <strong>{selectedOverviewCycle} Collection Customers</strong>
+                  <span>{rangeLabel} · {overviewCycleCustomerRows.length} loan/customer record${overviewCycleCustomerRows.length === 1 ? '' : 's'}</span>
+                </div>
+                <strong>{formatCurrency(selectedOverviewCycleSummary?.amount || 0)}</strong>
+              </div>
+
+              {overviewCycleCustomerRows.length === 0 ? (
+                <EmptyState>No {selectedOverviewCycle.toLowerCase()} collection customers found in this date range.</EmptyState>
+              ) : (
+                <>
+                  <div className="reports-cycle-customer-table-wrap">
+                    <table className="reports-cycle-customer-table">
+                      <thead>
+                        <tr>
+                          <th>Customer</th>
+                          <th>Loan</th>
+                          <th>Collection / Cycle</th>
+                          <th>Expected</th>
+                          <th>Received</th>
+                          <th>Pending</th>
+                          <th>Outstanding</th>
+                          <th>Status</th>
+                          <th>View</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {overviewCycleCustomerRows.map((item) => (
+                          <tr key={item.key}>
+                            <td>
+                              <div className="reports-cycle-customer-identity">
+                                <CustomerAvatar className="reports-cycle-customer-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
+                                <div>
+                                  <strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong>
+                                  <span>{item.customerId || '—'}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td><strong>{item.loanId || '—'}</strong></td>
+                            <td>{formatCurrency(item.collectionPerCycle)}</td>
+                            <td>{formatCurrency(item.expected)}</td>
+                            <td className="collection-money-positive">{formatCurrency(item.received)}</td>
+                            <td className={item.pending > 0 ? 'collection-money-pending' : ''}>{formatCurrency(item.pending)}</td>
+                            <td>{formatCurrency(item.outstanding)}</td>
+                            <td><span className={`collection-status-pill status-${String(item.status).toLowerCase()}`}>{item.status}</span></td>
+                            <td>
+                              <button type="button" className="reports-cycle-customer-view" onClick={() => navigate(`/customers/${item.customerId}`)} aria-label={`View ${item.customerName}`}>
+                                <Eye size={15} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="reports-cycle-customer-mobile">
+                    {overviewCycleCustomerRows.map((item) => (
+                      <article key={item.key} className="reports-cycle-customer-mobile-card">
+                        <div className="reports-cycle-customer-mobile-top">
+                          <div className="reports-cycle-customer-identity">
+                            <CustomerAvatar className="reports-cycle-customer-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
+                            <div>
+                              <strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong>
+                              <span>{item.customerId || '—'} · {item.loanId || '—'}</span>
+                            </div>
+                          </div>
+                          <span className={`collection-status-pill status-${String(item.status).toLowerCase()}`}>{item.status}</span>
+                        </div>
+                        <div className="reports-cycle-customer-mobile-money">
+                          <div><span>Collection / Cycle</span><strong>{formatCurrency(item.collectionPerCycle)}</strong></div>
+                          <div><span>Expected</span><strong>{formatCurrency(item.expected)}</strong></div>
+                          <div><span>Received</span><strong className="collection-money-positive">{formatCurrency(item.received)}</strong></div>
+                          <div><span>Pending</span><strong className={item.pending > 0 ? 'collection-money-pending' : ''}>{formatCurrency(item.pending)}</strong></div>
+                          <div><span>Outstanding</span><strong>{formatCurrency(item.outstanding)}</strong></div>
+                        </div>
+                        <button type="button" className="reports-cycle-customer-mobile-view" onClick={() => navigate(`/customers/${item.customerId}`)}>
+                          <Eye size={15} /> View Customer
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </section>
 
           <section className="reports-overview-grid">
