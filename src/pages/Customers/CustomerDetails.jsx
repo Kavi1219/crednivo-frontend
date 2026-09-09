@@ -150,6 +150,7 @@ export default function CustomerDetails() {
   const [extensionSaving, setExtensionSaving] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [mediaEditor, setMediaEditor] = useState(null);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState(null);
   const [mediaDraft, setMediaDraft] = useState({ photo: '', documents: [] });
   const [mediaSaving, setMediaSaving] = useState(false);
   const [customerEditorOpen, setCustomerEditorOpen] = useState(false);
@@ -651,7 +652,7 @@ export default function CustomerDetails() {
     }
   };
 
-  const openMediaEditor = (kind) => {
+  const openMediaEditor = (kind, pickerTarget = null) => {
     const isJamin = kind === 'jamin';
     const existingDocuments = isJamin
       ? (customer.jaminDocuments || (customer.jaminDocument ? [customer.jaminDocument] : []))
@@ -660,6 +661,7 @@ export default function CustomerDetails() {
       photo: isJamin ? (customer.jaminPhoto || '') : (customer.photo || ''),
       documents: existingDocuments,
     });
+    setMediaPickerTarget(pickerTarget);
     setMediaEditor(kind);
     setActionError('');
   };
@@ -667,6 +669,7 @@ export default function CustomerDetails() {
   const closeMediaEditor = () => {
     if (mediaSaving) return;
     setMediaEditor(null);
+    setMediaPickerTarget(null);
     setMediaDraft({ photo: '', documents: [] });
   };
 
@@ -686,6 +689,7 @@ export default function CustomerDetails() {
     try {
       await saveCustomerMedia(customer.id, mediaEditor, mediaDraft);
       setMediaEditor(null);
+      setMediaPickerTarget(null);
       setMediaDraft({ photo: '', documents: [] });
     } catch (apiError) {
       setActionError(apiError?.message || 'Could not save the customer media to the database.');
@@ -943,11 +947,11 @@ export default function CustomerDetails() {
           <DetailRow label="Address" value={customer.address || customer.area}/>
         </dl>
         <div className="detail-media-row">
-          <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer')} disabled={!customer.photo&&!canEditMedia}>
-            {customer.photo?<ProtectedImage src={customer.photo} alt="Customer" fallback={<UserRound size={21}/>} />:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'Add Profile Photo'}</span>
+          <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer','photo')} disabled={!customer.photo&&!canEditMedia}>
+            {customer.photo?<ProtectedImage src={customer.photo} alt="Customer" fallback={<UserRound size={21}/>} />:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'+ Add Profile'}</span>
           </button>
-          <button type="button" className="detail-document-tile detail-view-documents" onClick={()=>customerDocuments.length&&setDocumentViewer({title:'Customer Documents',documents:customerDocuments})} disabled={!customerDocuments.length}>
-            <Files size={21}/><span>{customerDocuments.length ? `View Documents (${customerDocuments.length})` : 'No Documents'}</span>{customerDocuments.length>0&&<ExternalLink size={15}/>} 
+          <button type="button" className={`detail-document-tile detail-view-documents ${!customerDocuments.length&&canEditMedia?'can-add':''}`} onClick={()=>customerDocuments.length?setDocumentViewer({title:'Customer Documents',documents:customerDocuments}):canEditMedia&&openMediaEditor('customer','document')} disabled={!customerDocuments.length&&!canEditMedia}>
+            <Files size={21}/><span>{customerDocuments.length ? `View Documents (${customerDocuments.length})` : '+ Document'}</span>{customerDocuments.length>0&&<ExternalLink size={15}/>} 
           </button>
         </div>
       </article>
@@ -1335,6 +1339,7 @@ export default function CustomerDetails() {
             title={mediaEditor==='jamin'?'Jamin':'Customer'}
             photo={mediaDraft.photo}
             documents={mediaDraft.documents}
+            initialPickerMode={mediaPickerTarget}
             onPhotoChange={(value)=>setMediaDraft((current)=>({...current,photo:value}))}
             onDocumentsChange={(value)=>setMediaDraft((current)=>({...current,documents:value}))}
           />

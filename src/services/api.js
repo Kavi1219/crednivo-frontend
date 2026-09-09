@@ -89,8 +89,18 @@ function dataUrlToFile(dataUrl, fileName = 'upload') {
   return new File([bytes], fileName, { type: mime });
 }
 
+function imageExtensionFromDataUrl(dataUrl) {
+  const mime = String(dataUrl || '').match(/^data:([^;,]+)/i)?.[1]?.toLowerCase() || '';
+  const subtype = mime.split('/')[1] || 'jpg';
+  const normalized = subtype.split('+')[0];
+  if (normalized === 'jpeg' || normalized === 'pjpeg') return 'jpg';
+  if (/^[a-z0-9]{2,8}$/.test(normalized)) return normalized;
+  return 'jpg';
+}
+
 export async function uploadProfilePhoto(customerId, dataUrl, kind = 'customer') {
-  const file = dataUrlToFile(dataUrl, `${kind}-profile.jpg`);
+  const extension = imageExtensionFromDataUrl(dataUrl);
+  const file = dataUrlToFile(dataUrl, `${kind}-profile.${extension}`);
   if (!file) return null;
   const formData = new FormData();
   formData.append('file', file);

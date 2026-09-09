@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, Camera, FileText, Maximize2, Plus, X } from 'lucide-react';
+import { AlertTriangle, Camera, FileText, FolderOpen, Maximize2, Plus, X } from 'lucide-react';
 import { getAuthToken } from '../../services/api';
 import './MediaUploader.css';
 
@@ -128,6 +128,7 @@ export default function MediaUploader({
   onPhotoChange,
   onDocumentChange,
   onDocumentsChange,
+  initialPickerMode = null,
   maxDocuments = MAX_DOCUMENTS,
 }) {
   const photoCameraRef = useRef(null);
@@ -142,11 +143,18 @@ export default function MediaUploader({
   const [mediaError, setMediaError] = useState('');
   const [cameraMode, setCameraMode] = useState(null);
   const [cameraOpening, setCameraOpening] = useState(false);
+  const [sourceChooser, setSourceChooser] = useState(initialPickerMode);
 
   const documentList = useMemo(() => {
     if (Array.isArray(documents)) return documents.filter(Boolean).slice(0, maxDocuments);
     return document ? [document] : [];
   }, [documents, document, maxDocuments]);
+
+  useEffect(() => {
+    if (initialPickerMode === 'photo' || initialPickerMode === 'document') {
+      setSourceChooser(initialPickerMode);
+    }
+  }, [initialPickerMode]);
 
   const emitDocuments = (next) => {
     const limited = next.filter(Boolean).slice(0, maxDocuments);
@@ -328,8 +336,15 @@ export default function MediaUploader({
     }
   };
 
+  const openFilePicker = (mode) => {
+    setSourceChooser(null);
+    if (mode === 'photo') photoFileRef.current?.click();
+    else documentFileRef.current?.click();
+  };
+
   const requestCamera = (mode) => {
     if (cameraOpening) return;
+    setSourceChooser(null);
     startCamera(mode);
   };
 
@@ -382,7 +397,7 @@ export default function MediaUploader({
           <button
             type="button"
             className={`compact-media-tile compact-photo-tile ${photo ? 'has-photo' : ''}`}
-            onClick={() => photo ? setViewerOpen(true) : requestCamera('photo')}
+            onClick={() => photo ? setViewerOpen(true) : setSourceChooser('photo')}
             disabled={cameraOpening}
             aria-busy={cameraOpening}
             title={photo ? `View ${title} photo` : (cameraOpening ? 'Opening camera...' : `Take ${title} photo`)}
@@ -426,7 +441,7 @@ export default function MediaUploader({
         {documentList.length < maxDocuments && <button
           type="button"
           className="compact-media-tile compact-add-tile"
-          onClick={() => documentFileRef.current?.click()}
+          onClick={() => setSourceChooser('document')}
           title="Add document"
         >
           <Plus size={31}/>
@@ -436,7 +451,30 @@ export default function MediaUploader({
       <input ref={photoCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickPhoto} />
       <input ref={documentCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickDocumentCamera} />
       <input ref={photoFileRef} className="hidden-media-input" type="file" accept="image/*" onChange={pickPhoto} />
-      <input ref={documentFileRef} className="hidden-media-input" type="file" accept="image/*,.pdf,application/pdf" multiple onChange={pickDocuments} />
+      <input ref={documentFileRef} className="hidden-media-input" type="file" multiple onChange={pickDocuments} />
+
+      {sourceChooser && <div className="media-source-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setSourceChooser(null)}>
+        <div className="media-source-modal" role="dialog" aria-modal="true" aria-label={sourceChooser === 'photo' ? 'Add profile photo' : 'Add document'}>
+          <div className="media-source-head">
+            <div>
+              <strong>{sourceChooser === 'photo' ? '+ Add Profile' : '+ Document'}</strong>
+              <span>{sourceChooser === 'photo' ? 'Choose how to add the profile photo' : 'Choose how to add the document'}</span>
+            </div>
+            <button type="button" onClick={() => setSourceChooser(null)} title="Close"><X size={18}/></button>
+          </div>
+          <div className="media-source-actions">
+            <button type="button" className="media-source-option" onClick={() => requestCamera(sourceChooser)} disabled={cameraOpening}>
+              <span className="media-source-icon"><Camera size={24}/></span>
+              <span><strong>Camera</strong><small>{sourceChooser === 'photo' ? 'Take profile photo from website camera' : 'Scan document using website camera'}</small></span>
+            </button>
+            <button type="button" className="media-source-option" onClick={() => openFilePicker(sourceChooser)}>
+              <span className="media-source-icon"><FolderOpen size={24}/></span>
+              <span><strong>Open Files</strong><small>{sourceChooser === 'photo' ? 'Choose JPG, PNG, WebP or another image' : 'Choose a document from this device'}</small></span>
+            </button>
+          </div>
+          <p className="media-source-note">{sourceChooser === 'photo' ? 'Camera captures are saved as JPG.' : 'Camera scans are saved as JPG. File upload supports normal document formats.'}</p>
+        </div>
+      </div>}
 
       {viewerOpen && photo && <div className="media-viewer" onMouseDown={(event) => event.target === event.currentTarget && setViewerOpen(false)}>
         <button type="button" className="media-viewer-close" onClick={() => setViewerOpen(false)} title="Close"><X size={20}/></button>
