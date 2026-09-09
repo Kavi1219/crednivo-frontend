@@ -272,30 +272,23 @@ html[data-theme='dark'] :is(
 
 
 /* =============================================================
-   CREDNIVO GLOBAL POPUP / DETAIL SCROLL CLEARANCE FIX
+   CREDNIVO GLOBAL POPUP / DETAIL BOTTOM CLEARANCE
    -------------------------------------------------------------
-   Fixes:
-   - popup content stopping before the final row
-   - bottom rows being clipped by the viewport
-   - schedule/detail/payment popups losing the last scroll area
-   - keeps ~6 mm (23 px) visible clearance at the bottom
-   - supports desktop, mobile and safe-area devices
+   Every popup gets safe bottom space so its final row/action can
+   be fully scrolled into view instead of touching or hiding under
+   the bottom edge of the viewport.
    ============================================================= */
 
 :root {
-  --crednivo-popup-bottom-clearance: 23px; /* ~6 mm on a 96dpi screen */
+  --crednivo-popup-bottom-clearance: 44px;
 }
 
-/* Modal/detail backdrops must be allowed to scroll when the viewport
-   is shorter than the popup. The extra bottom padding keeps the popup
-   away from the physical bottom edge of the screen. */
+/* All popup backdrops: leave usable space below the popup and allow
+   the backdrop itself to scroll on short screens. */
 :is(
-  [class*="modal-backdrop"],
-  .record-payment-backdrop,
-  .customer-loan-pay-backdrop,
-  .customer-media-editor-backdrop,
-  .customer-io-extension-backdrop,
-  .dashboard-detail-backdrop
+  [class*="-backdrop"],
+  .review-overlay,
+  .auth-create-overlay
 ) {
   box-sizing: border-box !important;
   overflow-y: auto !important;
@@ -305,37 +298,63 @@ html[data-theme='dark'] :is(
     var(--crednivo-popup-bottom-clearance),
     calc(var(--crednivo-popup-bottom-clearance) + env(safe-area-inset-bottom))
   ) !important;
-  scroll-padding-bottom: var(--crednivo-popup-bottom-clearance);
+  scroll-padding-bottom: var(--crednivo-popup-bottom-clearance) !important;
 }
 
-/* Keep large popup cards inside the usable viewport.
-   This is especially important for 100-row Daily schedules. */
+/* Any class token that ends in "-modal" is treated as a popup card.
+   This automatically covers current and future CREDNIVO popups. */
 :is(
-  .collection-schedule-modal,
-  .collection-modal,
-  .record-payment-modal,
-  .customer-loan-pay-modal,
-  .customer-media-editor-modal,
-  .customer-io-extension-modal,
+  [class$="-modal"],
+  [class*="-modal "],
   .dashboard-detail-sheet,
-  .review-modal,
-  .preclose-modal
+  .document-delete-dialog
 ) {
   box-sizing: border-box !important;
   min-height: 0 !important;
   max-height: calc(
-    100dvh - var(--crednivo-popup-bottom-clearance) - 18px
+    100dvh - var(--crednivo-popup-bottom-clearance) - 16px
+  ) !important;
+  scroll-padding-bottom: var(--crednivo-popup-bottom-clearance) !important;
+}
+
+/* Popup cards that scroll by themselves need real bottom padding.
+   Do not apply this to the flex/hidden schedule shell; its inner
+   schedule scroll area is handled below. */
+:is(
+  .agent-modal,
+  .agent-permission-modal,
+  .capital-modal,
+  .company-profile-modal,
+  .customer-delete-modal,
+  .customer-document-viewer-modal,
+  .customer-loan-edit-modal,
+  .customer-profile-editor-modal,
+  .document-modal,
+  .password-modal,
+  .record-payment-modal,
+  .review-modal,
+  .savings-modal,
+  .savings-delete-modal,
+  .transaction-editor-modal,
+  .webcam-modal,
+  .auth-create-modal,
+  .preclose-modal,
+  .dashboard-detail-sheet
+) {
+  padding-bottom: max(
+    var(--crednivo-popup-bottom-clearance),
+    calc(var(--crednivo-popup-bottom-clearance) + env(safe-area-inset-bottom))
   ) !important;
 }
 
-/* The actual scrolling areas get their own bottom breathing room.
-   The Collection schedule in particular uses collection-schedule-scroll. */
+/* Long nested scroll areas (loan schedules, payment bodies, editors, etc.)
+   get their own space after the final row/card. */
 :is(
   .collection-schedule-scroll,
+  .collection-schedule-mobile,
+  .customer-loan-schedule-scroll,
   .customer-loan-pay-body,
   .customer-media-editor-body,
-  .record-payment-modal,
-  .dashboard-detail-sheet,
   [class$="-modal-body"],
   [class*="-modal-body "],
   [class$="-modal-scroll"],
@@ -355,46 +374,30 @@ html[data-theme='dark'] :is(
   scroll-padding-bottom: var(--crednivo-popup-bottom-clearance) !important;
 }
 
-/* The schedule table must not sit directly on the popup edge. */
+/* The long Collection schedule shown in your screenshot gets an
+   additional small table-end gap so row 100 can never sit on the edge. */
 .collection-schedule-scroll > table,
 .collection-schedule-scroll > .module-table {
-  margin-bottom: var(--crednivo-popup-bottom-clearance) !important;
+  margin-bottom: 16px !important;
 }
 
-/* Mobile bottom-sheet popups previously used only 12px at the bottom.
-   Keep a full ~6mm clearance and still allow the entire sheet to scroll. */
 @media (max-width: 767px) {
+  :root {
+    --crednivo-popup-bottom-clearance: 56px;
+  }
+
+  /* Mobile bottom sheets still keep safe-area clearance. */
   :is(
-    [class*="modal-backdrop"],
-    .record-payment-backdrop,
-    .customer-loan-pay-backdrop,
-    .customer-media-editor-backdrop,
-    .customer-io-extension-backdrop,
-    .dashboard-detail-backdrop
+    [class*="-backdrop"],
+    .review-overlay,
+    .auth-create-overlay
   ) {
     padding-bottom: max(
       var(--crednivo-popup-bottom-clearance),
       calc(var(--crednivo-popup-bottom-clearance) + env(safe-area-inset-bottom))
     ) !important;
   }
-
-  :is(
-    .collection-schedule-modal,
-    .collection-modal,
-    .record-payment-modal,
-    .customer-loan-pay-modal,
-    .customer-media-editor-modal,
-    .customer-io-extension-modal,
-    .dashboard-detail-sheet,
-    .review-modal,
-    .preclose-modal
-  ) {
-    max-height: calc(
-      100dvh - var(--crednivo-popup-bottom-clearance) - 12px
-    ) !important;
-  }
 }
-
 
 
 /* =========================================================
