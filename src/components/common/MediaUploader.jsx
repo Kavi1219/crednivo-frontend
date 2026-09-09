@@ -26,6 +26,44 @@ function isMobileLike() {
   return uaMobile || (coarse && window.innerWidth <= 900);
 }
 
+function detectBrowser() {
+  if (typeof navigator === 'undefined') return 'Browser';
+  const ua = navigator.userAgent || '';
+  if (/Edg\//i.test(ua)) return 'Microsoft Edge';
+  if (/Firefox\//i.test(ua)) return 'Firefox';
+  if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) return 'Google Chrome';
+  if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua) && !/Chromium\//i.test(ua)) return 'Safari';
+  return 'Browser';
+}
+
+async function getCameraPermissionState() {
+  if (typeof navigator === 'undefined' || !navigator.permissions?.query) return 'unknown';
+  try {
+    const status = await navigator.permissions.query({ name: 'camera' });
+    return status?.state || 'unknown';
+  } catch {
+    // Firefox/Safari versions that do not expose camera through the Permissions API
+    // still show the native permission prompt when getUserMedia() is requested.
+    return 'unknown';
+  }
+}
+
+function cameraPermissionInstruction(browser) {
+  if (browser === 'Google Chrome') {
+    return 'Click the site controls icon beside the address bar → Camera → Allow. If Camera is not listed, open Site settings and set Camera to Allow.';
+  }
+  if (browser === 'Microsoft Edge') {
+    return 'Click the site information/lock icon beside the address bar → Permissions for this site → Camera → Allow.';
+  }
+  if (browser === 'Firefox') {
+    return 'Click the permissions/camera icon beside the address bar, clear the blocked Camera permission, then choose Allow when Firefox asks again.';
+  }
+  if (browser === 'Safari') {
+    return 'Open Safari → Settings for This Website → Camera → Allow, then return to CREDNIVO.';
+  }
+  return 'Open this site’s browser permissions, set Camera to Allow, then return to CREDNIVO.';
+}
+
 async function openProtectedFile(document) {
   const source = String(document?.data || '').trim();
   if (!source) return;
@@ -144,6 +182,7 @@ export default function MediaUploader({
   const [cameraMode, setCameraMode] = useState(null);
   const [cameraOpening, setCameraOpening] = useState(false);
   const [sourceChooser, setSourceChooser] = useState(initialPickerMode);
+  const [permissionHelp, setPermissionHelp] = useState(null);
 
   const documentList = useMemo(() => {
     if (Array.isArray(documents)) return documents.filter(Boolean).slice(0, maxDocuments);
@@ -282,7 +321,17 @@ export default function MediaUploader({
     setMediaError('');
     setCameraOpening(true);
 
+    const browser = detectBrowser();
+
     try {
+      const hostname = typeof window !== 'undefined' ? window.location?.hostname : '';
+      const localDev = hostname === 'localhost' || hostname === '127.0.0.1';
+      if (typeof window !== 'undefined' && !window.isSecureContext && !localDev) {
+        setCameraOpening(false);
+        setPermissionHelp({ mode, browser, reason: 'secure-context' });
+        return;
+      }
+
       const mediaDevices = typeof navigator !== 'undefined' ? navigator.mediaDevices : null;
       const getUserMedia = mediaDevices && typeof mediaDevices.getUserMedia === 'function'
         ? mediaDevices.getUserMedia.bind(mediaDevices)
@@ -292,6 +341,17 @@ export default function MediaUploader({
         setCameraOpening(false);
         if (mode === 'photo') photoCameraRef.current?.click();
         else documentCameraRef.current?.click();
+        return;
+      }
+
+      // When permission is still "prompt", calling getUserMedia from this user click
+      // makes Chrome/Edge/Firefox/Safari show their native Allow/Block UI.
+      // If the user previously selected Block, browsers intentionally prevent a site
+      // from forcing that permission panel open again.
+      const permissionState = await getCameraPermissionState();
+      if (permissionState === 'denied') {
+        setCameraOpening(false);
+        setPermissionHelp({ mode, browser, reason: 'denied' });
         return;
       }
 
@@ -310,6 +370,7 @@ export default function MediaUploader({
 
       streamRef.current?.getTracks?.().forEach((track) => track.stop());
       streamRef.current = stream;
+      setPermissionHelp(null);
       setCameraMode(mode);
       setCameraOpening(false);
     } catch (error) {
@@ -326,12 +387,20 @@ export default function MediaUploader({
         || error?.name === 'DevicesNotFoundError'
         || error?.name === 'NotReadableError';
 
+      if (denied) {
+        const permissionState = await getCameraPermissionState();
+        setPermissionHelp({
+          mode,
+          browser,
+          reason: permissionState === 'denied' ? 'denied' : 'permission-failed',
+        });
+        return;
+      }
+
       setMediaError(
-        denied
-          ? 'Camera permission is blocked. Click the camera/lock icon in the browser address bar, allow Camera, then try again.'
-          : unavailable
-            ? 'No usable camera was found. Check that another app is not using the camera, or choose a photo from files.'
-            : 'Camera could not be opened. Check browser camera permission and try again.',
+        unavailable
+          ? 'No usable camera was found. Check that another app is not using the camera, or choose a photo from files.'
+          : 'Camera could not be opened. Check the device camera and browser permission, then try again.',
       );
     }
   };
@@ -473,6 +542,47 @@ export default function MediaUploader({
             </button>
           </div>
           <p className="media-source-note">{sourceChooser === 'photo' ? 'Camera captures are saved as JPG.' : 'Camera scans are saved as JPG. File upload supports normal document formats.'}</p>
+        </div>
+      </div>}
+
+      {permissionHelp && <div className="camera-permission-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setPermissionHelp(null)}>
+        <div className="camera-permission-modal" role="dialog" aria-modal="true" aria-label="Camera permission required">
+          <div className="camera-permission-head">
+            <div className="camera-permission-icon"><Camera size={24}/></div>
+            <div>
+              <strong>Allow camera in {permissionHelp.browser}</strong>
+              <span>CREDNIVO needs camera permission only when you choose Camera.</span>
+            </div>
+            <button type="button" onClick={() => setPermissionHelp(null)} title="Close"><X size={18}/></button>
+          </div>
+          <div className="camera-permission-body">
+            {permissionHelp.reason === 'secure-context'
+              ? <p>Browser camera access only works on a secure HTTPS website (or localhost). Open the HTTPS version of CREDNIVO and try again.</p>
+              : <>
+                <p>
+                  {permissionHelp.reason === 'denied'
+                    ? 'Camera was already blocked for this website, so the browser will not show the Allow popup again automatically.'
+                    : 'The browser did not grant camera access. Check the site camera permission, then retry.'}
+                </p>
+                <div className="camera-permission-step">
+                  <strong>{permissionHelp.browser}</strong>
+                  <span>{cameraPermissionInstruction(permissionHelp.browser)}</span>
+                </div>
+                <p className="camera-permission-note">After changing it to Allow, you normally do not need to leave this page. Press Try Camera Again below.</p>
+              </>}
+          </div>
+          <div className="camera-permission-actions">
+            <button type="button" className="camera-permission-cancel" onClick={() => setPermissionHelp(null)}>Cancel</button>
+            {permissionHelp.reason !== 'secure-context' && <button
+              type="button"
+              className="camera-permission-retry"
+              onClick={() => {
+                const mode = permissionHelp.mode;
+                setPermissionHelp(null);
+                startCamera(mode);
+              }}
+            ><Camera size={16}/> Try Camera Again</button>}
+          </div>
         </div>
       </div>}
 
