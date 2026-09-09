@@ -864,6 +864,7 @@ export default function Collection() {
                   ))}
                 </tbody>
               </table>
+              <div className="crednivo-popup-end-spacer" aria-hidden="true" />
             </div>
 
             <div className="mobile-data-list collection-schedule-mobile">
@@ -881,6 +882,7 @@ export default function Collection() {
                   </div>
                 </article>
               ))}
+              <div className="crednivo-popup-end-spacer" aria-hidden="true" />
             </div>
           </div>
         </div>

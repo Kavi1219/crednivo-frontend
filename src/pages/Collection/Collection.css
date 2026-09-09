@@ -310,3 +310,13 @@
   pointer-events: auto;
   filter: saturate(.35);
 }
+
+/* =========================================================
+   POPUP SCROLL END CLEARANCE V2
+   Keep the complete final schedule row visible at scroll end.
+   ========================================================= */
+.collection-schedule-scroll,
+.collection-schedule-mobile {
+  flex: 1 1 auto;
+  min-height: 0;
+}
