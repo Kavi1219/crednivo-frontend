@@ -2063,3 +2063,65 @@
   }
 }
 
+
+/* =========================================================
+   POPUP BOTTOM CLEARANCE V3 - Customer loan schedule
+   The schedule modal must own a fixed viewport-safe height and the
+   table/list must be the shrinking scroll child. This prevents the last
+   installment from being clipped by the modal's overflow:hidden edge.
+   ========================================================= */
+.customer-loan-schedule-modal{
+  display:flex;
+  flex-direction:column;
+  max-height:min(820px,calc(100dvh - 40px));
+  min-height:0;
+}
+
+.customer-loan-schedule-head,
+.customer-loan-schedule-summary{
+  flex:0 0 auto;
+}
+
+.customer-loan-schedule-table-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+  padding-bottom:0;
+}
+
+.customer-loan-schedule-table-wrap::after{
+  content:"";
+  display:block;
+  width:100%;
+  height:max(42px,calc(42px + env(safe-area-inset-bottom)));
+  pointer-events:none;
+}
+
+@media(max-width:767px){
+  .customer-loan-schedule-modal{
+    max-height:calc(100dvh - var(--mobile-nav-height,0px) - 12px);
+  }
+
+  .customer-loan-schedule-mobile-list{
+    flex:1 1 auto;
+    min-height:0;
+    max-height:none;
+    overflow:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-gutter:stable;
+    padding-bottom:0;
+  }
+
+  .customer-loan-schedule-mobile-list::after{
+    content:"";
+    display:block;
+    width:100%;
+    height:max(48px,calc(48px + env(safe-area-inset-bottom)));
+    pointer-events:none;
+  }
+}
