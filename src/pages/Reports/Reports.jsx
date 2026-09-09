@@ -381,9 +381,10 @@ export default function Reports() {
     };
   }, [filteredCollections, filteredPayments, filteredExpenses]);
 
-  // Overview cycle cards intentionally use the selected date range but do not
-  // inherit the Cycle dropdown. This keeps Daily / Weekly / Monthly visible
-  // together as a true breakdown of customer money received for the period.
+  // Daily / Weekly / Monthly overview cards are portfolio totals, not payment totals.
+  // Example: three active Daily loans with Collection / Cycle values of
+  // ₹100 + ₹50 + ₹600 must show Daily Collection = ₹750, regardless of how
+  // much has already been received or is pending in the selected report period.
   const overviewRangeCollections = useMemo(() => collections.filter(
     (item) => inRange(item.date, fromDate, toDate),
   ), [collections, fromDate, toDate]);
@@ -394,31 +395,29 @@ export default function Reports() {
     && item.direction === 'in'
   )), [payments, fromDate, toDate]);
 
+  const overviewActiveLoans = useMemo(() => loans.filter((loan) => (
+    String(loan.status || '').toLowerCase() !== 'closed'
+    && numberValue(loan.outstanding) > 0
+  )), [loans]);
+
   const overviewCycleCollections = useMemo(() => ['Daily', 'Weekly', 'Monthly'].map((itemCycle) => {
-    const paymentRows = overviewRangeCollectionPayments.filter((payment) => {
-      const paymentCycle = payment.cycle || loanMap[payment.loanId]?.cycle || '';
-      return String(paymentCycle).toLowerCase() === itemCycle.toLowerCase();
-    });
-    const scheduleRows = overviewRangeCollections.filter(
-      (item) => String(item.cycle || '').toLowerCase() === itemCycle.toLowerCase(),
+    const cycleLoans = overviewActiveLoans.filter(
+      (loan) => String(loan.cycle || '').toLowerCase() === itemCycle.toLowerCase(),
     );
 
-    const amount = paymentRows.reduce(
-      (sum, item) => sum + numberValue(item.collectionAmount ?? item.amount),
+    const amount = cycleLoans.reduce(
+      (sum, loan) => sum + numberValue(loan.collectionAmount),
       0,
     );
-    const customerIds = new Set([
-      ...paymentRows.map((item) => item.customerId).filter(Boolean),
-      ...scheduleRows.map((item) => item.customerId).filter(Boolean),
-    ]);
+    const customerIds = new Set(cycleLoans.map((loan) => loan.customerId).filter(Boolean));
 
     return {
       cycle: itemCycle,
       amount,
       customerCount: customerIds.size,
-      paymentCount: paymentRows.length,
+      loanCount: cycleLoans.length,
     };
-  }), [overviewRangeCollectionPayments, overviewRangeCollections, loanMap]);
+  }), [overviewActiveLoans]);
 
   const overviewCycleCustomerRows = useMemo(() => {
     const selected = String(selectedOverviewCycle || 'Daily').toLowerCase();
@@ -446,6 +445,19 @@ export default function Reports() {
       }
       return grouped.get(key);
     };
+
+    // Start with every currently active loan in the selected cycle so clicking
+    // a card always shows all customers that make up that cycle total.
+    overviewActiveLoans
+      .filter((loan) => String(loan.cycle || '').toLowerCase() === selected)
+      .forEach((loan) => {
+        ensureRow({
+          customerId: loan.customerId,
+          customerName: loan.customerName,
+          loanId: loan.id,
+          itemCycle: loan.cycle,
+        });
+      });
 
     overviewRangeCollections
       .filter((item) => String(item.cycle || '').toLowerCase() === selected)
@@ -490,7 +502,7 @@ export default function Reports() {
       }))
       .sort((a, b) => String(a.customerName || '').localeCompare(String(b.customerName || ''))
         || String(a.loanId || '').localeCompare(String(b.loanId || '')));
-  }, [selectedOverviewCycle, overviewRangeCollections, overviewRangeCollectionPayments, loanMap]);
+  }, [selectedOverviewCycle, overviewActiveLoans, overviewRangeCollections, overviewRangeCollectionPayments, loanMap]);
 
   const selectedOverviewCycleSummary = overviewCycleCollections.find(
     (item) => item.cycle === selectedOverviewCycle,
@@ -641,7 +653,7 @@ export default function Reports() {
       ['Summary', 'Value'],
       ['Expected Collection', overview.expected],
       ['Customer Money Received', overview.collected],
-      ...overviewCycleCollections.map((item) => [`${item.cycle} Collection Received`, item.amount]),
+      ...overviewCycleCollections.map((item) => [`${item.cycle} Collection / Cycle Total`, item.amount]),
       ['Scheduled Collection Collected', overview.scheduledCollected],
       ['Pending', overview.pending],
       ['Overdue', overview.overdue],
@@ -794,7 +806,7 @@ export default function Reports() {
             <div className="reports-cycle-collection-head">
               <div>
                 <strong>Collection by Cycle</strong>
-                <span>Actual customer collection money received for {rangeLabel}. Click a cycle to view only those customer details.</span>
+                <span>Total Collection / Cycle amount across current active loans. Click a cycle to view only those customer details.</span>
               </div>
               <span className="reports-cycle-selected-badge">{selectedOverviewCycle} customers</span>
             </div>
@@ -815,7 +827,7 @@ export default function Reports() {
                     <span className="reports-cycle-tab-copy">
                       <small>{item.cycle} Collection</small>
                       <strong>{formatCurrency(item.amount)}</strong>
-                      <em>{item.customerCount} customer${item.customerCount === 1 ? '' : 's'} · {item.paymentCount} payment${item.paymentCount === 1 ? '' : 's'}</em>
+                      <em>{item.customerCount} customer${item.customerCount === 1 ? '' : 's'} · {item.loanCount} active loan${item.loanCount === 1 ? '' : 's'}</em>
                     </span>
                   </button>
                 );
@@ -826,13 +838,13 @@ export default function Reports() {
               <div className="reports-cycle-customer-panel-head">
                 <div>
                   <strong>{selectedOverviewCycle} Collection Customers</strong>
-                  <span>{rangeLabel} · {overviewCycleCustomerRows.length} loan/customer record${overviewCycleCustomerRows.length === 1 ? '' : 's'}</span>
+                  <span>{overviewCycleCustomerRows.length} active loan/customer record${overviewCycleCustomerRows.length === 1 ? '' : 's'} · period figures: {rangeLabel}</span>
                 </div>
                 <strong>{formatCurrency(selectedOverviewCycleSummary?.amount || 0)}</strong>
               </div>
 
               {overviewCycleCustomerRows.length === 0 ? (
-                <EmptyState>No {selectedOverviewCycle.toLowerCase()} collection customers found in this date range.</EmptyState>
+                <EmptyState>No active {selectedOverviewCycle.toLowerCase()} collection customers found.</EmptyState>
               ) : (
                 <>
                   <div className="reports-cycle-customer-table-wrap">
