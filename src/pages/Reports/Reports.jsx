@@ -264,7 +264,7 @@ export default function Reports() {
   const [collectionApiError, setCollectionApiError] = useState('');
   const [selectedOverviewCycle, setSelectedOverviewCycle] = useState('Daily');
   const [expandedOverviewCycle, setExpandedOverviewCycle] = useState(null);
-  const [expandedOverallActivity, setExpandedOverallActivity] = useState(false);
+  const [selectedActivityCard, setSelectedActivityCard] = useState(null);
   const [weeklyStartDate, setWeeklyStartDate] = useState(() => getSundayWeekRange(toInputDate()).from);
 
   useEffect(() => {
@@ -596,6 +596,135 @@ export default function Reports() {
 
   const overviewActiveLoanCount = overviewActiveLoans.length;
   const overviewCustomerCount = customers.length;
+
+  const customerById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer])),
+    [customers],
+  );
+
+  const newLoanDetailRows = useMemo(() => {
+    return (loans || [])
+      .map((loan) => {
+        const loanDate = String(
+          loan.disbursedDate
+            || loan.disbursed_date
+            || loan.startDate
+            || loan.loanDate
+            || loan.createdAt
+            || ''
+        ).slice(0, 10);
+
+        if (overviewHasDateFilter && !inRange(loanDate, fromDate, toDate)) return null;
+
+        const customer = customerById[String(loan.customerId)] || {};
+        const principal = numberValue(
+          loan.principal
+            ?? loan.loanAmount
+            ?? loan.amount
+            ?? loan.requiredAmount
+            ?? 0
+        );
+        const givenAmount = numberValue(
+          loan.disbursedAmount
+            ?? loan.disbursed_amount
+            ?? loan.givenAmount
+            ?? loan.amountGiven
+            ?? principal
+        );
+
+        return {
+          key: `loan-${loan.id || loan.loanId || Math.random()}`,
+          date: loanDate,
+          customerDbId: loan.customerId || customer.id || '',
+          customerId: customer.customerId || loan.customerCode || loan.customerId || '—',
+          customerName: loan.customerName || customer.name || 'Customer',
+          loanId: loan.loanId || loan.id || '—',
+          cycle: loan.cycle || '—',
+          loanAmount: principal,
+          givenAmount,
+          status: loan.status || 'Active',
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  }, [loans, customerById, overviewHasDateFilter, fromDate, toDate]);
+
+  const expenseDetailRows = useMemo(
+    () => (filteredExpenses || [])
+      .map((item, index) => ({
+        key: `expense-${item.id || item.referenceId || index}`,
+        date: String(item.date || item.expenseDate || item.createdAt || '').slice(0, 10),
+        category: item.category || item.expenseType || 'Expense',
+        description: item.description || item.note || item.purpose || '—',
+        amount: numberValue(item.amount),
+        createdBy: item.createdByName || item.creatorName || item.createdBy || item.userName || '—',
+      }))
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))),
+    [filteredExpenses],
+  );
+
+  const fineDetailRows = useMemo(
+    () => (filteredPayments || [])
+      .filter((item) => item.direction === 'in' && numberValue(item.fineAmount) > 0)
+      .map((item, index) => {
+        const linkedLoan = loanMap[item.loanId] || {};
+        const customer = customerById[String(item.customerId || linkedLoan.customerId)] || {};
+        return {
+          key: `fine-${item.id || item.referenceId || index}`,
+          date: String(item.date || item.paymentDate || item.createdAt || '').slice(0, 10),
+          customerDbId: item.customerId || linkedLoan.customerId || customer.id || '',
+          customerId: customer.customerId || item.customerCode || item.customerId || linkedLoan.customerId || '—',
+          customerName: item.customerName || linkedLoan.customerName || customer.name || 'Customer',
+          loanId: item.loanId || linkedLoan.loanId || linkedLoan.id || '—',
+          amount: numberValue(item.fineAmount),
+          paymentMode: item.paymentMode || item.mode || '—',
+        };
+      })
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))),
+    [filteredPayments, loanMap, customerById],
+  );
+
+  const documentChargeDetailRows = useMemo(
+    () => (filteredPayments || [])
+      .filter((item) => {
+        if (item.direction !== 'in') return false;
+        const type = String(item.type || '').toLowerCase().replace(/[_-]+/g, ' ');
+        const note = String(item.note || '').toLowerCase();
+        const reference = String(item.referenceId || item.reference || '').toLowerCase();
+        return type.includes('document charge')
+          || note.includes('document charge')
+          || reference.endsWith('-doc');
+      })
+      .map((item, index) => {
+        const linkedLoan = loanMap[item.loanId] || {};
+        const customer = customerById[String(item.customerId || linkedLoan.customerId)] || {};
+        return {
+          key: `doc-${item.id || item.referenceId || index}`,
+          date: String(item.date || item.paymentDate || item.createdAt || '').slice(0, 10),
+          customerDbId: item.customerId || linkedLoan.customerId || customer.id || '',
+          customerId: customer.customerId || item.customerCode || item.customerId || linkedLoan.customerId || '—',
+          customerName: item.customerName || linkedLoan.customerName || customer.name || 'Customer',
+          loanId: item.loanId || linkedLoan.loanId || linkedLoan.id || '—',
+          amount: numberValue(item.amount),
+          reference: item.referenceId || item.reference || '—',
+        };
+      })
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))),
+    [filteredPayments, loanMap, customerById],
+  );
+
+  const savingsDetailRows = useMemo(
+    () => (overviewSavingsEntries || [])
+      .map((item, index) => ({
+        key: `saving-${item.id || item.referenceId || index}`,
+        date: String(item.date || item.createdAt || '').slice(0, 10),
+        amount: numberValue(item.amount),
+        description: item.note || item.description || item.purpose || 'Savings',
+        createdBy: item.createdByName || item.creatorName || item.createdBy || item.userName || '—',
+      }))
+      .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))),
+    [overviewSavingsEntries],
+  );
 
   const overviewRangeLabel = !fromDate && !toDate
     ? 'Overall live snapshot'
@@ -1321,162 +1450,309 @@ export default function Reports() {
             <small>{overviewRangeLabel}</small>
           </div>
 
-          <button
-            type="button"
-            className={`reports-overall-activity-master-card ${expandedOverallActivity ? 'active' : ''}`}
-            aria-expanded={expandedOverallActivity}
-            onClick={() => setExpandedOverallActivity((current) => !current)}
-          >
-            <span className="reports-overall-activity-master-icon">
-              <Activity size={20} />
-            </span>
-
-            <div className="reports-overall-activity-master-copy">
-              <span>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</span>
-              <strong>
-                {overviewActivityRows.length} activity entr{overviewActivityRows.length === 1 ? 'y' : 'ies'}
-              </strong>
-              <small>
-                New loans · Expenses · Fine · Document charges{isOwner ? ' · Savings' : ''}
-              </small>
-            </div>
-
-            <b className="reports-cycle-open-label">
-              {expandedOverallActivity ? 'Hide' : 'View'}
-            </b>
-          </button>
-
           <div className={`reports-overall-activity-grid ${isOwner ? 'with-savings' : ''}`} aria-label="Business activity summary">
-            <article className="reports-overall-activity-card">
+            <button
+              type="button"
+              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'loans' ? 'active' : ''}`}
+              aria-expanded={selectedActivityCard === 'loans'}
+              onClick={() => setSelectedActivityCard((current) => current === 'loans' ? null : 'loans')}
+            >
               <span className="reports-overall-activity-icon"><UserPlus size={19} /></span>
               <div>
                 <small>New Loans Given</small>
                 <strong>{formatCurrency(overview.loanGiven)}</strong>
-                <span>{overviewHasDateFilter ? 'Loan disbursement in selected range' : 'Total loan disbursement amount'}</span>
+                <span>{overviewHasDateFilter ? 'Loans given in selected date range' : 'All loan disbursements'}</span>
               </div>
-            </article>
+              <b className="reports-activity-card-view">{selectedActivityCard === 'loans' ? 'Hide' : 'View'}</b>
+            </button>
 
-            <article className="reports-overall-activity-card">
+            <button
+              type="button"
+              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'expenses' ? 'active' : ''}`}
+              aria-expanded={selectedActivityCard === 'expenses'}
+              onClick={() => setSelectedActivityCard((current) => current === 'expenses' ? null : 'expenses')}
+            >
               <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
               <div>
                 <small>Expenses</small>
                 <strong>{formatCurrency(overview.expenseTotal)}</strong>
-                <span>{overviewHasDateFilter ? 'Expenses in selected range' : 'Recorded business expenses'}</span>
+                <span>{overviewHasDateFilter ? 'Expenses in selected date range' : 'All recorded business expenses'}</span>
               </div>
-            </article>
+              <b className="reports-activity-card-view">{selectedActivityCard === 'expenses' ? 'Hide' : 'View'}</b>
+            </button>
 
-            <article className="reports-overall-activity-card">
+            <button
+              type="button"
+              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'fine' ? 'active' : ''}`}
+              aria-expanded={selectedActivityCard === 'fine'}
+              onClick={() => setSelectedActivityCard((current) => current === 'fine' ? null : 'fine')}
+            >
               <span className="reports-overall-activity-icon"><CircleDollarSign size={19} /></span>
               <div>
                 <small>Fine Income</small>
                 <strong>{formatCurrency(overviewFineIncome)}</strong>
-                <span>{overviewHasDateFilter ? 'Fine received in selected range' : 'Fine amount actually received'}</span>
+                <span>{overviewHasDateFilter ? 'Fine received in selected date range' : 'All fine amount received'}</span>
               </div>
-            </article>
+              <b className="reports-activity-card-view">{selectedActivityCard === 'fine' ? 'Hide' : 'View'}</b>
+            </button>
 
-            <article className="reports-overall-activity-card">
+            <button
+              type="button"
+              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'documents' ? 'active' : ''}`}
+              aria-expanded={selectedActivityCard === 'documents'}
+              onClick={() => setSelectedActivityCard((current) => current === 'documents' ? null : 'documents')}
+            >
               <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
               <div>
                 <small>Document Charges Income</small>
                 <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
-                <span>{overviewHasDateFilter ? 'Document charges in selected range' : 'Document charges recorded as income'}</span>
+                <span>{overviewHasDateFilter ? 'Charges in selected date range' : 'All document charge income'}</span>
               </div>
-            </article>
+              <b className="reports-activity-card-view">{selectedActivityCard === 'documents' ? 'Hide' : 'View'}</b>
+            </button>
 
             {isOwner && (
-              <article className="reports-overall-activity-card reports-overall-activity-savings">
+              <button
+                type="button"
+                className={`reports-overall-activity-card reports-overall-activity-button reports-overall-activity-savings ${selectedActivityCard === 'savings' ? 'active' : ''}`}
+                aria-expanded={selectedActivityCard === 'savings'}
+                onClick={() => setSelectedActivityCard((current) => current === 'savings' ? null : 'savings')}
+              >
                 <span className="reports-overall-activity-icon"><PiggyBank size={19} /></span>
                 <div>
                   <small>Savings</small>
                   <strong>{formatCurrency(overviewSavingsAmount)}</strong>
-                  <span>{overviewHasDateFilter ? 'Savings moved in selected range' : 'Total cash moved into Savings'}</span>
+                  <span>{overviewHasDateFilter ? 'Savings in selected date range' : 'All cash moved into Savings'}</span>
                 </div>
-              </article>
+                <b className="reports-activity-card-view">{selectedActivityCard === 'savings' ? 'Hide' : 'View'}</b>
+              </button>
             )}
           </div>
 
-          {expandedOverallActivity && (
-            <section className="reports-overall-activity-detail" aria-label="Overall activity details">
-              <div className="reports-overall-activity-detail-head">
+          {selectedActivityCard && (
+            <section className="reports-activity-selected-detail" aria-label="Selected activity details">
+              <div className="reports-activity-selected-head">
                 <div>
                   <span>ACTIVITY DETAILS</span>
-                  <strong>{overviewHasDateFilter ? 'Filtered Business Activity' : 'Overall Business Activity'}</strong>
+                  <strong>
+                    {selectedActivityCard === 'loans' && 'New Loans Given'}
+                    {selectedActivityCard === 'expenses' && 'Expenses'}
+                    {selectedActivityCard === 'fine' && 'Fine Income'}
+                    {selectedActivityCard === 'documents' && 'Document Charges Income'}
+                    {selectedActivityCard === 'savings' && 'Savings'}
+                  </strong>
                   <small>{overviewRangeLabel}</small>
                 </div>
-                <strong>{overviewActivityRows.length} entr{overviewActivityRows.length === 1 ? 'y' : 'ies'}</strong>
               </div>
 
-              {overviewActivityRows.length ? (
-                <>
-                  <div className="reports-overall-activity-detail-table-wrap">
-                    <table className="reports-overall-activity-detail-table">
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Activity</th>
-                          <th>Reference</th>
-                          <th>Description</th>
-                          <th>Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {overviewActivityRows.map((row) => (
-                          <tr key={row.key}>
-                            <td>{formatDate(row.date)}</td>
-                            <td>
-                              <span className={`reports-activity-type reports-activity-type-${String(row.type).toLowerCase().replace(/\s+/g, '-')}`}>
-                                {row.type}
-                              </span>
-                            </td>
-                            <td><strong>{row.reference || '—'}</strong></td>
-                            <td>{row.description || '—'}</td>
-                            <td className={
-                              row.direction === 'in'
-                                ? 'reports-activity-amount-in'
-                                : row.direction === 'out'
-                                  ? 'reports-activity-amount-out'
-                                  : 'reports-activity-amount-saving'
-                            }>
-                              {row.direction === 'in' ? '+' : row.direction === 'out' ? '−' : ''}
-                              {formatCurrency(row.amount)}
-                            </td>
+              {selectedActivityCard === 'loans' && (
+                newLoanDetailRows.length ? (
+                  <>
+                    <div className="reports-activity-detail-table-wrap">
+                      <table className="reports-activity-detail-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Customer ID</th>
+                            <th>Loan ID</th>
+                            <th>Cycle</th>
+                            <th>Loan Amount</th>
+                            <th>Given Amount</th>
+                            <th>Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {newLoanDetailRows.map((row) => (
+                            <tr key={row.key}>
+                              <td>{formatDate(row.date)}</td>
+                              <td>
+                                <strong>
+                                  {row.customerDbId
+                                    ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
+                                    : row.customerName}
+                                </strong>
+                              </td>
+                              <td>{row.customerId}</td>
+                              <td><strong>{row.loanId}</strong></td>
+                              <td>{row.cycle}</td>
+                              <td>{formatCurrency(row.loanAmount)}</td>
+                              <td>{formatCurrency(row.givenAmount)}</td>
+                              <td><span className="reports-cycle-detail-status">{row.status}</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
-                  <div className="reports-overall-activity-mobile-list">
-                    {overviewActivityRows.map((row) => (
-                      <article className="reports-overall-activity-mobile-card" key={`mobile-${row.key}`}>
-                        <div className="reports-activity-mobile-top">
-                          <div>
-                            <span>{formatDate(row.date)}</span>
-                            <strong>{row.type}</strong>
+                    <div className="reports-activity-detail-mobile">
+                      {newLoanDetailRows.map((row) => (
+                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                          <div className="reports-activity-detail-mobile-top">
+                            <div>
+                              <span>{formatDate(row.date)}</span>
+                              <strong>
+                                {row.customerDbId
+                                  ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
+                                  : row.customerName}
+                              </strong>
+                              <small>{row.customerId} · {row.loanId}</small>
+                            </div>
+                            <span className="reports-cycle-detail-status">{row.status}</span>
                           </div>
-                          <strong className={
-                            row.direction === 'in'
-                              ? 'amount-in'
-                              : row.direction === 'out'
-                                ? 'amount-out'
-                                : 'amount-saving'
-                          }>
-                            {row.direction === 'in' ? '+' : row.direction === 'out' ? '−' : ''}
-                            {formatCurrency(row.amount)}
-                          </strong>
-                        </div>
-                        <div className="reports-activity-mobile-meta">
-                          <span>Reference</span><strong>{row.reference || '—'}</strong>
-                          <span>Details</span><strong>{row.description || '—'}</strong>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="reports-overview-cycle-empty">
-                  No business activity is available for {overviewRangeLabel.toLowerCase()}.
-                </div>
+                          <div className="reports-activity-detail-mobile-grid">
+                            <div><span>Cycle</span><strong>{row.cycle}</strong></div>
+                            <div><span>Loan Amount</span><strong>{formatCurrency(row.loanAmount)}</strong></div>
+                            <div><span>Given Amount</span><strong>{formatCurrency(row.givenAmount)}</strong></div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="reports-overview-cycle-empty">No new loans found for {overviewRangeLabel.toLowerCase()}.</div>
+                )
+              )}
+
+              {selectedActivityCard === 'expenses' && (
+                expenseDetailRows.length ? (
+                  <>
+                    <div className="reports-activity-detail-table-wrap">
+                      <table className="reports-activity-detail-table">
+                        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Created By</th><th>Amount</th></tr></thead>
+                        <tbody>
+                          {expenseDetailRows.map((row) => (
+                            <tr key={row.key}>
+                              <td>{formatDate(row.date)}</td>
+                              <td><strong>{row.category}</strong></td>
+                              <td>{row.description}</td>
+                              <td>{row.createdBy}</td>
+                              <td className="reports-activity-amount-out">{formatCurrency(row.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="reports-activity-detail-mobile">
+                      {expenseDetailRows.map((row) => (
+                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                          <div className="reports-activity-detail-mobile-top">
+                            <div><span>{formatDate(row.date)}</span><strong>{row.category}</strong><small>{row.description}</small></div>
+                            <strong className="amount-out">{formatCurrency(row.amount)}</strong>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : <div className="reports-overview-cycle-empty">No expenses found for {overviewRangeLabel.toLowerCase()}.</div>
+              )}
+
+              {selectedActivityCard === 'fine' && (
+                fineDetailRows.length ? (
+                  <>
+                    <div className="reports-activity-detail-table-wrap">
+                      <table className="reports-activity-detail-table">
+                        <thead><tr><th>Date</th><th>Customer</th><th>Customer ID</th><th>Loan ID</th><th>Mode</th><th>Fine Amount</th></tr></thead>
+                        <tbody>
+                          {fineDetailRows.map((row) => (
+                            <tr key={row.key}>
+                              <td>{formatDate(row.date)}</td>
+                              <td><strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong></td>
+                              <td>{row.customerId}</td>
+                              <td><strong>{row.loanId}</strong></td>
+                              <td>{row.paymentMode}</td>
+                              <td className="reports-activity-amount-in">{formatCurrency(row.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="reports-activity-detail-mobile">
+                      {fineDetailRows.map((row) => (
+                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                          <div className="reports-activity-detail-mobile-top">
+                            <div>
+                              <span>{formatDate(row.date)}</span>
+                              <strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong>
+                              <small>{row.customerId} · {row.loanId}</small>
+                            </div>
+                            <strong className="amount-in">{formatCurrency(row.amount)}</strong>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : <div className="reports-overview-cycle-empty">No fine income found for {overviewRangeLabel.toLowerCase()}.</div>
+              )}
+
+              {selectedActivityCard === 'documents' && (
+                documentChargeDetailRows.length ? (
+                  <>
+                    <div className="reports-activity-detail-table-wrap">
+                      <table className="reports-activity-detail-table">
+                        <thead><tr><th>Date</th><th>Customer</th><th>Customer ID</th><th>Loan ID</th><th>Reference</th><th>Document Charge</th></tr></thead>
+                        <tbody>
+                          {documentChargeDetailRows.map((row) => (
+                            <tr key={row.key}>
+                              <td>{formatDate(row.date)}</td>
+                              <td><strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong></td>
+                              <td>{row.customerId}</td>
+                              <td><strong>{row.loanId}</strong></td>
+                              <td>{row.reference}</td>
+                              <td className="reports-activity-amount-in">{formatCurrency(row.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="reports-activity-detail-mobile">
+                      {documentChargeDetailRows.map((row) => (
+                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                          <div className="reports-activity-detail-mobile-top">
+                            <div>
+                              <span>{formatDate(row.date)}</span>
+                              <strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong>
+                              <small>{row.customerId} · {row.loanId}</small>
+                            </div>
+                            <strong className="amount-in">{formatCurrency(row.amount)}</strong>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : <div className="reports-overview-cycle-empty">No document charges found for {overviewRangeLabel.toLowerCase()}.</div>
+              )}
+
+              {selectedActivityCard === 'savings' && isOwner && (
+                savingsDetailRows.length ? (
+                  <>
+                    <div className="reports-activity-detail-table-wrap">
+                      <table className="reports-activity-detail-table">
+                        <thead><tr><th>Date</th><th>Description</th><th>Created By</th><th>Amount</th></tr></thead>
+                        <tbody>
+                          {savingsDetailRows.map((row) => (
+                            <tr key={row.key}>
+                              <td>{formatDate(row.date)}</td>
+                              <td><strong>{row.description}</strong></td>
+                              <td>{row.createdBy}</td>
+                              <td className="reports-activity-amount-saving">{formatCurrency(row.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="reports-activity-detail-mobile">
+                      {savingsDetailRows.map((row) => (
+                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                          <div className="reports-activity-detail-mobile-top">
+                            <div><span>{formatDate(row.date)}</span><strong>{row.description}</strong><small>{row.createdBy}</small></div>
+                            <strong className="amount-saving">{formatCurrency(row.amount)}</strong>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : <div className="reports-overview-cycle-empty">No savings found for {overviewRangeLabel.toLowerCase()}.</div>
               )}
             </section>
           )}
