@@ -514,8 +514,23 @@ export default function Reports() {
     return ['Daily', 'Weekly', 'Monthly'].map((itemCycle) => {
       const cycleKey = itemCycle.toLowerCase();
 
-      const portfolio = overviewCycleCollections.find(
-        (item) => String(item.cycle || '').toLowerCase() === cycleKey,
+      // "Loan Amount" means the original/principal loan amount, not the
+      // disbursed/given amount after upfront interest is deducted.
+      // Example: principal ₹20,000 - upfront interest ₹3,000 = ₹17,000 given,
+      // but this report must show Loan Amount = ₹20,000.
+      const cycleLoans = filteredLoans.filter(
+        (loan) => String(loan.cycle || '').toLowerCase() === cycleKey,
+      );
+
+      const loanAmount = cycleLoans.reduce(
+        (sum, loan) => sum + numberValue(
+          loan.principal
+            ?? loan.loanAmount
+            ?? loan.amount
+            ?? loan.requiredAmount
+            ?? 0
+        ),
+        0,
       );
 
       const scheduleRows = collections.filter((item) => {
@@ -560,7 +575,7 @@ export default function Reports() {
 
       return {
         cycle: itemCycle,
-        overallCollectionAmount: numberValue(portfolio?.amount),
+        loanAmount,
         collectedAmount,
         upcomingAmount,
         pendingAmount,
@@ -570,7 +585,7 @@ export default function Reports() {
     collections,
     payments,
     loanMap,
-    overviewCycleCollections,
+    filteredLoans,
     overviewHasDateFilter,
     fromDate,
     toDate,
@@ -1296,7 +1311,7 @@ export default function Reports() {
               <thead>
                 <tr>
                   <th>Cycle</th>
-                  <th>Overall Collection Amount</th>
+                  <th>Loan Amount</th>
                   <th>Collected Amount</th>
                   <th>Upcoming Amount</th>
                   <th>Pending Amount</th>
@@ -1310,22 +1325,13 @@ export default function Reports() {
                         {row.cycle}
                       </span>
                     </td>
-                    <td><strong>{formatCurrency(row.overallCollectionAmount)}</strong></td>
+                    <td><strong>{formatCurrency(row.loanAmount)}</strong></td>
                     <td className="reports-cycle-status-collected">{formatCurrency(row.collectedAmount)}</td>
                     <td className="reports-cycle-status-upcoming">{formatCurrency(row.upcomingAmount)}</td>
                     <td className="reports-cycle-status-pending">{formatCurrency(row.pendingAmount)}</td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td>Total</td>
-                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.overallCollectionAmount, 0))}</td>
-                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.collectedAmount, 0))}</td>
-                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.upcomingAmount, 0))}</td>
-                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.pendingAmount, 0))}</td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </section>
