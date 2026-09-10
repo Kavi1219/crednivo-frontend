@@ -518,7 +518,9 @@ export default function Reports() {
       // disbursed/given amount after upfront interest is deducted.
       // Example: principal ₹20,000 - upfront interest ₹3,000 = ₹17,000 given,
       // but this report must show Loan Amount = ₹20,000.
-      const cycleLoans = filteredLoans.filter(
+      // Loan Amount in this table must include ACTIVE LOANS ONLY.
+      // Closed/preclosed/fully settled loans are excluded by overviewActiveLoans.
+      const cycleLoans = overviewActiveLoans.filter(
         (loan) => String(loan.cycle || '').toLowerCase() === cycleKey,
       );
 
@@ -585,7 +587,7 @@ export default function Reports() {
     collections,
     payments,
     loanMap,
-    filteredLoans,
+    overviewActiveLoans,
     overviewHasDateFilter,
     fromDate,
     toDate,
