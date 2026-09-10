@@ -1313,24 +1313,38 @@ export default function Reports() {
             </article>
           </div>
 
-          <div className="reports-overall-section-heading reports-overall-activity-heading">
+          <div className="reports-overall-section-heading">
             <div>
               <span>BUSINESS ACTIVITY</span>
               <strong>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</strong>
             </div>
-            <div className="reports-overall-heading-actions">
-              <small>{overviewRangeLabel}</small>
-              <button
-                type="button"
-                className={`reports-overall-view-button ${expandedOverallActivity ? 'active' : ''}`}
-                aria-expanded={expandedOverallActivity}
-                onClick={() => setExpandedOverallActivity((current) => !current)}
-              >
-                <Eye size={15} />
-                {expandedOverallActivity ? 'Hide Activity' : 'View Activity'}
-              </button>
-            </div>
+            <small>{overviewRangeLabel}</small>
           </div>
+
+          <button
+            type="button"
+            className={`reports-overall-activity-master-card ${expandedOverallActivity ? 'active' : ''}`}
+            aria-expanded={expandedOverallActivity}
+            onClick={() => setExpandedOverallActivity((current) => !current)}
+          >
+            <span className="reports-overall-activity-master-icon">
+              <Activity size={20} />
+            </span>
+
+            <div className="reports-overall-activity-master-copy">
+              <span>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</span>
+              <strong>
+                {overviewActivityRows.length} activity entr{overviewActivityRows.length === 1 ? 'y' : 'ies'}
+              </strong>
+              <small>
+                New loans · Expenses · Fine · Document charges{isOwner ? ' · Savings' : ''}
+              </small>
+            </div>
+
+            <b className="reports-cycle-open-label">
+              {expandedOverallActivity ? 'Hide' : 'View'}
+            </b>
+          </button>
 
           <div className={`reports-overall-activity-grid ${isOwner ? 'with-savings' : ''}`} aria-label="Business activity summary">
             <article className="reports-overall-activity-card">
