@@ -734,3 +734,65 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
   .weekly-change-strip{grid-template-columns:repeat(3,1fr)!important;gap:2mm!important}.weekly-change-strip>div{padding:2.5mm!important;border-color:#dce4ee!important;background:#fff!important}.weekly-change-strip span{font-size:5.8pt!important}.weekly-change-strip strong{font-size:7pt!important}
   .weekly-report-footer{padding:3mm 4mm!important;background:#f8fafc!important;color:#71839a!important;font-size:5.5pt!important;break-inside:avoid}
 }
+
+/* =========================================================
+   V14 — CLEAN REPORT NAV + DATE RANGE ONLY
+   ========================================================= */
+.reports-tabs-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  min-width:0;
+}
+
+.reports-date-range{
+  margin-left:auto;
+  min-height:48px;
+  padding:6px 8px 6px 12px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+  color:var(--blue-600);
+}
+
+.reports-date-range>svg{flex:0 0 auto}
+.reports-date-range>span{
+  color:var(--ink-400);
+  font-size:10px;
+  font-weight:800;
+}
+.reports-date-range input{
+  min-width:132px;
+  height:34px;
+  padding:0 9px;
+  border:0;
+  border-radius:8px;
+  background:var(--surface-soft);
+  color:var(--ink-800);
+  font:inherit;
+  font-size:10px;
+  font-weight:800;
+  outline:0;
+}
+.reports-date-range input:focus{
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--blue-500) 20%,transparent);
+}
+
+@media(max-width:900px){
+  .reports-tabs-row{align-items:stretch;flex-direction:column}
+  .reports-date-range{margin-left:0;align-self:flex-end}
+}
+
+@media(max-width:560px){
+  .reports-date-range{width:100%;display:grid;grid-template-columns:auto 1fr auto 1fr}
+  .reports-date-range input{min-width:0;width:100%}
+}
+
+@media print{
+  .reports-tabs-row{display:none!important}
+}

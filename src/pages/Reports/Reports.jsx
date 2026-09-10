@@ -10,7 +10,6 @@ import {
   Landmark,
   Printer,
   ReceiptText,
-  RotateCcw,
   Search,
   TriangleAlert,
   UserPlus,
@@ -29,8 +28,6 @@ import { apiRequest } from '../../services/api';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Reports.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
-
-const CYCLES = ['All', 'Daily', 'Weekly', 'Monthly'];
 
 function numberValue(value) {
   const number = Number(value);
@@ -769,22 +766,6 @@ export default function Reports() {
     ...filteredLoans.map((item) => item.customerId),
   ]).size;
 
-  const resetFilters = () => {
-    const currentMonth = getMonthMeta(toInputDate().slice(0, 7));
-    setFromDate(currentMonth.start);
-    setToDate(currentMonth.end);
-    if (view === 'daily') setCycle('Daily');
-    else if (view === 'weekly') setCycle('Weekly');
-    else if (view === 'monthly') setCycle('Monthly');
-    else setCycle('All');
-  };
-
-  const setQuickRange = (type) => {
-    const range = getQuickRange(type);
-    setFromDate(range.from);
-    setToDate(range.to);
-  };
-
   const downloadOverview = () => downloadCsv(
     `crednivo-reports-overview-${fromDate}-to-${toDate}.csv`,
     [
@@ -927,18 +908,7 @@ export default function Reports() {
     else setCycle('All');
   };
 
-  const handleCycleChange = (event) => {
-    const nextCycle = event.target.value;
-    setCycle(nextCycle);
-    if (nextCycle === 'Daily') setView('daily');
-    else if (nextCycle === 'Weekly') setView('weekly');
-    else if (nextCycle === 'Monthly') setView('monthly');
-    else setView('overview');
-  };
 
-  const rangeLabel = fromDate === toDate
-    ? formatDate(fromDate)
-    : `${formatDate(fromDate)} – ${formatDate(toDate)}`;
 
   return (
     <div className="module-page reports-page phase5-reports">
@@ -954,42 +924,33 @@ export default function Reports() {
         )}
       />
 
-      <div className="reports-view-tabs" role="tablist" aria-label="Report view">
-        <button type="button" className={view === 'overview' ? 'active' : ''} onClick={() => selectReportView('overview')}><BarChart3 size={17} />Overview</button>
-        <button type="button" className={view === 'daily' ? 'active' : ''} onClick={() => selectReportView('daily')}><CalendarDays size={17} />Daily</button>
-        <button type="button" className={view === 'weekly' ? 'active' : ''} onClick={() => selectReportView('weekly')}><CalendarDays size={17} />Weekly</button>
-        <button type="button" className={view === 'monthly' ? 'active' : ''} onClick={() => selectReportView('monthly')}><ReceiptText size={17} />Monthly</button>
+      <div className="reports-tabs-row">
+        <div className="reports-view-tabs" role="tablist" aria-label="Report view">
+          <button type="button" className={view === 'overview' ? 'active' : ''} onClick={() => selectReportView('overview')}><BarChart3 size={17} />Overview</button>
+          <button type="button" className={view === 'daily' ? 'active' : ''} onClick={() => selectReportView('daily')}><CalendarDays size={17} />Daily</button>
+          <button type="button" className={view === 'weekly' ? 'active' : ''} onClick={() => selectReportView('weekly')}><CalendarDays size={17} />Weekly</button>
+          <button type="button" className={view === 'monthly' ? 'active' : ''} onClick={() => selectReportView('monthly')}><ReceiptText size={17} />Monthly</button>
+        </div>
+
+        <div className="reports-date-range" aria-label="Report date range">
+          <CalendarDays size={17} />
+          <input
+            type="date"
+            aria-label="From date"
+            value={fromDate}
+            max={toDate}
+            onChange={(event) => setFromDate(event.target.value)}
+          />
+          <span>to</span>
+          <input
+            type="date"
+            aria-label="To date"
+            value={toDate}
+            min={fromDate}
+            onChange={(event) => setToDate(event.target.value)}
+          />
+        </div>
       </div>
-
-      <section className="reports-filter-card app-card">
-        <div className="reports-filter-head">
-          <div>
-            <strong>Report Filters</strong>
-            <span>{rangeLabel} · {cycle === 'All' ? 'All cycles' : cycle}</span>
-          </div>
-          <div className="reports-quick-ranges">
-            <button type="button" onClick={() => setQuickRange('today')}>Today</button>
-            <button type="button" onClick={() => setQuickRange('week')}>This Week</button>
-            <button type="button" onClick={() => setQuickRange('month')}>This Month</button>
-          </div>
-        </div>
-
-        <div className="reports-filter-grid">
-          <label>
-            <span>From Date</span>
-            <div><CalendarDays size={16} /><input type="date" value={fromDate} max={toDate} onChange={(event) => setFromDate(event.target.value)} /></div>
-          </label>
-          <label>
-            <span>To Date</span>
-            <div><CalendarDays size={16} /><input type="date" value={toDate} min={fromDate} onChange={(event) => setToDate(event.target.value)} /></div>
-          </label>
-          <label>
-            <span>Cycle</span>
-            <select value={cycle} onChange={handleCycleChange}>{CYCLES.map((item) => <option key={item}>{item}</option>)}</select>
-          </label>
-          <button type="button" className="reports-reset" onClick={resetFilters}><RotateCcw size={16} />Reset</button>
-        </div>
-      </section>
     </div>
   );
 }
