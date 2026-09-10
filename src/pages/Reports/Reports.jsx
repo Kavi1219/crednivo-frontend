@@ -773,7 +773,10 @@ export default function Reports() {
     const currentMonth = getMonthMeta(toInputDate().slice(0, 7));
     setFromDate(currentMonth.start);
     setToDate(currentMonth.end);
-    setCycle('All');
+    if (view === 'daily') setCycle('Daily');
+    else if (view === 'weekly') setCycle('Weekly');
+    else if (view === 'monthly') setCycle('Monthly');
+    else setCycle('All');
   };
 
   const setQuickRange = (type) => {
@@ -914,11 +917,23 @@ export default function Reports() {
     ],
   );
 
-  const exportCurrent = () => {
-    if (view === 'weekly') return downloadWeeklyReport();
-    if (view === 'statement') return downloadMonthly();
-    if (view === 'collection') return downloadCollectionReport();
-    return downloadOverview();
+  const exportCurrent = () => downloadOverview();
+
+  const selectReportView = (nextView) => {
+    setView(nextView);
+    if (nextView === 'daily') setCycle('Daily');
+    else if (nextView === 'weekly') setCycle('Weekly');
+    else if (nextView === 'monthly') setCycle('Monthly');
+    else setCycle('All');
+  };
+
+  const handleCycleChange = (event) => {
+    const nextCycle = event.target.value;
+    setCycle(nextCycle);
+    if (nextCycle === 'Daily') setView('daily');
+    else if (nextCycle === 'Weekly') setView('weekly');
+    else if (nextCycle === 'Monthly') setView('monthly');
+    else setView('overview');
   };
 
   const rangeLabel = fromDate === toDate
@@ -934,16 +949,16 @@ export default function Reports() {
         actions={(
           <>
             <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print</ActionButton>
-            <ActionButton tone="secondary" icon={Download} onClick={exportCurrent}>Export CSV</ActionButton>
+            <ActionButton tone="secondary" icon={Download} onClick={exportCurrent}>Download</ActionButton>
           </>
         )}
       />
 
       <div className="reports-view-tabs" role="tablist" aria-label="Report view">
-        <button type="button" className={view === 'overview' ? 'active' : ''} onClick={() => setView('overview')}><BarChart3 size={17} />Overview</button>
-        <button type="button" className={view === 'weekly' ? 'active' : ''} onClick={() => setView('weekly')}><CalendarDays size={17} />Weekly Report</button>
-        <button type="button" className={view === 'collection' ? 'active' : ''} onClick={() => setView('collection')}><HandCoins size={17} />Collection Report</button>
-        <button type="button" className={view === 'statement' ? 'active' : ''} onClick={() => setView('statement')}><ReceiptText size={17} />Monthly Statement</button>
+        <button type="button" className={view === 'overview' ? 'active' : ''} onClick={() => selectReportView('overview')}><BarChart3 size={17} />Overview</button>
+        <button type="button" className={view === 'daily' ? 'active' : ''} onClick={() => selectReportView('daily')}><CalendarDays size={17} />Daily</button>
+        <button type="button" className={view === 'weekly' ? 'active' : ''} onClick={() => selectReportView('weekly')}><CalendarDays size={17} />Weekly</button>
+        <button type="button" className={view === 'monthly' ? 'active' : ''} onClick={() => selectReportView('monthly')}><ReceiptText size={17} />Monthly</button>
       </div>
 
       <section className="reports-filter-card app-card">
@@ -970,15 +985,7 @@ export default function Reports() {
           </label>
           <label>
             <span>Cycle</span>
-            <select value={cycle} onChange={(event) => setCycle(event.target.value)}>{CYCLES.map((item) => <option key={item}>{item}</option>)}</select>
-          </label>
-          <label>
-            <span>Branch</span>
-            <input value={user?.branch || company.branch || 'Current company branch'} readOnly />
-          </label>
-          <label>
-            <span>Agent Scope</span>
-            <input value={isOwner ? 'All permitted company data' : `${user?.displayName || 'Agent'} · permitted data`} readOnly />
+            <select value={cycle} onChange={handleCycleChange}>{CYCLES.map((item) => <option key={item}>{item}</option>)}</select>
           </label>
           <button type="button" className="reports-reset" onClick={resetFilters}><RotateCcw size={16} />Reset</button>
         </div>
