@@ -508,6 +508,74 @@ export default function Reports() {
         ? `From ${formatDate(fromDate)}`
         : `Up to ${formatDate(toDate)}`;
 
+  const overviewCycleStatusRows = useMemo(() => {
+    const today = toInputDate();
+
+    return ['Daily', 'Weekly', 'Monthly'].map((itemCycle) => {
+      const cycleKey = itemCycle.toLowerCase();
+
+      const portfolio = overviewCycleCollections.find(
+        (item) => String(item.cycle || '').toLowerCase() === cycleKey,
+      );
+
+      const scheduleRows = collections.filter((item) => {
+        if (String(item.cycle || '').toLowerCase() !== cycleKey) return false;
+        if (String(item.status || '').toLowerCase() === 'cancelled') return false;
+        if (!overviewHasDateFilter) return true;
+        return inRange(item.date, fromDate, toDate);
+      });
+
+      const collectedPayments = payments.filter((item) => {
+        if (item.type !== 'Collection' || item.direction !== 'in') return false;
+        const paymentCycle = item.cycle || loanMap[item.loanId]?.cycle || '';
+        if (String(paymentCycle).toLowerCase() !== cycleKey) return false;
+        if (!overviewHasDateFilter) return true;
+        return inRange(item.date, fromDate, toDate);
+      });
+
+      const collectedAmount = collectedPayments.reduce(
+        (sum, item) => sum + numberValue(item.collectionAmount ?? item.amount),
+        0,
+      );
+
+      const upcomingAmount = scheduleRows
+        .filter((item) => String(item.date || '') > today)
+        .reduce(
+          (sum, item) => sum + Math.max(
+            0,
+            numberValue(item.dueAmount) - numberValue(item.paidAmount),
+          ),
+          0,
+        );
+
+      const pendingAmount = scheduleRows
+        .filter((item) => String(item.date || '') <= today)
+        .reduce(
+          (sum, item) => sum + Math.max(
+            0,
+            numberValue(item.dueAmount) - numberValue(item.paidAmount),
+          ),
+          0,
+        );
+
+      return {
+        cycle: itemCycle,
+        overallCollectionAmount: numberValue(portfolio?.amount),
+        collectedAmount,
+        upcomingAmount,
+        pendingAmount,
+      };
+    });
+  }, [
+    collections,
+    payments,
+    loanMap,
+    overviewCycleCollections,
+    overviewHasDateFilter,
+    fromDate,
+    toDate,
+  ]);
+
   const overviewCycleCustomerRows = useMemo(() => {
     const selected = String(selectedOverviewCycle || 'Daily').toLowerCase();
     const grouped = new Map();
@@ -1213,6 +1281,52 @@ export default function Reports() {
                 <span>Document charges recorded as income</span>
               </div>
             </article>
+          </div>
+
+          <div className="reports-overall-section-heading reports-cycle-status-heading">
+            <div>
+              <span>COLLECTION STATUS</span>
+              <strong>Daily / Weekly / Monthly Summary</strong>
+            </div>
+            <small>{overviewRangeLabel}</small>
+          </div>
+
+          <div className="reports-cycle-status-table-wrap">
+            <table className="reports-cycle-status-table">
+              <thead>
+                <tr>
+                  <th>Cycle</th>
+                  <th>Overall Collection Amount</th>
+                  <th>Collected Amount</th>
+                  <th>Upcoming Amount</th>
+                  <th>Pending Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {overviewCycleStatusRows.map((row) => (
+                  <tr key={row.cycle}>
+                    <td>
+                      <span className={`reports-cycle-status-badge reports-cycle-status-${row.cycle.toLowerCase()}`}>
+                        {row.cycle}
+                      </span>
+                    </td>
+                    <td><strong>{formatCurrency(row.overallCollectionAmount)}</strong></td>
+                    <td className="reports-cycle-status-collected">{formatCurrency(row.collectedAmount)}</td>
+                    <td className="reports-cycle-status-upcoming">{formatCurrency(row.upcomingAmount)}</td>
+                    <td className="reports-cycle-status-pending">{formatCurrency(row.pendingAmount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Total</td>
+                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.overallCollectionAmount, 0))}</td>
+                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.collectedAmount, 0))}</td>
+                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.upcomingAmount, 0))}</td>
+                  <td>{formatCurrency(overviewCycleStatusRows.reduce((sum, row) => sum + row.pendingAmount, 0))}</td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
         </section>
       )}

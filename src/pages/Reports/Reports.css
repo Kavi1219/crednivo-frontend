@@ -1392,3 +1392,129 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     width:100%;
   }
 }
+
+/* =========================================================
+   V20 — OVERVIEW COLLECTION STATUS TABLE
+   ========================================================= */
+
+.reports-cycle-status-heading{
+  margin-top:4px;
+}
+
+.reports-cycle-status-table-wrap{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+}
+
+.reports-cycle-status-table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+.reports-cycle-status-table th{
+  padding:11px 14px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface-soft);
+  color:var(--ink-600);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.015em;
+  text-align:left;
+  white-space:nowrap;
+}
+
+.reports-cycle-status-table td{
+  padding:13px 14px;
+  border-bottom:1px solid var(--line);
+  color:var(--ink-850);
+  font-size:10px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+.reports-cycle-status-table tbody tr:last-child td{
+  border-bottom:1px solid var(--line);
+}
+
+.reports-cycle-status-table tbody tr:hover{
+  background:color-mix(in srgb,var(--blue-100) 34%,transparent);
+}
+
+.reports-cycle-status-table td strong{
+  color:var(--ink-950);
+  font-weight:950;
+}
+
+.reports-cycle-status-badge{
+  display:inline-flex;
+  min-width:64px;
+  height:26px;
+  align-items:center;
+  justify-content:center;
+  padding:0 10px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:900;
+}
+
+.reports-cycle-status-daily{
+  color:#087f8c;
+  background:#e8f7f8;
+}
+
+.reports-cycle-status-weekly{
+  color:#6657c8;
+  background:#f0edff;
+}
+
+.reports-cycle-status-monthly{
+  color:#c87819;
+  background:#fff3e5;
+}
+
+.reports-cycle-status-collected{
+  color:#0b9361!important;
+}
+
+.reports-cycle-status-upcoming{
+  color:var(--blue-600)!important;
+}
+
+.reports-cycle-status-pending{
+  color:#c56a16!important;
+  font-weight:850!important;
+}
+
+.reports-cycle-status-table tfoot td{
+  padding:12px 14px;
+  border-bottom:0;
+  background:var(--surface-soft);
+  color:var(--ink-950);
+  font-size:10px;
+  font-weight:950;
+}
+
+@media(max-width:700px){
+  .reports-cycle-status-table-wrap{
+    margin-left:-2px;
+    margin-right:-2px;
+  }
+}
+
+@media print{
+  .reports-cycle-status-table-wrap{
+    overflow:visible;
+    box-shadow:none;
+    break-inside:avoid;
+  }
+
+  .reports-cycle-status-table{
+    min-width:0;
+  }
+}
