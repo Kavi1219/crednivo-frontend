@@ -1030,6 +1030,37 @@ export default function Reports() {
               </div>
             </article>
           </div>
+
+          <div className="reports-overall-cycle-grid" aria-label="Collection amount by cycle">
+            {overviewCycleCollections.map((item) => {
+              const CycleIcon = item.cycle === 'Daily'
+                ? CalendarDays
+                : item.cycle === 'Weekly'
+                  ? WalletCards
+                  : ReceiptText;
+              const cycleUnit = item.cycle === 'Daily'
+                ? 'day'
+                : item.cycle === 'Weekly'
+                  ? 'week'
+                  : 'month';
+
+              return (
+                <article
+                  key={item.cycle}
+                  className={`reports-overall-cycle-card reports-overall-cycle-${item.cycle.toLowerCase()}`}
+                >
+                  <span className="reports-overall-cycle-icon">
+                    <CycleIcon size={19} />
+                  </span>
+                  <div>
+                    <span>{item.cycle} Collection</span>
+                    <strong>{formatCurrency(item.amount)}</strong>
+                    <small>Total collection / {cycleUnit}</small>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </section>
       )}
     </div>
