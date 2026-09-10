@@ -183,6 +183,30 @@ function getQuickRange(type) {
   return { from: month.start, to: month.end };
 }
 
+function addDays(dateKey, days) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return toInputDate(date);
+}
+
+function getSundayWeekRange(dateKey = toInputDate()) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  const start = new Date(date);
+  start.setDate(date.getDate() - date.getDay());
+  const from = toInputDate(start);
+  return { from, to: addDays(from, 6) };
+}
+
+function percentage(part, total) {
+  return total > 0 ? Math.min(100, Math.max(0, (part / total) * 100)) : 0;
+}
+
+function signedCurrency(value) {
+  const amount = numberValue(value);
+  if (amount === 0) return formatCurrency(0);
+  return `${amount > 0 ? '+' : '-'}${formatCurrency(Math.abs(amount))}`;
+}
+
 function MetricCard({ icon: Icon, label, value, sub, tone = 'blue' }) {
   return (
     <article className={`reports-kpi reports-kpi-${tone}`}>
@@ -234,6 +258,7 @@ export default function Reports() {
   const [collectionApiLoading, setCollectionApiLoading] = useState(false);
   const [collectionApiError, setCollectionApiError] = useState('');
   const [selectedOverviewCycle, setSelectedOverviewCycle] = useState('Daily');
+  const [weeklyStartDate, setWeeklyStartDate] = useState(() => getSundayWeekRange(toInputDate()).from);
 
   useEffect(() => {
     if (view !== 'statement') return undefined;
@@ -508,6 +533,123 @@ export default function Reports() {
     (item) => item.cycle === selectedOverviewCycle,
   ) || overviewCycleCollections[0];
 
+  const weeklyRange = useMemo(
+    () => ({ from: weeklyStartDate, to: addDays(weeklyStartDate, 6) }),
+    [weeklyStartDate],
+  );
+
+  const weeklyReport = useMemo(() => {
+    const buildPeriod = (from, to) => {
+      const rows = collections.filter((item) => {
+        const status = String(item.status || '').toLowerCase();
+        return inRange(item.date, from, to) && status !== 'cancelled';
+      });
+
+      const cycles = ['Daily', 'Weekly', 'Monthly'].map((itemCycle) => {
+        const cycleRows = rows.filter(
+          (item) => String(item.cycle || '').toLowerCase() === itemCycle.toLowerCase(),
+        );
+        const target = cycleRows.reduce((sum, item) => sum + numberValue(item.dueAmount), 0);
+        const collected = cycleRows.reduce((sum, item) => {
+          const due = numberValue(item.dueAmount);
+          return sum + Math.min(due, numberValue(item.paidAmount));
+        }, 0);
+        const pending = cycleRows.reduce(
+          (sum, item) => sum + Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount)),
+          0,
+        );
+
+        const customerIds = new Set(cycleRows.map((item) => item.customerId).filter(Boolean));
+        const pendingCustomerIds = new Set(
+          cycleRows
+            .filter((item) => numberValue(item.paidAmount) < numberValue(item.dueAmount))
+            .map((item) => item.customerId)
+            .filter(Boolean),
+        );
+
+        return {
+          cycle: itemCycle,
+          target,
+          collected,
+          pending,
+          achievement: percentage(collected, target),
+          customersDue: customerIds.size,
+          fullyCollected: Math.max(0, customerIds.size - pendingCustomerIds.size),
+          pendingCustomers: pendingCustomerIds.size,
+        };
+      });
+
+      const pendingMap = new Map();
+      rows.forEach((item) => {
+        const due = numberValue(item.dueAmount);
+        const paid = Math.min(due, numberValue(item.paidAmount));
+        const pending = Math.max(0, due - numberValue(item.paidAmount));
+        if (pending <= 0) return;
+
+        const key = `${item.customerId || 'unknown'}::${item.loanId || 'unknown'}`;
+        const existing = pendingMap.get(key) || {
+          key,
+          customerId: item.customerId || '',
+          customerName: item.customerName || 'Customer',
+          loanId: item.loanId || '',
+          cycle: item.cycle || '',
+          target: 0,
+          collected: 0,
+          pending: 0,
+          oldestDue: item.date || '',
+        };
+        existing.target += due;
+        existing.collected += paid;
+        existing.pending += pending;
+        if (!existing.oldestDue || String(item.date || '') < existing.oldestDue) existing.oldestDue = item.date || '';
+        pendingMap.set(key, existing);
+      });
+
+      const target = cycles.reduce((sum, item) => sum + item.target, 0);
+      const collected = cycles.reduce((sum, item) => sum + item.collected, 0);
+      const pending = cycles.reduce((sum, item) => sum + item.pending, 0);
+      const customersDue = new Set(rows.map((item) => item.customerId).filter(Boolean)).size;
+      const pendingCustomers = new Set(
+        rows
+          .filter((item) => numberValue(item.paidAmount) < numberValue(item.dueAmount))
+          .map((item) => item.customerId)
+          .filter(Boolean),
+      ).size;
+
+      return {
+        from,
+        to,
+        cycles,
+        target,
+        collected,
+        pending,
+        achievement: percentage(collected, target),
+        customersDue,
+        pendingCustomers,
+        fullyCollected: Math.max(0, customersDue - pendingCustomers),
+        pendingRows: [...pendingMap.values()].sort(
+          (a, b) => String(a.oldestDue || '').localeCompare(String(b.oldestDue || ''))
+            || b.pending - a.pending,
+        ),
+      };
+    };
+
+    const current = buildPeriod(weeklyRange.from, weeklyRange.to);
+    const previousFrom = addDays(weeklyRange.from, -7);
+    const previous = buildPeriod(previousFrom, addDays(previousFrom, 6));
+
+    return {
+      current,
+      previous,
+      collectionGrowth: current.collected - previous.collected,
+      achievementChange: current.achievement - previous.achievement,
+      pendingChange: current.pending - previous.pending,
+    };
+  }, [collections, weeklyRange.from, weeklyRange.to]);
+
+  const weeklyPreparedBy = user?.displayName || user?.name || user?.fullName || (isOwner ? 'Owner' : 'Agent');
+  const weeklyBranch = user?.branch || company.branch || 'Current branch';
+
   const latestCollectionPaymentByLoan = useMemo(() => {
     const map = new Map();
     filteredPayments
@@ -674,6 +816,47 @@ export default function Reports() {
     ],
   );
 
+  const downloadWeeklyReport = () => downloadCsv(
+    `crednivo-weekly-report-${weeklyRange.from}-to-${weeklyRange.to}.csv`,
+    [
+      ['CREDNIVO Weekly Collection Performance Report'],
+      ['Company', company.name],
+      ['Branch', weeklyBranch],
+      ['Prepared By', weeklyPreparedBy],
+      ['From', weeklyRange.from],
+      ['To', weeklyRange.to],
+      [],
+      ['Target / Scheduled Collection'],
+      ['Cycle', 'Target'],
+      ...weeklyReport.current.cycles.map((item) => [item.cycle, item.target]),
+      ['Total Target', weeklyReport.current.target],
+      [],
+      ['Collection Performance'],
+      ['Cycle', 'Target', 'Collected', 'Pending', 'Achievement %'],
+      ...weeklyReport.current.cycles.map((item) => [item.cycle, item.target, item.collected, item.pending, `${item.achievement.toFixed(1)}%`]),
+      ['Total', weeklyReport.current.target, weeklyReport.current.collected, weeklyReport.current.pending, `${weeklyReport.current.achievement.toFixed(1)}%`],
+      [],
+      ['Customer Performance'],
+      ['Cycle', 'Customers Due', 'Fully Collected', 'Pending Customers'],
+      ...weeklyReport.current.cycles.map((item) => [item.cycle, item.customersDue, item.fullyCollected, item.pendingCustomers]),
+      ['Total', weeklyReport.current.customersDue, weeklyReport.current.fullyCollected, weeklyReport.current.pendingCustomers],
+      [],
+      ['Pending Customer Details'],
+      ['Customer ID', 'Customer', 'Loan ID', 'Cycle', 'Target', 'Collected', 'Pending', 'Oldest Due'],
+      ...weeklyReport.current.pendingRows.map((item) => [
+        item.customerId, item.customerName, item.loanId, item.cycle,
+        item.target, item.collected, item.pending, item.oldestDue,
+      ]),
+      [],
+      ['Weekly Comparison'],
+      ['Metric', 'Last Week', 'This Week', 'Change'],
+      ['Target', weeklyReport.previous.target, weeklyReport.current.target, weeklyReport.current.target - weeklyReport.previous.target],
+      ['Collected', weeklyReport.previous.collected, weeklyReport.current.collected, weeklyReport.collectionGrowth],
+      ['Pending', weeklyReport.previous.pending, weeklyReport.current.pending, weeklyReport.pendingChange],
+      ['Achievement %', `${weeklyReport.previous.achievement.toFixed(1)}%`, `${weeklyReport.current.achievement.toFixed(1)}%`, `${weeklyReport.achievementChange >= 0 ? '+' : ''}${weeklyReport.achievementChange.toFixed(1)}%`],
+    ],
+  );
+
   const downloadMonthly = () => downloadCsv(
     `crednivo-monthly-statement-${selectedMonth}.csv`,
     [
@@ -732,6 +915,7 @@ export default function Reports() {
   );
 
   const exportCurrent = () => {
+    if (view === 'weekly') return downloadWeeklyReport();
     if (view === 'statement') return downloadMonthly();
     if (view === 'collection') return downloadCollectionReport();
     return downloadOverview();
@@ -749,14 +933,15 @@ export default function Reports() {
         description="Business-wide overview plus a launch-ready detailed collection report from your live CREDNIVO records."
         actions={(
           <>
-            <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print</ActionButton>
-            <ActionButton tone="secondary" icon={Download} onClick={exportCurrent}>Export CSV</ActionButton>
+            <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>{view === 'weekly' ? 'Print / PDF' : 'Print'}</ActionButton>
+            <ActionButton tone="secondary" icon={Download} onClick={exportCurrent}>{view === 'weekly' ? 'Export Excel' : 'Export CSV'}</ActionButton>
           </>
         )}
       />
 
       <div className="reports-view-tabs" role="tablist" aria-label="Report view">
         <button type="button" className={view === 'overview' ? 'active' : ''} onClick={() => setView('overview')}><BarChart3 size={17} />Overview</button>
+        <button type="button" className={view === 'weekly' ? 'active' : ''} onClick={() => setView('weekly')}><CalendarDays size={17} />Weekly Report</button>
         <button type="button" className={view === 'collection' ? 'active' : ''} onClick={() => setView('collection')}><HandCoins size={17} />Collection Report</button>
         <button type="button" className={view === 'statement' ? 'active' : ''} onClick={() => setView('statement')}><ReceiptText size={17} />Monthly Statement</button>
       </div>
@@ -1020,6 +1205,195 @@ export default function Reports() {
           </section>
 
         </>
+      ) : view === 'weekly' ? (
+        <section className="weekly-report-view">
+          <div className="weekly-report-toolbar app-card">
+            <div>
+              <strong>Weekly Report Period</strong>
+              <span>Sunday to Saturday · choose the week you want to review</span>
+            </div>
+            <div className="weekly-report-range-actions">
+              <button type="button" onClick={() => setWeeklyStartDate(addDays(weeklyStartDate, -7))}>← Previous Week</button>
+              <button type="button" onClick={() => setWeeklyStartDate(getSundayWeekRange(toInputDate()).from)}>This Week</button>
+              <label>
+                <span>Week starting</span>
+                <input
+                  type="date"
+                  value={weeklyStartDate}
+                  onChange={(event) => setWeeklyStartDate(getSundayWeekRange(event.target.value).from)}
+                />
+              </label>
+              <button type="button" onClick={() => setWeeklyStartDate(addDays(weeklyStartDate, 7))}>Next Week →</button>
+            </div>
+          </div>
+
+          <article className="weekly-report-paper app-card">
+            <header className="weekly-report-header">
+              <div className="weekly-report-brand">
+                <strong>CREDNIVO</strong>
+                <span>Finance Management Platform</span>
+              </div>
+              <b>WEEKLY REPORT</b>
+              <div className="weekly-report-title-block">
+                <div>
+                  <span>{company.name}</span>
+                  <h2>Weekly Collection<br />Performance Report</h2>
+                  <small>{formatDate(weeklyRange.from)} – {formatDate(weeklyRange.to)}</small>
+                </div>
+                <dl>
+                  <div><dt>Branch:</dt><dd>{weeklyBranch}</dd></div>
+                  <div><dt>Prepared by:</dt><dd>{weeklyPreparedBy}</dd></div>
+                  <div><dt>Generated:</dt><dd>{formatDate(toInputDate())}</dd></div>
+                </dl>
+              </div>
+            </header>
+
+            <section className="weekly-report-section">
+              <div className="weekly-report-section-head">
+                <div><span>01</span><div><strong>Target / Scheduled Collection</strong><small>Amount scheduled to be collected during this week</small></div></div>
+                <b>{formatCurrency(weeklyReport.current.target)}</b>
+              </div>
+              <div className="weekly-target-grid">
+                {weeklyReport.current.cycles.map((item) => (
+                  <article key={item.cycle}>
+                    <span>{item.cycle} Collection</span>
+                    <strong>{formatCurrency(item.target)}</strong>
+                    <small>{item.customersDue} customer{item.customersDue === 1 ? '' : 's'} due</small>
+                  </article>
+                ))}
+                <article className="weekly-target-total">
+                  <span>Total Target</span>
+                  <strong>{formatCurrency(weeklyReport.current.target)}</strong>
+                  <small>Daily + Weekly + Monthly</small>
+                </article>
+              </div>
+            </section>
+
+            <section className="weekly-report-section">
+              <div className="weekly-report-section-head">
+                <div><span>02</span><div><strong>Collection Performance</strong><small>Target vs collected vs pending</small></div></div>
+                <b>{weeklyReport.current.achievement.toFixed(1)}%</b>
+              </div>
+              <div className="weekly-report-table-wrap">
+                <table className="weekly-report-table">
+                  <thead><tr><th>Cycle</th><th>Target</th><th>Collected</th><th>Pending</th><th>Achievement</th></tr></thead>
+                  <tbody>
+                    {weeklyReport.current.cycles.map((item) => (
+                      <tr key={item.cycle}>
+                        <td><strong>{item.cycle}</strong></td>
+                        <td>{formatCurrency(item.target)}</td>
+                        <td className="weekly-positive">{formatCurrency(item.collected)}</td>
+                        <td className={item.pending > 0 ? 'weekly-warning' : ''}>{formatCurrency(item.pending)}</td>
+                        <td><span className="weekly-percent-pill">{item.achievement.toFixed(1)}%</span></td>
+                      </tr>
+                    ))}
+                    <tr className="weekly-total-row">
+                      <td><strong>Total</strong></td>
+                      <td><strong>{formatCurrency(weeklyReport.current.target)}</strong></td>
+                      <td><strong>{formatCurrency(weeklyReport.current.collected)}</strong></td>
+                      <td><strong>{formatCurrency(weeklyReport.current.pending)}</strong></td>
+                      <td><strong>{weeklyReport.current.achievement.toFixed(1)}%</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="weekly-report-section">
+              <div className="weekly-report-section-head">
+                <div><span>03</span><div><strong>Customer Performance</strong><small>Customer completion status for scheduled collections</small></div></div>
+                <b>{weeklyReport.current.pendingCustomers} pending</b>
+              </div>
+              <div className="weekly-report-table-wrap">
+                <table className="weekly-report-table">
+                  <thead><tr><th>Cycle</th><th>Customers Due</th><th>Fully Collected</th><th>Pending Customers</th></tr></thead>
+                  <tbody>
+                    {weeklyReport.current.cycles.map((item) => (
+                      <tr key={item.cycle}>
+                        <td><strong>{item.cycle}</strong></td>
+                        <td>{item.customersDue}</td>
+                        <td className="weekly-positive">{item.fullyCollected}</td>
+                        <td className={item.pendingCustomers > 0 ? 'weekly-warning' : ''}>{item.pendingCustomers}</td>
+                      </tr>
+                    ))}
+                    <tr className="weekly-total-row">
+                      <td><strong>Total</strong></td>
+                      <td><strong>{weeklyReport.current.customersDue}</strong></td>
+                      <td><strong>{weeklyReport.current.fullyCollected}</strong></td>
+                      <td><strong>{weeklyReport.current.pendingCustomers}</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="weekly-report-section weekly-pending-section">
+              <div className="weekly-print-page-two-title">WEEKLY REPORT</div>
+              <div className="weekly-report-section-head">
+                <div><span>04</span><div><strong>Pending Customer Details</strong><small>Customers with balance remaining from this week's scheduled collection</small></div></div>
+                <b>{weeklyReport.current.pendingRows.length} loan{weeklyReport.current.pendingRows.length === 1 ? '' : 's'}</b>
+              </div>
+              {weeklyReport.current.pendingRows.length === 0 ? (
+                <div className="weekly-report-empty"><CheckCircle2 size={22} /><strong>No pending customers</strong><span>All scheduled collections for this week are fully collected.</span></div>
+              ) : (
+                <div className="weekly-report-table-wrap">
+                  <table className="weekly-report-table weekly-pending-table">
+                    <thead><tr><th>Customer</th><th>Loan ID</th><th>Cycle</th><th>Target</th><th>Collected</th><th>Pending</th><th>Oldest Due</th><th className="weekly-screen-only">View</th></tr></thead>
+                    <tbody>
+                      {weeklyReport.current.pendingRows.map((item) => (
+                        <tr key={item.key}>
+                          <td><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId || '—'}</small></td>
+                          <td>{item.loanId || '—'}</td>
+                          <td>{item.cycle || '—'}</td>
+                          <td>{formatCurrency(item.target)}</td>
+                          <td className="weekly-positive">{formatCurrency(item.collected)}</td>
+                          <td className="weekly-warning"><strong>{formatCurrency(item.pending)}</strong></td>
+                          <td>{formatDate(item.oldestDue)}</td>
+                          <td className="weekly-screen-only"><button type="button" className="weekly-view-button" onClick={() => navigate(`/customers/${item.customerId}`)}><Eye size={14} /></button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            <section className="weekly-report-section weekly-comparison-section">
+              <div className="weekly-report-section-head">
+                <div><span>05</span><div><strong>Weekly Comparison</strong><small>Last week vs this week collection performance</small></div></div>
+                <b>{weeklyReport.collectionGrowth >= 0 ? 'Improved' : 'Reduced'}</b>
+              </div>
+              <div className="weekly-comparison-grid">
+                {[{ label: 'Last Week', data: weeklyReport.previous }, { label: 'This Week', data: weeklyReport.current }].map(({ label, data }) => (
+                  <article className="weekly-comparison-card" key={label}>
+                    <div className="weekly-donut" style={{ background: `conic-gradient(var(--blue-600) 0 ${data.achievement}%, var(--surface-soft) ${data.achievement}% 100%)` }}>
+                      <span><strong>{data.achievement.toFixed(1)}%</strong><small>Collected</small></span>
+                    </div>
+                    <div>
+                      <strong>{label}</strong>
+                      <small>{formatDate(data.from)} – {formatDate(data.to)}</small>
+                      <dl>
+                        <div><dt>Target</dt><dd>{formatCurrency(data.target)}</dd></div>
+                        <div><dt>Collected</dt><dd>{formatCurrency(data.collected)}</dd></div>
+                        <div><dt>Pending</dt><dd>{formatCurrency(data.pending)}</dd></div>
+                      </dl>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="weekly-change-strip">
+                <div><span>Collection Growth</span><strong className={weeklyReport.collectionGrowth >= 0 ? 'weekly-positive' : 'weekly-negative'}>{signedCurrency(weeklyReport.collectionGrowth)}</strong></div>
+                <div><span>Achievement Change</span><strong className={weeklyReport.achievementChange >= 0 ? 'weekly-positive' : 'weekly-negative'}>{weeklyReport.achievementChange >= 0 ? '+' : ''}{weeklyReport.achievementChange.toFixed(1)}%</strong></div>
+                <div><span>Pending Change</span><strong className={weeklyReport.pendingChange <= 0 ? 'weekly-positive' : 'weekly-warning'}>{signedCurrency(weeklyReport.pendingChange)}</strong></div>
+              </div>
+            </section>
+
+            <footer className="weekly-report-footer">
+              <span>CREDNIVO · Weekly Collection Performance Report</span>
+              <span>{company.name} · {weeklyBranch}</span>
+            </footer>
+          </article>
+        </section>
       ) : view === 'collection' ? (
         <section className="collection-report-wrap">
           <section className="collection-report-filter app-card">
