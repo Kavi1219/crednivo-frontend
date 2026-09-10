@@ -933,22 +933,53 @@ export default function Reports() {
         </div>
 
         <div className="reports-date-range" aria-label="Report date range">
-          <CalendarDays size={17} />
-          <input
-            type="date"
-            aria-label="From date"
-            value={fromDate}
-            max={toDate}
-            onChange={(event) => setFromDate(event.target.value)}
-          />
+          <div className="reports-date-field">
+            <input
+              id="reports-from-date"
+              type="date"
+              aria-label="From date"
+              value={fromDate}
+              max={toDate}
+              onChange={(event) => setFromDate(event.target.value)}
+            />
+            <button
+              type="button"
+              className="reports-date-picker-button"
+              aria-label="Open from date calendar"
+              onClick={() => {
+                const input = document.getElementById('reports-from-date');
+                if (input?.showPicker) input.showPicker();
+                else input?.focus();
+              }}
+            >
+              <CalendarDays size={17} aria-hidden="true" />
+            </button>
+          </div>
+
           <span>to</span>
-          <input
-            type="date"
-            aria-label="To date"
-            value={toDate}
-            min={fromDate}
-            onChange={(event) => setToDate(event.target.value)}
-          />
+
+          <div className="reports-date-field">
+            <input
+              id="reports-to-date"
+              type="date"
+              aria-label="To date"
+              value={toDate}
+              min={fromDate}
+              onChange={(event) => setToDate(event.target.value)}
+            />
+            <button
+              type="button"
+              className="reports-date-picker-button"
+              aria-label="Open to date calendar"
+              onClick={() => {
+                const input = document.getElementById('reports-to-date');
+                if (input?.showPicker) input.showPicker();
+                else input?.focus();
+              }}
+            >
+              <CalendarDays size={17} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
