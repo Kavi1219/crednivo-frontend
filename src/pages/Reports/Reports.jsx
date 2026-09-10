@@ -982,6 +982,56 @@ export default function Reports() {
           </div>
         </div>
       </div>
+
+      {view === 'overview' && (
+        <section className="reports-overall-report" aria-label="Overall report summary">
+          <div className="reports-overall-report-head">
+            <div>
+              <span>OVERALL REPORT</span>
+              <strong>Business Collection Summary</strong>
+            </div>
+            <small>{formatDate(fromDate)} – {formatDate(toDate)}</small>
+          </div>
+
+          <div className="reports-overall-kpi-grid">
+            <article className="reports-overall-kpi reports-overall-kpi-inhand">
+              <span className="reports-overall-kpi-icon"><Wallet size={21} /></span>
+              <div>
+                <span>In-Hand Amount</span>
+                <strong>{formatCurrency(currentInHandAmount)}</strong>
+                <small>Current available business cash</small>
+              </div>
+            </article>
+
+            <article className="reports-overall-kpi reports-overall-kpi-collection">
+              <span className="reports-overall-kpi-icon"><WalletCards size={21} /></span>
+              <div>
+                <span>Collection Amount</span>
+                <strong>{formatCurrency(overview.expected)}</strong>
+                <small>Scheduled in selected date range</small>
+              </div>
+            </article>
+
+            <article className="reports-overall-kpi reports-overall-kpi-collected">
+              <span className="reports-overall-kpi-icon"><HandCoins size={21} /></span>
+              <div>
+                <span>Collected Amount</span>
+                <strong>{formatCurrency(overview.collected)}</strong>
+                <small>Actual customer money received</small>
+              </div>
+            </article>
+
+            <article className="reports-overall-kpi reports-overall-kpi-pending">
+              <span className="reports-overall-kpi-icon"><TriangleAlert size={21} /></span>
+              <div>
+                <span>Pending Amount</span>
+                <strong>{formatCurrency(overview.pending)}</strong>
+                <small>Still pending in selected date range</small>
+              </div>
+            </article>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -859,3 +859,117 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     width:100%;
   }
 }
+
+/* =========================================================
+   V17 — OVERVIEW / OVERALL REPORT SUMMARY
+   ========================================================= */
+.reports-overall-report{
+  margin-top:18px;
+  display:grid;
+  gap:12px;
+}
+.reports-overall-report-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:16px;
+}
+.reports-overall-report-head>div{
+  display:grid;
+  gap:3px;
+}
+.reports-overall-report-head>div>span{
+  color:var(--blue-600);
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.09em;
+}
+.reports-overall-report-head>div>strong{
+  color:var(--ink-950);
+  font-size:15px;
+  font-weight:900;
+}
+.reports-overall-report-head>small{
+  color:var(--ink-500);
+  font-size:9px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.reports-overall-kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+.reports-overall-kpi{
+  min-width:0;
+  min-height:112px;
+  padding:16px;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+}
+.reports-overall-kpi-icon{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+}
+.reports-overall-kpi>div{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+.reports-overall-kpi>div>span{
+  color:var(--ink-500);
+  font-size:9px;
+  font-weight:800;
+}
+.reports-overall-kpi>div>strong{
+  color:var(--ink-950);
+  font-size:20px;
+  line-height:1.1;
+  font-weight:950;
+  letter-spacing:-.02em;
+  overflow-wrap:anywhere;
+}
+.reports-overall-kpi>div>small{
+  color:var(--ink-500);
+  font-size:8px;
+  line-height:1.4;
+}
+.reports-overall-kpi-inhand .reports-overall-kpi-icon{
+  color:#0b8f7c;
+  background:#e8f8f4;
+}
+.reports-overall-kpi-collection .reports-overall-kpi-icon{
+  color:var(--blue-600);
+  background:var(--blue-100);
+}
+.reports-overall-kpi-collected .reports-overall-kpi-icon{
+  color:#0b9f69;
+  background:#e9f9f3;
+}
+.reports-overall-kpi-pending .reports-overall-kpi-icon{
+  color:#c87819;
+  background:#fff3e5;
+}
+
+@media(max-width:1100px){
+  .reports-overall-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .reports-overall-report-head{align-items:flex-start;flex-direction:column;gap:5px}
+  .reports-overall-kpi-grid{grid-template-columns:1fr}
+  .reports-overall-kpi{min-height:96px}
+}
+
+@media print{
+  .reports-overall-report{margin-top:0}
+  .reports-overall-kpi{box-shadow:none;break-inside:avoid}
+}
