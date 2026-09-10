@@ -16,7 +16,7 @@ const initial = {
   name: '', mobile: '', fatherName: '', date: toInputDate(), work: '', address: '', photo: '', customerDocument: null, customerDocuments: [],
   jaminName: '', jaminMobile: '', jaminFatherName: '', jaminWork: '', jaminAddress: '', jaminPhoto: '', jaminDocument: null, jaminDocuments: [],
   amount: 10000, cycle: 'Daily', loanType: 'EMI', interestRate: 15,
-  duration: 100, interestUpfront: false, fineEnabled: false, fineAmount: 0, startDate: toInputDate(),
+  duration: 100, interestUpfront: false, fineEnabled: false, fineAmount: 0, documentChargeEnabled: false, documentChargeAmount: 0, startDate: toInputDate(),
 };
 
 function nextPreviewId(prefix, list, pad) {
@@ -82,6 +82,10 @@ export default function NewCustomer() {
     }
     if (form.fineEnabled && Number(form.fineAmount) <= 0) {
       setError('Enter a valid Fine Amount or turn Fine off.');
+      return false;
+    }
+    if (form.documentChargeEnabled && Number(form.documentChargeAmount) <= 0) {
+      setError('Enter a valid Document Charges Amount or turn Document Charges off.');
       return false;
     }
     setError('');
@@ -278,6 +282,7 @@ export default function NewCustomer() {
           <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{form.interestRate}% · {formatCurrency(terms.interestAmount)}</strong></div>
           <div className="review-summary-item"><span>Interest Taken</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
           <div className="review-summary-item"><span>Fine</span><strong>{form.fineEnabled ? `Yes · ${formatCurrency(form.fineAmount)}` : 'No'}</strong></div>
+          <div className="review-summary-item"><span>Document Charges</span><strong>{form.documentChargeEnabled ? `Yes · ${formatCurrency(form.documentChargeAmount)}` : 'No'}</strong></div>
           <div className="review-summary-item"><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
           <div className="review-summary-item"><span>Collection / Cycle</span><strong>{formatCurrency(terms.collectionAmount)}</strong></div>
           {form.loanType === 'IO' && <div className="review-summary-item"><span>Principal Outstanding</span><strong>{formatCurrency(terms.initialOutstanding)}</strong></div>}

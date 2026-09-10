@@ -134,6 +134,8 @@ export default function CustomerDetails() {
     interestUpfront: false,
     fineEnabled: false,
     fineAmount: '0',
+    documentChargeEnabled: false,
+    documentChargeAmount: '0',
     startDate: toInputDate(),
   });
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -344,6 +346,8 @@ export default function CustomerDetails() {
       interestUpfront: Boolean(loan.interestUpfront),
       fineEnabled: Boolean(loan.fineEnabled),
       fineAmount: String(Number(loan.fineAmount || 0)),
+      documentChargeEnabled: Boolean(loan.documentChargeEnabled),
+      documentChargeAmount: String(Number(loan.documentChargeAmount || 0)),
       startDate: loan.startDate || toInputDate(),
     });
   };
@@ -363,6 +367,7 @@ export default function CustomerDetails() {
     const interestRate = Number(loanDraft.interestRate || 0);
     const duration = Number(loanDraft.duration || 0);
     const fineAmount = Number(loanDraft.fineAmount || 0);
+    const documentChargeAmount = Number(loanDraft.documentChargeAmount || 0);
 
     if (amount <= 0) {
       setActionError('Loan amount must be greater than zero.');
@@ -388,6 +393,10 @@ export default function CustomerDetails() {
       setActionError('Enter a fine amount greater than zero or turn Fine off.');
       return;
     }
+    if (loanDraft.documentChargeEnabled && documentChargeAmount <= 0) {
+      setActionError('Enter a Document Charges amount greater than zero or turn Document Charges off.');
+      return;
+    }
 
     try {
       setLoanEditBusy(true);
@@ -398,6 +407,7 @@ export default function CustomerDetails() {
         interestRate,
         duration,
         fineAmount: loanDraft.fineEnabled ? fineAmount : 0,
+        documentChargeAmount: loanDraft.documentChargeEnabled ? documentChargeAmount : 0,
       });
       setEditingLoan(null);
     } catch (apiError) {
@@ -421,6 +431,7 @@ export default function CustomerDetails() {
     const loanPayments = paymentsForLoan(loan.id);
     const collectionCash = loanPayments.reduce((sum, payment) => sum + Number(payment.collectionAmount || 0), 0);
     const fineCollected = loanPayments.reduce((sum, payment) => sum + Number(payment.fineAmount || 0), 0);
+    const documentCharges = loan.documentChargeEnabled ? Number(loan.documentChargeAmount || 0) : 0;
     const upfrontInterest = upfrontInterestForLoan(loan);
 
     let interestFromPayments = 0;
@@ -434,7 +445,7 @@ export default function CustomerDetails() {
     }
 
     const interestEarned = upfrontInterest + interestFromPayments;
-    const profitEarned = interestEarned + fineCollected;
+    const profitEarned = interestEarned + fineCollected + documentCharges;
 
     // EMI upfront interest is deducted before disbursement, so it must not be
     // added again to the amount the customer actually repaid through collections.
@@ -473,6 +484,7 @@ export default function CustomerDetails() {
       upfrontInterest,
       interestEarned,
       fineCollected,
+      documentCharges,
       profitEarned,
       actualRepayment,
       principalRepaid,
@@ -485,10 +497,11 @@ export default function CustomerDetails() {
       const figures = realizedLoanFigures(loan);
       summary.interest += figures.interestEarned;
       summary.fine += figures.fineCollected;
+      summary.documentCharges += figures.documentCharges;
       summary.profit += figures.profitEarned;
       return summary;
     },
-    { interest: 0, fine: 0, profit: 0 },
+    { interest: 0, fine: 0, documentCharges: 0, profit: 0 },
   );
 
   const todayKey = toInputDate();
@@ -905,7 +918,7 @@ export default function CustomerDetails() {
               <small>Owner only</small>
             </div>
             <strong>{formatCurrency(customerProfitFigures.profit)}</strong>
-            <p>Interest {formatCurrency(customerProfitFigures.interest)} · Fine {formatCurrency(customerProfitFigures.fine)}</p>
+            <p>Interest {formatCurrency(customerProfitFigures.interest)} · Fine {formatCurrency(customerProfitFigures.fine)} · Document Charges {formatCurrency(customerProfitFigures.documentCharges)}</p>
           </div>}
         </div>
 
@@ -1079,6 +1092,7 @@ export default function CustomerDetails() {
             <div><span>{loan.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{loan.interestRate}% · {formatCurrency(loan.interestAmount ?? (loan.principal * (Number(loan.interestRate) || 0) / 100))}</strong></div>
             <div><span>Interest Taken</span><strong>{loan.interestUpfront?'Yes':'No'}</strong></div>
             <div><span>Fine</span><strong>{loan.fineEnabled ? formatCurrency(loan.fineAmount) : 'No'}</strong></div>
+            <div><span>Document Charges</span><strong>{loan.documentChargeEnabled ? formatCurrency(loan.documentChargeAmount) : 'No'}</strong></div>
             <div><span>Disbursed</span><strong>{formatDate(loan.startDate)}</strong></div>
             <div><span>Duration</span><strong>{loan.duration} {loan.cycle==='Daily'?'days':loan.cycle==='Weekly'?'weeks':'months'}{loan.extensionCycles > 0 ? ` · +${loan.extensionCycles} extended` : ''}</strong></div>
             <div><span>{loan.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(loan.totalRepayment)}</strong></div>
@@ -1096,7 +1110,8 @@ export default function CustomerDetails() {
               {loan.loanType === 'IO' && <div><span>Principal Repaid</span><strong>{formatCurrency(realized.principalRepaid)}</strong></div>}
               {loan.loanType === 'IO' && <div><span>Future Interest Cancelled</span><strong>{formatCurrency(realized.futureInterestCancelled)}</strong></div>}
               {realized.fineCollected > 0 && <div><span>Fine Collected</span><strong>{formatCurrency(realized.fineCollected)}</strong></div>}
-              {isOwner && <div className="loan-owner-profit"><span>Profit Earned</span><strong>{formatCurrency(realized.profitEarned)}</strong><small>Interest {formatCurrency(realized.interestEarned)}{realized.fineCollected > 0 ? ` · Fine ${formatCurrency(realized.fineCollected)}` : ''}</small></div>}
+              {realized.documentCharges > 0 && <div><span>Document Charges</span><strong>{formatCurrency(realized.documentCharges)}</strong></div>}
+              {isOwner && <div className="loan-owner-profit"><span>Profit Earned</span><strong>{formatCurrency(realized.profitEarned)}</strong><small>Interest {formatCurrency(realized.interestEarned)}{realized.fineCollected > 0 ? ` · Fine ${formatCurrency(realized.fineCollected)}` : ''}{realized.documentCharges > 0 ? ` · Document ${formatCurrency(realized.documentCharges)}` : ''}</small></div>}
             </div>
           </div>}
         </article>;
@@ -1514,6 +1529,14 @@ export default function CustomerDetails() {
           <label className="customer-loan-edit-fine">
             <span>Fine Amount</span>
             <input type="number" min="0" step="0.01" value={loanDraft.fineAmount} disabled={!loanDraft.fineEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,fineAmount:event.target.value}))}/>
+          </label>
+          <label className="customer-loan-edit-check">
+            <input type="checkbox" checked={loanDraft.documentChargeEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,documentChargeEnabled:event.target.checked}))}/>
+            <span>Document Charges Enabled</span>
+          </label>
+          <label className="customer-loan-edit-fine">
+            <span>Document Charges Amount</span>
+            <input type="number" min="0" step="0.01" value={loanDraft.documentChargeAmount} disabled={!loanDraft.documentChargeEnabled} onChange={(event)=>setLoanDraft((current)=>({...current,documentChargeAmount:event.target.value}))}/>
           </label>
         </div>
 

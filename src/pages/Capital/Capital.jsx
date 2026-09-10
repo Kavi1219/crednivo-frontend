@@ -221,6 +221,7 @@ export default function Capital() {
   const actualProfitMetrics = useMemo(() => {
     let interestEarned = 0;
     let finesCollected = 0;
+    let documentChargesCollected = 0;
 
     loans.forEach((loan) => {
       const loanPayments = payments.filter(
@@ -273,10 +274,13 @@ export default function Capital() {
 
       interestEarned += upfrontInterest + interestFromPayments;
       finesCollected += fineCollected;
+      documentChargesCollected += loan.documentChargeEnabled
+        ? Number(loan.documentChargeAmount || 0)
+        : 0;
     });
 
     const expensesPaid = Number(capitalMetrics.expensesPaid || 0);
-    const actualProfit = interestEarned + finesCollected - expensesPaid;
+    const actualProfit = interestEarned + finesCollected + documentChargesCollected - expensesPaid;
     const totalInvestment = Number(capitalMetrics.totalInvestment || 0);
     const roiPercent = totalInvestment > 0
       ? (actualProfit / totalInvestment) * 100
@@ -285,6 +289,7 @@ export default function Capital() {
     return {
       interestEarned,
       finesCollected,
+      documentChargesCollected,
       expensesPaid,
       actualProfit,
       roiPercent,
@@ -293,13 +298,13 @@ export default function Capital() {
 
   const metrics = [
     { label: 'Total Investment', value: formatCurrency(capitalMetrics.totalInvestment), note: 'Investment + additional investment', icon: Landmark, tone: 'blue' },
-    { label: 'Available Capital', value: formatCurrency(capitalMetrics.availableCapital), note: 'Capital + collections − loans − expenses − savings', icon: Wallet, tone: capitalMetrics.availableCapital < 0 ? 'red' : 'green' },
+    { label: 'Available Capital', value: formatCurrency(capitalMetrics.availableCapital), note: 'Capital + collections + document charges − loans − expenses − savings', icon: Wallet, tone: capitalMetrics.availableCapital < 0 ? 'red' : 'green' },
     { label: 'Loan Book Outstanding', value: formatCurrency(capitalMetrics.loanBookOutstanding), note: 'Outstanding across active loans', icon: Banknote, tone: 'purple' },
     { label: 'Capital Withdrawn', value: formatCurrency(capitalMetrics.totalWithdrawn), note: 'Partner / investor withdrawals', icon: ArrowUpFromLine, tone: 'orange' },
     {
       label: 'Actual Profit Earned',
       value: formatCurrency(actualProfitMetrics.actualProfit),
-      note: `Interest + fines − expenses · ${actualProfitMetrics.roiPercent.toFixed(2)}% ROI`,
+      note: `Interest + fines + document charges − expenses · ${actualProfitMetrics.roiPercent.toFixed(2)}% ROI`,
       icon: TrendingUp,
       tone: actualProfitMetrics.actualProfit < 0 ? 'red' : 'green',
       className: 'capital-profit-metric',
@@ -339,7 +344,7 @@ export default function Capital() {
         <div className="capital-position-grid">
           <div><span>Net Capital</span><strong>{formatCurrency(capitalMetrics.netCapital)}</strong><small>Investment − withdrawals</small></div>
           <b>+</b>
-          <div><span>Collections Received</span><strong>{formatCurrency(capitalMetrics.collectionsReceived)}</strong><small>Customer collections + fines received</small></div>
+          <div><span>Collections + Charges</span><strong>{formatCurrency(capitalMetrics.collectionsReceived)}</strong><small>Customer collections + fines + document charges</small></div>
           <b>−</b>
           <div><span>Loans Disbursed</span><strong>{formatCurrency(capitalMetrics.loanDisbursed)}</strong><small>Actual amounts given to customers</small></div>
           <b>−</b>

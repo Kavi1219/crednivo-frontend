@@ -47,6 +47,42 @@ export default function LoanSetupFields({ form, change }) {
         </div>
       </div>
 
+      <div className="form-field full">
+        <div className="toggle-row loan-fine-toggle-row">
+          <div>
+            <strong>Document Charges applicable?</strong>
+            <small>{form.documentChargeEnabled ? 'Yes — this one-time charge is treated as extra income and does not affect repayment.' : 'No — no document charge is configured for this loan.'}</small>
+          </div>
+          <div className="loan-fine-toggle-controls">
+            {form.documentChargeEnabled && (
+              <label className="loan-fine-amount-field">
+                <span>Document Charges Amount</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.documentChargeAmount}
+                  onChange={(e)=>change('documentChargeAmount',e.target.value)}
+                  placeholder="Enter document charge"
+                />
+              </label>
+            )}
+            <button
+              type="button"
+              className={`switch ${form.documentChargeEnabled ? 'on':''}`}
+              onClick={()=>{
+                const next = !form.documentChargeEnabled;
+                change('documentChargeEnabled', next);
+                if (!next) change('documentChargeAmount', 0);
+              }}
+              aria-label="Toggle document charges"
+            >
+              <span/>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {form.loanType === 'IO' && <div className="form-field full"><div className="io-loan-rule-note"><strong>Interest Only rule</strong><small>Collection / Cycle is interest only. The principal remains outstanding until you record a Principal Paid amount.</small></div></div>}
     </div>
   );

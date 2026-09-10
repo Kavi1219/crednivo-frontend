@@ -26,7 +26,7 @@ export default function Payments() {
   const [searchParams] = useSearchParams();
   const requestedFilter = searchParams.get('filter');
   const todayRequested = searchParams.get('today') === '1';
-  const initialFilter = ['All', 'Collection', 'New Loan', 'Expense', 'Capital'].includes(requestedFilter)
+  const initialFilter = ['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital'].includes(requestedFilter)
     ? requestedFilter
     : 'All';
   const initialDate = todayRequested ? toInputDate() : '';
@@ -157,7 +157,7 @@ export default function Payments() {
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search payment history..." />
           </label>
           <div className="module-toolbar-group">
-            {['All', 'Collection', 'New Loan', 'Expense', 'Capital'].map((item) => (
+            {['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital'].map((item) => (
               <button key={item} className={`filter-chip ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item}</button>
             ))}
           </div>

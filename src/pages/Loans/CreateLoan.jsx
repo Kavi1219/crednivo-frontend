@@ -33,7 +33,7 @@ export default function CreateLoan() {
   const canAddCustomer = hasPermission('customers.add');
   const navigate = useNavigate();
   const location = useLocation();
-  const [form, setForm] = useState({ customerId: location.state?.customerId || '', amount:10000, cycle:'Weekly', loanType:'EMI', interestRate:15, duration:10, interestUpfront:false, fineEnabled:false, fineAmount:0, startDate:toInputDate() });
+  const [form, setForm] = useState({ customerId: location.state?.customerId || '', amount:10000, cycle:'Weekly', loanType:'EMI', interestRate:15, duration:10, interestUpfront:false, fineEnabled:false, fineAmount:0, documentChargeEnabled:false, documentChargeAmount:0, startDate:toInputDate() });
   const [customerSearch, setCustomerSearch] = useState('');
   const customerFromProfile = Boolean(location.state?.customerId);
   const [error,setError]=useState('');
@@ -87,6 +87,7 @@ export default function CreateLoan() {
   const requestCreate=async()=>{
     if(!form.customerId||Number(form.amount)<=0||Number(form.duration)<=0||Number(form.interestRate)<0||!form.startDate){setError('Select a customer and enter a valid amount, interest, manual duration and disbursed date.');return;}
     if(form.fineEnabled && Number(form.fineAmount)<=0){setError('Enter a valid Fine Amount or turn Fine off.');return;}
+    if(form.documentChargeEnabled && Number(form.documentChargeAmount)<=0){setError('Enter a valid Document Charges Amount or turn Document Charges off.');return;}
     setError('');
     try {
       const result=await apiRequest('/loans/next-id');
@@ -244,6 +245,7 @@ export default function CreateLoan() {
         <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{form.interestRate}% · {formatCurrency(terms.interestAmount)}</strong></div>
         <div className="review-summary-item"><span>Interest Taken</span><strong>{form.interestUpfront?'Yes':'No'}</strong></div>
         <div className="review-summary-item"><span>Fine</span><strong>{form.fineEnabled ? `Yes · ${formatCurrency(form.fineAmount)}` : 'No'}</strong></div>
+        <div className="review-summary-item"><span>Document Charges</span><strong>{form.documentChargeEnabled ? `Yes · ${formatCurrency(form.documentChargeAmount)}` : 'No'}</strong></div>
         <div className="review-summary-item"><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
         <div className="review-summary-item"><span>Collection / Cycle</span><strong>{formatCurrency(terms.collectionAmount)}</strong></div>
         {form.loanType === 'IO' && <div className="review-summary-item"><span>Principal Outstanding</span><strong>{formatCurrency(terms.initialOutstanding)}</strong></div>}

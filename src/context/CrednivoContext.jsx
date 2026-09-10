@@ -298,6 +298,8 @@ function mapBackendLoan(item) {
     interestUpfront: Boolean(item.interestUpfront),
     fineEnabled: Boolean(item.fineEnabled),
     fineAmount: asNumber(item.fineAmount),
+    documentChargeEnabled: Boolean(item.documentChargeEnabled),
+    documentChargeAmount: asNumber(item.documentChargeAmount),
     extensionCycles: Number(item.extensionCycles || 0),
     lastExtensionReason: item.lastExtensionReason || '',
     lastExtendedAt: item.lastExtendedAt || null,
@@ -700,6 +702,8 @@ export function CrednivoProvider({ children }) {
       interestUpfront: Boolean(form.interestUpfront),
       fineEnabled: Boolean(form.fineEnabled),
       fineAmount: form.fineEnabled ? Math.max(0, asNumber(form.fineAmount)) : 0,
+      documentChargeEnabled: Boolean(form.documentChargeEnabled),
+      documentChargeAmount: form.documentChargeEnabled ? Math.max(0, asNumber(form.documentChargeAmount)) : 0,
       startDate: form.startDate || toInputDate(),
     };
     const saved = await apiRequest('/loans', { method: 'POST', body: JSON.stringify(payload) });
@@ -718,6 +722,8 @@ export function CrednivoProvider({ children }) {
       interestUpfront: Boolean(form.interestUpfront),
       fineEnabled: Boolean(form.fineEnabled),
       fineAmount: form.fineEnabled ? Math.max(0, asNumber(form.fineAmount)) : 0,
+      documentChargeEnabled: Boolean(form.documentChargeEnabled),
+      documentChargeAmount: form.documentChargeEnabled ? Math.max(0, asNumber(form.documentChargeAmount)) : 0,
       startDate: form.startDate || toInputDate(),
     };
     const saved = await apiRequest(`/loans/${loanId}`, {
@@ -1015,10 +1021,13 @@ export function CrednivoProvider({ children }) {
     const totalWithdrawn = withdrawals.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     const netCapital = totalInvestment - totalWithdrawn;
     const collectionsReceived = data.payments
-      .filter((item) => item.type === 'Collection' && item.direction === 'in')
+      .filter((item) => (
+        (item.type === 'Collection' || item.type === 'Document Charge')
+        && item.direction === 'in'
+      ))
       .reduce((sum, item) => {
-        // payment.amount from the backend is collection cash + fine. Prefer it
-        // so fines increase available capital too; keep a legacy fallback.
+        // Collection payment.amount is collection cash + fine.
+        // Document Charge is a separate one-time income payment.
         if (item.amount != null) return sum + (Number(item.amount) || 0);
         return sum
           + (Number(item.collectionAmount) || 0)
@@ -1064,6 +1073,9 @@ export function CrednivoProvider({ children }) {
       .reduce((sum, item) => sum + Math.max(0, item.dueAmount - item.paidAmount), 0);
     const todayExpenses = data.expenses.filter((item) => item.date === today).reduce((sum, item) => sum + item.amount, 0);
     const todayNewLoans = data.payments.filter((item) => item.date === today && item.type === 'New Loan').reduce((sum, item) => sum + item.amount, 0);
+    const todayBusinessIncome = data.payments
+      .filter((item) => item.date === today && item.direction === 'in' && (item.type === 'Collection' || item.type === 'Document Charge'))
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const activeLoans = data.loans.filter((item) => item.status === 'Active' || item.status === 'Overdue').length;
     return {
       expected,
@@ -1075,7 +1087,7 @@ export function CrednivoProvider({ children }) {
       todayExpenses,
       todayNewLoans,
       activeLoans,
-      netCash: collected - todayExpenses - todayNewLoans,
+      netCash: todayBusinessIncome - todayExpenses - todayNewLoans,
       availableCapital: capitalMetrics.availableCapital,
       totalEntries: todayCollections.length,
       paidEntries: todayCollections.filter((item) => item.status === 'Paid').length,
