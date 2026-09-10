@@ -34,6 +34,13 @@ function numberValue(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
+function formatDateInputDisplay(dateKey) {
+  if (!dateKey) return 'DD-MM-YYYY';
+  const [year, month, day] = String(dateKey).split('-');
+  if (!year || !month || !day) return 'DD-MM-YYYY';
+  return `${day}-${month}-${year}`;
+}
+
 function getMonthMeta(monthKey) {
   const [year, month] = String(monthKey).split('-').map(Number);
   const lastDay = new Date(year, month, 0).getDate();
@@ -240,10 +247,9 @@ export default function Reports() {
   const navigate = useNavigate();
 
   const monthDefault = toInputDate().slice(0, 7);
-  const monthRange = useMemo(() => getMonthMeta(monthDefault), [monthDefault]);
   const [view, setView] = useState('overview');
-  const [fromDate, setFromDate] = useState(monthRange.start);
-  const [toDate, setToDate] = useState(monthRange.end);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [cycle, setCycle] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState(monthDefault);
   const [monthlyReport, setMonthlyReport] = useState(() => emptyMonthlyReport(monthDefault));
@@ -440,6 +446,67 @@ export default function Reports() {
       loanCount: cycleLoans.length,
     };
   }), [overviewActiveLoans]);
+
+  const overviewHasDateFilter = Boolean(fromDate || toDate);
+
+  // With no date selected, Overview is a live business snapshot.
+  // Once a date is selected, period-sensitive cards use that selected range.
+  const overviewPortfolioCollectionAmount = useMemo(
+    () => overviewCycleCollections.reduce((sum, item) => sum + numberValue(item.amount), 0),
+    [overviewCycleCollections],
+  );
+
+  const overviewCurrentPending = useMemo(() => {
+    const today = toInputDate();
+    return collections
+      .filter((item) => String(item.status || '').toLowerCase() !== 'cancelled')
+      .filter((item) => String(item.date || '') <= today)
+      .reduce(
+        (sum, item) => sum + Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount)),
+        0,
+      );
+  }, [collections]);
+
+  const overviewCollectionAmount = overviewHasDateFilter
+    ? overview.expected
+    : overviewPortfolioCollectionAmount;
+
+  const overviewPendingAmount = overviewHasDateFilter
+    ? overview.pending
+    : overviewCurrentPending;
+
+  const overviewFineIncome = useMemo(
+    () => filteredPayments
+      .filter((item) => item.direction === 'in')
+      .reduce((sum, item) => sum + numberValue(item.fineAmount), 0),
+    [filteredPayments],
+  );
+
+  const overviewDocumentChargeIncome = useMemo(
+    () => filteredPayments
+      .filter((item) => {
+        if (item.direction !== 'in') return false;
+        const type = String(item.type || '').toLowerCase().replace(/[_-]+/g, ' ');
+        const note = String(item.note || '').toLowerCase();
+        const reference = String(item.referenceId || item.reference || '').toLowerCase();
+        return type.includes('document charge')
+          || note.includes('document charge')
+          || reference.endsWith('-doc');
+      })
+      .reduce((sum, item) => sum + numberValue(item.amount), 0),
+    [filteredPayments],
+  );
+
+  const overviewActiveLoanCount = overviewActiveLoans.length;
+  const overviewCustomerCount = customers.length;
+
+  const overviewRangeLabel = !fromDate && !toDate
+    ? 'Overall live snapshot'
+    : fromDate && toDate
+      ? `${formatDate(fromDate)} – ${formatDate(toDate)}`
+      : fromDate
+        ? `From ${formatDate(fromDate)}`
+        : `Up to ${formatDate(toDate)}`;
 
   const overviewCycleCustomerRows = useMemo(() => {
     const selected = String(selectedOverviewCycle || 'Daily').toLowerCase();
@@ -767,21 +834,23 @@ export default function Reports() {
   ]).size;
 
   const downloadOverview = () => downloadCsv(
-    `crednivo-reports-overview-${fromDate}-to-${toDate}.csv`,
+    overviewHasDateFilter
+      ? `crednivo-reports-overview-${fromDate || 'start'}-to-${toDate || 'today'}.csv`
+      : 'crednivo-reports-overview-overall.csv',
     [
       ['CREDNIVO Reports Overview'],
       ['Company', company.name],
       ['Branch', user?.branch || company.branch || 'All'],
-      ['From', fromDate],
-      ['To', toDate],
+      ['From', fromDate || 'Overall'],
+      ['To', toDate || 'Overall'],
       ['Cycle', cycle],
       [],
       ['Summary', 'Value'],
-      ['Expected Collection', overview.expected],
-      ['Customer Money Received', overview.collected],
+      ['Collection Amount', overviewCollectionAmount],
+      ['Collected Amount', overview.collected],
       ...overviewCycleCollections.map((item) => [`${item.cycle} Collection / Cycle Total`, item.amount]),
       ['Scheduled Collection Collected', overview.scheduledCollected],
-      ['Pending', overview.pending],
+      ['Pending Amount', overviewPendingAmount],
       ['Overdue', overview.overdue],
       ['Incoming Cash', overview.incoming],
       ['Outgoing Cash', overview.outgoing],
@@ -790,6 +859,13 @@ export default function Reports() {
       ['New Loans Given', overview.loanGiven],
       ['Total Outstanding (Current)', currentTotalOutstanding],
       ['In-Hand Amount (Current)', currentInHandAmount],
+      ['Active Loans', overviewActiveLoanCount],
+      ['Total Customers', overviewCustomerCount],
+      ['Overdue Amount', overview.overdue],
+      ['New Loans Given', overview.loanGiven],
+      ['Expenses', overview.expenseTotal],
+      ['Fine Income', overviewFineIncome],
+      ['Document Charges Income', overviewDocumentChargeIncome],
       ['Recovery %', `${overview.recovery.toFixed(1)}%`],
       [],
       ['Cycle', 'Expected', 'Collected', 'Pending', 'Customers', 'Loans', 'Recovery %'],
@@ -934,51 +1010,55 @@ export default function Reports() {
 
         <div className="reports-date-range" aria-label="Report date range">
           <div className="reports-date-field">
-            <input
-              id="reports-from-date"
-              type="date"
-              aria-label="From date"
-              value={fromDate}
-              max={toDate}
-              onChange={(event) => setFromDate(event.target.value)}
-            />
             <button
               type="button"
-              className="reports-date-picker-button"
-              aria-label="Open from date calendar"
+              className="reports-date-display"
+              aria-label={fromDate ? `From date ${formatDateInputDisplay(fromDate)}` : 'Choose from date'}
               onClick={() => {
                 const input = document.getElementById('reports-from-date');
                 if (input?.showPicker) input.showPicker();
-                else input?.focus();
+                else input?.click();
               }}
             >
+              <span>{formatDateInputDisplay(fromDate)}</span>
               <CalendarDays size={17} aria-hidden="true" />
             </button>
+            <input
+              id="reports-from-date"
+              className="reports-date-native"
+              type="date"
+              tabIndex={-1}
+              value={fromDate}
+              max={toDate || undefined}
+              onChange={(event) => setFromDate(event.target.value)}
+            />
           </div>
 
           <span>to</span>
 
           <div className="reports-date-field">
-            <input
-              id="reports-to-date"
-              type="date"
-              aria-label="To date"
-              value={toDate}
-              min={fromDate}
-              onChange={(event) => setToDate(event.target.value)}
-            />
             <button
               type="button"
-              className="reports-date-picker-button"
-              aria-label="Open to date calendar"
+              className="reports-date-display"
+              aria-label={toDate ? `To date ${formatDateInputDisplay(toDate)}` : 'Choose to date'}
               onClick={() => {
                 const input = document.getElementById('reports-to-date');
                 if (input?.showPicker) input.showPicker();
-                else input?.focus();
+                else input?.click();
               }}
             >
+              <span>{formatDateInputDisplay(toDate)}</span>
               <CalendarDays size={17} aria-hidden="true" />
             </button>
+            <input
+              id="reports-to-date"
+              className="reports-date-native"
+              type="date"
+              tabIndex={-1}
+              value={toDate}
+              min={fromDate || undefined}
+              onChange={(event) => setToDate(event.target.value)}
+            />
           </div>
         </div>
       </div>
@@ -990,7 +1070,7 @@ export default function Reports() {
               <span>OVERALL REPORT</span>
               <strong>Business Collection Summary</strong>
             </div>
-            <small>{formatDate(fromDate)} – {formatDate(toDate)}</small>
+            <small>{overviewRangeLabel}</small>
           </div>
 
           <div className="reports-overall-kpi-grid">
@@ -1007,8 +1087,8 @@ export default function Reports() {
               <span className="reports-overall-kpi-icon"><WalletCards size={21} /></span>
               <div>
                 <span>Collection Amount</span>
-                <strong>{formatCurrency(overview.expected)}</strong>
-                <small>Scheduled in selected date range</small>
+                <strong>{formatCurrency(overviewCollectionAmount)}</strong>
+                <small>{overviewHasDateFilter ? 'Scheduled in selected date range' : 'Current collection / cycle total'}</small>
               </div>
             </article>
 
@@ -1017,7 +1097,7 @@ export default function Reports() {
               <div>
                 <span>Collected Amount</span>
                 <strong>{formatCurrency(overview.collected)}</strong>
-                <small>Actual customer money received</small>
+                <small>{overviewHasDateFilter ? 'Received in selected date range' : 'Total customer collection received'}</small>
               </div>
             </article>
 
@@ -1025,10 +1105,37 @@ export default function Reports() {
               <span className="reports-overall-kpi-icon"><TriangleAlert size={21} /></span>
               <div>
                 <span>Pending Amount</span>
-                <strong>{formatCurrency(overview.pending)}</strong>
-                <small>Still pending in selected date range</small>
+                <strong>{formatCurrency(overviewPendingAmount)}</strong>
+                <small>{overviewHasDateFilter ? 'Pending in selected date range' : 'Current unpaid dues up to today'}</small>
               </div>
             </article>
+          </div>
+
+          <div className="reports-overall-secondary-grid" aria-label="Current portfolio status">
+            <article className="reports-overall-mini-card">
+              <span><Landmark size={18} /></span>
+              <div><small>Total Outstanding</small><strong>{formatCurrency(currentTotalOutstanding)}</strong></div>
+            </article>
+            <article className="reports-overall-mini-card">
+              <span><Activity size={18} /></span>
+              <div><small>Active Loans</small><strong>{overviewActiveLoanCount}</strong></div>
+            </article>
+            <article className="reports-overall-mini-card">
+              <span><UsersRound size={18} /></span>
+              <div><small>Total Customers</small><strong>{overviewCustomerCount}</strong></div>
+            </article>
+            <article className="reports-overall-mini-card reports-overall-mini-alert">
+              <span><TriangleAlert size={18} /></span>
+              <div><small>Overdue Amount</small><strong>{formatCurrency(overview.overdue)}</strong></div>
+            </article>
+          </div>
+
+          <div className="reports-overall-section-heading">
+            <div>
+              <span>COLLECTION BY CYCLE</span>
+              <strong>Current Collection Capacity</strong>
+            </div>
+            <small>Active loans only</small>
           </div>
 
           <div className="reports-overall-cycle-grid" aria-label="Collection amount by cycle">
@@ -1055,11 +1162,57 @@ export default function Reports() {
                   <div>
                     <span>{item.cycle} Collection</span>
                     <strong>{formatCurrency(item.amount)}</strong>
-                    <small>Total collection / {cycleUnit}</small>
+                    <small>{item.loanCount} active loan{item.loanCount === 1 ? '' : 's'} · per {cycleUnit}</small>
                   </div>
                 </article>
               );
             })}
+          </div>
+
+          <div className="reports-overall-section-heading">
+            <div>
+              <span>BUSINESS ACTIVITY</span>
+              <strong>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</strong>
+            </div>
+            <small>{overviewRangeLabel}</small>
+          </div>
+
+          <div className="reports-overall-activity-grid" aria-label="Business activity summary">
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><UserPlus size={19} /></span>
+              <div>
+                <small>New Loans Given</small>
+                <strong>{formatCurrency(overview.loanGiven)}</strong>
+                <span>Loan disbursement amount</span>
+              </div>
+            </article>
+
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
+              <div>
+                <small>Expenses</small>
+                <strong>{formatCurrency(overview.expenseTotal)}</strong>
+                <span>Recorded business expenses</span>
+              </div>
+            </article>
+
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><CircleDollarSign size={19} /></span>
+              <div>
+                <small>Fine Income</small>
+                <strong>{formatCurrency(overviewFineIncome)}</strong>
+                <span>Fine amount actually received</span>
+              </div>
+            </article>
+
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
+              <div>
+                <small>Document Charges Income</small>
+                <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
+                <span>Document charges recorded as income</span>
+              </div>
+            </article>
           </div>
         </section>
       )}

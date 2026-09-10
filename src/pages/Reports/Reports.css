@@ -1087,3 +1087,217 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
   }
 }
 
+/* =========================================================
+   V19 — OVERVIEW LIVE SNAPSHOT + OPTIONAL DATE RANGE
+   ========================================================= */
+
+.reports-date-field input{
+  font-family:"Segoe UI Variable Text","Segoe UI Variable","Inter","Segoe UI",Roboto,Arial,sans-serif;
+  font-size:11px;
+  font-weight:650;
+  letter-spacing:.01em;
+  font-variant-numeric:tabular-nums;
+}
+
+/* Chromium renders the empty native date field as the locale date mask.
+   Keep the mask clean and professional instead of forcing a preselected date. */
+.reports-date-field input:invalid,
+.reports-date-field input[value=""]{
+  color:var(--ink-500);
+}
+
+.reports-overall-secondary-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.reports-overall-mini-card{
+  min-width:0;
+  min-height:74px;
+  padding:13px 15px;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+}
+
+.reports-overall-mini-card>span{
+  width:34px;
+  height:34px;
+  flex:0 0 34px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  color:var(--blue-600);
+  background:var(--blue-100);
+}
+
+.reports-overall-mini-card>div{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+
+.reports-overall-mini-card small{
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:800;
+}
+
+.reports-overall-mini-card strong{
+  overflow:hidden;
+  color:var(--ink-950);
+  font-size:14px;
+  line-height:1.15;
+  font-weight:950;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+
+.reports-overall-mini-alert>span{
+  color:#c87819;
+  background:#fff3e5;
+}
+
+.reports-overall-section-heading{
+  margin-top:3px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.reports-overall-section-heading>div{
+  display:grid;
+  gap:3px;
+}
+
+.reports-overall-section-heading>div>span{
+  color:var(--blue-600);
+  font-size:8px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+
+.reports-overall-section-heading>div>strong{
+  color:var(--ink-950);
+  font-size:13px;
+  line-height:1.2;
+}
+
+.reports-overall-section-heading>small{
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:750;
+  text-align:right;
+}
+
+.reports-overall-activity-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+}
+
+.reports-overall-activity-card{
+  min-width:0;
+  min-height:94px;
+  padding:15px;
+  display:flex;
+  align-items:flex-start;
+  gap:11px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+}
+
+.reports-overall-activity-icon{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  color:var(--blue-600);
+  background:var(--blue-100);
+}
+
+.reports-overall-activity-card:nth-child(2) .reports-overall-activity-icon{
+  color:#c87819;
+  background:#fff3e5;
+}
+
+.reports-overall-activity-card:nth-child(3) .reports-overall-activity-icon{
+  color:#0b9361;
+  background:#e8f8f1;
+}
+
+.reports-overall-activity-card:nth-child(4) .reports-overall-activity-icon{
+  color:#6958c8;
+  background:#f0edff;
+}
+
+.reports-overall-activity-card>div{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+
+.reports-overall-activity-card small{
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:850;
+}
+
+.reports-overall-activity-card strong{
+  color:var(--ink-950);
+  font-size:16px;
+  line-height:1.15;
+  font-weight:950;
+  font-variant-numeric:tabular-nums;
+}
+
+.reports-overall-activity-card>div>span{
+  color:var(--ink-500);
+  font-size:8px;
+  line-height:1.35;
+}
+
+@media(max-width:1100px){
+  .reports-overall-secondary-grid,
+  .reports-overall-activity-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:600px){
+  .reports-overall-secondary-grid,
+  .reports-overall-activity-grid{
+    grid-template-columns:1fr;
+  }
+
+  .reports-overall-section-heading{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .reports-overall-section-heading>small{
+    text-align:left;
+  }
+}
+
+@media print{
+  .reports-overall-mini-card,
+  .reports-overall-activity-card{
+    box-shadow:none;
+    break-inside:avoid;
+  }
+}
+
+\n\n/* V19 exact DD-MM-YYYY date display */\n.reports-date-field{\n  position:relative;\n}\n.reports-date-display{\n  width:100%;\n  height:34px;\n  padding:0 7px 0 11px;\n  display:flex;\n  align-items:center;\n  justify-content:space-between;\n  gap:10px;\n  border:0;\n  border-radius:8px;\n  background:transparent;\n  color:var(--ink-900);\n  cursor:pointer;\n  font-family:\"Segoe UI Variable Text\",\"Inter\",\"Segoe UI\",Roboto,Arial,sans-serif;\n  font-size:11px;\n  font-weight:700;\n  letter-spacing:.015em;\n  font-variant-numeric:tabular-nums;\n}\n.reports-date-display>span{\n  white-space:nowrap;\n}\n.reports-date-display>svg{\n  flex:0 0 auto;\n  color:var(--blue-600);\n}\n.reports-date-display:hover{\n  background:var(--blue-100);\n}\n.reports-date-display:focus-visible{\n  outline:2px solid color-mix(in srgb,var(--blue-500) 35%,transparent);\n  outline-offset:-2px;\n}\n.reports-date-native{\n  position:absolute!important;\n  width:1px!important;\n  height:1px!important;\n  padding:0!important;\n  margin:0!important;\n  opacity:0!important;\n  pointer-events:none!important;\n  overflow:hidden!important;\n}\n
