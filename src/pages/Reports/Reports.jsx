@@ -8,6 +8,7 @@ import {
   Eye,
   HandCoins,
   Landmark,
+  PiggyBank,
   Printer,
   ReceiptText,
   Search,
@@ -236,6 +237,7 @@ export default function Reports() {
     collections = [],
     payments = [],
     expenses = [],
+    savings = [],
     agents = [],
     capitalMetrics,
   } = useCrednivo();
@@ -261,6 +263,7 @@ export default function Reports() {
   const [collectionApiLoading, setCollectionApiLoading] = useState(false);
   const [collectionApiError, setCollectionApiError] = useState('');
   const [selectedOverviewCycle, setSelectedOverviewCycle] = useState('Daily');
+  const [expandedOverviewCycle, setExpandedOverviewCycle] = useState(null);
   const [weeklyStartDate, setWeeklyStartDate] = useState(() => getSundayWeekRange(toInputDate()).from);
 
   useEffect(() => {
@@ -495,6 +498,16 @@ export default function Reports() {
       })
       .reduce((sum, item) => sum + numberValue(item.amount), 0),
     [filteredPayments],
+  );
+
+  const overviewSavingsEntries = useMemo(
+    () => savings.filter((item) => inRange(item.date, fromDate, toDate)),
+    [savings, fromDate, toDate],
+  );
+
+  const overviewSavingsAmount = useMemo(
+    () => overviewSavingsEntries.reduce((sum, item) => sum + numberValue(item.amount), 0),
+    [overviewSavingsEntries],
   );
 
   const overviewActiveLoanCount = overviewActiveLoans.length;
@@ -951,6 +964,7 @@ export default function Reports() {
       ['Expenses', overview.expenseTotal],
       ['Fine Income', overviewFineIncome],
       ['Document Charges Income', overviewDocumentChargeIncome],
+      ...(isOwner ? [['Savings', overviewSavingsAmount]] : []),
       ['Recovery %', `${overview.recovery.toFixed(1)}%`],
       [],
       ['Cycle', 'Expected', 'Collected', 'Pending', 'Customers', 'Loans', 'Recovery %'],
@@ -1217,10 +1231,67 @@ export default function Reports() {
 
           <div className="reports-overall-section-heading">
             <div>
+              <span>BUSINESS ACTIVITY</span>
+              <strong>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</strong>
+            </div>
+            <small>{overviewRangeLabel}</small>
+          </div>
+
+          <div className={`reports-overall-activity-grid ${isOwner ? 'with-savings' : ''}`} aria-label="Business activity summary">
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><UserPlus size={19} /></span>
+              <div>
+                <small>New Loans Given</small>
+                <strong>{formatCurrency(overview.loanGiven)}</strong>
+                <span>{overviewHasDateFilter ? 'Loan disbursement in selected range' : 'Total loan disbursement amount'}</span>
+              </div>
+            </article>
+
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
+              <div>
+                <small>Expenses</small>
+                <strong>{formatCurrency(overview.expenseTotal)}</strong>
+                <span>{overviewHasDateFilter ? 'Expenses in selected range' : 'Recorded business expenses'}</span>
+              </div>
+            </article>
+
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><CircleDollarSign size={19} /></span>
+              <div>
+                <small>Fine Income</small>
+                <strong>{formatCurrency(overviewFineIncome)}</strong>
+                <span>{overviewHasDateFilter ? 'Fine received in selected range' : 'Fine amount actually received'}</span>
+              </div>
+            </article>
+
+            <article className="reports-overall-activity-card">
+              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
+              <div>
+                <small>Document Charges Income</small>
+                <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
+                <span>{overviewHasDateFilter ? 'Document charges in selected range' : 'Document charges recorded as income'}</span>
+              </div>
+            </article>
+
+            {isOwner && (
+              <article className="reports-overall-activity-card reports-overall-activity-savings">
+                <span className="reports-overall-activity-icon"><PiggyBank size={19} /></span>
+                <div>
+                  <small>Savings</small>
+                  <strong>{formatCurrency(overviewSavingsAmount)}</strong>
+                  <span>{overviewHasDateFilter ? 'Savings moved in selected range' : 'Total cash moved into Savings'}</span>
+                </div>
+              </article>
+            )}
+          </div>
+
+          <div className="reports-overall-section-heading">
+            <div>
               <span>COLLECTION BY CYCLE</span>
               <strong>Current Collection Capacity</strong>
             </div>
-            <small>Active loans only</small>
+            <small>Tap a cycle to view customer details · {overviewRangeLabel}</small>
           </div>
 
           <div className="reports-overall-cycle-grid" aria-label="Collection amount by cycle">
@@ -1235,11 +1306,18 @@ export default function Reports() {
                 : item.cycle === 'Weekly'
                   ? 'week'
                   : 'month';
+              const isExpanded = expandedOverviewCycle === item.cycle;
 
               return (
-                <article
+                <button
+                  type="button"
                   key={item.cycle}
-                  className={`reports-overall-cycle-card reports-overall-cycle-${item.cycle.toLowerCase()}`}
+                  className={`reports-overall-cycle-card reports-overall-cycle-button reports-overall-cycle-${item.cycle.toLowerCase()} ${isExpanded ? 'active' : ''}`}
+                  aria-expanded={isExpanded}
+                  onClick={() => {
+                    setSelectedOverviewCycle(item.cycle);
+                    setExpandedOverviewCycle((current) => current === item.cycle ? null : item.cycle);
+                  }}
                 >
                   <span className="reports-overall-cycle-icon">
                     <CycleIcon size={19} />
@@ -1249,56 +1327,110 @@ export default function Reports() {
                     <strong>{formatCurrency(item.amount)}</strong>
                     <small>{item.loanCount} active loan{item.loanCount === 1 ? '' : 's'} · per {cycleUnit}</small>
                   </div>
-                </article>
+                  <b className="reports-cycle-open-label">{isExpanded ? 'Hide' : 'View'}</b>
+                </button>
               );
             })}
           </div>
 
-          <div className="reports-overall-section-heading">
-            <div>
-              <span>BUSINESS ACTIVITY</span>
-              <strong>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</strong>
-            </div>
-            <small>{overviewRangeLabel}</small>
-          </div>
-
-          <div className="reports-overall-activity-grid" aria-label="Business activity summary">
-            <article className="reports-overall-activity-card">
-              <span className="reports-overall-activity-icon"><UserPlus size={19} /></span>
-              <div>
-                <small>New Loans Given</small>
-                <strong>{formatCurrency(overview.loanGiven)}</strong>
-                <span>Loan disbursement amount</span>
+          {expandedOverviewCycle && (
+            <section className="reports-overview-cycle-detail" aria-label={`${selectedOverviewCycle} customer details`}>
+              <div className="reports-overview-cycle-detail-head">
+                <div>
+                  <span>{selectedOverviewCycle.toUpperCase()} DETAILS</span>
+                  <strong>{selectedOverviewCycle} Customer Collection Details</strong>
+                  <small>
+                    {overviewHasDateFilter
+                      ? `Filtered by ${overviewRangeLabel}`
+                      : 'Showing the overall live customer position'}
+                  </small>
+                </div>
+                <div>
+                  <strong>{formatCurrency(selectedOverviewCycleSummary?.amount || 0)}</strong>
+                  <small>Collection / cycle</small>
+                </div>
               </div>
-            </article>
 
-            <article className="reports-overall-activity-card">
-              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
-              <div>
-                <small>Expenses</small>
-                <strong>{formatCurrency(overview.expenseTotal)}</strong>
-                <span>Recorded business expenses</span>
-              </div>
-            </article>
+              {overviewCycleCustomerRows.length ? (
+                <>
+                  <div className="reports-overview-cycle-detail-table-wrap">
+                    <table className="reports-overview-cycle-detail-table">
+                      <thead>
+                        <tr>
+                          <th>Customer</th>
+                          <th>Loan</th>
+                          <th>Collection / Cycle</th>
+                          <th>Expected</th>
+                          <th>Collected</th>
+                          <th>Pending</th>
+                          <th>Outstanding</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {overviewCycleCustomerRows.map((row) => (
+                          <tr key={row.key}>
+                            <td>
+                              <div className="reports-cycle-customer">
+                                <CustomerAvatar
+                                  className="reports-cycle-customer-avatar"
+                                  photo={customerPhotoById[String(row.customerId)]}
+                                  name={row.customerName}
+                                />
+                                <div>
+                                  <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
+                                  <small>{row.customerId || '—'}</small>
+                                </div>
+                              </div>
+                            </td>
+                            <td><strong>{row.loanId || '—'}</strong></td>
+                            <td>{formatCurrency(row.collectionPerCycle)}</td>
+                            <td>{formatCurrency(row.expected)}</td>
+                            <td className="reports-cycle-detail-collected">{formatCurrency(row.received)}</td>
+                            <td className="reports-cycle-detail-pending">{formatCurrency(row.pending)}</td>
+                            <td>{formatCurrency(row.outstanding)}</td>
+                            <td><span className={`reports-cycle-detail-status status-${String(row.status || '').toLowerCase()}`}>{row.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-            <article className="reports-overall-activity-card">
-              <span className="reports-overall-activity-icon"><CircleDollarSign size={19} /></span>
-              <div>
-                <small>Fine Income</small>
-                <strong>{formatCurrency(overviewFineIncome)}</strong>
-                <span>Fine amount actually received</span>
-              </div>
-            </article>
-
-            <article className="reports-overall-activity-card">
-              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
-              <div>
-                <small>Document Charges Income</small>
-                <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
-                <span>Document charges recorded as income</span>
-              </div>
-            </article>
-          </div>
+                  <div className="reports-overview-cycle-mobile-list">
+                    {overviewCycleCustomerRows.map((row) => (
+                      <article className="reports-overview-cycle-mobile-card" key={`mobile-${row.key}`}>
+                        <div className="reports-cycle-mobile-top">
+                          <div className="reports-cycle-customer">
+                            <CustomerAvatar
+                              className="reports-cycle-customer-avatar"
+                              photo={customerPhotoById[String(row.customerId)]}
+                              name={row.customerName}
+                            />
+                            <div>
+                              <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
+                              <small>{row.customerId || '—'} · {row.loanId || '—'}</small>
+                            </div>
+                          </div>
+                          <span className={`reports-cycle-detail-status status-${String(row.status || '').toLowerCase()}`}>{row.status}</span>
+                        </div>
+                        <div className="reports-cycle-mobile-values">
+                          <div><span>Collection</span><strong>{formatCurrency(row.collectionPerCycle)}</strong></div>
+                          <div><span>Expected</span><strong>{formatCurrency(row.expected)}</strong></div>
+                          <div><span>Collected</span><strong className="positive">{formatCurrency(row.received)}</strong></div>
+                          <div><span>Pending</span><strong className="pending">{formatCurrency(row.pending)}</strong></div>
+                          <div><span>Outstanding</span><strong>{formatCurrency(row.outstanding)}</strong></div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="reports-overview-cycle-empty">
+                  No {selectedOverviewCycle.toLowerCase()} customer records are available for {overviewRangeLabel.toLowerCase()}.
+                </div>
+              )}
+            </section>
+          )}
 
           <div className="reports-overall-section-heading reports-cycle-status-heading">
             <div>
