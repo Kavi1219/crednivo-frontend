@@ -726,7 +726,6 @@ Load this file AFTER responsive.css in src/main.jsx.
   .customers-page,
   .collection-page,
   .agents-page,
-  .documents-page,
   .settings-page,
   .today-report-page{
     min-width:0!important;

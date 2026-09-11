@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart3, CircleDollarSign, FileText, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
+import { BarChart3, CircleDollarSign, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './MobileDrawer.css';
 
@@ -8,7 +8,6 @@ const items = [
   ['Loans', '/loans', CircleDollarSign, 'loans.view'],
   ['Payments', '/payments', WalletCards, 'payments.view'],
   ['Expenses', '/expenses', ReceiptText, 'expenses.view'],
-  ['Documents', '/documents', FileText, 'documents.view'],
   ['Capital', '/capital', Landmark, 'capital.view'],
   ['Savings', '/savings', PiggyBank, null, true],
   ['Reports', '/reports', BarChart3, 'reports.full'],

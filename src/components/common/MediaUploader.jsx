@@ -450,8 +450,8 @@ export default function MediaUploader({
 
   const removeDocument = (index) => {
     const target = documentList[index];
-    // Existing server documents are intentionally view-only here. Deletion should
-    // happen through the Documents module so live records are not removed accidentally.
+    // Existing server documents are intentionally view-only here so live records
+    // are not removed accidentally from the customer media editor.
     if (target?.backendId && !String(target?.data || '').startsWith('data:')) return;
     emitDocuments(documentList.filter((_, itemIndex) => itemIndex !== index));
   };

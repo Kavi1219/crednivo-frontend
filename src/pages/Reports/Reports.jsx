@@ -2397,7 +2397,6 @@ export default function Reports() {
       statementBalanceLabel: overviewBankStatement.balanceLabel,
       sections: overviewStatementSections,
     };
-    };
   };
 
   const openDownloadDialog = () => {

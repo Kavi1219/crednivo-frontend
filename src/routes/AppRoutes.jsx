@@ -19,7 +19,6 @@ import Savings from '../pages/Savings/Savings';
 import Expenses from '../pages/Expenses/Expenses';
 import Reports from '../pages/Reports/Reports';
 import Agents from '../pages/Agents/Agents';
-import Documents from '../pages/Documents/Documents';
 import Settings from '../pages/Settings/Settings';
 
 function ProtectedWorkspace() {
@@ -67,7 +66,6 @@ export default function AppRoutes() {
         <Route element={<PermissionOnly permission="collections.view" />}><Route path="/collection" element={<Collection />} /></Route>
         <Route element={<PermissionOnly permission="payments.view" />}><Route path="/payments" element={<Payments />} /></Route>
         <Route element={<PermissionOnly permission="expenses.view" />}><Route path="/expenses" element={<Expenses />} /></Route>
-        <Route element={<PermissionOnly permission="documents.view" />}><Route path="/documents" element={<Documents />} /></Route>
         <Route element={<PermissionOnly permission="capital.view" />}><Route path="/capital" element={<Capital />} /></Route>
         <Route element={<OwnerOnly />}><Route path="/savings" element={<Savings />} /></Route>
         <Route element={<PermissionOnly permission="reports.full" />}><Route path="/reports" element={<Reports />} /></Route>

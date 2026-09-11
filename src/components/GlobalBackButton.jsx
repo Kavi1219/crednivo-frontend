@@ -16,7 +16,6 @@ const MAIN_PAGES = new Set([
   '/expenses',
   '/reports',
   '/agents',
-  '/documents',
   '/settings',
 ]);
 
@@ -41,7 +40,6 @@ function parentFallback(pathname) {
   if (pathname.startsWith('/expenses/')) return '/expenses';
   if (pathname.startsWith('/reports/')) return '/reports';
   if (pathname.startsWith('/agents/')) return '/agents';
-  if (pathname.startsWith('/documents/')) return '/documents';
   if (pathname.startsWith('/settings/')) return '/settings';
   return '/overview';
 }
