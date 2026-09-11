@@ -6,6 +6,9 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Download,
+  FileDown,
+  FileSpreadsheet,
+  FileText,
   HandCoins,
   Landmark,
   PiggyBank,
@@ -17,6 +20,7 @@ import {
   UsersRound,
   Wallet,
   WalletCards,
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -29,6 +33,11 @@ import { apiRequest } from '../../services/api';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Reports.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
+import {
+  exportReportDoc,
+  exportReportExcel,
+  exportReportPdf,
+} from '../../utils/reportExport';
 
 function numberValue(value) {
   const number = Number(value);
@@ -281,6 +290,9 @@ export default function Reports() {
   const [collectionApiError, setCollectionApiError] = useState('');
   const [selectedOverviewCycle, setSelectedOverviewCycle] = useState(capacityCycle || 'Daily');
   const [weeklyStartDate, setWeeklyStartDate] = useState(() => getSundayWeekRange(toInputDate()).from);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const [downloadBusy, setDownloadBusy] = useState('');
+  const [downloadError, setDownloadError] = useState('');
 
   useEffect(() => {
     if (capacityCycle) setSelectedOverviewCycle(capacityCycle);
@@ -1343,6 +1355,338 @@ export default function Reports() {
             ? 'Savings'
             : '';
 
+  const reportMeta = [
+    ['Company', company?.name || 'CREDNIVO'],
+    ['Branch', user?.branch || company?.branch || 'Current branch'],
+    ['Prepared by', user?.displayName || user?.name || user?.fullName || (isOwner ? 'Owner' : 'Agent')],
+    ['Generated', formatDate(toInputDate())],
+    ['Period', overviewRangeLabel],
+  ];
+
+  const makeExportReport = () => {
+    if (activityPage === 'loans') {
+      return {
+        fileBase: `crednivo-new-loans-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: 'Business Activity',
+        title: 'New Loans Given Report',
+        subtitle: 'Customer-wise loan disbursement details. This document is generated from report data, not from the website layout.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [{
+          title: 'Loan Disbursement Details',
+          note: overviewHasDateFilter ? 'Only loans inside the selected date range are included.' : 'All available loan disbursements are included.',
+          columns: [
+            { key: 'date', label: 'Date', type: 'date' },
+            { key: 'customerName', label: 'Customer' },
+            { key: 'customerId', label: 'Customer ID' },
+            { key: 'loanId', label: 'Loan ID' },
+            { key: 'cycle', label: 'Cycle' },
+            { key: 'loanAmount', label: 'Loan Amount', type: 'currency' },
+            { key: 'givenAmount', label: 'Given Amount', type: 'currency' },
+            { key: 'status', label: 'Status' },
+          ],
+          rows: newLoanDetailRows,
+        }],
+      };
+    }
+
+    if (activityPage === 'expenses') {
+      return {
+        fileBase: `crednivo-expenses-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: 'Business Activity',
+        title: 'Expense Report',
+        subtitle: 'Expense ledger for the selected reporting period.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [{
+          title: 'Expense Entries',
+          columns: [
+            { key: 'date', label: 'Date', type: 'date' },
+            { key: 'category', label: 'Category' },
+            { key: 'description', label: 'Description' },
+            { key: 'createdBy', label: 'Created By' },
+            { key: 'amount', label: 'Amount', type: 'currency' },
+          ],
+          rows: expenseDetailRows,
+        }],
+      };
+    }
+
+    if (activityPage === 'fine') {
+      return {
+        fileBase: `crednivo-fine-income-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: 'Business Activity',
+        title: 'Fine Income Report',
+        subtitle: 'Customer and loan-wise fine amounts received.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [{
+          title: 'Fine Income Details',
+          columns: [
+            { key: 'date', label: 'Date', type: 'date' },
+            { key: 'customerName', label: 'Customer' },
+            { key: 'customerId', label: 'Customer ID' },
+            { key: 'loanId', label: 'Loan ID' },
+            { key: 'paymentMode', label: 'Payment Mode' },
+            { key: 'amount', label: 'Fine Amount', type: 'currency' },
+          ],
+          rows: fineDetailRows,
+        }],
+      };
+    }
+
+    if (activityPage === 'documents') {
+      return {
+        fileBase: `crednivo-document-charges-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: 'Business Activity',
+        title: 'Document Charges Income Report',
+        subtitle: 'Customer and loan-wise document charge income.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [{
+          title: 'Document Charge Details',
+          columns: [
+            { key: 'date', label: 'Date', type: 'date' },
+            { key: 'customerName', label: 'Customer' },
+            { key: 'customerId', label: 'Customer ID' },
+            { key: 'loanId', label: 'Loan ID' },
+            { key: 'reference', label: 'Reference' },
+            { key: 'amount', label: 'Document Charge', type: 'currency' },
+          ],
+          rows: documentChargeDetailRows,
+        }],
+      };
+    }
+
+    if (activityPage === 'savings') {
+      return {
+        fileBase: `crednivo-savings-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: 'Business Activity',
+        title: 'Savings Report',
+        subtitle: 'Savings movements recorded by the business.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [{
+          title: 'Savings Entries',
+          columns: [
+            { key: 'date', label: 'Date', type: 'date' },
+            { key: 'description', label: 'Description' },
+            { key: 'createdBy', label: 'Created By' },
+            { key: 'amount', label: 'Amount', type: 'currency' },
+          ],
+          rows: savingsDetailRows,
+        }],
+      };
+    }
+
+    if (capacityPage) {
+      return {
+        fileBase: `crednivo-${capacityPage}-collection-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: 'Collection Capacity',
+        title: `${capacityCycle} Collection Report`,
+        subtitle: 'Customer-wise collection position for the selected cycle.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [
+          {
+            title: 'Cycle Summary',
+            metrics: [
+              { label: 'Collection / Cycle', value: selectedOverviewCycleSummary?.amount || 0, type: 'currency' },
+              { label: 'Active Loans', value: selectedOverviewCycleSummary?.loanCount || 0, type: 'number' },
+              { label: 'Customers', value: selectedOverviewCycleSummary?.customerCount || 0, type: 'number' },
+            ],
+          },
+          {
+            title: 'Customer Collection Details',
+            columns: [
+              { key: 'customerName', label: 'Customer' },
+              { key: 'customerId', label: 'Customer ID' },
+              { key: 'loanId', label: 'Loan ID' },
+              { key: 'collectionPerCycle', label: 'Collection / Cycle', type: 'currency' },
+              { key: 'expected', label: 'Expected', type: 'currency' },
+              { key: 'received', label: 'Collected', type: 'currency' },
+              { key: 'pending', label: 'Pending', type: 'currency' },
+              { key: 'outstanding', label: 'Outstanding', type: 'currency' },
+              { key: 'status', label: 'Status' },
+            ],
+            rows: overviewCycleCustomerRows,
+          },
+        ],
+      };
+    }
+
+    const periodCycle = view === 'daily'
+      ? 'Daily'
+      : view === 'weekly'
+        ? 'Weekly'
+        : view === 'monthly'
+          ? 'Monthly'
+          : null;
+
+    if (periodCycle) {
+      const statusRow = overviewCycleStatusRows.find((item) => item.cycle === periodCycle) || {};
+      return {
+        fileBase: `crednivo-${periodCycle.toLowerCase()}-report-${fromDate || 'all'}-${toDate || 'all'}`,
+        badge: `${periodCycle} Report`,
+        title: `${periodCycle} Collection Report`,
+        subtitle: 'Cycle-specific business collection summary.',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        sections: [{
+          title: `${periodCycle} Summary`,
+          metrics: [
+            { label: 'Active Loan Amount', value: statusRow.loanAmount || 0, type: 'currency' },
+            { label: 'Collected Amount', value: statusRow.collectedAmount || 0, type: 'currency' },
+            { label: 'Upcoming Amount', value: statusRow.upcomingAmount || 0, type: 'currency' },
+            { label: 'Pending Amount', value: statusRow.pendingAmount || 0, type: 'currency' },
+          ],
+        }],
+      };
+    }
+
+    return {
+      fileBase: `crednivo-overview-${fromDate || 'overall'}-${toDate || 'overall'}`,
+      badge: 'Overview Report',
+      title: 'Business Overview Report',
+      subtitle: 'Professional business summary prepared from live CREDNIVO records. The exported document uses a dedicated report layout rather than the website card design.',
+      company: company?.name || 'CREDNIVO',
+      generated: formatDate(toInputDate()),
+      meta: reportMeta,
+      sections: [
+        {
+          title: 'Business Summary',
+          metrics: [
+            { label: 'In-Hand Amount', value: currentInHandAmount, type: 'currency' },
+            { label: 'Collection Amount', value: overviewCollectionAmount, type: 'currency' },
+            { label: 'Collected Amount', value: overview.collected, type: 'currency' },
+            { label: 'Pending Amount', value: overviewPendingAmount, type: 'currency' },
+            { label: 'Total Outstanding', value: currentTotalOutstanding, type: 'currency' },
+            { label: 'Active Loans', value: overviewActiveLoanCount, type: 'number' },
+            { label: 'Total Customers', value: overviewCustomerCount, type: 'number' },
+            { label: 'Overdue Amount', value: overview.overdue, type: 'currency' },
+          ],
+        },
+        {
+          title: 'Business Activity',
+          metrics: [
+            { label: 'New Loans Given', value: overview.loanGiven, type: 'currency' },
+            { label: 'Expenses', value: overview.expenseTotal, type: 'currency' },
+            { label: 'Fine Income', value: overviewFineIncome, type: 'currency' },
+            { label: 'Document Charges Income', value: overviewDocumentChargeIncome, type: 'currency' },
+            ...(isOwner ? [{ label: 'Savings', value: overviewSavingsAmount, type: 'currency' }] : []),
+          ],
+        },
+        {
+          title: 'Current Collection Capacity',
+          note: 'Active loans only.',
+          columns: [
+            { key: 'cycle', label: 'Cycle' },
+            { key: 'amount', label: 'Collection / Cycle', type: 'currency' },
+            { key: 'customerCount', label: 'Customers', type: 'number' },
+            { key: 'loanCount', label: 'Active Loans', type: 'number' },
+          ],
+          rows: overviewCycleCollections,
+        },
+        {
+          title: 'Collection Status by Cycle',
+          columns: [
+            { key: 'cycle', label: 'Cycle' },
+            { key: 'loanAmount', label: 'Active Loan Amount', type: 'currency' },
+            { key: 'collectedAmount', label: 'Collected Amount', type: 'currency' },
+            { key: 'upcomingAmount', label: 'Upcoming Amount', type: 'currency' },
+            { key: 'pendingAmount', label: 'Pending Amount', type: 'currency' },
+          ],
+          rows: overviewCycleStatusRows,
+        },
+      ],
+    };
+  };
+
+  const handleDownloadFormat = async (format) => {
+    if (downloadBusy) return;
+    setDownloadBusy(format);
+    setDownloadError('');
+    try {
+      const report = makeExportReport();
+      if (format === 'pdf') await exportReportPdf(report);
+      else if (format === 'excel') await exportReportExcel(report);
+      else if (format === 'doc') await exportReportDoc(report);
+      setDownloadOpen(false);
+    } catch (error) {
+      console.error('Report export failed', error);
+      setDownloadError(error?.message || 'Unable to generate this report file.');
+    } finally {
+      setDownloadBusy('');
+    }
+  };
+
+  const downloadDialog = downloadOpen ? (
+    <div className="reports-download-backdrop" role="presentation" onMouseDown={() => !downloadBusy && setDownloadOpen(false)}>
+      <section
+        className="reports-download-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reports-download-title"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="reports-download-dialog-head">
+          <div>
+            <span>EXPORT REPORT</span>
+            <strong id="reports-download-title">Choose document type</strong>
+            <small>Each format uses its own professional report layout.</small>
+          </div>
+          <button
+            type="button"
+            className="reports-download-close"
+            onClick={() => setDownloadOpen(false)}
+            disabled={Boolean(downloadBusy)}
+            aria-label="Close download options"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="reports-download-options">
+          <button type="button" onClick={() => handleDownloadFormat('pdf')} disabled={Boolean(downloadBusy)}>
+            <span className="reports-download-format-icon pdf"><FileDown size={22} /></span>
+            <div>
+              <strong>PDF</strong>
+              <small>Professional printable report with page header, tables and page numbers.</small>
+            </div>
+            <b>{downloadBusy === 'pdf' ? 'Creating…' : '.pdf'}</b>
+          </button>
+
+          <button type="button" onClick={() => handleDownloadFormat('excel')} disabled={Boolean(downloadBusy)}>
+            <span className="reports-download-format-icon excel"><FileSpreadsheet size={22} /></span>
+            <div>
+              <strong>EXCEL</strong>
+              <small>Real spreadsheet cells with title, metadata, section headings and structured tables.</small>
+            </div>
+            <b>{downloadBusy === 'excel' ? 'Creating…' : '.xlsx'}</b>
+          </button>
+
+          <button type="button" onClick={() => handleDownloadFormat('doc')} disabled={Boolean(downloadBusy)}>
+            <span className="reports-download-format-icon doc"><FileText size={22} /></span>
+            <div>
+              <strong>DOC</strong>
+              <small>Editable Word document with report headings and properly formatted tables.</small>
+            </div>
+            <b>{downloadBusy === 'doc' ? 'Creating…' : '.docx'}</b>
+          </button>
+        </div>
+
+        {downloadError && <div className="reports-download-error">{downloadError}</div>}
+      </section>
+    </div>
+  ) : null;
+
   if (activityPage || capacityPage) {
     return (
       <div className="module-page reports-page phase5-reports reports-dedicated-detail-page">
@@ -1351,9 +1695,14 @@ export default function Reports() {
           title={activityPage ? activityPageTitle : `${capacityCycle} Collection`}
           description={overviewRangeLabel}
           actions={(
-            <ActionButton tone="secondary" icon={ArrowLeft} onClick={() => navigate(-1)}>
-              Back
-            </ActionButton>
+            <>
+              <ActionButton tone="secondary" icon={ArrowLeft} onClick={() => navigate(-1)}>
+                Back
+              </ActionButton>
+              <ActionButton tone="secondary" icon={Download} onClick={() => setDownloadOpen(true)}>
+                Download
+              </ActionButton>
+            </>
           )}
         />
 
@@ -1681,6 +2030,8 @@ export default function Reports() {
             )}
           </section>
         )}
+
+        {downloadDialog}
       </div>
     );
   }
@@ -1694,7 +2045,7 @@ export default function Reports() {
         actions={(
           <>
             <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print</ActionButton>
-            <ActionButton tone="secondary" icon={Download} onClick={exportCurrent}>Download</ActionButton>
+            <ActionButton tone="secondary" icon={Download} onClick={() => setDownloadOpen(true)}>Download</ActionButton>
           </>
         )}
       />
@@ -1985,6 +2336,7 @@ export default function Reports() {
           </div>
         </section>
       )}
+      {downloadDialog}
     </div>
   );
 }

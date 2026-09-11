@@ -2926,3 +2926,217 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     box-shadow:none;
   }
 }
+
+/* =========================================================
+   V29 — PROFESSIONAL DOWNLOAD FORMAT PICKER
+   ========================================================= */
+
+.reports-download-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:1400;
+  display:grid;
+  place-items:center;
+  padding:20px;
+  background:rgba(15,27,43,.46);
+  backdrop-filter:blur(4px);
+}
+
+.reports-download-dialog{
+  width:min(620px,100%);
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--surface);
+  box-shadow:0 24px 70px rgba(15,35,60,.22);
+}
+
+.reports-download-dialog-head{
+  padding:18px 18px 15px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  border-bottom:1px solid var(--line);
+}
+
+.reports-download-dialog-head>div{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.reports-download-dialog-head span{
+  color:var(--blue-600);
+  font-size:8px;
+  font-weight:950;
+  letter-spacing:.09em;
+}
+
+.reports-download-dialog-head strong{
+  color:var(--ink-950);
+  font-size:16px;
+  line-height:1.2;
+}
+
+.reports-download-dialog-head small{
+  color:var(--ink-500);
+  font-size:8px;
+  line-height:1.45;
+}
+
+.reports-download-close{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  display:grid;
+  place-items:center;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--ink-600);
+  background:var(--surface-soft);
+  cursor:pointer;
+}
+
+.reports-download-close:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.reports-download-options{
+  padding:14px;
+  display:grid;
+  gap:10px;
+}
+
+.reports-download-options>button{
+  width:100%;
+  min-height:76px;
+  padding:12px 13px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  color:inherit;
+  background:var(--surface);
+  text-align:left;
+  cursor:pointer;
+  transition:border-color .15s ease,background .15s ease,transform .15s ease,box-shadow .15s ease;
+}
+
+.reports-download-options>button:hover:not(:disabled){
+  transform:translateY(-1px);
+  border-color:color-mix(in srgb,var(--blue-500) 35%,var(--line));
+  background:var(--surface-soft);
+  box-shadow:0 7px 20px rgba(18,57,105,.07);
+}
+
+.reports-download-options>button:disabled{
+  opacity:.62;
+  cursor:wait;
+}
+
+.reports-download-format-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+}
+
+.reports-download-format-icon.pdf{
+  color:#d64a4a;
+  background:#fff0f0;
+}
+
+.reports-download-format-icon.excel{
+  color:#16815a;
+  background:#eaf8f1;
+}
+
+.reports-download-format-icon.doc{
+  color:#2569c9;
+  background:#edf4ff;
+}
+
+.reports-download-options>button>div{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+
+.reports-download-options>button>div>strong{
+  color:var(--ink-950);
+  font-size:11px;
+  font-weight:950;
+}
+
+.reports-download-options>button>div>small{
+  color:var(--ink-500);
+  font-size:8px;
+  line-height:1.4;
+}
+
+.reports-download-options>button>b{
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.reports-download-error{
+  margin:0 14px 14px;
+  padding:10px 12px;
+  border:1px solid #f2bbbb;
+  border-radius:10px;
+  color:#b93030;
+  background:#fff3f3;
+  font-size:8.5px;
+  font-weight:750;
+}
+
+@media(max-width:600px){
+  .reports-download-backdrop{
+    padding:12px;
+    place-items:end center;
+  }
+
+  .reports-download-dialog{
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+    border-radius:18px 18px 0 0;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+
+  .reports-download-dialog-head{
+    padding:16px 15px 13px;
+  }
+
+  .reports-download-options{
+    padding:10px;
+  }
+
+  .reports-download-options>button{
+    min-height:72px;
+    grid-template-columns:auto minmax(0,1fr);
+    gap:10px;
+  }
+
+  .reports-download-options>button>b{
+    display:none;
+  }
+
+  .reports-download-format-icon{
+    width:38px;
+    height:38px;
+  }
+}
+
+@media print{
+  .reports-download-backdrop{
+    display:none!important;
+  }
+}
