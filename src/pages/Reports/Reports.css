@@ -3152,3 +3152,21 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
   position:relative;
   z-index:10001!important;
 }
+
+/* =========================================================
+   V32 — ACTIVE CUSTOMERS INSIDE TOTAL CUSTOMERS CARD
+   ========================================================= */
+.reports-overall-customers-card>div>em{
+  color:#0b9361;
+  font-size:7.5px;
+  line-height:1.2;
+  font-style:normal;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+@media(max-width:767px){
+  .reports-overall-customers-card>div>em{
+    font-size:7px;
+  }
+}

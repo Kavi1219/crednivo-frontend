@@ -627,6 +627,15 @@ export default function Reports() {
 
   const overviewActiveLoanCount = overviewActiveLoans.length;
   const overviewCustomerCount = customers.length;
+  const overviewActiveCustomerCount = useMemo(
+    () => new Set(
+      overviewActiveLoans
+        .map((loan) => loan.customerId)
+        .filter((customerId) => customerId !== null && customerId !== undefined && String(customerId).trim() !== '')
+        .map((customerId) => String(customerId)),
+    ).size,
+    [overviewActiveLoans],
+  );
 
   const customerById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer])),
@@ -1426,6 +1435,7 @@ export default function Reports() {
             { label: 'Total Outstanding', value: currentTotalOutstanding, type: 'currency' },
             { label: 'Active Loans', value: overviewActiveLoanCount, type: 'number' },
             { label: 'Total Customers', value: overviewCustomerCount, type: 'number' },
+            { label: 'Active Customers', value: overviewActiveCustomerCount, type: 'number' },
             { label: 'Overdue Amount', value: overview.overdue, type: 'currency' },
           ],
         },
@@ -2031,9 +2041,13 @@ export default function Reports() {
               <span><Activity size={18} /></span>
               <div><small>Active Loans</small><strong>{overviewActiveLoanCount}</strong></div>
             </article>
-            <article className="reports-overall-mini-card">
+            <article className="reports-overall-mini-card reports-overall-customers-card">
               <span><UsersRound size={18} /></span>
-              <div><small>Total Customers</small><strong>{overviewCustomerCount}</strong></div>
+              <div>
+                <small>Total Customers</small>
+                <strong>{overviewCustomerCount}</strong>
+                <em>{overviewActiveCustomerCount} active customer{overviewActiveCustomerCount === 1 ? '' : 's'}</em>
+              </div>
             </article>
             <article className="reports-overall-mini-card reports-overall-mini-alert">
               <span><TriangleAlert size={18} /></span>
