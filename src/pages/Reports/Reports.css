@@ -4024,3 +4024,41 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     padding:0 5px;
   }
 }
+
+/* =========================================================
+   V38 — OVERVIEW PIE CHART + PENDING CUSTOMER LIST
+   ========================================================= */
+
+.reports-overview-performance-heading{
+  margin-top:3px;
+}
+
+.reports-overview-performance-card{
+  margin-top:0;
+}
+
+.reports-overview-pending-section{
+  margin-top:0;
+}
+
+.reports-overview-pending-table{
+  min-width:940px;
+}
+
+@media(max-width:767px){
+  .reports-overview-performance-card{
+    padding:13px;
+  }
+
+  .reports-overview-pending-section{
+    border-radius:14px;
+  }
+}
+
+@media print{
+  .reports-overview-performance-card,
+  .reports-overview-pending-section{
+    box-shadow:none;
+    break-inside:avoid;
+  }
+}
