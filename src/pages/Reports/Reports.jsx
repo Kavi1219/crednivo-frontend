@@ -1,11 +1,11 @@
 import {
   Activity,
+  ArrowLeft,
   BarChart3,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
   Download,
-  Eye,
   HandCoins,
   Landmark,
   PiggyBank,
@@ -19,7 +19,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
@@ -247,11 +247,28 @@ export default function Reports() {
   );
   const { isOwner, user, hasPermission } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const requestedActivityPage = String(searchParams.get('activity') || '').toLowerCase();
+  const activityPage = ['loans', 'expenses', 'fine', 'documents', 'savings'].includes(requestedActivityPage)
+    ? requestedActivityPage
+    : null;
+
+  const requestedCapacityPage = String(searchParams.get('capacity') || '').toLowerCase();
+  const capacityPage = ['daily', 'weekly', 'monthly'].includes(requestedCapacityPage)
+    ? requestedCapacityPage
+    : null;
+  const capacityCycle = capacityPage
+    ? `${capacityPage.charAt(0).toUpperCase()}${capacityPage.slice(1)}`
+    : null;
+
+  const initialFromDate = String(searchParams.get('from') || '');
+  const initialToDate = String(searchParams.get('to') || '');
 
   const monthDefault = toInputDate().slice(0, 7);
   const [view, setView] = useState('overview');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState(initialFromDate);
+  const [toDate, setToDate] = useState(initialToDate);
   const [cycle, setCycle] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState(monthDefault);
   const [monthlyReport, setMonthlyReport] = useState(() => emptyMonthlyReport(monthDefault));
@@ -262,10 +279,12 @@ export default function Reports() {
   const [collectionApiReport, setCollectionApiReport] = useState(null);
   const [collectionApiLoading, setCollectionApiLoading] = useState(false);
   const [collectionApiError, setCollectionApiError] = useState('');
-  const [selectedOverviewCycle, setSelectedOverviewCycle] = useState('Daily');
-  const [expandedOverviewCycle, setExpandedOverviewCycle] = useState(null);
-  const [selectedActivityCard, setSelectedActivityCard] = useState(null);
+  const [selectedOverviewCycle, setSelectedOverviewCycle] = useState(capacityCycle || 'Daily');
   const [weeklyStartDate, setWeeklyStartDate] = useState(() => getSundayWeekRange(toInputDate()).from);
+
+  useEffect(() => {
+    if (capacityCycle) setSelectedOverviewCycle(capacityCycle);
+  }, [capacityCycle]);
 
   useEffect(() => {
     if (view !== 'statement') return undefined;
@@ -1296,7 +1315,375 @@ export default function Reports() {
     else setCycle('All');
   };
 
+  const buildReportDetailUrl = (key, value) => {
+    const params = new URLSearchParams();
+    params.set(key, value);
+    if (fromDate) params.set('from', fromDate);
+    if (toDate) params.set('to', toDate);
+    return `/reports?${params.toString()}`;
+  };
 
+  const openActivityPage = (activity) => {
+    navigate(buildReportDetailUrl('activity', activity));
+  };
+
+  const openCapacityPage = (itemCycle) => {
+    navigate(buildReportDetailUrl('capacity', String(itemCycle || '').toLowerCase()));
+  };
+
+  const activityPageTitle = activityPage === 'loans'
+    ? 'New Loans Given'
+    : activityPage === 'expenses'
+      ? 'Expenses'
+      : activityPage === 'fine'
+        ? 'Fine Income'
+        : activityPage === 'documents'
+          ? 'Document Charges Income'
+          : activityPage === 'savings'
+            ? 'Savings'
+            : '';
+
+  if (activityPage || capacityPage) {
+    return (
+      <div className="module-page reports-page phase5-reports reports-dedicated-detail-page">
+        <ModuleHeader
+          eyebrow={activityPage ? 'Reports · Business Activity' : 'Reports · Collection Capacity'}
+          title={activityPage ? activityPageTitle : `${capacityCycle} Collection`}
+          description={overviewRangeLabel}
+          actions={(
+            <ActionButton tone="secondary" icon={ArrowLeft} onClick={() => navigate(-1)}>
+              Back
+            </ActionButton>
+          )}
+        />
+
+        {activityPage && (
+          <section className="reports-dedicated-detail-card">
+            <div className="reports-dedicated-detail-head">
+              <div>
+                <span>ACTIVITY DETAILS</span>
+                <strong>{activityPageTitle}</strong>
+                <small>{overviewRangeLabel}</small>
+              </div>
+              <div className="reports-dedicated-summary">
+                <strong>
+                  {activityPage === 'loans' && formatCurrency(overview.loanGiven)}
+                  {activityPage === 'expenses' && formatCurrency(overview.expenseTotal)}
+                  {activityPage === 'fine' && formatCurrency(overviewFineIncome)}
+                  {activityPage === 'documents' && formatCurrency(overviewDocumentChargeIncome)}
+                  {activityPage === 'savings' && formatCurrency(overviewSavingsAmount)}
+                </strong>
+                <small>Total amount</small>
+              </div>
+            </div>
+
+            {activityPage === 'loans' && (
+              newLoanDetailRows.length ? (
+                <>
+                  <div className="reports-activity-detail-table-wrap">
+                    <table className="reports-activity-detail-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Customer</th>
+                          <th>Customer ID</th>
+                          <th>Loan ID</th>
+                          <th>Cycle</th>
+                          <th>Loan Amount</th>
+                          <th>Given Amount</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {newLoanDetailRows.map((row) => (
+                          <tr key={row.key}>
+                            <td>{formatDate(row.date)}</td>
+                            <td>
+                              <strong>
+                                {row.customerDbId
+                                  ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
+                                  : row.customerName}
+                              </strong>
+                            </td>
+                            <td>{row.customerId}</td>
+                            <td><strong>{row.loanId}</strong></td>
+                            <td>{row.cycle}</td>
+                            <td>{formatCurrency(row.loanAmount)}</td>
+                            <td>{formatCurrency(row.givenAmount)}</td>
+                            <td><span className="reports-cycle-detail-status">{row.status}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="reports-activity-detail-mobile">
+                    {newLoanDetailRows.map((row) => (
+                      <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                        <div className="reports-activity-detail-mobile-top">
+                          <div>
+                            <span>{formatDate(row.date)}</span>
+                            <strong>
+                              {row.customerDbId
+                                ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
+                                : row.customerName}
+                            </strong>
+                            <small>{row.customerId} · {row.loanId}</small>
+                          </div>
+                          <span className="reports-cycle-detail-status">{row.status}</span>
+                        </div>
+                        <div className="reports-activity-detail-mobile-grid">
+                          <div><span>Cycle</span><strong>{row.cycle}</strong></div>
+                          <div><span>Loan Amount</span><strong>{formatCurrency(row.loanAmount)}</strong></div>
+                          <div><span>Given Amount</span><strong>{formatCurrency(row.givenAmount)}</strong></div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : <div className="reports-overview-cycle-empty">No new loans found for {overviewRangeLabel.toLowerCase()}.</div>
+            )}
+
+            {activityPage === 'expenses' && (
+              expenseDetailRows.length ? (
+                <>
+                  <div className="reports-activity-detail-table-wrap">
+                    <table className="reports-activity-detail-table">
+                      <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Created By</th><th>Amount</th></tr></thead>
+                      <tbody>
+                        {expenseDetailRows.map((row) => (
+                          <tr key={row.key}>
+                            <td>{formatDate(row.date)}</td>
+                            <td><strong>{row.category}</strong></td>
+                            <td>{row.description}</td>
+                            <td>{row.createdBy}</td>
+                            <td className="reports-activity-amount-out">{formatCurrency(row.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="reports-activity-detail-mobile">
+                    {expenseDetailRows.map((row) => (
+                      <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                        <div className="reports-activity-detail-mobile-top">
+                          <div><span>{formatDate(row.date)}</span><strong>{row.category}</strong><small>{row.description}</small></div>
+                          <strong className="amount-out">{formatCurrency(row.amount)}</strong>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : <div className="reports-overview-cycle-empty">No expenses found for {overviewRangeLabel.toLowerCase()}.</div>
+            )}
+
+            {activityPage === 'fine' && (
+              fineDetailRows.length ? (
+                <>
+                  <div className="reports-activity-detail-table-wrap">
+                    <table className="reports-activity-detail-table">
+                      <thead><tr><th>Date</th><th>Customer</th><th>Customer ID</th><th>Loan ID</th><th>Mode</th><th>Fine Amount</th></tr></thead>
+                      <tbody>
+                        {fineDetailRows.map((row) => (
+                          <tr key={row.key}>
+                            <td>{formatDate(row.date)}</td>
+                            <td><strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong></td>
+                            <td>{row.customerId}</td>
+                            <td><strong>{row.loanId}</strong></td>
+                            <td>{row.paymentMode}</td>
+                            <td className="reports-activity-amount-in">{formatCurrency(row.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="reports-activity-detail-mobile">
+                    {fineDetailRows.map((row) => (
+                      <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                        <div className="reports-activity-detail-mobile-top">
+                          <div>
+                            <span>{formatDate(row.date)}</span>
+                            <strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong>
+                            <small>{row.customerId} · {row.loanId}</small>
+                          </div>
+                          <strong className="amount-in">{formatCurrency(row.amount)}</strong>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : <div className="reports-overview-cycle-empty">No fine income found for {overviewRangeLabel.toLowerCase()}.</div>
+            )}
+
+            {activityPage === 'documents' && (
+              documentChargeDetailRows.length ? (
+                <>
+                  <div className="reports-activity-detail-table-wrap">
+                    <table className="reports-activity-detail-table">
+                      <thead><tr><th>Date</th><th>Customer</th><th>Customer ID</th><th>Loan ID</th><th>Reference</th><th>Document Charge</th></tr></thead>
+                      <tbody>
+                        {documentChargeDetailRows.map((row) => (
+                          <tr key={row.key}>
+                            <td>{formatDate(row.date)}</td>
+                            <td><strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong></td>
+                            <td>{row.customerId}</td>
+                            <td><strong>{row.loanId}</strong></td>
+                            <td>{row.reference}</td>
+                            <td className="reports-activity-amount-in">{formatCurrency(row.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="reports-activity-detail-mobile">
+                    {documentChargeDetailRows.map((row) => (
+                      <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                        <div className="reports-activity-detail-mobile-top">
+                          <div>
+                            <span>{formatDate(row.date)}</span>
+                            <strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong>
+                            <small>{row.customerId} · {row.loanId}</small>
+                          </div>
+                          <strong className="amount-in">{formatCurrency(row.amount)}</strong>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              ) : <div className="reports-overview-cycle-empty">No document charges found for {overviewRangeLabel.toLowerCase()}.</div>
+            )}
+
+            {activityPage === 'savings' && (
+              isOwner ? (
+                savingsDetailRows.length ? (
+                  <>
+                    <div className="reports-activity-detail-table-wrap">
+                      <table className="reports-activity-detail-table">
+                        <thead><tr><th>Date</th><th>Description</th><th>Created By</th><th>Amount</th></tr></thead>
+                        <tbody>
+                          {savingsDetailRows.map((row) => (
+                            <tr key={row.key}>
+                              <td>{formatDate(row.date)}</td>
+                              <td><strong>{row.description}</strong></td>
+                              <td>{row.createdBy}</td>
+                              <td className="reports-activity-amount-saving">{formatCurrency(row.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="reports-activity-detail-mobile">
+                      {savingsDetailRows.map((row) => (
+                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
+                          <div className="reports-activity-detail-mobile-top">
+                            <div><span>{formatDate(row.date)}</span><strong>{row.description}</strong><small>{row.createdBy}</small></div>
+                            <strong className="amount-saving">{formatCurrency(row.amount)}</strong>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                ) : <div className="reports-overview-cycle-empty">No savings found for {overviewRangeLabel.toLowerCase()}.</div>
+              ) : <div className="reports-overview-cycle-empty">Savings details are available to the Owner only.</div>
+            )}
+          </section>
+        )}
+
+        {capacityPage && (
+          <section className="reports-dedicated-detail-card">
+            <div className="reports-dedicated-detail-head">
+              <div>
+                <span>{capacityCycle.toUpperCase()} DETAILS</span>
+                <strong>{capacityCycle} Customer Collection Details</strong>
+                <small>{overviewRangeLabel}</small>
+              </div>
+              <div className="reports-dedicated-summary">
+                <strong>{formatCurrency(selectedOverviewCycleSummary?.amount || 0)}</strong>
+                <small>Collection / cycle</small>
+              </div>
+            </div>
+
+            {overviewCycleCustomerRows.length ? (
+              <>
+                <div className="reports-overview-cycle-detail-table-wrap">
+                  <table className="reports-overview-cycle-detail-table">
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Loan</th>
+                        <th>Collection / Cycle</th>
+                        <th>Expected</th>
+                        <th>Collected</th>
+                        <th>Pending</th>
+                        <th>Outstanding</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {overviewCycleCustomerRows.map((row) => (
+                        <tr key={row.key}>
+                          <td>
+                            <div className="reports-cycle-customer">
+                              <CustomerAvatar
+                                className="reports-cycle-customer-avatar"
+                                photo={customerPhotoById[String(row.customerId)]}
+                                name={row.customerName}
+                              />
+                              <div>
+                                <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
+                                <small>{row.customerId || '—'}</small>
+                              </div>
+                            </div>
+                          </td>
+                          <td><strong>{row.loanId || '—'}</strong></td>
+                          <td>{formatCurrency(row.collectionPerCycle)}</td>
+                          <td>{formatCurrency(row.expected)}</td>
+                          <td className="reports-cycle-detail-collected">{formatCurrency(row.received)}</td>
+                          <td className="reports-cycle-detail-pending">{formatCurrency(row.pending)}</td>
+                          <td>{formatCurrency(row.outstanding)}</td>
+                          <td><span className={`reports-cycle-detail-status status-${String(row.status || '').toLowerCase()}`}>{row.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="reports-overview-cycle-mobile-list">
+                  {overviewCycleCustomerRows.map((row) => (
+                    <article className="reports-overview-cycle-mobile-card" key={`mobile-${row.key}`}>
+                      <div className="reports-cycle-mobile-top">
+                        <div className="reports-cycle-customer">
+                          <CustomerAvatar
+                            className="reports-cycle-customer-avatar"
+                            photo={customerPhotoById[String(row.customerId)]}
+                            name={row.customerName}
+                          />
+                          <div>
+                            <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
+                            <small>{row.customerId || '—'} · {row.loanId || '—'}</small>
+                          </div>
+                        </div>
+                        <span className={`reports-cycle-detail-status status-${String(row.status || '').toLowerCase()}`}>{row.status}</span>
+                      </div>
+                      <div className="reports-cycle-mobile-values">
+                        <div><span>Collection</span><strong>{formatCurrency(row.collectionPerCycle)}</strong></div>
+                        <div><span>Expected</span><strong>{formatCurrency(row.expected)}</strong></div>
+                        <div><span>Collected</span><strong className="positive">{formatCurrency(row.received)}</strong></div>
+                        <div><span>Pending</span><strong className="pending">{formatCurrency(row.pending)}</strong></div>
+                        <div><span>Outstanding</span><strong>{formatCurrency(row.outstanding)}</strong></div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="reports-overview-cycle-empty">No {capacityCycle.toLowerCase()} customer records are available for {overviewRangeLabel.toLowerCase()}.</div>
+            )}
+          </section>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="module-page reports-page phase5-reports">
@@ -1453,9 +1840,8 @@ export default function Reports() {
           <div className={`reports-overall-activity-grid ${isOwner ? 'with-savings' : ''}`} aria-label="Business activity summary">
             <button
               type="button"
-              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'loans' ? 'active' : ''}`}
-              aria-expanded={selectedActivityCard === 'loans'}
-              onClick={() => setSelectedActivityCard((current) => current === 'loans' ? null : 'loans')}
+              className="reports-overall-activity-card reports-overall-activity-button"
+              onClick={() => openActivityPage('loans')}
             >
               <span className="reports-overall-activity-icon"><UserPlus size={19} /></span>
               <div>
@@ -1463,14 +1849,12 @@ export default function Reports() {
                 <strong>{formatCurrency(overview.loanGiven)}</strong>
                 <span>{overviewHasDateFilter ? 'Loans given in selected date range' : 'All loan disbursements'}</span>
               </div>
-              <b className="reports-activity-card-view">{selectedActivityCard === 'loans' ? 'Hide' : 'View'}</b>
             </button>
 
             <button
               type="button"
-              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'expenses' ? 'active' : ''}`}
-              aria-expanded={selectedActivityCard === 'expenses'}
-              onClick={() => setSelectedActivityCard((current) => current === 'expenses' ? null : 'expenses')}
+              className="reports-overall-activity-card reports-overall-activity-button"
+              onClick={() => openActivityPage('expenses')}
             >
               <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
               <div>
@@ -1478,14 +1862,12 @@ export default function Reports() {
                 <strong>{formatCurrency(overview.expenseTotal)}</strong>
                 <span>{overviewHasDateFilter ? 'Expenses in selected date range' : 'All recorded business expenses'}</span>
               </div>
-              <b className="reports-activity-card-view">{selectedActivityCard === 'expenses' ? 'Hide' : 'View'}</b>
             </button>
 
             <button
               type="button"
-              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'fine' ? 'active' : ''}`}
-              aria-expanded={selectedActivityCard === 'fine'}
-              onClick={() => setSelectedActivityCard((current) => current === 'fine' ? null : 'fine')}
+              className="reports-overall-activity-card reports-overall-activity-button"
+              onClick={() => openActivityPage('fine')}
             >
               <span className="reports-overall-activity-icon"><CircleDollarSign size={19} /></span>
               <div>
@@ -1493,14 +1875,12 @@ export default function Reports() {
                 <strong>{formatCurrency(overviewFineIncome)}</strong>
                 <span>{overviewHasDateFilter ? 'Fine received in selected date range' : 'All fine amount received'}</span>
               </div>
-              <b className="reports-activity-card-view">{selectedActivityCard === 'fine' ? 'Hide' : 'View'}</b>
             </button>
 
             <button
               type="button"
-              className={`reports-overall-activity-card reports-overall-activity-button ${selectedActivityCard === 'documents' ? 'active' : ''}`}
-              aria-expanded={selectedActivityCard === 'documents'}
-              onClick={() => setSelectedActivityCard((current) => current === 'documents' ? null : 'documents')}
+              className="reports-overall-activity-card reports-overall-activity-button"
+              onClick={() => openActivityPage('documents')}
             >
               <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
               <div>
@@ -1508,15 +1888,13 @@ export default function Reports() {
                 <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
                 <span>{overviewHasDateFilter ? 'Charges in selected date range' : 'All document charge income'}</span>
               </div>
-              <b className="reports-activity-card-view">{selectedActivityCard === 'documents' ? 'Hide' : 'View'}</b>
             </button>
 
             {isOwner && (
               <button
                 type="button"
-                className={`reports-overall-activity-card reports-overall-activity-button reports-overall-activity-savings ${selectedActivityCard === 'savings' ? 'active' : ''}`}
-                aria-expanded={selectedActivityCard === 'savings'}
-                onClick={() => setSelectedActivityCard((current) => current === 'savings' ? null : 'savings')}
+                className="reports-overall-activity-card reports-overall-activity-button reports-overall-activity-savings"
+                onClick={() => openActivityPage('savings')}
               >
                 <span className="reports-overall-activity-icon"><PiggyBank size={19} /></span>
                 <div>
@@ -1524,238 +1902,9 @@ export default function Reports() {
                   <strong>{formatCurrency(overviewSavingsAmount)}</strong>
                   <span>{overviewHasDateFilter ? 'Savings in selected date range' : 'All cash moved into Savings'}</span>
                 </div>
-                <b className="reports-activity-card-view">{selectedActivityCard === 'savings' ? 'Hide' : 'View'}</b>
               </button>
             )}
           </div>
-
-          {selectedActivityCard && (
-            <section className="reports-activity-selected-detail" aria-label="Selected activity details">
-              <div className="reports-activity-selected-head">
-                <div>
-                  <span>ACTIVITY DETAILS</span>
-                  <strong>
-                    {selectedActivityCard === 'loans' && 'New Loans Given'}
-                    {selectedActivityCard === 'expenses' && 'Expenses'}
-                    {selectedActivityCard === 'fine' && 'Fine Income'}
-                    {selectedActivityCard === 'documents' && 'Document Charges Income'}
-                    {selectedActivityCard === 'savings' && 'Savings'}
-                  </strong>
-                  <small>{overviewRangeLabel}</small>
-                </div>
-              </div>
-
-              {selectedActivityCard === 'loans' && (
-                newLoanDetailRows.length ? (
-                  <>
-                    <div className="reports-activity-detail-table-wrap">
-                      <table className="reports-activity-detail-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Customer</th>
-                            <th>Customer ID</th>
-                            <th>Loan ID</th>
-                            <th>Cycle</th>
-                            <th>Loan Amount</th>
-                            <th>Given Amount</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {newLoanDetailRows.map((row) => (
-                            <tr key={row.key}>
-                              <td>{formatDate(row.date)}</td>
-                              <td>
-                                <strong>
-                                  {row.customerDbId
-                                    ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
-                                    : row.customerName}
-                                </strong>
-                              </td>
-                              <td>{row.customerId}</td>
-                              <td><strong>{row.loanId}</strong></td>
-                              <td>{row.cycle}</td>
-                              <td>{formatCurrency(row.loanAmount)}</td>
-                              <td>{formatCurrency(row.givenAmount)}</td>
-                              <td><span className="reports-cycle-detail-status">{row.status}</span></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="reports-activity-detail-mobile">
-                      {newLoanDetailRows.map((row) => (
-                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
-                          <div className="reports-activity-detail-mobile-top">
-                            <div>
-                              <span>{formatDate(row.date)}</span>
-                              <strong>
-                                {row.customerDbId
-                                  ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
-                                  : row.customerName}
-                              </strong>
-                              <small>{row.customerId} · {row.loanId}</small>
-                            </div>
-                            <span className="reports-cycle-detail-status">{row.status}</span>
-                          </div>
-                          <div className="reports-activity-detail-mobile-grid">
-                            <div><span>Cycle</span><strong>{row.cycle}</strong></div>
-                            <div><span>Loan Amount</span><strong>{formatCurrency(row.loanAmount)}</strong></div>
-                            <div><span>Given Amount</span><strong>{formatCurrency(row.givenAmount)}</strong></div>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="reports-overview-cycle-empty">No new loans found for {overviewRangeLabel.toLowerCase()}.</div>
-                )
-              )}
-
-              {selectedActivityCard === 'expenses' && (
-                expenseDetailRows.length ? (
-                  <>
-                    <div className="reports-activity-detail-table-wrap">
-                      <table className="reports-activity-detail-table">
-                        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Created By</th><th>Amount</th></tr></thead>
-                        <tbody>
-                          {expenseDetailRows.map((row) => (
-                            <tr key={row.key}>
-                              <td>{formatDate(row.date)}</td>
-                              <td><strong>{row.category}</strong></td>
-                              <td>{row.description}</td>
-                              <td>{row.createdBy}</td>
-                              <td className="reports-activity-amount-out">{formatCurrency(row.amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="reports-activity-detail-mobile">
-                      {expenseDetailRows.map((row) => (
-                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
-                          <div className="reports-activity-detail-mobile-top">
-                            <div><span>{formatDate(row.date)}</span><strong>{row.category}</strong><small>{row.description}</small></div>
-                            <strong className="amount-out">{formatCurrency(row.amount)}</strong>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </>
-                ) : <div className="reports-overview-cycle-empty">No expenses found for {overviewRangeLabel.toLowerCase()}.</div>
-              )}
-
-              {selectedActivityCard === 'fine' && (
-                fineDetailRows.length ? (
-                  <>
-                    <div className="reports-activity-detail-table-wrap">
-                      <table className="reports-activity-detail-table">
-                        <thead><tr><th>Date</th><th>Customer</th><th>Customer ID</th><th>Loan ID</th><th>Mode</th><th>Fine Amount</th></tr></thead>
-                        <tbody>
-                          {fineDetailRows.map((row) => (
-                            <tr key={row.key}>
-                              <td>{formatDate(row.date)}</td>
-                              <td><strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong></td>
-                              <td>{row.customerId}</td>
-                              <td><strong>{row.loanId}</strong></td>
-                              <td>{row.paymentMode}</td>
-                              <td className="reports-activity-amount-in">{formatCurrency(row.amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="reports-activity-detail-mobile">
-                      {fineDetailRows.map((row) => (
-                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
-                          <div className="reports-activity-detail-mobile-top">
-                            <div>
-                              <span>{formatDate(row.date)}</span>
-                              <strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong>
-                              <small>{row.customerId} · {row.loanId}</small>
-                            </div>
-                            <strong className="amount-in">{formatCurrency(row.amount)}</strong>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </>
-                ) : <div className="reports-overview-cycle-empty">No fine income found for {overviewRangeLabel.toLowerCase()}.</div>
-              )}
-
-              {selectedActivityCard === 'documents' && (
-                documentChargeDetailRows.length ? (
-                  <>
-                    <div className="reports-activity-detail-table-wrap">
-                      <table className="reports-activity-detail-table">
-                        <thead><tr><th>Date</th><th>Customer</th><th>Customer ID</th><th>Loan ID</th><th>Reference</th><th>Document Charge</th></tr></thead>
-                        <tbody>
-                          {documentChargeDetailRows.map((row) => (
-                            <tr key={row.key}>
-                              <td>{formatDate(row.date)}</td>
-                              <td><strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong></td>
-                              <td>{row.customerId}</td>
-                              <td><strong>{row.loanId}</strong></td>
-                              <td>{row.reference}</td>
-                              <td className="reports-activity-amount-in">{formatCurrency(row.amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="reports-activity-detail-mobile">
-                      {documentChargeDetailRows.map((row) => (
-                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
-                          <div className="reports-activity-detail-mobile-top">
-                            <div>
-                              <span>{formatDate(row.date)}</span>
-                              <strong>{row.customerDbId ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink> : row.customerName}</strong>
-                              <small>{row.customerId} · {row.loanId}</small>
-                            </div>
-                            <strong className="amount-in">{formatCurrency(row.amount)}</strong>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </>
-                ) : <div className="reports-overview-cycle-empty">No document charges found for {overviewRangeLabel.toLowerCase()}.</div>
-              )}
-
-              {selectedActivityCard === 'savings' && isOwner && (
-                savingsDetailRows.length ? (
-                  <>
-                    <div className="reports-activity-detail-table-wrap">
-                      <table className="reports-activity-detail-table">
-                        <thead><tr><th>Date</th><th>Description</th><th>Created By</th><th>Amount</th></tr></thead>
-                        <tbody>
-                          {savingsDetailRows.map((row) => (
-                            <tr key={row.key}>
-                              <td>{formatDate(row.date)}</td>
-                              <td><strong>{row.description}</strong></td>
-                              <td>{row.createdBy}</td>
-                              <td className="reports-activity-amount-saving">{formatCurrency(row.amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="reports-activity-detail-mobile">
-                      {savingsDetailRows.map((row) => (
-                        <article key={`m-${row.key}`} className="reports-activity-detail-mobile-card">
-                          <div className="reports-activity-detail-mobile-top">
-                            <div><span>{formatDate(row.date)}</span><strong>{row.description}</strong><small>{row.createdBy}</small></div>
-                            <strong className="amount-saving">{formatCurrency(row.amount)}</strong>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </>
-                ) : <div className="reports-overview-cycle-empty">No savings found for {overviewRangeLabel.toLowerCase()}.</div>
-              )}
-            </section>
-          )}
 
           <div className="reports-overall-section-heading">
             <div>
@@ -1777,18 +1926,13 @@ export default function Reports() {
                 : item.cycle === 'Weekly'
                   ? 'week'
                   : 'month';
-              const isExpanded = expandedOverviewCycle === item.cycle;
 
               return (
                 <button
                   type="button"
                   key={item.cycle}
-                  className={`reports-overall-cycle-card reports-overall-cycle-button reports-overall-cycle-${item.cycle.toLowerCase()} ${isExpanded ? 'active' : ''}`}
-                  aria-expanded={isExpanded}
-                  onClick={() => {
-                    setSelectedOverviewCycle(item.cycle);
-                    setExpandedOverviewCycle((current) => current === item.cycle ? null : item.cycle);
-                  }}
+                  className={`reports-overall-cycle-card reports-overall-cycle-button reports-overall-cycle-${item.cycle.toLowerCase()}`}
+                  onClick={() => openCapacityPage(item.cycle)}
                 >
                   <span className="reports-overall-cycle-icon">
                     <CycleIcon size={19} />
@@ -1798,110 +1942,10 @@ export default function Reports() {
                     <strong>{formatCurrency(item.amount)}</strong>
                     <small>{item.loanCount} active loan{item.loanCount === 1 ? '' : 's'} · per {cycleUnit}</small>
                   </div>
-                  <b className="reports-cycle-open-label">{isExpanded ? 'Hide' : 'View'}</b>
                 </button>
               );
             })}
           </div>
-
-          {expandedOverviewCycle && (
-            <section className="reports-overview-cycle-detail" aria-label={`${selectedOverviewCycle} customer details`}>
-              <div className="reports-overview-cycle-detail-head">
-                <div>
-                  <span>{selectedOverviewCycle.toUpperCase()} DETAILS</span>
-                  <strong>{selectedOverviewCycle} Customer Collection Details</strong>
-                  <small>
-                    {overviewHasDateFilter
-                      ? `Filtered by ${overviewRangeLabel}`
-                      : 'Showing the overall live customer position'}
-                  </small>
-                </div>
-                <div>
-                  <strong>{formatCurrency(selectedOverviewCycleSummary?.amount || 0)}</strong>
-                  <small>Collection / cycle</small>
-                </div>
-              </div>
-
-              {overviewCycleCustomerRows.length ? (
-                <>
-                  <div className="reports-overview-cycle-detail-table-wrap">
-                    <table className="reports-overview-cycle-detail-table">
-                      <thead>
-                        <tr>
-                          <th>Customer</th>
-                          <th>Loan</th>
-                          <th>Collection / Cycle</th>
-                          <th>Expected</th>
-                          <th>Collected</th>
-                          <th>Pending</th>
-                          <th>Outstanding</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {overviewCycleCustomerRows.map((row) => (
-                          <tr key={row.key}>
-                            <td>
-                              <div className="reports-cycle-customer">
-                                <CustomerAvatar
-                                  className="reports-cycle-customer-avatar"
-                                  photo={customerPhotoById[String(row.customerId)]}
-                                  name={row.customerName}
-                                />
-                                <div>
-                                  <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
-                                  <small>{row.customerId || '—'}</small>
-                                </div>
-                              </div>
-                            </td>
-                            <td><strong>{row.loanId || '—'}</strong></td>
-                            <td>{formatCurrency(row.collectionPerCycle)}</td>
-                            <td>{formatCurrency(row.expected)}</td>
-                            <td className="reports-cycle-detail-collected">{formatCurrency(row.received)}</td>
-                            <td className="reports-cycle-detail-pending">{formatCurrency(row.pending)}</td>
-                            <td>{formatCurrency(row.outstanding)}</td>
-                            <td><span className={`reports-cycle-detail-status status-${String(row.status || '').toLowerCase()}`}>{row.status}</span></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="reports-overview-cycle-mobile-list">
-                    {overviewCycleCustomerRows.map((row) => (
-                      <article className="reports-overview-cycle-mobile-card" key={`mobile-${row.key}`}>
-                        <div className="reports-cycle-mobile-top">
-                          <div className="reports-cycle-customer">
-                            <CustomerAvatar
-                              className="reports-cycle-customer-avatar"
-                              photo={customerPhotoById[String(row.customerId)]}
-                              name={row.customerName}
-                            />
-                            <div>
-                              <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
-                              <small>{row.customerId || '—'} · {row.loanId || '—'}</small>
-                            </div>
-                          </div>
-                          <span className={`reports-cycle-detail-status status-${String(row.status || '').toLowerCase()}`}>{row.status}</span>
-                        </div>
-                        <div className="reports-cycle-mobile-values">
-                          <div><span>Collection</span><strong>{formatCurrency(row.collectionPerCycle)}</strong></div>
-                          <div><span>Expected</span><strong>{formatCurrency(row.expected)}</strong></div>
-                          <div><span>Collected</span><strong className="positive">{formatCurrency(row.received)}</strong></div>
-                          <div><span>Pending</span><strong className="pending">{formatCurrency(row.pending)}</strong></div>
-                          <div><span>Outstanding</span><strong>{formatCurrency(row.outstanding)}</strong></div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="reports-overview-cycle-empty">
-                  No {selectedOverviewCycle.toLowerCase()} customer records are available for {overviewRangeLabel.toLowerCase()}.
-                </div>
-              )}
-            </section>
-          )}
 
           <div className="reports-overall-section-heading reports-cycle-status-heading">
             <div>
