@@ -1,0 +1,413 @@
+/* =========================================================
+   CREDNIVO V39 — APP-WIDE PORTABLE / RESPONSIVE LAYOUT
+   Import once from main.jsx AFTER existing global/responsive CSS.
+   ========================================================= */
+
+:root{
+  --cred-mobile-gap:10px;
+  --cred-mobile-radius:14px;
+  --cred-mobile-footer-space:96px;
+}
+
+/* ---------- universal safety ---------- */
+html,body,#root{
+  max-width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+*,
+*::before,
+*::after{
+  box-sizing:border-box;
+}
+
+img,video,canvas,svg{
+  max-width:100%;
+}
+
+input,select,textarea,button{
+  max-width:100%;
+}
+
+/* Tables never push the whole page sideways */
+table{
+  max-width:100%;
+}
+
+.table-wrap,
+.table-wrapper,
+.responsive-table,
+.module-table-wrap,
+.reports-cycle-pending-table-wrap,
+.reports-overview-cycle-detail-table-wrap,
+.reports-activity-detail-table-wrap,
+.payment-table-wrap,
+.customer-table-wrap,
+.loan-table-wrap,
+.expense-table-wrap{
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* =========================================================
+   PHONE / SMALL TABLET
+   ========================================================= */
+@media (max-width:767px){
+
+  html{
+    font-size:15px;
+  }
+
+  body{
+    overflow-x:hidden;
+  }
+
+  /* Main authenticated content */
+  main,
+  .main,
+  .main-content,
+  .app-main,
+  .content,
+  .page-content,
+  .workspace-content,
+  .layout-content{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+  }
+
+  .module-page,
+  .page,
+  .page-shell,
+  .dashboard-page,
+  .customers-page,
+  .customer-details-page,
+  .loans-page,
+  .collection-page,
+  .payments-page,
+  .expenses-page,
+  .reports-page,
+  .capital-page,
+  .savings-page,
+  .agents-page,
+  .documents-page,
+  .settings-page,
+  .profile-page{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    padding-left:12px!important;
+    padding-right:12px!important;
+    padding-bottom:calc(var(--cred-mobile-footer-space) + env(safe-area-inset-bottom,0px))!important;
+    gap:var(--cred-mobile-gap)!important;
+  }
+
+  /* Compact common page headers */
+  .module-header,
+  .page-header,
+  .dashboard-titlebar,
+  .customer-page-header,
+  .section-header{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:8px!important;
+    margin-bottom:4px!important;
+  }
+
+  .module-header-copy,
+  .module-header>div:first-child,
+  .page-header>div:first-child{
+    min-width:0!important;
+  }
+
+  .module-header h1,
+  .page-header h1,
+  .dashboard-titlebar h1,
+  .module-page h1{
+    font-size:22px!important;
+    line-height:1.15!important;
+    margin:0!important;
+  }
+
+  .module-header p,
+  .page-header p,
+  .dashboard-titlebar p{
+    font-size:11px!important;
+    line-height:1.45!important;
+    margin-top:4px!important;
+  }
+
+  .eyebrow,
+  .module-eyebrow,
+  .section-eyebrow{
+    font-size:9px!important;
+    letter-spacing:.07em!important;
+  }
+
+  /* Header action buttons: compact but tappable */
+  .module-header-actions,
+  .page-header-actions,
+  .dashboard-title-actions,
+  .header-actions{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  .module-header-actions>button,
+  .module-header-actions>a,
+  .page-header-actions>button,
+  .page-header-actions>a,
+  .header-actions>button,
+  .header-actions>a{
+    min-width:0!important;
+    min-height:40px!important;
+    padding:0 10px!important;
+    font-size:11px!important;
+  }
+
+  /* Common cards / panels */
+  .card,
+  .panel,
+  .section-card,
+  .module-card,
+  .summary-card,
+  .metric-card,
+  .dashboard-card,
+  .profile-section,
+  .loan-slot-card,
+  .customer-card,
+  .expense-card{
+    border-radius:var(--cred-mobile-radius)!important;
+  }
+
+  /* Most summary grids should not become one extremely long column */
+  .cards,
+  .summary-grid,
+  .metric-grid,
+  .dashboard-summary-cards,
+  .reports-overall-kpi-grid,
+  .reports-overall-secondary-grid,
+  .reports-overall-cycle-grid,
+  .reports-overall-activity-grid,
+  .reports-cycle-report-kpi-grid{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:9px!important;
+  }
+
+  .cards>*,
+  .summary-grid>*,
+  .metric-grid>*,
+  .dashboard-summary-cards>*,
+  .reports-overall-kpi-grid>*,
+  .reports-overall-secondary-grid>*,
+  .reports-overall-cycle-grid>*,
+  .reports-overall-activity-grid>*,
+  .reports-cycle-report-kpi-grid>*{
+    min-width:0!important;
+  }
+
+  /* Make cards visually portable */
+  .metric-card,
+  .summary-card,
+  .dashboard-card,
+  .reports-kpi,
+  .reports-overall-kpi,
+  .reports-overall-mini-card,
+  .reports-overall-cycle-card,
+  .reports-overall-activity-card{
+    min-height:82px!important;
+    padding:11px!important;
+  }
+
+  /* Forms */
+  .form-grid,
+  .fields-grid,
+  .profile-info-grid,
+  .loan-form-grid,
+  .customer-form-grid,
+  .jamin-form-grid,
+  .expense-form-grid,
+  .settings-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+
+  input,
+  select,
+  textarea{
+    min-height:40px;
+    font-size:16px!important; /* avoids iOS zoom */
+  }
+
+  textarea{
+    min-height:90px;
+  }
+
+  /* Tabs stay compact and horizontally usable */
+  .tabs,
+  .tab-list,
+  .module-tabs,
+  .reports-view-tabs,
+  .customer-loan-tabs,
+  .collection-tabs{
+    max-width:100%!important;
+    overflow-x:auto!important;
+    overscroll-behavior-inline:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+
+  .tabs::-webkit-scrollbar,
+  .tab-list::-webkit-scrollbar,
+  .module-tabs::-webkit-scrollbar,
+  .reports-view-tabs::-webkit-scrollbar,
+  .customer-loan-tabs::-webkit-scrollbar,
+  .collection-tabs::-webkit-scrollbar{
+    display:none;
+  }
+
+  /* Report-specific fix from screenshot: 2 cards instead of huge single-column cards */
+  .reports-cycle-report-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi{
+    min-height:82px!important;
+    padding:10px!important;
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi:last-child:nth-child(odd){
+    grid-column:1 / -1;
+  }
+
+  .reports-cycle-performance-page{
+    gap:10px!important;
+  }
+
+  /* Keep fixed mobile footer from hiding last content */
+  .mobile-bottom-nav,
+  .mobile-footer,
+  .bottom-nav,
+  .app-mobile-footer{
+    padding-bottom:max(8px,env(safe-area-inset-bottom,0px));
+  }
+
+  /* Modals / drawers */
+  .modal-backdrop,
+  .popup-backdrop,
+  .dialog-backdrop{
+    padding:10px!important;
+  }
+
+  .modal,
+  .popup,
+  .dialog,
+  .drawer-panel{
+    max-width:100%!important;
+  }
+
+  /* Global back button */
+  .crednivo-global-back{
+    position:fixed;
+    z-index:8500;
+    left:12px;
+    bottom:calc(82px + env(safe-area-inset-bottom,0px));
+    width:42px;
+    height:42px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(20,119,242,.18);
+    border-radius:50%;
+    background:rgba(255,255,255,.96);
+    color:#126de8;
+    box-shadow:0 8px 24px rgba(20,50,90,.18);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    cursor:pointer;
+  }
+
+  .crednivo-global-back svg{
+    width:19px;
+    height:19px;
+  }
+
+  .crednivo-global-back:active{
+    transform:scale(.95);
+  }
+}
+
+/* Very narrow phones */
+@media (max-width:420px){
+  .module-page,
+  .page,
+  .dashboard-page,
+  .customer-details-page,
+  .reports-page{
+    padding-left:9px!important;
+    padding-right:9px!important;
+  }
+
+  .module-header h1,
+  .page-header h1,
+  .dashboard-titlebar h1,
+  .module-page h1{
+    font-size:20px!important;
+  }
+
+  .cards,
+  .summary-grid,
+  .metric-grid,
+  .dashboard-summary-cards,
+  .reports-overall-kpi-grid,
+  .reports-overall-secondary-grid,
+  .reports-overall-cycle-grid,
+  .reports-overall-activity-grid,
+  .reports-cycle-report-kpi-grid{
+    gap:7px!important;
+  }
+
+  .metric-card,
+  .summary-card,
+  .dashboard-card,
+  .reports-kpi,
+  .reports-overall-kpi,
+  .reports-overall-mini-card,
+  .reports-overall-cycle-card,
+  .reports-overall-activity-card{
+    padding:9px!important;
+  }
+}
+
+/* Desktop/tablet back button */
+@media (min-width:768px){
+  .crednivo-global-back{
+    position:fixed;
+    z-index:8500;
+    left:18px;
+    top:92px;
+    width:40px;
+    height:40px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(20,119,242,.15);
+    border-radius:10px;
+    background:#fff;
+    color:#126de8;
+    box-shadow:0 5px 16px rgba(20,50,90,.12);
+    cursor:pointer;
+  }
+
+  .crednivo-global-back svg{
+    width:18px;
+    height:18px;
+  }
+}
