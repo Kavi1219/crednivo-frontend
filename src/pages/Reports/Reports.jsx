@@ -637,6 +637,64 @@ export default function Reports() {
     [overviewActiveLoans],
   );
 
+  const loanPrincipalAmount = (loan) => numberValue(
+    loan?.principal
+      ?? loan?.loanAmount
+      ?? loan?.amount
+      ?? loan?.requiredAmount
+      ?? 0
+  );
+
+  const overviewTotalPortfolioAmount = useMemo(
+    () => (loans || []).reduce((sum, loan) => sum + loanPrincipalAmount(loan), 0),
+    [loans],
+  );
+
+  const overviewClosedLoans = useMemo(
+    () => (loans || []).filter((loan) => {
+      const status = String(loan.status || '').trim().toLowerCase().replace(/[_\s]+/g, '-');
+      return status === 'closed'
+        || status === 'preclosed'
+        || status === 'pre-closed'
+        || Boolean(loan.closedDate || loan.closedAt || loan.preclosedAt);
+    }),
+    [loans],
+  );
+
+  const overviewClosedLoanAmount = useMemo(
+    () => overviewClosedLoans.reduce((sum, loan) => sum + loanPrincipalAmount(loan), 0),
+    [overviewClosedLoans],
+  );
+
+  const overviewNewOpeningLoans = useMemo(() => {
+    const today = toInputDate();
+    const currentMonth = getMonthMeta(today.slice(0, 7));
+    const openingFrom = overviewHasDateFilter ? fromDate : currentMonth.start;
+    const openingTo = overviewHasDateFilter ? toDate : currentMonth.end;
+
+    return (loans || []).filter((loan) => {
+      const openingDate = String(
+        loan.disbursedDate
+          || loan.disbursed_date
+          || loan.startDate
+          || loan.loanDate
+          || loan.createdAt
+          || ''
+      ).slice(0, 10);
+
+      return openingDate ? inRange(openingDate, openingFrom, openingTo) : false;
+    });
+  }, [loans, overviewHasDateFilter, fromDate, toDate]);
+
+  const overviewNewOpeningAmount = useMemo(
+    () => overviewNewOpeningLoans.reduce((sum, loan) => sum + loanPrincipalAmount(loan), 0),
+    [overviewNewOpeningLoans],
+  );
+
+  const overviewNewOpeningLabel = overviewHasDateFilter
+    ? overviewRangeLabel
+    : 'This month';
+
   const customerById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer])),
     [customers],
@@ -1440,6 +1498,32 @@ export default function Reports() {
           ],
         },
         {
+          title: 'Loan Portfolio Summary',
+          note: `New Loan Openings: ${overviewNewOpeningLabel}`,
+          columns: [
+            { key: 'category', label: 'Category' },
+            { key: 'count', label: 'Count', type: 'number' },
+            { key: 'amount', label: 'Loan Amount', type: 'currency' },
+          ],
+          rows: [
+            {
+              category: 'Total Portfolio',
+              count: overviewCustomerCount,
+              amount: overviewTotalPortfolioAmount,
+            },
+            {
+              category: 'Closed Loans',
+              count: overviewClosedLoans.length,
+              amount: overviewClosedLoanAmount,
+            },
+            {
+              category: 'New Loan Openings',
+              count: overviewNewOpeningLoans.length,
+              amount: overviewNewOpeningAmount,
+            },
+          ],
+        },
+        {
           title: 'Business Activity',
           metrics: [
             { label: 'New Loans Given', value: overview.loanGiven, type: 'currency' },
@@ -2052,6 +2136,53 @@ export default function Reports() {
             <article className="reports-overall-mini-card reports-overall-mini-alert">
               <span><TriangleAlert size={18} /></span>
               <div><small>Overdue Amount</small><strong>{formatCurrency(overview.overdue)}</strong></div>
+            </article>
+          </div>
+
+          <div className="reports-overall-section-heading reports-portfolio-heading">
+            <div>
+              <span>LOAN PORTFOLIO</span>
+              <strong>Loan Portfolio Summary</strong>
+            </div>
+            <small>New openings: {overviewNewOpeningLabel}</small>
+          </div>
+
+          <div className="reports-portfolio-summary-grid" aria-label="Loan portfolio summary">
+            <article className="reports-portfolio-card reports-portfolio-total">
+              <span className="reports-portfolio-icon"><UsersRound size={20} /></span>
+              <div className="reports-portfolio-copy">
+                <span>Total Portfolio</span>
+                <strong>{overviewCustomerCount} customer{overviewCustomerCount === 1 ? '' : 's'}</strong>
+                <div className="reports-portfolio-amount">
+                  <small>Total Loan Amount</small>
+                  <b>{formatCurrency(overviewTotalPortfolioAmount)}</b>
+                </div>
+              </div>
+            </article>
+
+            <article className="reports-portfolio-card reports-portfolio-closed">
+              <span className="reports-portfolio-icon"><CheckCircle2 size={20} /></span>
+              <div className="reports-portfolio-copy">
+                <span>Closed Loans</span>
+                <strong>{overviewClosedLoans.length} closed</strong>
+                <div className="reports-portfolio-amount">
+                  <small>Closed Amount</small>
+                  <b>{formatCurrency(overviewClosedLoanAmount)}</b>
+                </div>
+              </div>
+            </article>
+
+            <article className="reports-portfolio-card reports-portfolio-opening">
+              <span className="reports-portfolio-icon"><UserPlus size={20} /></span>
+              <div className="reports-portfolio-copy">
+                <span>New Loan Openings</span>
+                <strong>{overviewNewOpeningLoans.length} opened</strong>
+                <div className="reports-portfolio-amount">
+                  <small>Opening Amount</small>
+                  <b>{formatCurrency(overviewNewOpeningAmount)}</b>
+                </div>
+                <em>{overviewNewOpeningLabel}</em>
+              </div>
             </article>
           </div>
 
