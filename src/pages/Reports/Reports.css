@@ -3975,3 +3975,52 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     break-inside:avoid;
   }
 }
+
+/* =========================================================
+   V36 — HORIZONTAL RISK FILTER + RISK PRIORITY
+   ========================================================= */
+
+.reports-risk-filter{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  gap:5px!important;
+  width:auto!important;
+  max-width:100%;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+
+.reports-risk-filter::-webkit-scrollbar{
+  display:none;
+}
+
+.reports-risk-filter button{
+  flex:0 0 auto!important;
+  white-space:nowrap!important;
+  min-width:auto!important;
+}
+
+@media(max-width:767px){
+  .reports-risk-filter{
+    width:100%!important;
+    display:flex!important;
+    grid-template-columns:none!important;
+    justify-content:flex-start;
+    padding:4px;
+  }
+
+  .reports-risk-filter button{
+    min-height:32px;
+    padding:0 10px!important;
+    font-size:7.5px!important;
+  }
+
+  .reports-risk-filter button b{
+    min-width:18px;
+    height:18px;
+    padding:0 5px;
+  }
+}

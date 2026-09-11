@@ -1120,10 +1120,14 @@ export default function Reports() {
           return (customerMatches || loanMatches) && relatesToPendingPeriod;
         });
 
-        const category = finePaid
-          ? 'fine-paid'
-          : row.pendingDueCount >= 3
-            ? 'risky'
+        // Risk rule:
+        // 3 or more overdue/pending dues are always Risky,
+        // even when the customer has already paid a fine.
+        // Fine Paid is used only for 1-2 pending dues where a fine was paid.
+        const category = row.pendingDueCount >= 3
+          ? 'risky'
+          : finePaid
+            ? 'fine-paid'
             : 'normal';
 
         return {
@@ -1131,10 +1135,10 @@ export default function Reports() {
           loanIds: [...row.loanIds],
           finePaid,
           category,
-          categoryLabel: category === 'fine-paid'
-            ? 'Fine Paid'
-            : category === 'risky'
-              ? 'Risky'
+          categoryLabel: category === 'risky'
+            ? 'Risky'
+            : category === 'fine-paid'
+              ? 'Fine Paid'
               : 'Normal',
         };
       })
@@ -1777,7 +1781,7 @@ export default function Reports() {
           },
           {
             title: 'Pending Customer Risk List',
-            note: 'Normal = 1–2 pending dues · Risky = 3+ pending dues · Fine Paid overrides Normal/Risky.',
+            note: 'Normal = 1–2 pending dues · Fine Paid = 1–2 pending dues with fine paid · Risky = 3+ pending dues even if fine was paid.',
             columns: [
               { key: 'customerName', label: 'Customer' },
               { key: 'customerId', label: 'Customer ID' },
@@ -2768,7 +2772,7 @@ export default function Reports() {
                 <span>PENDING CUSTOMERS</span>
                 <strong>Pending Customer List</strong>
                 <small>
-                  Normal: 1–2 dues · Risky: 3+ dues · Fine Paid overrides Normal / Risky
+                  Normal: 1–2 dues · Fine Paid: 1–2 dues with fine paid · Risky: 3+ dues even if fine was paid
                 </small>
               </div>
 
