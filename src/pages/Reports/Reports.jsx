@@ -692,6 +692,14 @@ export default function Reports() {
     [overviewNewOpeningLoans],
   );
 
+  const overviewRangeLabel = !fromDate && !toDate
+    ? 'Overall live snapshot'
+    : fromDate && toDate
+      ? `${formatDate(fromDate)} – ${formatDate(toDate)}`
+      : fromDate
+        ? `From ${formatDate(fromDate)}`
+        : `Up to ${formatDate(toDate)}`;
+
   const overviewNewOpeningLabel = overviewHasDateFilter
     ? overviewRangeLabel
     : 'This month';
@@ -824,14 +832,6 @@ export default function Reports() {
       .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))),
     [overviewSavingsEntries],
   );
-
-  const overviewRangeLabel = !fromDate && !toDate
-    ? 'Overall live snapshot'
-    : fromDate && toDate
-      ? `${formatDate(fromDate)} – ${formatDate(toDate)}`
-      : fromDate
-        ? `From ${formatDate(fromDate)}`
-        : `Up to ${formatDate(toDate)}`;
 
   const overviewCycleStatusRows = useMemo(() => {
     const today = toInputDate();
