@@ -2126,7 +2126,7 @@ export default function Reports() {
               <div><small>Active Loans</small><strong>{overviewActiveLoanCount}</strong></div>
             </article>
             <article className="reports-overall-mini-card reports-overall-customers-card">
-              <span><UsersRound size={18} /></span>
+              <span><UsersRound size={30} /></span>
               <div>
                 <small>Total Customers</small>
                 <strong>{overviewCustomerCount}</strong>
