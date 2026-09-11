@@ -293,6 +293,7 @@ export default function Reports() {
   const [downloadOpen, setDownloadOpen] = useState(false);
   const [downloadBusy, setDownloadBusy] = useState('');
   const [downloadError, setDownloadError] = useState('');
+  const [pendingRiskFilter, setPendingRiskFilter] = useState('normal');
 
   useEffect(() => {
     if (capacityCycle) setSelectedOverviewCycle(capacityCycle);
@@ -917,6 +918,281 @@ export default function Reports() {
     toDate,
   ]);
 
+
+  const cyclePerformanceReport = useMemo(() => {
+    const selectedCycle = view === 'daily'
+      ? 'Daily'
+      : view === 'weekly'
+        ? 'Weekly'
+        : view === 'monthly'
+          ? 'Monthly'
+          : null;
+
+    if (!selectedCycle) return null;
+
+    const today = toInputDate();
+    const selectedKey = selectedCycle.toLowerCase();
+    const hasDateFilter = Boolean(fromDate || toDate);
+
+    const isClosedLoan = (loan) => {
+      const status = String(loan?.status || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[_\s]+/g, '-');
+
+      return status === 'closed'
+        || status === 'preclosed'
+        || status === 'pre-closed'
+        || Boolean(loan?.closedDate || loan?.closedAt || loan?.preclosedAt)
+        || (loan?.outstanding !== null
+          && loan?.outstanding !== undefined
+          && numberValue(loan.outstanding) <= 0);
+    };
+
+    const loanIdentity = (loan) => [
+      loan?.id,
+      loan?.loanId,
+      loan?.loanCode,
+      loan?.code,
+      loan?.loanDbId,
+      loan?.dbLoanId,
+    ]
+      .filter((value) => value !== null && value !== undefined && String(value).trim() !== '')
+      .map((value) => String(value));
+
+    const cycleLoanLookup = new Map();
+    (loans || []).forEach((loan) => {
+      loanIdentity(loan).forEach((key) => cycleLoanLookup.set(key, loan));
+    });
+
+    const linkedLoanFor = (item) => {
+      const keys = [
+        item?.loanId,
+        item?.loanCode,
+        item?.loanDbId,
+        item?.dbLoanId,
+        item?.loan?.id,
+        item?.loan?.loanId,
+      ]
+        .filter((value) => value !== null && value !== undefined && String(value).trim() !== '')
+        .map((value) => String(value));
+
+      for (const key of keys) {
+        const match = cycleLoanLookup.get(key);
+        if (match) return match;
+      }
+      return {};
+    };
+
+    const cycleLoans = (loans || []).filter(
+      (loan) => String(loan.cycle || '').toLowerCase() === selectedKey,
+    );
+    const activeLoans = cycleLoans.filter((loan) => !isClosedLoan(loan));
+    const closedLoans = cycleLoans.filter((loan) => isClosedLoan(loan));
+
+    const totalCustomerIds = new Set(
+      cycleLoans
+        .map((loan) => loan.customerId)
+        .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+        .map(String),
+    );
+    const activeCustomerIds = new Set(
+      activeLoans
+        .map((loan) => loan.customerId)
+        .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+        .map(String),
+    );
+    const closedCustomerIds = new Set(
+      closedLoans
+        .map((loan) => loan.customerId)
+        .filter((id) => id !== null && id !== undefined && String(id).trim() !== '')
+        .map(String)
+        .filter((id) => !activeCustomerIds.has(id)),
+    );
+
+    const outstandingAmount = activeLoans.reduce(
+      (sum, loan) => sum + Math.max(0, numberValue(loan.outstanding)),
+      0,
+    );
+
+    const cycleCollectionPayments = (payments || []).filter((item) => {
+      if (String(item.type || '').toLowerCase() !== 'collection') return false;
+      if (String(item.direction || '').toLowerCase() !== 'in') return false;
+
+      const linkedLoan = linkedLoanFor(item);
+      const paymentCycle = item.cycle || linkedLoan.cycle || '';
+      if (String(paymentCycle).toLowerCase() !== selectedKey) return false;
+
+      const paymentDate = String(item.date || item.paymentDate || item.createdAt || '').slice(0, 10);
+      return hasDateFilter ? inRange(paymentDate, fromDate, toDate) : true;
+    });
+
+    const collectedAmount = cycleCollectionPayments.reduce(
+      (sum, item) => sum + numberValue(item.collectionAmount ?? item.amount),
+      0,
+    );
+
+    const pendingScheduleRows = (collections || []).filter((item) => {
+      if (String(item.cycle || '').toLowerCase() !== selectedKey) return false;
+      if (String(item.status || '').toLowerCase() === 'cancelled') return false;
+
+      const dueDate = String(item.date || '').slice(0, 10);
+      if (!dueDate || dueDate > today) return false;
+      if (hasDateFilter && !inRange(dueDate, fromDate, toDate)) return false;
+
+      return Math.max(
+        0,
+        numberValue(item.dueAmount) - numberValue(item.paidAmount),
+      ) > 0;
+    });
+
+    const pendingAmount = pendingScheduleRows.reduce(
+      (sum, item) => sum + Math.max(
+        0,
+        numberValue(item.dueAmount) - numberValue(item.paidAmount),
+      ),
+      0,
+    );
+
+    const pendingByCustomer = new Map();
+
+    pendingScheduleRows.forEach((item) => {
+      const linkedLoan = linkedLoanFor(item);
+      const customerKey = String(item.customerId || linkedLoan.customerId || item.customerName || 'unknown');
+      const customer = customerById[String(item.customerId || linkedLoan.customerId)] || {};
+      const dueDate = String(item.date || '').slice(0, 10);
+      const balance = Math.max(
+        0,
+        numberValue(item.dueAmount) - numberValue(item.paidAmount),
+      );
+      const loanId = item.loanId || linkedLoan.loanId || linkedLoan.id || '';
+
+      if (!pendingByCustomer.has(customerKey)) {
+        pendingByCustomer.set(customerKey, {
+          key: customerKey,
+          customerDbId: item.customerId || linkedLoan.customerId || customer.id || '',
+          customerId: customer.customerId || item.customerCode || item.customerId || linkedLoan.customerId || '—',
+          customerName: item.customerName || linkedLoan.customerName || customer.name || 'Customer',
+          loanIds: new Set(),
+          pendingDueCount: 0,
+          pendingAmount: 0,
+          oldestDue: dueDate,
+          finePaid: false,
+        });
+      }
+
+      const row = pendingByCustomer.get(customerKey);
+      if (loanId) row.loanIds.add(String(loanId));
+      row.pendingDueCount += 1;
+      row.pendingAmount += balance;
+      if (!row.oldestDue || (dueDate && dueDate < row.oldestDue)) row.oldestDue = dueDate;
+    });
+
+    const finePayments = (payments || []).filter((item) => {
+      if (String(item.direction || '').toLowerCase() !== 'in') return false;
+      const paymentType = String(item.type || '').toLowerCase();
+      const fineAmount = numberValue(
+        item.fineAmount
+          ?? (paymentType.includes('fine') ? item.amount : 0),
+      );
+      if (fineAmount <= 0) return false;
+
+      const paymentDate = String(item.date || item.paymentDate || item.createdAt || '').slice(0, 10);
+      return hasDateFilter ? inRange(paymentDate, fromDate, toDate) : true;
+    });
+
+    const pendingCustomers = [...pendingByCustomer.values()]
+      .map((row) => {
+        const finePaid = finePayments.some((payment) => {
+          const linkedLoan = linkedLoanFor(payment);
+          const paymentCustomerId = String(payment.customerId || linkedLoan.customerId || '');
+          const paymentLoanId = String(payment.loanId || linkedLoan.loanId || linkedLoan.id || '');
+          const paymentDate = String(payment.date || payment.paymentDate || payment.createdAt || '').slice(0, 10);
+
+          const customerMatches = paymentCustomerId
+            && (
+              paymentCustomerId === String(row.customerDbId || '')
+              || paymentCustomerId === String(row.customerId || '')
+            );
+          const loanMatches = paymentLoanId && row.loanIds.has(paymentLoanId);
+          const relatesToPendingPeriod = !row.oldestDue || !paymentDate || paymentDate >= row.oldestDue;
+
+          return (customerMatches || loanMatches) && relatesToPendingPeriod;
+        });
+
+        const category = finePaid
+          ? 'fine-paid'
+          : row.pendingDueCount >= 3
+            ? 'risky'
+            : 'normal';
+
+        return {
+          ...row,
+          loanIds: [...row.loanIds],
+          finePaid,
+          category,
+          categoryLabel: category === 'fine-paid'
+            ? 'Fine Paid'
+            : category === 'risky'
+              ? 'Risky'
+              : 'Normal',
+        };
+      })
+      .sort((a, b) => {
+        if (b.pendingDueCount !== a.pendingDueCount) return b.pendingDueCount - a.pendingDueCount;
+        if (b.pendingAmount !== a.pendingAmount) return b.pendingAmount - a.pendingAmount;
+        return String(a.customerName || '').localeCompare(String(b.customerName || ''));
+      });
+
+    const normalCustomers = pendingCustomers.filter((row) => row.category === 'normal');
+    const riskyCustomers = pendingCustomers.filter((row) => row.category === 'risky');
+    const finePaidCustomers = pendingCustomers.filter((row) => row.category === 'fine-paid');
+
+    const totalPerformanceLoans = activeLoans.length + closedLoans.length;
+    const activePercent = totalPerformanceLoans
+      ? (activeLoans.length / totalPerformanceLoans) * 100
+      : 0;
+    const closedPercent = totalPerformanceLoans
+      ? 100 - activePercent
+      : 0;
+
+    return {
+      cycle: selectedCycle,
+      hasDateFilter,
+      rangeLabel: hasDateFilter ? overviewRangeLabel : 'Overall live cycle report',
+      outstandingAmount,
+      collectedAmount,
+      pendingAmount,
+      totalCustomers: totalCustomerIds.size,
+      activeCustomers: activeCustomerIds.size,
+      closedCustomers: closedCustomerIds.size,
+      activeLoans: activeLoans.length,
+      closedLoans: closedLoans.length,
+      activePercent,
+      closedPercent,
+      pendingCustomers,
+      normalCustomers,
+      riskyCustomers,
+      finePaidCustomers,
+    };
+  }, [
+    view,
+    loans,
+    collections,
+    payments,
+    customerById,
+    fromDate,
+    toDate,
+    overviewRangeLabel,
+  ]);
+
+  const filteredPendingCycleCustomers = useMemo(() => {
+    if (!cyclePerformanceReport) return [];
+    if (pendingRiskFilter === 'risky') return cyclePerformanceReport.riskyCustomers;
+    if (pendingRiskFilter === 'fine-paid') return cyclePerformanceReport.finePaidCustomers;
+    return cyclePerformanceReport.normalCustomers;
+  }, [cyclePerformanceReport, pendingRiskFilter]);
+
   const overviewCycleCustomerRows = useMemo(() => {
     const selected = String(selectedOverviewCycle || 'Daily').toLowerCase();
     const grouped = new Map();
@@ -1244,6 +1520,7 @@ export default function Reports() {
 
   const selectReportView = (nextView) => {
     setView(nextView);
+    setPendingRiskFilter('normal');
     if (nextView === 'daily') setCycle('Daily');
     else if (nextView === 'weekly') setCycle('Weekly');
     else if (nextView === 'monthly') setCycle('Monthly');
@@ -1452,25 +1729,70 @@ export default function Reports() {
           ? 'Monthly'
           : null;
 
-    if (periodCycle) {
-      const statusRow = overviewCycleStatusRows.find((item) => item.cycle === periodCycle) || {};
+    if (periodCycle && cyclePerformanceReport) {
       return {
         fileBase: `crednivo-${periodCycle.toLowerCase()}-report-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: `${periodCycle} Report`,
-        title: `${periodCycle} Collection Report`,
-        subtitle: 'Cycle-specific business collection summary.',
+        title: `${periodCycle} Collection & Loan Performance Report`,
+        subtitle: 'Cycle-specific loan position, customer status and pending-risk report.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
-        sections: [{
-          title: `${periodCycle} Summary`,
-          metrics: [
-            { label: 'Active Loan Amount', value: statusRow.loanAmount || 0, type: 'currency' },
-            { label: 'Collected Amount', value: statusRow.collectedAmount || 0, type: 'currency' },
-            { label: 'Upcoming Amount', value: statusRow.upcomingAmount || 0, type: 'currency' },
-            { label: 'Pending Amount', value: statusRow.pendingAmount || 0, type: 'currency' },
-          ],
-        }],
+        sections: [
+          {
+            title: `${periodCycle} Financial Summary`,
+            metrics: [
+              { label: 'Outstanding Amount', value: cyclePerformanceReport.outstandingAmount, type: 'currency' },
+              { label: 'Collected Amount', value: cyclePerformanceReport.collectedAmount, type: 'currency' },
+              { label: 'Pending Amount', value: cyclePerformanceReport.pendingAmount, type: 'currency' },
+            ],
+          },
+          {
+            title: `${periodCycle} Customer Summary`,
+            metrics: [
+              { label: 'Customer Count', value: cyclePerformanceReport.totalCustomers, type: 'number' },
+              { label: 'Active Customers', value: cyclePerformanceReport.activeCustomers, type: 'number' },
+              { label: 'Closed Customers', value: cyclePerformanceReport.closedCustomers, type: 'number' },
+            ],
+          },
+          {
+            title: 'Loan Performance',
+            columns: [
+              { key: 'status', label: 'Loan Status' },
+              { key: 'count', label: 'Loan Count', type: 'number' },
+              { key: 'share', label: 'Share' },
+            ],
+            rows: [
+              {
+                status: 'Active Loans',
+                count: cyclePerformanceReport.activeLoans,
+                share: `${cyclePerformanceReport.activePercent.toFixed(1)}%`,
+              },
+              {
+                status: 'Closed Loans',
+                count: cyclePerformanceReport.closedLoans,
+                share: `${cyclePerformanceReport.closedPercent.toFixed(1)}%`,
+              },
+            ],
+          },
+          {
+            title: 'Pending Customer Risk List',
+            note: 'Normal = 1–2 pending dues · Risky = 3+ pending dues · Fine Paid overrides Normal/Risky.',
+            columns: [
+              { key: 'customerName', label: 'Customer' },
+              { key: 'customerId', label: 'Customer ID' },
+              { key: 'loanIdsText', label: 'Loan ID(s)' },
+              { key: 'pendingDueCount', label: 'Pending Dues', type: 'number' },
+              { key: 'pendingAmount', label: 'Pending Amount', type: 'currency' },
+              { key: 'oldestDue', label: 'Oldest Due', type: 'date' },
+              { key: 'categoryLabel', label: 'Risk Status' },
+            ],
+            rows: cyclePerformanceReport.pendingCustomers.map((row) => ({
+              ...row,
+              loanIdsText: row.loanIds.join(', '),
+            })),
+          },
+        ],
       };
     }
 
@@ -2343,6 +2665,214 @@ export default function Reports() {
           </div>
         </section>
       )}
+
+      {view !== 'overview' && cyclePerformanceReport && (
+        <section className="reports-cycle-performance-page" aria-label={`${cyclePerformanceReport.cycle} report`}>
+          <div className="reports-cycle-performance-head">
+            <div>
+              <span>{cyclePerformanceReport.cycle.toUpperCase()} REPORT</span>
+              <strong>{cyclePerformanceReport.cycle} Collection & Loan Performance</strong>
+            </div>
+            <small>{cyclePerformanceReport.rangeLabel}</small>
+          </div>
+
+          <div className="reports-cycle-report-kpi-grid">
+            <MetricCard
+              icon={Landmark}
+              label="Outstanding"
+              value={formatCurrency(cyclePerformanceReport.outstandingAmount)}
+              sub="Current active loan balance"
+              tone="blue"
+            />
+            <MetricCard
+              icon={HandCoins}
+              label="Collected"
+              value={formatCurrency(cyclePerformanceReport.collectedAmount)}
+              sub={cyclePerformanceReport.hasDateFilter ? 'Received in selected range' : 'Total collection received'}
+              tone="green"
+            />
+            <MetricCard
+              icon={TriangleAlert}
+              label="Pending"
+              value={formatCurrency(cyclePerformanceReport.pendingAmount)}
+              sub={cyclePerformanceReport.hasDateFilter ? 'Pending dues in selected range' : 'Due / overdue balance'}
+              tone="orange"
+            />
+          </div>
+
+          <div className="reports-cycle-report-kpi-grid reports-cycle-customer-kpis">
+            <MetricCard
+              icon={UsersRound}
+              label="Customer Count"
+              value={cyclePerformanceReport.totalCustomers}
+              sub={`All ${cyclePerformanceReport.cycle.toLowerCase()} customers`}
+              tone="blue"
+            />
+            <MetricCard
+              icon={Activity}
+              label="Active Customers"
+              value={cyclePerformanceReport.activeCustomers}
+              sub="Currently having active loan"
+              tone="green"
+            />
+            <MetricCard
+              icon={CheckCircle2}
+              label="Closed Customers"
+              value={cyclePerformanceReport.closedCustomers}
+              sub="No active loan in this cycle"
+              tone="purple"
+            />
+          </div>
+
+          <div className="reports-cycle-performance-chart-card">
+            <div className="reports-cycle-section-head">
+              <div>
+                <span>LOAN PERFORMANCE</span>
+                <strong>{cyclePerformanceReport.cycle} Loan Performance</strong>
+              </div>
+              <small>Active vs Closed loans</small>
+            </div>
+
+            <div className="reports-loan-pie-layout">
+              <div
+                className={`reports-loan-pie ${cyclePerformanceReport.activeLoans + cyclePerformanceReport.closedLoans === 0 ? 'empty' : ''}`}
+                style={{ '--active-share': `${cyclePerformanceReport.activePercent}%` }}
+                role="img"
+                aria-label={`${cyclePerformanceReport.activePercent.toFixed(1)} percent active loans and ${cyclePerformanceReport.closedPercent.toFixed(1)} percent closed loans`}
+              />
+
+              <div className="reports-loan-pie-legend">
+                <div>
+                  <span className="reports-pie-dot active" />
+                  <div>
+                    <small>Active Loans</small>
+                    <strong>{cyclePerformanceReport.activeLoans}</strong>
+                    <em>{cyclePerformanceReport.activePercent.toFixed(1)}%</em>
+                  </div>
+                </div>
+                <div>
+                  <span className="reports-pie-dot closed" />
+                  <div>
+                    <small>Closed Loans</small>
+                    <strong>{cyclePerformanceReport.closedLoans}</strong>
+                    <em>{cyclePerformanceReport.closedPercent.toFixed(1)}%</em>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="reports-cycle-pending-section">
+            <div className="reports-cycle-section-head reports-cycle-pending-head">
+              <div>
+                <span>PENDING CUSTOMERS</span>
+                <strong>Pending Customer List</strong>
+                <small>
+                  Normal: 1–2 dues · Risky: 3+ dues · Fine Paid overrides Normal / Risky
+                </small>
+              </div>
+
+              <div className="reports-risk-filter" role="tablist" aria-label="Pending customer risk filter">
+                <button
+                  type="button"
+                  className={pendingRiskFilter === 'normal' ? 'active normal' : 'normal'}
+                  onClick={() => setPendingRiskFilter('normal')}
+                >
+                  Normal
+                  <b>{cyclePerformanceReport.normalCustomers.length}</b>
+                </button>
+                <button
+                  type="button"
+                  className={pendingRiskFilter === 'risky' ? 'active risky' : 'risky'}
+                  onClick={() => setPendingRiskFilter('risky')}
+                >
+                  Risky
+                  <b>{cyclePerformanceReport.riskyCustomers.length}</b>
+                </button>
+                <button
+                  type="button"
+                  className={pendingRiskFilter === 'fine-paid' ? 'active fine-paid' : 'fine-paid'}
+                  onClick={() => setPendingRiskFilter('fine-paid')}
+                >
+                  Fine Paid
+                  <b>{cyclePerformanceReport.finePaidCustomers.length}</b>
+                </button>
+              </div>
+            </div>
+
+            {filteredPendingCycleCustomers.length ? (
+              <>
+                <div className="reports-cycle-pending-table-wrap">
+                  <table className="reports-cycle-pending-table">
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Customer ID</th>
+                        <th>Loan ID(s)</th>
+                        <th>Pending Dues</th>
+                        <th>Pending Amount</th>
+                        <th>Oldest Due</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPendingCycleCustomers.map((row) => (
+                        <tr key={row.key}>
+                          <td>
+                            <strong>
+                              {row.customerDbId
+                                ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
+                                : row.customerName}
+                            </strong>
+                          </td>
+                          <td>{row.customerId}</td>
+                          <td>{row.loanIds.length ? row.loanIds.join(', ') : '—'}</td>
+                          <td><strong>{row.pendingDueCount}</strong></td>
+                          <td className="reports-cycle-pending-money">{formatCurrency(row.pendingAmount)}</td>
+                          <td>{formatDate(row.oldestDue)}</td>
+                          <td>
+                            <span className={`reports-risk-badge ${row.category}`}>
+                              {row.categoryLabel}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="reports-cycle-pending-mobile">
+                  {filteredPendingCycleCustomers.map((row) => (
+                    <article className="reports-cycle-pending-mobile-card" key={`mobile-${row.key}`}>
+                      <div className="reports-cycle-pending-mobile-top">
+                        <div>
+                          <strong>
+                            {row.customerDbId
+                              ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
+                              : row.customerName}
+                          </strong>
+                          <small>{row.customerId} · {row.loanIds.length ? row.loanIds.join(', ') : '—'}</small>
+                        </div>
+                        <span className={`reports-risk-badge ${row.category}`}>{row.categoryLabel}</span>
+                      </div>
+                      <div className="reports-cycle-pending-mobile-grid">
+                        <div><span>Pending Dues</span><strong>{row.pendingDueCount}</strong></div>
+                        <div><span>Pending Amount</span><strong>{formatCurrency(row.pendingAmount)}</strong></div>
+                        <div><span>Oldest Due</span><strong>{formatDate(row.oldestDue)}</strong></div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="reports-cycle-pending-empty">
+                No {pendingRiskFilter === 'fine-paid' ? 'Fine Paid' : pendingRiskFilter === 'risky' ? 'Risky' : 'Normal'} pending customers found for this {cyclePerformanceReport.cycle.toLowerCase()} report.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {downloadDialog}
     </div>
   );

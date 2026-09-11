@@ -3474,3 +3474,504 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     break-inside:avoid;
   }
 }
+
+/* =========================================================
+   V35 — DAILY / WEEKLY / MONTHLY PERFORMANCE REPORTS
+   ========================================================= */
+
+.reports-cycle-performance-page{
+  display:grid;
+  gap:14px;
+}
+
+.reports-cycle-performance-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.reports-cycle-performance-head>div{
+  display:grid;
+  gap:4px;
+}
+
+.reports-cycle-performance-head>div>span,
+.reports-cycle-section-head>div>span{
+  color:var(--blue-600);
+  font-size:8px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+
+.reports-cycle-performance-head>div>strong{
+  color:var(--ink-950);
+  font-size:15px;
+  line-height:1.2;
+}
+
+.reports-cycle-performance-head>small{
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:750;
+  text-align:right;
+}
+
+.reports-cycle-report-kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+}
+
+.reports-cycle-report-kpi-grid .reports-kpi{
+  min-width:0;
+}
+
+.reports-cycle-performance-chart-card,
+.reports-cycle-pending-section{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+}
+
+.reports-cycle-performance-chart-card{
+  padding:15px 16px;
+  display:grid;
+  gap:14px;
+}
+
+.reports-cycle-section-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.reports-cycle-section-head>div{
+  display:grid;
+  gap:4px;
+}
+
+.reports-cycle-section-head>div>strong{
+  color:var(--ink-950);
+  font-size:13px;
+  line-height:1.2;
+}
+
+.reports-cycle-section-head small{
+  color:var(--ink-500);
+  font-size:8px;
+  line-height:1.35;
+}
+
+.reports-loan-pie-layout{
+  min-height:195px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:42px;
+  padding:8px 0;
+}
+
+.reports-loan-pie{
+  --active-share:50%;
+  width:156px;
+  height:156px;
+  flex:0 0 156px;
+  border-radius:50%;
+  background:conic-gradient(
+    var(--blue-500) 0 var(--active-share),
+    #18a46f var(--active-share) 100%
+  );
+  box-shadow:inset 0 0 0 1px rgba(15,34,61,.05);
+}
+
+.reports-loan-pie.empty{
+  background:var(--surface-soft);
+  border:1px solid var(--line);
+}
+
+.reports-loan-pie-legend{
+  min-width:220px;
+  display:grid;
+  gap:10px;
+}
+
+.reports-loan-pie-legend>div{
+  padding:11px 12px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--surface-soft);
+}
+
+.reports-pie-dot{
+  width:12px;
+  height:12px;
+  border-radius:50%;
+}
+
+.reports-pie-dot.active{background:var(--blue-500);}
+.reports-pie-dot.closed{background:#18a46f;}
+
+.reports-loan-pie-legend>div>div{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  align-items:baseline;
+  gap:8px;
+}
+
+.reports-loan-pie-legend small{
+  color:var(--ink-600);
+  font-size:8px;
+  font-weight:850;
+}
+
+.reports-loan-pie-legend strong{
+  color:var(--ink-950);
+  font-size:14px;
+  font-weight:950;
+  font-variant-numeric:tabular-nums;
+}
+
+.reports-loan-pie-legend em{
+  color:var(--ink-500);
+  font-size:8px;
+  font-style:normal;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+
+.reports-cycle-pending-section{
+  overflow:hidden;
+}
+
+.reports-cycle-pending-head{
+  padding:14px 15px;
+  align-items:center;
+  border-bottom:1px solid var(--line);
+  background:var(--surface-soft);
+}
+
+.reports-risk-filter{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--surface);
+}
+
+.reports-risk-filter button{
+  min-height:31px;
+  padding:0 9px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--ink-600);
+  font:inherit;
+  font-size:8px;
+  font-weight:850;
+  cursor:pointer;
+}
+
+.reports-risk-filter button b{
+  min-width:18px;
+  height:18px;
+  padding:0 5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:var(--surface-soft);
+  color:inherit;
+  font-size:7px;
+  font-weight:950;
+}
+
+.reports-risk-filter button.active.normal{
+  background:#eef5ff;
+  color:#1769cc;
+}
+
+.reports-risk-filter button.active.risky{
+  background:#fff0f0;
+  color:#c94f4f;
+}
+
+.reports-risk-filter button.active.fine-paid{
+  background:#fff4e5;
+  color:#c77816;
+}
+
+.reports-cycle-pending-table-wrap{
+  overflow-x:auto;
+}
+
+.reports-cycle-pending-table{
+  width:100%;
+  min-width:830px;
+  border-collapse:collapse;
+}
+
+.reports-cycle-pending-table th,
+.reports-cycle-pending-table td{
+  padding:11px 12px;
+  border-bottom:1px solid var(--line);
+  text-align:left;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.reports-cycle-pending-table th{
+  background:var(--surface-soft);
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:900;
+}
+
+.reports-cycle-pending-table td{
+  color:var(--ink-800);
+  font-size:9px;
+  font-variant-numeric:tabular-nums;
+}
+
+.reports-cycle-pending-table tbody tr:last-child td{
+  border-bottom:0;
+}
+
+.reports-cycle-pending-money{
+  color:#c77816!important;
+  font-weight:900;
+}
+
+.reports-risk-badge{
+  min-height:24px;
+  padding:0 8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  font-size:7px;
+  font-weight:900;
+}
+
+.reports-risk-badge.normal{
+  background:#eef5ff;
+  color:#1769cc;
+}
+
+.reports-risk-badge.risky{
+  background:#fff0f0;
+  color:#c94f4f;
+}
+
+.reports-risk-badge.fine-paid{
+  background:#fff4e5;
+  color:#c77816;
+}
+
+.reports-cycle-pending-mobile{
+  display:none;
+}
+
+.reports-cycle-pending-empty{
+  padding:24px 15px;
+  color:var(--ink-500);
+  font-size:9px;
+  text-align:center;
+}
+
+@media(max-width:900px){
+  .reports-cycle-report-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi:last-child:nth-child(odd){
+    grid-column:1/-1;
+  }
+
+  .reports-cycle-pending-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+}
+
+@media(max-width:767px){
+  .reports-cycle-performance-page{
+    gap:11px;
+    padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  }
+
+  .reports-cycle-performance-head{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .reports-cycle-performance-head>small{
+    text-align:left;
+  }
+
+  .reports-cycle-report-kpi-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:9px;
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi{
+    min-height:86px;
+    padding:11px;
+  }
+
+  .reports-cycle-performance-chart-card{
+    padding:13px;
+  }
+
+  .reports-cycle-section-head{
+    align-items:flex-start;
+  }
+
+  .reports-loan-pie-layout{
+    min-height:0;
+    flex-direction:column;
+    gap:18px;
+    padding:5px 0;
+  }
+
+  .reports-loan-pie{
+    width:138px;
+    height:138px;
+    flex-basis:138px;
+  }
+
+  .reports-loan-pie-legend{
+    width:100%;
+    min-width:0;
+  }
+
+  .reports-cycle-pending-head{
+    padding:12px;
+    gap:10px;
+  }
+
+  .reports-risk-filter{
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+
+  .reports-risk-filter button{
+    min-width:0;
+    padding:0 5px;
+    font-size:7px;
+  }
+
+  .reports-cycle-pending-table-wrap{
+    display:none;
+  }
+
+  .reports-cycle-pending-mobile{
+    display:grid;
+    gap:8px;
+    padding:9px;
+  }
+
+  .reports-cycle-pending-mobile-card{
+    padding:11px;
+    display:grid;
+    gap:9px;
+    border:1px solid var(--line);
+    border-radius:11px;
+    background:var(--surface);
+  }
+
+  .reports-cycle-pending-mobile-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:8px;
+  }
+
+  .reports-cycle-pending-mobile-top>div{
+    min-width:0;
+    display:grid;
+    gap:2px;
+  }
+
+  .reports-cycle-pending-mobile-top strong{
+    color:var(--ink-950);
+    font-size:10px;
+  }
+
+  .reports-cycle-pending-mobile-top small{
+    color:var(--ink-500);
+    font-size:7px;
+    line-height:1.35;
+    overflow-wrap:anywhere;
+  }
+
+  .reports-cycle-pending-mobile-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    padding-top:8px;
+    border-top:1px solid var(--line);
+  }
+
+  .reports-cycle-pending-mobile-grid>div{
+    min-width:0;
+    display:grid;
+    gap:2px;
+  }
+
+  .reports-cycle-pending-mobile-grid span{
+    color:var(--ink-500);
+    font-size:6.5px;
+  }
+
+  .reports-cycle-pending-mobile-grid strong{
+    color:var(--ink-900);
+    font-size:8px;
+    overflow-wrap:anywhere;
+  }
+}
+
+@media(max-width:520px){
+  .reports-cycle-report-kpi-grid{
+    grid-template-columns:1fr;
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi:last-child:nth-child(odd){
+    grid-column:auto;
+  }
+
+  .reports-cycle-pending-mobile-grid{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .reports-cycle-pending-mobile-grid>div:last-child{
+    grid-column:1/-1;
+  }
+}
+
+@media print{
+  .reports-risk-filter{
+    display:none!important;
+  }
+
+  .reports-cycle-performance-chart-card,
+  .reports-cycle-pending-section{
+    box-shadow:none;
+    break-inside:avoid;
+  }
+}
