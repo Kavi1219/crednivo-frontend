@@ -3140,3 +3140,15 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     display:none!important;
   }
 }
+
+/* =========================================================
+   V30 — DOWNLOAD FORMAT POPUP HARDENING
+   ========================================================= */
+.reports-download-backdrop{
+  z-index:10000!important;
+}
+
+.reports-download-dialog{
+  position:relative;
+  z-index:10001!important;
+}

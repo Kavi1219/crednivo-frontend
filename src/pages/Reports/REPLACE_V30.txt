@@ -1,0 +1,28 @@
+CREDNIVO V30 - DOWNLOAD POPUP FIX
+
+WHY:
+The V29 file already used the new popup. If clicking Download still created CSV,
+the running Reports.jsx was still an older version. V30 removes ALL CSV export
+code from Reports.jsx, so the Download button can only open the PDF / EXCEL / DOC popup.
+
+REPLACE:
+A:\CREDNIVO\crednivo-frontend\src\pages\Reports\Reports.jsx
+A:\CREDNIVO\crednivo-frontend\src\pages\Reports\Reports.css
+A:\CREDNIVO\crednivo-frontend\src\utils\reportExport.js
+
+ONE-TIME PACKAGES (only if not already installed):
+npm install jspdf jspdf-autotable xlsx-js-style docx
+
+THEN:
+npm run dev
+
+If Vite was already running, stop it with Ctrl+C first, then run npm run dev again.
+Hard refresh the browser once with Ctrl+Shift+R.
+
+EXPECTED:
+Click Download -> popup:
+1. PDF
+2. EXCEL
+3. DOC
+
+There is no CSV download path in this Reports.jsx.

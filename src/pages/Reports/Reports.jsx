@@ -30,7 +30,7 @@ import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
-import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
+import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Reports.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
 import {
@@ -1175,150 +1175,6 @@ export default function Reports() {
     ...filteredLoans.map((item) => item.customerId),
   ]).size;
 
-  const downloadOverview = () => downloadCsv(
-    overviewHasDateFilter
-      ? `crednivo-reports-overview-${fromDate || 'start'}-to-${toDate || 'today'}.csv`
-      : 'crednivo-reports-overview-overall.csv',
-    [
-      ['CREDNIVO Reports Overview'],
-      ['Company', company.name],
-      ['Branch', user?.branch || company.branch || 'All'],
-      ['From', fromDate || 'Overall'],
-      ['To', toDate || 'Overall'],
-      ['Cycle', cycle],
-      [],
-      ['Summary', 'Value'],
-      ['Collection Amount', overviewCollectionAmount],
-      ['Collected Amount', overview.collected],
-      ...overviewCycleCollections.map((item) => [`${item.cycle} Collection / Cycle Total`, item.amount]),
-      ['Scheduled Collection Collected', overview.scheduledCollected],
-      ['Pending Amount', overviewPendingAmount],
-      ['Overdue', overview.overdue],
-      ['Incoming Cash', overview.incoming],
-      ['Outgoing Cash', overview.outgoing],
-      ['Net Cash Flow', overview.netCash],
-      ['Expenses', overview.expenseTotal],
-      ['New Loans Given', overview.loanGiven],
-      ['Total Outstanding (Current)', currentTotalOutstanding],
-      ['In-Hand Amount (Current)', currentInHandAmount],
-      ['Active Loans', overviewActiveLoanCount],
-      ['Total Customers', overviewCustomerCount],
-      ['Overdue Amount', overview.overdue],
-      ['New Loans Given', overview.loanGiven],
-      ['Expenses', overview.expenseTotal],
-      ['Fine Income', overviewFineIncome],
-      ['Document Charges Income', overviewDocumentChargeIncome],
-      ...(isOwner ? [['Savings', overviewSavingsAmount]] : []),
-      ['Recovery %', `${overview.recovery.toFixed(1)}%`],
-      [],
-      ['Cycle', 'Expected', 'Collected', 'Pending', 'Customers', 'Loans', 'Recovery %'],
-      ...cycleRows.map((item) => [item.cycle, item.expected, item.collected, item.pending, item.uniqueCustomers, item.loans, `${item.rate.toFixed(1)}%`]),
-      [],
-      ['Recovery Attention', 'Customer', 'Loan', 'Due Date', 'Balance'],
-      ...overview.overdueRows.slice(0, 100).map((item) => [item.customerId, item.customerName, item.loanId, item.date, Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount))]),
-    ],
-  );
-
-  const downloadWeeklyReport = () => downloadCsv(
-    `crednivo-weekly-report-${weeklyRange.from}-to-${weeklyRange.to}.csv`,
-    [
-      ['CREDNIVO Weekly Collection Performance Report'],
-      ['Company', company.name],
-      ['Branch', weeklyBranch],
-      ['Prepared By', weeklyPreparedBy],
-      ['From', weeklyRange.from],
-      ['To', weeklyRange.to],
-      [],
-      ['Target / Scheduled Collection'],
-      ['Cycle', 'Target'],
-      ...weeklyReport.current.cycles.map((item) => [item.cycle, item.target]),
-      ['Total Target', weeklyReport.current.target],
-      [],
-      ['Collection Performance'],
-      ['Cycle', 'Target', 'Collected', 'Pending', 'Achievement %'],
-      ...weeklyReport.current.cycles.map((item) => [item.cycle, item.target, item.collected, item.pending, `${item.achievement.toFixed(1)}%`]),
-      ['Total', weeklyReport.current.target, weeklyReport.current.collected, weeklyReport.current.pending, `${weeklyReport.current.achievement.toFixed(1)}%`],
-      [],
-      ['Customer Performance'],
-      ['Cycle', 'Customers Due', 'Fully Collected', 'Pending Customers'],
-      ...weeklyReport.current.cycles.map((item) => [item.cycle, item.customersDue, item.fullyCollected, item.pendingCustomers]),
-      ['Total', weeklyReport.current.customersDue, weeklyReport.current.fullyCollected, weeklyReport.current.pendingCustomers],
-      [],
-      ['Pending Customer Details'],
-      ['Customer ID', 'Customer', 'Loan ID', 'Cycle', 'Target', 'Collected', 'Pending', 'Oldest Due'],
-      ...weeklyReport.current.pendingRows.map((item) => [
-        item.customerId, item.customerName, item.loanId, item.cycle,
-        item.target, item.collected, item.pending, item.oldestDue,
-      ]),
-      [],
-      ['Weekly Comparison'],
-      ['Metric', 'Last Week', 'This Week', 'Change'],
-      ['Target', weeklyReport.previous.target, weeklyReport.current.target, weeklyReport.current.target - weeklyReport.previous.target],
-      ['Collected', weeklyReport.previous.collected, weeklyReport.current.collected, weeklyReport.collectionGrowth],
-      ['Pending', weeklyReport.previous.pending, weeklyReport.current.pending, weeklyReport.pendingChange],
-      ['Achievement %', `${weeklyReport.previous.achievement.toFixed(1)}%`, `${weeklyReport.current.achievement.toFixed(1)}%`, `${weeklyReport.achievementChange >= 0 ? '+' : ''}${weeklyReport.achievementChange.toFixed(1)}%`],
-    ],
-  );
-
-  const downloadMonthly = () => downloadCsv(
-    `crednivo-monthly-statement-${selectedMonth}.csv`,
-    [
-      ['CREDNIVO Monthly Statement', monthlyReport.month.label],
-      [],
-      ['Expected', monthlyReport.overallExpected],
-      ['Collected', monthlyReport.overallCollected],
-      ['Pending', monthlyReport.overallPending],
-      ['Overdue', monthlyReport.overdueAmount],
-      ['New Loans Given', monthlyReport.newLoansGiven],
-      ['Expenses', monthlyReport.expenseTotal],
-      ['Net Cash Flow', monthlyReport.netCash],
-      ['In-Hand Amount (Month End)', monthlyReport.availableCapitalAtMonthEnd],
-      ['Total Outstanding (Current Snapshot)', currentTotalOutstanding],
-      [],
-      ['Cycle', 'Expected', 'Collected', 'Pending', 'Customers', 'Loans', 'Recovery %'],
-      ...monthlyReport.cycles.map((item) => [item.cycle, item.expected, item.collected, item.pending, item.customers, item.loans, `${item.rate.toFixed(1)}%`]),
-    ],
-  );
-
-  const downloadCollectionReport = () => downloadCsv(
-    `crednivo-collection-report-${fromDate}-to-${toDate}.csv`,
-    [
-      ['CREDNIVO Detailed Collection Report'],
-      ['Company', company.name],
-      ['Branch', user?.branch || company.branch || 'Current branch'],
-      ['From', fromDate],
-      ['To', toDate],
-      ['Cycle', cycle],
-      ['Status', collectionStatus],
-      [],
-      ['Actual Collection Transactions'],
-      ['Payment Date', 'Payment ID', 'Customer ID', 'Customer', 'Loan ID', 'Cycle', 'Collection', 'Fine', 'Total Received', 'Payment Mode', 'Note'],
-      ...collectionReportPaymentRows.map((item) => [
-        item.paymentDate, item.paymentId, item.customerId, item.customerName, item.loanId, item.cycle,
-        item.collectionAmount, item.fineAmount, item.totalReceived, item.paymentMode, item.note,
-      ]),
-      [],
-      ['Scheduled Collections'],
-      ['Due Date', 'Customer ID', 'Customer', 'Loan ID', 'Cycle', 'Expected', 'Allocated/Paid', 'Fine on Schedule', 'Balance', 'Status', 'Latest Payment Date', 'Payment Mode'],
-      ...collectionReportRows.map((item) => [
-        item.date, item.customerId, item.customerName, item.loanId, item.cycle,
-        item.dueAmount, item.paidAmount, item.fine, item.balance, item.status,
-        item.latestPaymentDate, item.paymentMode,
-      ]),
-      [],
-      ['Summary', 'Value'],
-      ['Expected Due in Period', collectionReportSummary.expected],
-      ['Collected in Period', collectionReportSummary.collected],
-      ['Pending Due in Period', collectionReportSummary.pending],
-      ['Fine Collected in Period', collectionReportSummary.fine],
-      ['Collection Transactions', collectionReportSummary.paidEntries],
-      ['Overdue Schedule Entries', collectionReportSummary.overdueEntries],
-      ['Recovery %', `${collectionReportSummary.recovery.toFixed(1)}%`],
-    ],
-  );
-
-  const exportCurrent = () => downloadOverview();
-
   const selectReportView = (nextView) => {
     setView(nextView);
     if (nextView === 'daily') setCycle('Daily');
@@ -1609,6 +1465,11 @@ export default function Reports() {
     };
   };
 
+  const openDownloadDialog = () => {
+    setDownloadError('');
+    setDownloadOpen(true);
+  };
+
   const handleDownloadFormat = async (format) => {
     if (downloadBusy) return;
     setDownloadBusy(format);
@@ -1699,7 +1560,7 @@ export default function Reports() {
               <ActionButton tone="secondary" icon={ArrowLeft} onClick={() => navigate(-1)}>
                 Back
               </ActionButton>
-              <ActionButton tone="secondary" icon={Download} onClick={() => setDownloadOpen(true)}>
+              <ActionButton tone="secondary" icon={Download} onClick={openDownloadDialog}>
                 Download
               </ActionButton>
             </>
@@ -2045,7 +1906,7 @@ export default function Reports() {
         actions={(
           <>
             <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print</ActionButton>
-            <ActionButton tone="secondary" icon={Download} onClick={() => setDownloadOpen(true)}>Download</ActionButton>
+            <ActionButton tone="secondary" icon={Download} onClick={openDownloadDialog}>Download</ActionButton>
           </>
         )}
       />
