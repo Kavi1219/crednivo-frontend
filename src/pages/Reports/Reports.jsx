@@ -834,6 +834,36 @@ export default function Reports() {
     [overviewSavingsEntries],
   );
 
+  const activityTotals = useMemo(() => ({
+    loans: {
+      count: newLoanDetailRows.length,
+      loanAmount: newLoanDetailRows.reduce((sum, row) => sum + numberValue(row.loanAmount), 0),
+      givenAmount: newLoanDetailRows.reduce((sum, row) => sum + numberValue(row.givenAmount), 0),
+    },
+    expenses: {
+      count: expenseDetailRows.length,
+      amount: expenseDetailRows.reduce((sum, row) => sum + numberValue(row.amount), 0),
+    },
+    fine: {
+      count: fineDetailRows.length,
+      amount: fineDetailRows.reduce((sum, row) => sum + numberValue(row.amount), 0),
+    },
+    documents: {
+      count: documentChargeDetailRows.length,
+      amount: documentChargeDetailRows.reduce((sum, row) => sum + numberValue(row.amount), 0),
+    },
+    savings: {
+      count: savingsDetailRows.length,
+      amount: savingsDetailRows.reduce((sum, row) => sum + numberValue(row.amount), 0),
+    },
+  }), [
+    newLoanDetailRows,
+    expenseDetailRows,
+    fineDetailRows,
+    documentChargeDetailRows,
+    savingsDetailRows,
+  ]);
+
   const overviewCycleStatusRows = useMemo(() => {
     const today = toInputDate();
 
@@ -1779,13 +1809,20 @@ export default function Reports() {
         fileBase: `crednivo-new-loans-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: 'Business Activity',
         title: 'New Loans Given Report',
-        subtitle: 'Customer-wise loan disbursement details. This document is generated from report data, not from the website layout.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
-        sections: [{
+        sections: [
+          {
+            title: 'Summary',
+            metrics: [
+              { label: 'Loans', value: activityTotals.loans.count, type: 'number' },
+              { label: 'Total Loan Amount', value: activityTotals.loans.loanAmount, type: 'currency' },
+              { label: 'Total Given Amount', value: activityTotals.loans.givenAmount, type: 'currency' },
+            ],
+          },
+          {
           title: 'Loan Disbursement Details',
-          note: overviewHasDateFilter ? 'Only loans inside the selected date range are included.' : 'All available loan disbursements are included.',
           columns: [
             { key: 'date', label: 'Date', type: 'date' },
             { key: 'customerName', label: 'Customer' },
@@ -1797,7 +1834,8 @@ export default function Reports() {
             { key: 'status', label: 'Status' },
           ],
           rows: newLoanDetailRows,
-        }],
+          },
+        ],
       };
     }
 
@@ -1806,11 +1844,18 @@ export default function Reports() {
         fileBase: `crednivo-expenses-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: 'Business Activity',
         title: 'Expense Report',
-        subtitle: 'Expense ledger for the selected reporting period.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
-        sections: [{
+        sections: [
+          {
+            title: 'Summary',
+            metrics: [
+              { label: 'Total Expenses', value: activityTotals.expenses.amount, type: 'currency' },
+              { label: 'Expense Entries', value: activityTotals.expenses.count, type: 'number' },
+            ],
+          },
+          {
           title: 'Expense Entries',
           columns: [
             { key: 'date', label: 'Date', type: 'date' },
@@ -1820,7 +1865,8 @@ export default function Reports() {
             { key: 'amount', label: 'Amount', type: 'currency' },
           ],
           rows: expenseDetailRows,
-        }],
+          },
+        ],
       };
     }
 
@@ -1829,11 +1875,18 @@ export default function Reports() {
         fileBase: `crednivo-fine-income-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: 'Business Activity',
         title: 'Fine Income Report',
-        subtitle: 'Customer and loan-wise fine amounts received.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
-        sections: [{
+        sections: [
+          {
+            title: 'Summary',
+            metrics: [
+              { label: 'Total Fine Income', value: activityTotals.fine.amount, type: 'currency' },
+              { label: 'Fine Entries', value: activityTotals.fine.count, type: 'number' },
+            ],
+          },
+          {
           title: 'Fine Income Details',
           columns: [
             { key: 'date', label: 'Date', type: 'date' },
@@ -1844,7 +1897,8 @@ export default function Reports() {
             { key: 'amount', label: 'Fine Amount', type: 'currency' },
           ],
           rows: fineDetailRows,
-        }],
+          },
+        ],
       };
     }
 
@@ -1853,11 +1907,18 @@ export default function Reports() {
         fileBase: `crednivo-document-charges-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: 'Business Activity',
         title: 'Document Charges Income Report',
-        subtitle: 'Customer and loan-wise document charge income.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
-        sections: [{
+        sections: [
+          {
+            title: 'Summary',
+            metrics: [
+              { label: 'Total Document Charges', value: activityTotals.documents.amount, type: 'currency' },
+              { label: 'Document Charge Entries', value: activityTotals.documents.count, type: 'number' },
+            ],
+          },
+          {
           title: 'Document Charge Details',
           columns: [
             { key: 'date', label: 'Date', type: 'date' },
@@ -1868,7 +1929,8 @@ export default function Reports() {
             { key: 'amount', label: 'Document Charge', type: 'currency' },
           ],
           rows: documentChargeDetailRows,
-        }],
+          },
+        ],
       };
     }
 
@@ -1877,11 +1939,18 @@ export default function Reports() {
         fileBase: `crednivo-savings-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: 'Business Activity',
         title: 'Savings Report',
-        subtitle: 'Savings movements recorded by the business.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
-        sections: [{
+        sections: [
+          {
+            title: 'Summary',
+            metrics: [
+              { label: 'Total Savings', value: activityTotals.savings.amount, type: 'currency' },
+              { label: 'Savings Entries', value: activityTotals.savings.count, type: 'number' },
+            ],
+          },
+          {
           title: 'Savings Entries',
           columns: [
             { key: 'date', label: 'Date', type: 'date' },
@@ -1890,7 +1959,8 @@ export default function Reports() {
             { key: 'amount', label: 'Amount', type: 'currency' },
           ],
           rows: savingsDetailRows,
-        }],
+          },
+        ],
       };
     }
 
@@ -1899,7 +1969,6 @@ export default function Reports() {
         fileBase: `crednivo-${capacityPage}-collection-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: 'Collection Capacity',
         title: `${capacityCycle} Collection Report`,
-        subtitle: 'Customer-wise collection position for the selected cycle.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
@@ -1944,7 +2013,6 @@ export default function Reports() {
         fileBase: `crednivo-${periodCycle.toLowerCase()}-report-${fromDate || 'all'}-${toDate || 'all'}`,
         badge: `${periodCycle} Report`,
         title: `${periodCycle} Collection & Loan Performance Report`,
-        subtitle: 'Cycle-specific loan position, customer status and pending-risk report.',
         company: company?.name || 'CREDNIVO',
         generated: formatDate(toInputDate()),
         meta: reportMeta,
@@ -2010,7 +2078,6 @@ export default function Reports() {
       fileBase: `crednivo-overview-${fromDate || 'overall'}-${toDate || 'overall'}`,
       badge: 'Overview Report',
       title: 'Business Overview Report',
-      subtitle: 'Professional business summary prepared from live CREDNIVO records. The exported document uses a dedicated report layout rather than the website card design.',
       company: company?.name || 'CREDNIVO',
       generated: formatDate(toInputDate()),
       meta: reportMeta,
@@ -2240,15 +2307,33 @@ export default function Reports() {
                 <strong>{activityPageTitle}</strong>
                 <small>{overviewRangeLabel}</small>
               </div>
-              <div className="reports-dedicated-summary">
-                <strong>
-                  {activityPage === 'loans' && formatCurrency(overview.loanGiven)}
-                  {activityPage === 'expenses' && formatCurrency(overview.expenseTotal)}
-                  {activityPage === 'fine' && formatCurrency(overviewFineIncome)}
-                  {activityPage === 'documents' && formatCurrency(overviewDocumentChargeIncome)}
-                  {activityPage === 'savings' && formatCurrency(overviewSavingsAmount)}
-                </strong>
-                <small>Total amount</small>
+              <div className="reports-dedicated-summary reports-dedicated-summary-grid">
+                <div>
+                  <strong>
+                    {activityPage === 'loans' && formatCurrency(activityTotals.loans.loanAmount)}
+                    {activityPage === 'expenses' && formatCurrency(activityTotals.expenses.amount)}
+                    {activityPage === 'fine' && formatCurrency(activityTotals.fine.amount)}
+                    {activityPage === 'documents' && formatCurrency(activityTotals.documents.amount)}
+                    {activityPage === 'savings' && formatCurrency(activityTotals.savings.amount)}
+                  </strong>
+                  <small>
+                    {activityPage === 'loans' ? 'Total Loan Amount'
+                      : activityPage === 'expenses' ? 'Total Expenses'
+                        : activityPage === 'fine' ? 'Total Fine Income'
+                          : activityPage === 'documents' ? 'Total Document Charges'
+                            : 'Total Savings'}
+                  </small>
+                </div>
+                <div>
+                  <strong>
+                    {activityPage === 'loans' && activityTotals.loans.count}
+                    {activityPage === 'expenses' && activityTotals.expenses.count}
+                    {activityPage === 'fine' && activityTotals.fine.count}
+                    {activityPage === 'documents' && activityTotals.documents.count}
+                    {activityPage === 'savings' && activityTotals.savings.count}
+                  </strong>
+                  <small>Entries</small>
+                </div>
               </div>
             </div>
 
@@ -2289,6 +2374,14 @@ export default function Reports() {
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan="5">Total</td>
+                          <td>{formatCurrency(activityTotals.loans.loanAmount)}</td>
+                          <td>{formatCurrency(activityTotals.loans.givenAmount)}</td>
+                          <td>{activityTotals.loans.count} loan{activityTotals.loans.count === 1 ? '' : 's'}</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
 
@@ -2336,6 +2429,12 @@ export default function Reports() {
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan="4">Total Expenses</td>
+                          <td className="reports-activity-amount-out">{formatCurrency(activityTotals.expenses.amount)}</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                   <div className="reports-activity-detail-mobile">
@@ -2370,6 +2469,12 @@ export default function Reports() {
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan="5">Total Fine Income</td>
+                          <td className="reports-activity-amount-in">{formatCurrency(activityTotals.fine.amount)}</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                   <div className="reports-activity-detail-mobile">
@@ -2408,6 +2513,12 @@ export default function Reports() {
                           </tr>
                         ))}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan="5">Total Document Charges</td>
+                          <td className="reports-activity-amount-in">{formatCurrency(activityTotals.documents.amount)}</td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                   <div className="reports-activity-detail-mobile">
@@ -2445,6 +2556,12 @@ export default function Reports() {
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot>
+                          <tr>
+                            <td colSpan="3">Total Savings</td>
+                            <td className="reports-activity-amount-saving">{formatCurrency(activityTotals.savings.amount)}</td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                     <div className="reports-activity-detail-mobile">
@@ -2567,7 +2684,6 @@ export default function Reports() {
       <ModuleHeader
         eyebrow="Phase 5.1 · Reports"
         title="Reports & Analytics"
-        description="Business-wide overview plus a launch-ready detailed collection report from your live CREDNIVO records."
         actions={(
           <>
             <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print</ActionButton>
@@ -2655,7 +2771,6 @@ export default function Reports() {
               <div>
                 <span>In-Hand Amount</span>
                 <strong>{formatCurrency(currentInHandAmount)}</strong>
-                <small>Current available business cash</small>
               </div>
             </article>
 
@@ -2664,7 +2779,6 @@ export default function Reports() {
               <div>
                 <span>Collection Amount</span>
                 <strong>{formatCurrency(overviewCollectionAmount)}</strong>
-                <small>{overviewHasDateFilter ? 'Scheduled in selected date range' : 'Current collection / cycle total'}</small>
               </div>
             </article>
 
@@ -2673,7 +2787,6 @@ export default function Reports() {
               <div>
                 <span>Collected Amount</span>
                 <strong>{formatCurrency(overview.collected)}</strong>
-                <small>{overviewHasDateFilter ? 'Received in selected date range' : 'Total customer collection received'}</small>
               </div>
             </article>
 
@@ -2682,7 +2795,6 @@ export default function Reports() {
               <div>
                 <span>Pending Amount</span>
                 <strong>{formatCurrency(overviewPendingAmount)}</strong>
-                <small>{overviewHasDateFilter ? 'Pending in selected date range' : 'Current unpaid dues up to today'}</small>
               </div>
             </article>
           </div>
@@ -2728,7 +2840,6 @@ export default function Reports() {
               <div>
                 <small>New Loans Given</small>
                 <strong>{formatCurrency(overview.loanGiven)}</strong>
-                <span>{overviewHasDateFilter ? 'Loans given in selected date range' : 'All loan disbursements'}</span>
               </div>
             </button>
 
@@ -2741,7 +2852,6 @@ export default function Reports() {
               <div>
                 <small>Expenses</small>
                 <strong>{formatCurrency(overview.expenseTotal)}</strong>
-                <span>{overviewHasDateFilter ? 'Expenses in selected date range' : 'All recorded business expenses'}</span>
               </div>
             </button>
 
@@ -2754,7 +2864,6 @@ export default function Reports() {
               <div>
                 <small>Fine Income</small>
                 <strong>{formatCurrency(overviewFineIncome)}</strong>
-                <span>{overviewHasDateFilter ? 'Fine received in selected date range' : 'All fine amount received'}</span>
               </div>
             </button>
 
@@ -2767,7 +2876,6 @@ export default function Reports() {
               <div>
                 <small>Document Charges Income</small>
                 <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
-                <span>{overviewHasDateFilter ? 'Charges in selected date range' : 'All document charge income'}</span>
               </div>
             </button>
 
@@ -2781,8 +2889,7 @@ export default function Reports() {
                 <div>
                   <small>Savings</small>
                   <strong>{formatCurrency(overviewSavingsAmount)}</strong>
-                  <span>{overviewHasDateFilter ? 'Savings in selected date range' : 'All cash moved into Savings'}</span>
-                </div>
+                  </div>
               </button>
             )}
           </div>
@@ -2792,7 +2899,7 @@ export default function Reports() {
               <span>COLLECTION BY CYCLE</span>
               <strong>Current Collection Capacity</strong>
             </div>
-            <small>Tap a cycle to view customer details · {overviewRangeLabel}</small>
+            <small>{overviewRangeLabel}</small>
           </div>
 
           <div className="reports-overall-cycle-grid" aria-label="Collection amount by cycle">
