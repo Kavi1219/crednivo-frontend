@@ -3320,3 +3320,157 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     break-inside:avoid;
   }
 }
+
+/* =========================================================
+   V34 — LOAN PORTFOLIO SUMMARY AS TABLE
+   Sits directly below Daily / Weekly / Monthly Summary.
+   ========================================================= */
+
+.reports-portfolio-table-block{
+  margin-top:2px;
+  display:grid;
+  gap:8px;
+}
+
+.reports-portfolio-table-title{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.reports-portfolio-table-title>div{
+  display:grid;
+  gap:3px;
+}
+
+.reports-portfolio-table-title>div>span{
+  color:var(--blue-600);
+  font-size:8px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+
+.reports-portfolio-table-title>div>strong{
+  color:var(--ink-950);
+  font-size:13px;
+  line-height:1.2;
+}
+
+.reports-portfolio-table-title>small{
+  color:var(--ink-500);
+  font-size:8px;
+  font-weight:750;
+  text-align:right;
+}
+
+.reports-portfolio-table-wrap{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+}
+
+.reports-portfolio-table{
+  width:100%;
+  min-width:520px;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+.reports-portfolio-table th{
+  padding:11px 14px;
+  border-bottom:1px solid var(--line);
+  background:var(--surface-soft);
+  color:var(--ink-600);
+  font-size:8px;
+  font-weight:900;
+  text-align:left;
+  white-space:nowrap;
+}
+
+.reports-portfolio-table td{
+  padding:13px 14px;
+  border-bottom:1px solid var(--line);
+  color:var(--ink-850);
+  font-size:10px;
+  font-weight:700;
+  font-variant-numeric:tabular-nums;
+  vertical-align:middle;
+}
+
+.reports-portfolio-table tbody tr:last-child td{
+  border-bottom:0;
+}
+
+.reports-portfolio-table td:first-child{
+  width:46%;
+}
+
+.reports-portfolio-table td:nth-child(2){
+  width:18%;
+}
+
+.reports-portfolio-table td:nth-child(3){
+  width:36%;
+}
+
+.reports-portfolio-table td>strong{
+  color:var(--ink-950);
+  font-weight:950;
+}
+
+.reports-portfolio-table td:first-child small{
+  display:block;
+  margin-top:3px;
+  color:var(--ink-500);
+  font-size:7px;
+  font-weight:700;
+}
+
+.reports-portfolio-table tbody tr:nth-child(2) td:nth-child(3){
+  color:#0b9361;
+  font-weight:850;
+}
+
+.reports-portfolio-table tbody tr:nth-child(3) td:nth-child(3){
+  color:#6657c8;
+  font-weight:850;
+}
+
+@media(max-width:600px){
+  .reports-portfolio-table-title{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .reports-portfolio-table-title>small{
+    text-align:left;
+  }
+
+  .reports-portfolio-table{
+    min-width:0;
+    table-layout:auto;
+  }
+
+  .reports-portfolio-table th,
+  .reports-portfolio-table td{
+    padding:10px 9px;
+    font-size:9px;
+  }
+
+  .reports-portfolio-table th{
+    font-size:7px;
+  }
+}
+
+@media print{
+  .reports-portfolio-table-wrap{
+    overflow:visible;
+    box-shadow:none;
+    break-inside:avoid;
+  }
+}

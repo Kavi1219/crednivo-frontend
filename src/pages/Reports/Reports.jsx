@@ -2126,7 +2126,7 @@ export default function Reports() {
               <div><small>Active Loans</small><strong>{overviewActiveLoanCount}</strong></div>
             </article>
             <article className="reports-overall-mini-card reports-overall-customers-card">
-              <span><UsersRound size={30} /></span>
+              <span><UsersRound size={18} /></span>
               <div>
                 <small>Total Customers</small>
                 <strong>{overviewCustomerCount}</strong>
@@ -2136,53 +2136,6 @@ export default function Reports() {
             <article className="reports-overall-mini-card reports-overall-mini-alert">
               <span><TriangleAlert size={18} /></span>
               <div><small>Overdue Amount</small><strong>{formatCurrency(overview.overdue)}</strong></div>
-            </article>
-          </div>
-
-          <div className="reports-overall-section-heading reports-portfolio-heading">
-            <div>
-              <span>LOAN PORTFOLIO</span>
-              <strong>Loan Portfolio Summary</strong>
-            </div>
-            <small>New openings: {overviewNewOpeningLabel}</small>
-          </div>
-
-          <div className="reports-portfolio-summary-grid" aria-label="Loan portfolio summary">
-            <article className="reports-portfolio-card reports-portfolio-total">
-              <span className="reports-portfolio-icon"><UsersRound size={20} /></span>
-              <div className="reports-portfolio-copy">
-                <span>Total Portfolio</span>
-                <strong>{overviewCustomerCount} customer{overviewCustomerCount === 1 ? '' : 's'}</strong>
-                <div className="reports-portfolio-amount">
-                  <small>Total Loan Amount</small>
-                  <b>{formatCurrency(overviewTotalPortfolioAmount)}</b>
-                </div>
-              </div>
-            </article>
-
-            <article className="reports-portfolio-card reports-portfolio-closed">
-              <span className="reports-portfolio-icon"><CheckCircle2 size={20} /></span>
-              <div className="reports-portfolio-copy">
-                <span>Closed Loans</span>
-                <strong>{overviewClosedLoans.length} closed</strong>
-                <div className="reports-portfolio-amount">
-                  <small>Closed Amount</small>
-                  <b>{formatCurrency(overviewClosedLoanAmount)}</b>
-                </div>
-              </div>
-            </article>
-
-            <article className="reports-portfolio-card reports-portfolio-opening">
-              <span className="reports-portfolio-icon"><UserPlus size={20} /></span>
-              <div className="reports-portfolio-copy">
-                <span>New Loan Openings</span>
-                <strong>{overviewNewOpeningLoans.length} opened</strong>
-                <div className="reports-portfolio-amount">
-                  <small>Opening Amount</small>
-                  <b>{formatCurrency(overviewNewOpeningAmount)}</b>
-                </div>
-                <em>{overviewNewOpeningLabel}</em>
-              </div>
             </article>
           </div>
 
@@ -2345,6 +2298,48 @@ export default function Reports() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          <div className="reports-portfolio-table-block">
+            <div className="reports-portfolio-table-title">
+              <div>
+                <span>LOAN PORTFOLIO</span>
+                <strong>Loan Portfolio Summary</strong>
+              </div>
+              <small>New openings: {overviewNewOpeningLabel}</small>
+            </div>
+
+            <div className="reports-portfolio-table-wrap">
+              <table className="reports-portfolio-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Count</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Total Customers</strong></td>
+                    <td>{overviewCustomerCount}</td>
+                    <td><strong>{formatCurrency(overviewTotalPortfolioAmount)}</strong></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Closed Loans</strong></td>
+                    <td>{overviewClosedLoans.length}</td>
+                    <td>{formatCurrency(overviewClosedLoanAmount)}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <strong>New Loan Openings</strong>
+                      <small>{overviewNewOpeningLabel}</small>
+                    </td>
+                    <td>{overviewNewOpeningLoans.length}</td>
+                    <td>{formatCurrency(overviewNewOpeningAmount)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       )}
