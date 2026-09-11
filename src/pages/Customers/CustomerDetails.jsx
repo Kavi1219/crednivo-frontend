@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CalendarDays, Check, Download, FileText, Files, HandCoins, Image as ImageIcon, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
@@ -10,43 +10,161 @@ import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
 import './CustomerDetails.css';
 
-async function openDocument(document) {
-  const source = String(document?.data || '').trim();
-  if (!source) return;
-
-  // Open the tab immediately so browsers do not block it after the async fetch.
-  const popup = window.open('', '_blank');
-  if (!popup) return;
-
-  if (/^(data:|blob:)/i.test(source)) {
-    popup.location.href = source;
-    return;
-  }
-
-  try {
-    const token = getAuthToken();
-    const response = await fetch(source, {
-      credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-
-    if (!response.ok) {
-      throw new Error(`Document request failed (${response.status})`);
-    }
-
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    popup.location.href = objectUrl;
-
-    // Keep the object URL alive long enough for images/PDFs to finish loading.
-    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 5 * 60 * 1000);
-  } catch (error) {
-    console.error('CREDNIVO protected document load failed', error);
-    popup.close();
-    window.alert('Could not open this document. Please try again.');
-  }
+function documentSource(document) {
+  return String(document?.data || document?.file?.data || '').trim();
 }
 
+function documentName(document, index = 0) {
+  const fallback = `crednivo-document-${index + 1}`;
+  const raw = String(document?.name || document?.file?.name || fallback).trim() || fallback;
+  return raw.replace(/[\\/:*?"<>|]+/g, '_');
+}
+
+function documentMime(document) {
+  return String(document?.type || document?.file?.type || '').toLowerCase();
+}
+
+function isPdfDocument(document) {
+  return documentMime(document) === 'application/pdf' || /\.pdf$/i.test(documentName(document));
+}
+
+function isImageDocument(document) {
+  return documentMime(document).startsWith('image/') || /\.(jpe?g|png)$/i.test(documentName(document));
+}
+
+async function resolveProtectedDocument(document) {
+  const source = documentSource(document);
+  if (!source) throw new Error('Document file is missing');
+
+  if (/^blob:/i.test(source)) {
+    const response = await fetch(source);
+    if (!response.ok) throw new Error(`Document request failed (${response.status})`);
+    return response.blob();
+  }
+
+  if (/^data:/i.test(source)) {
+    const response = await fetch(source);
+    return response.blob();
+  }
+
+  const token = getAuthToken();
+  const response = await fetch(source, {
+    credentials: 'include',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!response.ok) throw new Error(`Document request failed (${response.status})`);
+  return response.blob();
+}
+
+function CustomerDocumentViewer({ viewer, onClose }) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [preview, setPreview] = useState({ url: '', type: '', loading: true, error: '' });
+  const [downloading, setDownloading] = useState(false);
+  const documents = Array.isArray(viewer?.documents) ? viewer.documents : [];
+  const selected = documents[selectedIndex] || null;
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [viewer?.title]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = '';
+
+    if (!selected) {
+      setPreview({ url: '', type: '', loading: false, error: 'No document to view.' });
+      return undefined;
+    }
+
+    setPreview({ url: '', type: '', loading: true, error: '' });
+
+    resolveProtectedDocument(selected)
+      .then((blob) => {
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setPreview({
+          url: objectUrl,
+          type: String(blob.type || documentMime(selected) || '').toLowerCase(),
+          loading: false,
+          error: '',
+        });
+      })
+      .catch((error) => {
+        console.error('CREDNIVO in-app document preview failed', error);
+        if (!cancelled) setPreview({ url: '', type: '', loading: false, error: 'Could not load this document.' });
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [selected]);
+
+  if (!viewer) return null;
+
+  const downloadSelected = async () => {
+    if (!selected || downloading) return;
+    setDownloading(true);
+    try {
+      const blob = await resolveProtectedDocument(selected);
+      const url = URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = documentName(selected, selectedIndex);
+      window.document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (error) {
+      console.error('CREDNIVO document download failed', error);
+      window.alert('Could not download this document. Please try again.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const previewIsPdf = preview.type === 'application/pdf' || isPdfDocument(selected);
+  const previewIsImage = preview.type.startsWith('image/') || isImageDocument(selected);
+
+  return <div className="customer-document-viewer-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&onClose()}>
+    <section className="customer-document-viewer-modal" role="dialog" aria-modal="true" aria-label={viewer.title || 'Document viewer'}>
+      <div className="customer-document-viewer-head">
+        <div>
+          <strong>{viewer.title || 'Documents'}</strong>
+          <span>{documents.length} document{documents.length === 1 ? '' : 's'} · JPG / PNG / PDF</span>
+        </div>
+        <div className="customer-document-viewer-head-actions">
+          <button type="button" className="customer-document-download" onClick={downloadSelected} disabled={!selected || downloading} title="Download document">
+            <Download size={17}/><span>{downloading ? 'Downloading...' : 'Download'}</span>
+          </button>
+          <button type="button" className="customer-document-close" onClick={onClose} title="Close"><X size={19}/></button>
+        </div>
+      </div>
+
+      <div className="customer-document-viewer-body">
+        {documents.length > 1 && <aside className="customer-document-list">
+          {documents.map((doc,index)=><button
+            type="button"
+            className={index===selectedIndex?'active':''}
+            key={`${doc.backendId||doc.name||'doc'}-${index}`}
+            onClick={()=>setSelectedIndex(index)}
+          >
+            {isPdfDocument(doc)?<FileText size={18}/>:<ImageIcon size={18}/>}
+            <span><strong>Document {index+1}</strong><small>{documentName(doc,index)}</small></span>
+          </button>)}
+        </aside>}
+
+        <div className="customer-document-preview">
+          {preview.loading && <div className="customer-document-preview-state"><FileText size={30}/><span>Loading document...</span></div>}
+          {!preview.loading && preview.error && <div className="customer-document-preview-state error"><AlertTriangle size={30}/><span>{preview.error}</span></div>}
+          {!preview.loading && !preview.error && previewIsImage && <img src={preview.url} alt={documentName(selected,selectedIndex)} />}
+          {!preview.loading && !preview.error && previewIsPdf && <iframe src={preview.url} title={documentName(selected,selectedIndex)} />}
+          {!preview.loading && !preview.error && !previewIsImage && !previewIsPdf && <div className="customer-document-preview-state error"><FileText size={30}/><span>This file cannot be previewed. Use Download.</span></div>}
+        </div>
+      </div>
+    </section>
+  </div>;
+}
 
 
 function ProtectedImage({ src, alt = '', fallback = null, className = '' }) {
@@ -961,7 +1079,8 @@ export default function CustomerDetails() {
             <button type="button" className="detail-profile-edit-button" onClick={openCustomerEditor}>
               <Pencil size={14}/><span>Edit Details</span>
             </button>
-            <button type="button" className="detail-media-edit-button" onClick={()=>openMediaEditor('customer')}>Add / Edit Media</button>
+            <button type="button" className="detail-media-edit-button" onClick={()=>openMediaEditor('customer','photo')}><ImageIcon size={14}/><span>Profile Photo</span></button>
+            <button type="button" className="detail-media-edit-button" onClick={()=>openMediaEditor('customer','document')}><FileText size={14}/><span>Document</span></button>
           </div>}
         </div>
         <dl>
@@ -973,12 +1092,9 @@ export default function CustomerDetails() {
           <DetailRow label="Work" value={customer.work}/>
           <DetailRow label="Address" value={customer.address || customer.area}/>
         </dl>
-        <div className="detail-media-row">
-          <button type="button" className={`detail-photo-tile ${!customer.photo&&canEditMedia?'can-add':''}`} onClick={()=>customer.photo?setPhotoViewer({src:customer.photo,label:'Customer Photo'}):canEditMedia&&openMediaEditor('customer','photo')} disabled={!customer.photo&&!canEditMedia}>
-            {customer.photo?<ProtectedImage src={customer.photo} alt="Customer" fallback={<UserRound size={21}/>} />:<UserRound size={21}/>}<span>{customer.photo?'Profile Photo':'+ Add Profile'}</span>
-          </button>
-          <button type="button" className={`detail-document-tile detail-view-documents ${!customerDocuments.length&&canEditMedia?'can-add':''}`} onClick={()=>customerDocuments.length?setDocumentViewer({title:'Customer Documents',documents:customerDocuments}):canEditMedia&&openMediaEditor('customer','document')} disabled={!customerDocuments.length&&!canEditMedia}>
-            <Files size={21}/><span>{customerDocuments.length ? `View Documents (${customerDocuments.length})` : '+ Document'}</span>{customerDocuments.length>0&&<ExternalLink size={15}/>} 
+        <div className="detail-media-row detail-document-only-row">
+          <button type="button" className="detail-document-tile detail-view-documents" onClick={()=>customerDocuments.length&&setDocumentViewer({title:'Customer Documents',documents:customerDocuments})} disabled={!customerDocuments.length}>
+            <Files size={21}/><span>{customerDocuments.length ? 'View Document' : 'No Document to View'}</span>{customerDocuments.length>1&&<b className="detail-document-count">{customerDocuments.length}</b>}
           </button>
         </div>
       </article>
@@ -990,7 +1106,8 @@ export default function CustomerDetails() {
             <button type="button" className="detail-profile-edit-button" onClick={openJaminEditor}>
               <Pencil size={14}/><span>Edit Details</span>
             </button>
-            {customer.jaminName && <button type="button" className="detail-media-edit-button" onClick={()=>openMediaEditor('jamin')}>Add / Edit Media</button>}
+            {customer.jaminName && <button type="button" className="detail-media-edit-button" onClick={()=>openMediaEditor('jamin','photo')}><ImageIcon size={14}/><span>Profile Photo</span></button>}
+            {customer.jaminName && <button type="button" className="detail-media-edit-button" onClick={()=>openMediaEditor('jamin','document')}><FileText size={14}/><span>Document</span></button>}
           </div>}
         </div>
         <dl>
@@ -1000,12 +1117,9 @@ export default function CustomerDetails() {
           <DetailRow label="Work" value={customer.jaminWork}/>
           <DetailRow label="Address" value={customer.jaminAddress}/>
         </dl>
-        <div className="detail-media-row">
-          <button type="button" className={`detail-photo-tile ${!customer.jaminPhoto&&canEditMedia&&customer.jaminName?'can-add':''}`} onClick={()=>customer.jaminPhoto?setPhotoViewer({src:customer.jaminPhoto,label:'Jamin Photo'}):(canEditMedia&&customer.jaminName)&&openMediaEditor('jamin')} disabled={!customer.jaminPhoto&&(!canEditMedia||!customer.jaminName)}>
-            {customer.jaminPhoto?<ProtectedImage src={customer.jaminPhoto} alt="Jamin" fallback={<ShieldCheck size={21}/>} />:<ShieldCheck size={21}/>}<span>{customer.jaminPhoto?'Jamin Photo':canEditMedia&&customer.jaminName?'Add Jamin Photo':'Jamin Photo'}</span>
-          </button>
+        <div className="detail-media-row detail-document-only-row">
           <button type="button" className="detail-document-tile detail-view-documents" onClick={()=>jaminDocuments.length&&setDocumentViewer({title:'Jamin Documents',documents:jaminDocuments})} disabled={!jaminDocuments.length}>
-            <Files size={21}/><span>{jaminDocuments.length ? `View Documents (${jaminDocuments.length})` : 'No Documents'}</span>{jaminDocuments.length>0&&<ExternalLink size={15}/>} 
+            <Files size={21}/><span>{jaminDocuments.length ? 'View Document' : 'No Document to View'}</span>{jaminDocuments.length>1&&<b className="detail-document-count">{jaminDocuments.length}</b>}
           </button>
         </div>
       </article>
@@ -1358,13 +1472,14 @@ export default function CustomerDetails() {
       <div className="customer-media-editor-modal" onMouseDown={(event)=>event.stopPropagation()}>
         <div className="customer-media-editor-head">
           <div>
-            <strong>{mediaEditor==='jamin'?'Jamin':'Customer'} Photo & Document</strong>
+            <strong>{mediaEditor==='jamin'?'Jamin':'Customer'} {mediaPickerTarget==='document'?'Document':'Profile Photo'}</strong>
             <span>{customer.id} · {mediaEditor==='jamin'?(customer.jaminName||'Jamin'):customer.name}</span>
           </div>
           <button type="button" onClick={closeMediaEditor} disabled={mediaSaving} title="Close"><X size={18}/></button>
         </div>
         <div className="customer-media-editor-body">
           <MediaUploader
+            mode={mediaPickerTarget==='document'?'document':'photo'}
             title={mediaEditor==='jamin'?'Jamin':'Customer'}
             photo={mediaDraft.photo}
             documents={mediaDraft.documents}
@@ -1376,7 +1491,7 @@ export default function CustomerDetails() {
         <div className="customer-media-editor-actions">
           <button type="button" className="customer-media-editor-cancel" onClick={closeMediaEditor} disabled={mediaSaving}>Cancel</button>
           <button type="button" className="customer-media-editor-save" onClick={saveMediaChanges} disabled={mediaSaving}>
-            <Check size={16}/><span>{mediaSaving?'Saving...':'Save Media'}</span>
+            <Check size={16}/><span>{mediaSaving?'Saving...':mediaPickerTarget==='document'?'Save Document':'Save Profile Photo'}</span>
           </button>
         </div>
       </div>
@@ -1737,21 +1852,7 @@ export default function CustomerDetails() {
       </div>
     </div>}
 
-    {documentViewer && <div className="customer-document-viewer-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&setDocumentViewer(null)}>
-      <div className="customer-document-viewer-modal">
-        <div className="customer-document-viewer-head">
-          <div><strong>{documentViewer.title}</strong><span>{documentViewer.documents.length} document(s)</span></div>
-          <button type="button" onClick={()=>setDocumentViewer(null)} title="Close"><X size={19}/></button>
-        </div>
-        <div className="customer-document-viewer-grid">
-          {documentViewer.documents.map((doc,index)=><button type="button" className="customer-document-viewer-item" key={`${doc.backendId||doc.name||'doc'}-${index}`} onClick={()=>openDocument(doc)}>
-            <span className="customer-document-viewer-icon"><FileText size={24}/></span>
-            <span className="customer-document-viewer-copy"><strong>Document {index+1}</strong><small>{doc.name||'Supporting document'}</small></span>
-            <ExternalLink size={16}/>
-          </button>)}
-        </div>
-      </div>
-    </div>}
+    {documentViewer && <CustomerDocumentViewer viewer={documentViewer} onClose={()=>setDocumentViewer(null)} />}
 
     {photoViewer && <div className="customer-photo-viewer" onMouseDown={(event)=>event.target===event.currentTarget&&setPhotoViewer(null)}>
       <button type="button" onClick={()=>setPhotoViewer(null)} title="Close"><X size={21}/></button>

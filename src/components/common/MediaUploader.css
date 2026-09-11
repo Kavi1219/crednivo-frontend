@@ -210,3 +210,25 @@
   .camera-permission-body{padding:14px}
   .camera-permission-actions{padding:12px 14px max(12px,env(safe-area-inset-bottom))}
 }
+
+
+/* V47 — profile photo and KYC document uploads are deliberately separate. */
+.media-uploader-sections{display:grid;gap:12px;width:100%;min-width:0}
+.media-uploader-sections.two-section{grid-template-columns:repeat(2,minmax(0,1fr))}
+.media-uploader-section{min-width:0;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--surface-soft)}
+.media-uploader-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.media-uploader-section-head>div{min-width:0}
+.media-uploader-section-head strong{display:block;color:var(--ink-950);font-size:11px}
+.media-uploader-section-head span{display:block;margin-top:2px;color:var(--ink-500);font-size:8px}
+.media-uploader-section-head>small{color:var(--ink-500);font-size:8px;font-weight:800}
+.media-uploader-section-body{display:flex;align-items:center;gap:13px;min-width:0}
+.compact-document-strip{min-height:74px;padding:0;margin:0 0 10px;background:transparent;border:0}
+.media-separate-action{min-height:36px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid rgba(20,119,237,.28);border-radius:10px;color:#1477ed;background:rgba(20,119,237,.07);font:inherit;font-size:9px;font-weight:800;cursor:pointer}
+.media-separate-action:hover{background:rgba(20,119,237,.12)}
+.media-separate-action:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:700px){
+  .media-uploader-sections.two-section{grid-template-columns:1fr}
+  .media-uploader-section{padding:11px}
+  .media-uploader-section-body{align-items:center}
+  .media-separate-action{min-height:34px;font-size:8.5px}
+}

@@ -6,6 +6,18 @@ import './MediaUploader.css';
 const MAX_PHOTO_BYTES = 12 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024;
 const MAX_DOCUMENTS = 4;
+const DOCUMENT_ACCEPT = 'image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf';
+
+function supportedDocumentFile(file) {
+  if (!file) return false;
+  const type = String(file.type || '').toLowerCase();
+  const name = String(file.name || '').toLowerCase();
+  return type === 'image/jpeg'
+    || type === 'image/png'
+    || type === 'application/pdf'
+    || /\.(jpe?g|png|pdf)$/i.test(name);
+}
+
 
 function readFile(file, done, onError, maxBytes, label) {
   if (!file) return;
@@ -168,6 +180,7 @@ export default function MediaUploader({
   onDocumentsChange,
   initialPickerMode = null,
   maxDocuments = MAX_DOCUMENTS,
+  mode = 'both',
 }) {
   const photoCameraRef = useRef(null);
   const documentCameraRef = useRef(null);
@@ -183,6 +196,9 @@ export default function MediaUploader({
   const [cameraOpening, setCameraOpening] = useState(false);
   const [sourceChooser, setSourceChooser] = useState(initialPickerMode);
   const [permissionHelp, setPermissionHelp] = useState(null);
+
+  const showPhoto = mode !== 'document';
+  const showDocuments = mode !== 'photo';
 
   const documentList = useMemo(() => {
     if (Array.isArray(documents)) return documents.filter(Boolean).slice(0, maxDocuments);
@@ -226,7 +242,11 @@ export default function MediaUploader({
     setMediaError('');
     const selected = Array.from(event.target.files || []);
     const remaining = Math.max(0, maxDocuments - documentList.length);
-    selected.slice(0, remaining).forEach((file) => {
+    const accepted = selected.filter(supportedDocumentFile);
+    if (accepted.length !== selected.length) {
+      setMediaError('Documents must be JPG, JPEG, PNG or PDF files.');
+    }
+    accepted.slice(0, remaining).forEach((file) => {
       readFile(
         file,
         addDocument,
@@ -243,8 +263,14 @@ export default function MediaUploader({
 
   const pickDocumentCamera = (event) => {
     setMediaError('');
+    const file = event.target.files?.[0];
+    if (file && !supportedDocumentFile(file)) {
+      setMediaError('Documents must be JPG, JPEG, PNG or PDF files.');
+      event.target.value = '';
+      return;
+    }
     readFile(
-      event.target.files?.[0],
+      file,
       addDocument,
       setMediaError,
       MAX_DOCUMENT_BYTES,
@@ -461,66 +487,86 @@ export default function MediaUploader({
       {cameraOpening && <div className="media-camera-opening"><Camera size={15}/><span>Opening camera...</span></div>}
       {mediaError && <div ref={errorRef} className="media-upload-error"><AlertTriangle size={15}/><span>{mediaError}</span></div>}
 
-      <div className="compact-media-strip">
-        <div className="compact-photo-wrap">
-          <button
-            type="button"
-            className={`compact-media-tile compact-photo-tile ${photo ? 'has-photo' : ''}`}
-            onClick={() => photo ? setViewerOpen(true) : setSourceChooser('photo')}
-            disabled={cameraOpening}
-            aria-busy={cameraOpening}
-            title={photo ? `View ${title} photo` : (cameraOpening ? 'Opening camera...' : `Take ${title} photo`)}
-          >
-            {photo
-              ? <ProtectedMediaImage src={photo} alt={`${title} profile`} fallback={<Camera size={27}/>} />
-              : <Camera size={27}/>
-            }
-            {photo && <span className="compact-photo-expand"><Maximize2 size={11}/></span>}
-          </button>
-
-          <button
-            type="button"
-            className="compact-camera-badge"
-            onClick={() => requestCamera('photo')}
-            disabled={cameraOpening}
-            aria-busy={cameraOpening}
-            title={cameraOpening ? 'Opening camera...' : (photo ? `Replace ${title} photo` : `Take ${title} photo`)}
-          >
-            <Camera size={14}/>
-          </button>
-        </div>
-
-        {documentList.map((item, index) => {
-          const localImage = imageLike(item) && /^(data:|blob:)/i.test(String(item?.data || ''));
-          const removable = !item?.backendId || String(item?.data || '').startsWith('data:');
-          return <div className="compact-document-wrap" key={`${item?.backendId || item?.name || 'document'}-${index}`}>
-            <button
-              type="button"
-              className="compact-media-tile compact-document-tile"
-              onClick={() => openProtectedFile(item)}
-              title={`View document ${index + 1}`}
-            >
-              {localImage ? <img src={item.data} alt={`Document ${index + 1}`} /> : <FileText size={24}/>} 
-              <span className="compact-document-number">{index + 1}</span>
+      <div className={`media-uploader-sections ${showPhoto && showDocuments ? 'two-section' : 'single-section'}`}>
+        {showPhoto && <section className="media-uploader-section media-photo-section">
+          <div className="media-uploader-section-head">
+            <div><strong>Profile Photo</strong><span>Customer/Jamin profile image</span></div>
+          </div>
+          <div className="media-uploader-section-body">
+            <div className="compact-photo-wrap">
+              <button
+                type="button"
+                className={`compact-media-tile compact-photo-tile ${photo ? 'has-photo' : ''}`}
+                onClick={() => photo ? setViewerOpen(true) : setSourceChooser('photo')}
+                disabled={cameraOpening}
+                aria-busy={cameraOpening}
+                title={photo ? `View ${title} photo` : (cameraOpening ? 'Opening camera...' : `Add ${title} profile photo`)}
+              >
+                {photo
+                  ? <ProtectedMediaImage src={photo} alt={`${title} profile`} fallback={<Camera size={27}/>} />
+                  : <Camera size={27}/>
+                }
+                {photo && <span className="compact-photo-expand"><Maximize2 size={11}/></span>}
+              </button>
+              <button
+                type="button"
+                className="compact-camera-badge"
+                onClick={() => requestCamera('photo')}
+                disabled={cameraOpening}
+                aria-busy={cameraOpening}
+                title={cameraOpening ? 'Opening camera...' : (photo ? `Replace ${title} photo` : `Take ${title} photo`)}
+              >
+                <Camera size={14}/>
+              </button>
+            </div>
+            <button type="button" className="media-separate-action" onClick={() => setSourceChooser('photo')} disabled={cameraOpening}>
+              <Camera size={16}/><span>{photo ? 'Change Profile Photo' : 'Upload Profile Photo'}</span>
             </button>
-            {removable && <button type="button" className="compact-remove" onClick={() => removeDocument(index)} title="Remove document"><X size={12}/></button>}
-          </div>;
-        })}
+          </div>
+        </section>}
 
-        {documentList.length < maxDocuments && <button
-          type="button"
-          className="compact-media-tile compact-add-tile"
-          onClick={() => setSourceChooser('document')}
-          title="Add document"
-        >
-          <Plus size={31}/>
-        </button>}
+        {showDocuments && <section className="media-uploader-section media-document-section">
+          <div className="media-uploader-section-head">
+            <div><strong>Documents</strong><span>JPG, PNG or PDF only</span></div>
+            <small>{documentList.length}/{maxDocuments}</small>
+          </div>
+          <div className="compact-media-strip compact-document-strip">
+            {documentList.map((item, index) => {
+              const localImage = imageLike(item) && /^(data:|blob:)/i.test(String(item?.data || ''));
+              const removable = !item?.backendId || String(item?.data || '').startsWith('data:');
+              return <div className="compact-document-wrap" key={`${item?.backendId || item?.name || 'document'}-${index}`}>
+                <button
+                  type="button"
+                  className="compact-media-tile compact-document-tile"
+                  onClick={() => openProtectedFile(item)}
+                  title={`View document ${index + 1}`}
+                >
+                  {localImage ? <img src={item.data} alt={`Document ${index + 1}`} /> : <FileText size={24}/>} 
+                  <span className="compact-document-number">{index + 1}</span>
+                </button>
+                {removable && <button type="button" className="compact-remove" onClick={() => removeDocument(index)} title="Remove document"><X size={12}/></button>}
+              </div>;
+            })}
+
+            {documentList.length < maxDocuments && <button
+              type="button"
+              className="compact-media-tile compact-add-tile"
+              onClick={() => setSourceChooser('document')}
+              title="Add document"
+            >
+              <Plus size={31}/>
+            </button>}
+          </div>
+          <button type="button" className="media-separate-action" onClick={() => setSourceChooser('document')} disabled={documentList.length >= maxDocuments}>
+            <FileText size={16}/><span>Upload Document</span>
+          </button>
+        </section>}
       </div>
 
       <input ref={photoCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickPhoto} />
-      <input ref={documentCameraRef} className="hidden-media-input" type="file" accept="image/*" capture="environment" onChange={pickDocumentCamera} />
+      <input ref={documentCameraRef} className="hidden-media-input" type="file" accept="image/jpeg,image/png" capture="environment" onChange={pickDocumentCamera} />
       <input ref={photoFileRef} className="hidden-media-input" type="file" accept="image/*" onChange={pickPhoto} />
-      <input ref={documentFileRef} className="hidden-media-input" type="file" multiple onChange={pickDocuments} />
+      <input ref={documentFileRef} className="hidden-media-input" type="file" accept={DOCUMENT_ACCEPT} multiple onChange={pickDocuments} />
 
       {sourceChooser && <div className="media-source-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setSourceChooser(null)}>
         <div className="media-source-modal" role="dialog" aria-modal="true" aria-label={sourceChooser === 'photo' ? 'Add profile photo' : 'Add document'}>

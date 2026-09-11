@@ -199,16 +199,6 @@ function asNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function dataUrlToBrowserFile(dataUrl, fileName = 'document') {
-  if (!String(dataUrl || '').startsWith('data:')) return null;
-  const [header, encoded] = String(dataUrl).split(',', 2);
-  if (!encoded) return null;
-  const mime = header.match(/^data:([^;]+)/)?.[1] || 'application/octet-stream';
-  const binary = atob(encoded);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return new File([bytes], fileName, { type: mime });
-}
 
 function mapBackendDocument(item) {
   return {
@@ -566,13 +556,9 @@ export function CrednivoProvider({ children }) {
   const uploadAdditionalCustomerDocument = async (customerId, type, document) => {
     if (!document?.data || !String(document.data).startsWith('data:')) return null;
 
-    // The document vault is the preferred storage for document 2..4. Agents that
-    // only have Customer Add/Edit can still use the customer document endpoint.
-    if (isOwner || hasPermission('documents.upload')) {
-      const file = dataUrlToBrowserFile(document.data, document.name || 'customer-document');
-      if (file) return uploadVaultDocument({ customerId, type, file });
-    }
-
+    // Customer/Jamin documents always use the customer-owned KYC endpoint.
+    // This keeps profile media independent from the removed Documents Vault UI
+    // and stores every KYC item as a real JPG/PNG/PDF file on the backend.
     return uploadCustomerDocument(customerId, type, document);
   };
 

@@ -170,13 +170,20 @@ export default function NewCustomer() {
       {step === 0 && <section className="form-card module-card onboarding-panel">
         <div className="form-section">
           <div className="form-section-head"><span className="form-section-icon"><UserRound size={19}/></span><div><h2>Customer Details</h2><p>Customer identity, profile photo and supporting document</p></div></div>
-          <MediaUploader
-            title="Customer"
-            photo={form.photo}
-            documents={form.customerDocuments}
-            onPhotoChange={(value) => change('photo', value)}
-            onDocumentsChange={(value) => setForm((current) => ({ ...current, customerDocuments: value, customerDocument: value[0] || null }))}
-          />
+          <div className="onboarding-media-grid">
+            <MediaUploader
+              mode="photo"
+              title="Customer"
+              photo={form.photo}
+              onPhotoChange={(value) => change('photo', value)}
+            />
+            <MediaUploader
+              mode="document"
+              title="Customer"
+              documents={form.customerDocuments}
+              onDocumentsChange={(value) => setForm((current) => ({ ...current, customerDocuments: value, customerDocument: value[0] || null }))}
+            />
+          </div>
           <div className="form-grid">
             <div className="form-field"><label>Name *</label><input value={form.name} onChange={(e)=>change('name',e.target.value)} placeholder="Customer full name"/></div>
             <div className="form-field"><label>Mobile *</label><div className="indian-mobile-input"><span>+91 -</span><input value={formatIndianMobileLocal(form.mobile)} onChange={(e)=>change('mobile',normalizeIndianMobile(e.target.value))} inputMode="numeric" autoComplete="tel" placeholder="98765 43210"/></div></div>
@@ -192,13 +199,20 @@ export default function NewCustomer() {
       {step === 1 && <section className="form-card module-card onboarding-panel">
         <div className="form-section">
           <div className="form-section-head"><span className="form-section-icon"><ShieldCheck size={19}/></span><div><h2>Jamin Details</h2><p>Guarantor profile linked to {customerId}</p></div></div>
-          <MediaUploader
-            title="Jamin"
-            photo={form.jaminPhoto}
-            documents={form.jaminDocuments}
-            onPhotoChange={(value) => change('jaminPhoto', value)}
-            onDocumentsChange={(value) => setForm((current) => ({ ...current, jaminDocuments: value, jaminDocument: value[0] || null }))}
-          />
+          <div className="onboarding-media-grid">
+            <MediaUploader
+              mode="photo"
+              title="Jamin"
+              photo={form.jaminPhoto}
+              onPhotoChange={(value) => change('jaminPhoto', value)}
+            />
+            <MediaUploader
+              mode="document"
+              title="Jamin"
+              documents={form.jaminDocuments}
+              onDocumentsChange={(value) => setForm((current) => ({ ...current, jaminDocuments: value, jaminDocument: value[0] || null }))}
+            />
+          </div>
           <div className="form-grid">
             <div className="form-field"><label>Name *</label><input value={form.jaminName} onChange={(e)=>change('jaminName',e.target.value)} placeholder="Jamin full name"/></div>
             <div className="form-field"><label>Mobile *</label><div className="indian-mobile-input"><span>+91 -</span><input value={formatIndianMobileLocal(form.jaminMobile)} onChange={(e)=>change('jaminMobile',normalizeIndianMobile(e.target.value))} inputMode="numeric" autoComplete="tel" placeholder="98765 43210"/></div></div>
