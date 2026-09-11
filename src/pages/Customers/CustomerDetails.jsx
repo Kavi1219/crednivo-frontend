@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { AlertTriangle, ArrowLeft, CalendarDays, Check, ExternalLink, FileText, Files, HandCoins, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
 import ModuleHeader from '../../components/common/ModuleHeader';
@@ -111,13 +111,27 @@ function DetailRow({ label, value }) {
   return <div><dt>{label}</dt><dd>{value || '—'}</dd></div>;
 }
 
+// V40: Customer profile Back returns to the exact page that opened it.
 export default function CustomerDetails() {
   const actionLocksRef = useRef(new Set());
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { customers, loans, collections, payments, updateLoan, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
+
+  const handleBack = () => {
+    // Behave like a real browser back action. This returns the user to the
+    // exact page they opened the customer from (Collections, Reports, Loans,
+    // Customers, etc.). If the profile was opened directly in a new tab,
+    // fall back to the Customers page instead of leaving CREDNIVO.
+    if (location.key && location.key !== 'default') {
+      navigate(-1);
+      return;
+    }
+    navigate('/customers');
+  };
   const [photoViewer, setPhotoViewer] = useState(null);
   const [documentViewer, setDocumentViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
@@ -873,7 +887,7 @@ export default function CustomerDetails() {
       title={customer.name}
       description={`${formatIndianMobile(customer.mobile)} · ${customer.work || customer.area || 'Customer'}`}
       actions={<>
-        <ActionButton tone="secondary" icon={ArrowLeft} onClick={()=>navigate('/customers')}>Customers</ActionButton>
+        <ActionButton tone="secondary" icon={ArrowLeft} onClick={handleBack}>Back</ActionButton>
         {hasPermission('loans.create') && <ActionButton icon={WalletCards} onClick={()=>navigate('/loans/create',{state:{customerId:id}})}>New Loan</ActionButton>}
       </>}
     />

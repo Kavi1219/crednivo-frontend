@@ -1,5 +1,5 @@
 import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
@@ -82,10 +82,11 @@ function isPrecloseMarker(value) {
   return marker === 'PRECLOSE' || marker === 'PRECLOSED';
 }
 
+// V40: Collection keeps tab/filter/search/scroll position when opening a customer profile.
 export default function Collection() {
   const { customers, collections, loans, payments, recordLoanPayment } = useCrednivo();
   const { hasPermission } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialView = (() => {
     const view = String(searchParams.get('view') || 'today').toLowerCase();
     if (view === 'overdue') return 'Overdue';
@@ -98,9 +99,18 @@ export default function Collection() {
     const allowed = ['All', 'Unpaid', 'Partial', 'Pending', 'Paid', 'Overdue'];
     return allowed.includes(requested) ? requested : 'All';
   })();
-  const [cycle, setCycle] = useState('All');
+  const initialCycle = (() => {
+    const requested = String(searchParams.get('cycle') || 'All').toLowerCase();
+    if (requested === 'daily') return 'Daily';
+    if (requested === 'weekly') return 'Weekly';
+    if (requested === 'monthly') return 'Monthly';
+    return 'All';
+  })();
+  const initialSearch = String(searchParams.get('q') || '');
+
+  const [cycle, setCycle] = useState(initialCycle);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [collectionView, setCollectionView] = useState(initialView);
   const [scheduleLoanId, setScheduleLoanId] = useState(null);
   const [paying, setPaying] = useState(null);
@@ -114,6 +124,79 @@ export default function Collection() {
   const [actionError, setActionError] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
   const paymentSubmitLockRef = useRef(false);
+
+  const updateCollectionUrl = (changes = {}) => {
+    const next = new URLSearchParams(searchParams);
+
+    Object.entries(changes).forEach(([key, value]) => {
+      const normalized = String(value ?? '').trim();
+      if (!normalized) next.delete(key);
+      else next.set(key, normalized);
+    });
+
+    setSearchParams(next, { replace: true });
+  };
+
+  const changeCollectionView = (name) => {
+    setCollectionView(name);
+    updateCollectionUrl({ view: name === 'Today' ? '' : name.toLowerCase() });
+  };
+
+  const changeCycle = (name) => {
+    setCycle(name);
+    updateCollectionUrl({ cycle: name === 'All' ? '' : name.toLowerCase() });
+  };
+
+  const changeStatus = (name) => {
+    setStatusFilter(name);
+    updateCollectionUrl({ status: name === 'All' ? '' : name });
+  };
+
+  const changeSearch = (value) => {
+    setSearch(value);
+    updateCollectionUrl({ q: value.trim() ? value : '' });
+  };
+
+  const resetCollectionFilters = () => {
+    setCycle('All');
+    setStatusFilter('All');
+    const next = new URLSearchParams(searchParams);
+    next.delete('cycle');
+    next.delete('status');
+    setSearchParams(next, { replace: true });
+  };
+
+  const saveCollectionReturnPosition = () => {
+    try {
+      sessionStorage.setItem('crednivo:collection-return', JSON.stringify({
+        url: `${window.location.pathname}${window.location.search}`,
+        scrollY: window.scrollY,
+      }));
+    } catch {
+      // Browsers can disable sessionStorage; navigation should still work.
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('crednivo:collection-return');
+      if (!raw) return;
+
+      const saved = JSON.parse(raw);
+      const currentUrl = `${window.location.pathname}${window.location.search}`;
+      if (saved?.url !== currentUrl) return;
+
+      sessionStorage.removeItem('crednivo:collection-return');
+      const scrollY = Math.max(0, Number(saved?.scrollY || 0));
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
+        });
+      });
+    } catch {
+      // Ignore malformed/blocked sessionStorage data.
+    }
+  }, []);
 
   const today = toInputDate();
 
@@ -546,7 +629,7 @@ export default function Collection() {
               role="tab"
               aria-selected={collectionView === name}
               className={`collection-view-tab ${collectionView === name ? 'active' : ''}`}
-              onClick={() => setCollectionView(name)}
+              onClick={() => changeCollectionView(name)}
             >
               <span>{name}</span>
               <b>{count}</b>
@@ -559,7 +642,7 @@ export default function Collection() {
             <Search size={16} />
             <input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => changeSearch(event.target.value)}
               placeholder="Search customer or loan..."
             />
           </label>
@@ -602,7 +685,7 @@ export default function Collection() {
                         type="button"
                         className={`filter-chip ${cycle === item ? 'active' : ''}`}
                         key={item}
-                        onClick={() => setCycle(item)}
+                        onClick={() => changeCycle(item)}
                       >
                         {item}
                       </button>
@@ -618,7 +701,7 @@ export default function Collection() {
                         type="button"
                         className={`filter-chip ${statusFilter === item ? 'active' : ''}`}
                         key={item}
-                        onClick={() => setStatusFilter(item)}
+                        onClick={() => changeStatus(item)}
                       >
                         {item}
                       </button>
@@ -630,7 +713,7 @@ export default function Collection() {
                   <button
                     type="button"
                     className="collection-filter-reset"
-                    onClick={() => { setCycle('All'); setStatusFilter('All'); }}
+                    onClick={resetCollectionFilters}
                   >
                     <RotateCcw size={14} />
                     Reset
@@ -683,7 +766,7 @@ export default function Collection() {
                     <td>
                       <div className="row-title">
                         <CustomerAvatar className="row-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
-                        <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId}</small></div>
+                        <div><strong onClickCapture={saveCollectionReturnPosition}><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId}</small></div>
                       </div>
                     </td>
                     <td>{item.loanId}</td>
@@ -767,7 +850,7 @@ export default function Collection() {
                 <div className="mobile-data-top">
                   <div className="row-title">
                     <CustomerAvatar className="row-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
-                    <div><strong><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.cycle}</small></div>
+                    <div><strong onClickCapture={saveCollectionReturnPosition}><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.cycle}</small></div>
                   </div>
                   <StatusBadge status={collectionView === 'Overdue' ? 'Overdue' : displayStatus} />
                 </div>
