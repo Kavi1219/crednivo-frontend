@@ -2152,7 +2152,13 @@ export default function Reports() {
                   <div>
                     <span>{item.cycle} Collection</span>
                     <strong>{formatCurrency(item.amount)}</strong>
-                    <small>{item.loanCount} active loan{item.loanCount === 1 ? '' : 's'} · per {cycleUnit}</small>
+                    <small>
+                      {item.customerCount} customer{item.customerCount === 1 ? '' : 's'}
+                      {' · '}
+                      {item.loanCount} active loan{item.loanCount === 1 ? '' : 's'}
+                      {' · '}
+                      per {cycleUnit}
+                    </small>
                   </div>
                 </button>
               );
