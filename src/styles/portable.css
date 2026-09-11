@@ -1,413 +1,958 @@
-/* =========================================================
-   CREDNIVO V39 — APP-WIDE PORTABLE / RESPONSIVE LAYOUT
-   Import once from main.jsx AFTER existing global/responsive CSS.
-   ========================================================= */
+/*
+=========================================================
+CREDNIVO — GLOBAL PORTABLE UI V39
+Mobile/tablet-only overrides for ALL authenticated pages.
 
-:root{
-  --cred-mobile-gap:10px;
-  --cred-mobile-radius:14px;
-  --cred-mobile-footer-space:96px;
+Purpose
+- Reduce long vertical pages on mobile.
+- Keep summary information in compact 2-column layouts.
+- Make headers/forms/tables/modals consistent.
+- Prevent the fixed bottom navigation from covering content.
+- Preserve the desktop UI.
+
+Load this file AFTER responsive.css in src/main.jsx.
+=========================================================
+*/
+
+@media (max-width: 1024px) {
+  /* Shared page rhythm */
+  .page-content{
+    min-width:0!important;
+  }
+
+  .module-page{
+    min-width:0!important;
+  }
+
+  .module-card{
+    min-width:0!important;
+  }
+
+  /* Tablet: prefer compact 2-column metric layouts */
+  :where(
+    .metric-strip,
+    .stats-grid,
+    .capital-metrics,
+    .capital-position-grid,
+    .expense-metric-strip,
+    .collection-metric-strip,
+    .report-grid,
+    .reports-kpi-grid,
+    .reports-overall-kpi-grid,
+    .reports-overall-secondary-grid,
+    .reports-overall-cycle-grid,
+    .reports-overall-activity-grid,
+    .reports-cycle-report-kpi-grid,
+    .reports-portfolio-summary-grid,
+    .savings-metrics,
+    .savings-summary-grid
+  ){
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
 }
 
-/* ---------- universal safety ---------- */
-html,body,#root{
-  max-width:100%;
-  min-height:100%;
-  overflow-x:hidden;
-}
-
-*,
-*::before,
-*::after{
-  box-sizing:border-box;
-}
-
-img,video,canvas,svg{
-  max-width:100%;
-}
-
-input,select,textarea,button{
-  max-width:100%;
-}
-
-/* Tables never push the whole page sideways */
-table{
-  max-width:100%;
-}
-
-.table-wrap,
-.table-wrapper,
-.responsive-table,
-.module-table-wrap,
-.reports-cycle-pending-table-wrap,
-.reports-overview-cycle-detail-table-wrap,
-.reports-activity-detail-table-wrap,
-.payment-table-wrap,
-.customer-table-wrap,
-.loan-table-wrap,
-.expense-table-wrap{
-  max-width:100%;
-  overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
-}
-
-/* =========================================================
-   PHONE / SMALL TABLET
-   ========================================================= */
-@media (max-width:767px){
+@media (max-width: 767px) {
+  :root{
+    --crednivo-mobile-gap:9px;
+    --crednivo-mobile-radius:12px;
+  }
 
   html{
-    font-size:15px;
+    -webkit-text-size-adjust:100%;
   }
 
   body{
     overflow-x:hidden;
   }
 
-  /* Main authenticated content */
-  main,
-  .main,
-  .main-content,
-  .app-main,
-  .content,
-  .page-content,
-  .workspace-content,
-  .layout-content{
-    width:100%!important;
-    max-width:100%!important;
+  /* =====================================================
+     APPLICATION SHELL
+     ===================================================== */
+
+  .main-shell{
+    margin-left:0!important;
     min-width:0!important;
   }
 
-  .module-page,
-  .page,
-  .page-shell,
-  .dashboard-page,
-  .customers-page,
-  .customer-details-page,
-  .loans-page,
-  .collection-page,
-  .payments-page,
-  .expenses-page,
-  .reports-page,
-  .capital-page,
-  .savings-page,
-  .agents-page,
-  .documents-page,
-  .settings-page,
-  .profile-page{
+  .page-content{
     width:100%!important;
     max-width:100%!important;
-    min-width:0!important;
-    padding-left:12px!important;
-    padding-right:12px!important;
-    padding-bottom:calc(var(--cred-mobile-footer-space) + env(safe-area-inset-bottom,0px))!important;
-    gap:var(--cred-mobile-gap)!important;
+    padding:10px 10px calc(var(--mobile-nav-height, 78px) + 28px + env(safe-area-inset-bottom, 0px))!important;
+    overflow-x:hidden!important;
   }
 
-  /* Compact common page headers */
-  .module-header,
-  .page-header,
-  .dashboard-titlebar,
-  .customer-page-header,
-  .section-header{
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:stretch!important;
+  .module-page{
+    width:100%!important;
+    max-width:100%!important;
+    gap:10px!important;
+  }
+
+  .module-card{
+    border-radius:12px!important;
+  }
+
+  /* =====================================================
+     HEADER / PAGE TITLE / ACTIONS
+     ===================================================== */
+
+  .app-header{
+    min-height:66px!important;
+    padding:8px 10px!important;
+  }
+
+  .mobile-header-brand{
+    gap:7px!important;
+  }
+
+  .mobile-header-brand-mark{
+    width:34px!important;
+    height:34px!important;
+    flex-basis:34px!important;
+  }
+
+  .mobile-header-brand-copy strong,
+  .mobile-header-brand-copy b{
+    font-size:16px!important;
+  }
+
+  .mobile-header-brand-copy small{
+    font-size:8px!important;
+  }
+
+  .mobile-header-actions{
+    gap:6px!important;
+  }
+
+  .mobile-avatar{
+    width:36px!important;
+    height:36px!important;
+  }
+
+  .module-header{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    align-items:start!important;
     gap:8px!important;
-    margin-bottom:4px!important;
   }
 
-  .module-header-copy,
-  .module-header>div:first-child,
-  .page-header>div:first-child{
+  .module-header>div:first-child{
     min-width:0!important;
   }
 
-  .module-header h1,
-  .page-header h1,
-  .dashboard-titlebar h1,
-  .module-page h1{
-    font-size:22px!important;
+  .module-eyebrow{
+    font-size:8px!important;
+    letter-spacing:.1em!important;
+  }
+
+  .module-header h1{
+    margin-top:3px!important;
+    font-size:19px!important;
     line-height:1.15!important;
-    margin:0!important;
+    letter-spacing:-.025em!important;
   }
 
-  .module-header p,
-  .page-header p,
-  .dashboard-titlebar p{
-    font-size:11px!important;
-    line-height:1.45!important;
-    margin-top:4px!important;
+  .module-header p{
+    display:-webkit-box!important;
+    max-width:none!important;
+    margin-top:5px!important;
+    overflow:hidden!important;
+    -webkit-box-orient:vertical!important;
+    -webkit-line-clamp:2!important;
+    color:var(--ink-500)!important;
+    font-size:10px!important;
+    line-height:1.4!important;
   }
 
-  .eyebrow,
-  .module-eyebrow,
-  .section-eyebrow{
-    font-size:9px!important;
-    letter-spacing:.07em!important;
-  }
-
-  /* Header action buttons: compact but tappable */
-  .module-header-actions,
-  .page-header-actions,
-  .dashboard-title-actions,
-  .header-actions{
+  .module-header-actions{
     width:100%!important;
+    display:flex!important;
+    align-items:center!important;
+    gap:7px!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    justify-content:flex-start!important;
+    scrollbar-width:none!important;
+  }
+
+  .module-header-actions::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  .module-header-actions>*{
+    flex:0 1 auto!important;
+    min-width:0!important;
+  }
+
+  .module-header-actions .action-button{
+    min-height:36px!important;
+    padding:0 10px!important;
+    white-space:nowrap!important;
+    font-size:9px!important;
+  }
+
+  /* Reports: Print + Download stay side by side and compact */
+  .phase5-reports .module-header-actions{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    overflow:visible!important;
+  }
+
+  .phase5-reports .module-header-actions .action-button{
+    width:100%!important;
+  }
+
+  /* =====================================================
+     GLOBAL TOOLBARS / SEARCH / FILTERS
+     ===================================================== */
+
+  .module-toolbar{
+    padding:9px!important;
+    gap:7px!important;
+    align-items:stretch!important;
+    flex-direction:column!important;
+  }
+
+  .module-toolbar-group{
+    width:100%!important;
+    gap:6px!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    scrollbar-width:none!important;
+  }
+
+  .module-toolbar-group::-webkit-scrollbar{
+    display:none!important;
+  }
+
+  .module-search{
+    width:100%!important;
+    min-width:0!important;
+    height:38px!important;
+    border-radius:9px!important;
+  }
+
+  .filter-chip{
+    min-height:33px!important;
+    padding:0 10px!important;
+    flex:0 0 auto!important;
+    font-size:9px!important;
+  }
+
+  /* =====================================================
+     SUMMARY / METRIC CARDS — GLOBAL
+     ===================================================== */
+
+  :where(
+    .metric-strip,
+    .stats-grid,
+    .capital-metrics,
+    .capital-position-grid,
+    .expense-metric-strip,
+    .collection-metric-strip,
+    .report-grid,
+    .reports-kpi-grid,
+    .reports-overall-kpi-grid,
+    .reports-overall-secondary-grid,
+    .reports-overall-cycle-grid,
+    .reports-overall-activity-grid,
+    .reports-overall-activity-grid.with-savings,
+    .reports-cycle-report-kpi-grid,
+    .savings-metrics,
+    .savings-summary-grid
+  ){
     display:grid!important;
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
     gap:8px!important;
   }
 
-  .module-header-actions>button,
-  .module-header-actions>a,
-  .page-header-actions>button,
-  .page-header-actions>a,
-  .header-actions>button,
-  .header-actions>a{
+  :where(
+    .mini-metric,
+    .stat-card,
+    .capital-metric,
+    .report-metric,
+    .reports-kpi,
+    .reports-overall-kpi,
+    .reports-overall-mini-card,
+    .reports-overall-cycle-card,
+    .reports-overall-activity-card
+  ){
     min-width:0!important;
-    min-height:40px!important;
-    padding:0 10px!important;
-    font-size:11px!important;
+    min-height:72px!important;
+    padding:10px!important;
+    gap:8px!important;
+    border-radius:12px!important;
   }
 
-  /* Common cards / panels */
-  .card,
-  .panel,
-  .section-card,
-  .module-card,
-  .summary-card,
-  .metric-card,
-  .dashboard-card,
-  .profile-section,
-  .loan-slot-card,
-  .customer-card,
-  .expense-card{
-    border-radius:var(--cred-mobile-radius)!important;
+  :where(
+    .mini-metric-icon,
+    .reports-kpi-icon,
+    .reports-overall-kpi-icon,
+    .reports-overall-cycle-icon,
+    .reports-overall-activity-icon
+  ){
+    width:32px!important;
+    height:32px!important;
+    flex:0 0 32px!important;
+    border-radius:9px!important;
   }
 
-  /* Most summary grids should not become one extremely long column */
-  .cards,
-  .summary-grid,
-  .metric-grid,
-  .dashboard-summary-cards,
-  .reports-overall-kpi-grid,
-  .reports-overall-secondary-grid,
-  .reports-overall-cycle-grid,
-  .reports-overall-activity-grid,
-  .reports-cycle-report-kpi-grid{
+  :where(
+    .mini-metric-icon,
+    .reports-kpi-icon,
+    .reports-overall-kpi-icon,
+    .reports-overall-cycle-icon,
+    .reports-overall-activity-icon
+  ) svg{
+    width:17px!important;
+    height:17px!important;
+  }
+
+  :where(
+    .mini-metric,
+    .stat-card,
+    .capital-metric,
+    .report-metric,
+    .reports-kpi,
+    .reports-overall-kpi,
+    .reports-overall-mini-card,
+    .reports-overall-cycle-card,
+    .reports-overall-activity-card
+  ) strong{
+    min-width:0!important;
+    font-size:clamp(12px,3.7vw,15px)!important;
+    line-height:1.12!important;
+    overflow-wrap:anywhere!important;
+  }
+
+  :where(
+    .mini-metric,
+    .stat-card,
+    .capital-metric,
+    .report-metric,
+    .reports-kpi,
+    .reports-overall-kpi,
+    .reports-overall-mini-card,
+    .reports-overall-cycle-card,
+    .reports-overall-activity-card
+  ) small{
+    font-size:7px!important;
+    line-height:1.3!important;
+  }
+
+  /* Avoid third card stretching to a huge full-width tile */
+  :where(
+    .reports-cycle-report-kpi-grid,
+    .reports-overall-kpi-grid,
+    .reports-overall-secondary-grid,
+    .reports-overall-cycle-grid,
+    .reports-overall-activity-grid,
+    .reports-overall-activity-grid.with-savings
+  )>*:last-child:nth-child(odd){
+    grid-column:auto!important;
+  }
+
+  /* =====================================================
+     REPORTS — specifically shorten the long mobile page
+     ===================================================== */
+
+  .phase5-reports{
+    gap:10px!important;
+  }
+
+  .reports-view-tabs{
+    width:100%!important;
     display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:3px!important;
+    padding:3px!important;
+    border-radius:12px!important;
+  }
+
+  .reports-view-tabs button{
+    min-width:0!important;
+    min-height:38px!important;
+    padding:0 5px!important;
+    justify-content:center!important;
+    gap:4px!important;
+    font-size:9px!important;
+  }
+
+  .reports-view-tabs button svg{
+    width:15px!important;
+    height:15px!important;
+  }
+
+  .reports-filter-card{
+    padding:8px!important;
+    border-radius:12px!important;
+  }
+
+  .reports-date-range{
+    width:100%!important;
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+    gap:5px!important;
+  }
+
+  .reports-date-field{
+    min-width:0!important;
+    width:100%!important;
+    height:36px!important;
+  }
+
+  .reports-date-display{
+    height:36px!important;
+    min-width:0!important;
+    padding:0 7px!important;
+    font-size:9px!important;
+  }
+
+  .reports-cycle-performance-page{
+    gap:9px!important;
+    padding-bottom:0!important;
+  }
+
+  .reports-cycle-performance-head{
+    gap:2px!important;
+  }
+
+  .reports-cycle-performance-head>div>strong{
+    font-size:17px!important;
+  }
+
+  .reports-cycle-performance-head>small{
+    font-size:7.5px!important;
+  }
+
+  .reports-cycle-report-kpi-grid{
     grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi{
+    min-height:70px!important;
+    padding:9px!important;
+  }
+
+  .reports-cycle-report-kpi-grid .reports-kpi:last-child:nth-child(odd){
+    grid-column:auto!important;
+  }
+
+  .reports-cycle-customer-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+
+  /* Hide low-value helper copy on tiny metric cards */
+  .reports-cycle-report-kpi-grid .reports-kpi>div>small{
+    display:none!important;
+  }
+
+  .reports-cycle-performance-chart-card{
+    padding:10px!important;
+    border-radius:12px!important;
+  }
+
+  .reports-loan-pie-layout{
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:108px minmax(0,1fr)!important;
+    align-items:center!important;
+    justify-content:stretch!important;
+    gap:10px!important;
+    padding:2px 0!important;
+  }
+
+  .reports-loan-pie{
+    width:108px!important;
+    height:108px!important;
+    flex-basis:108px!important;
+    margin:auto!important;
+  }
+
+  .reports-loan-pie-legend{
+    width:100%!important;
+    min-width:0!important;
+    gap:6px!important;
+  }
+
+  .reports-loan-pie-legend>div{
+    padding:8px!important;
+    gap:7px!important;
+    border-radius:9px!important;
+  }
+
+  .reports-loan-pie-legend>div>div{
+    gap:5px!important;
+  }
+
+  .reports-loan-pie-legend strong{
+    font-size:12px!important;
+  }
+
+  .reports-cycle-pending-head{
+    padding:10px!important;
+    gap:7px!important;
+  }
+
+  .reports-cycle-section-head>div>strong{
+    font-size:12px!important;
+  }
+
+  .reports-cycle-section-head small{
+    font-size:7px!important;
+  }
+
+  .reports-risk-filter{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    width:100%!important;
+    gap:3px!important;
+    padding:3px!important;
+    overflow-x:auto!important;
+  }
+
+  .reports-risk-filter button{
+    flex:1 0 auto!important;
+    min-height:30px!important;
+    padding:0 7px!important;
+    font-size:7px!important;
+  }
+
+  .reports-cycle-pending-mobile{
+    gap:6px!important;
+    padding:7px!important;
+  }
+
+  .reports-cycle-pending-mobile-card{
+    padding:9px!important;
+    gap:7px!important;
+    border-radius:10px!important;
+  }
+
+  .reports-cycle-pending-mobile-grid{
+    gap:5px!important;
+    padding-top:6px!important;
+  }
+
+  .reports-overall-report,
+  .reports-portfolio-table-block{
     gap:9px!important;
   }
 
-  .cards>*,
-  .summary-grid>*,
-  .metric-grid>*,
-  .dashboard-summary-cards>*,
-  .reports-overall-kpi-grid>*,
-  .reports-overall-secondary-grid>*,
-  .reports-overall-cycle-grid>*,
-  .reports-overall-activity-grid>*,
-  .reports-cycle-report-kpi-grid>*{
-    min-width:0!important;
+  .reports-overall-section-heading{
+    margin-top:0!important;
+    gap:2px!important;
   }
 
-  /* Make cards visually portable */
-  .metric-card,
-  .summary-card,
-  .dashboard-card,
-  .reports-kpi,
-  .reports-overall-kpi,
-  .reports-overall-mini-card,
-  .reports-overall-cycle-card,
-  .reports-overall-activity-card{
-    min-height:82px!important;
-    padding:11px!important;
+  /* =====================================================
+     DASHBOARD
+     ===================================================== */
+
+  .dashboard-page{
+    gap:10px!important;
   }
 
-  /* Forms */
-  .form-grid,
-  .fields-grid,
-  .profile-info-grid,
-  .loan-form-grid,
-  .customer-form-grid,
-  .jamin-form-grid,
-  .expense-form-grid,
-  .settings-grid{
-    display:grid!important;
+  .dashboard-toolbar{
+    min-height:0!important;
+  }
+
+  .stats-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  .dashboard-middle{
     grid-template-columns:1fr!important;
     gap:10px!important;
   }
 
-  input,
-  select,
-  textarea{
-    min-height:40px;
-    font-size:16px!important; /* avoids iOS zoom */
+  /* =====================================================
+     CUSTOMERS / CUSTOMER DETAILS / LOANS
+     ===================================================== */
+
+  .customer-hero{
+    padding:11px!important;
+    border-radius:12px!important;
   }
 
-  textarea{
-    min-height:90px;
+  .customer-big-avatar{
+    width:58px!important;
+    height:58px!important;
   }
 
-  /* Tabs stay compact and horizontally usable */
-  .tabs,
-  .tab-list,
-  .module-tabs,
-  .reports-view-tabs,
-  .customer-loan-tabs,
-  .collection-tabs{
-    max-width:100%!important;
-    overflow-x:auto!important;
-    overscroll-behavior-inline:contain;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
+  .customer-outstanding{
+    margin-top:8px!important;
+    padding:9px 10px!important;
   }
 
-  .tabs::-webkit-scrollbar,
-  .tab-list::-webkit-scrollbar,
-  .module-tabs::-webkit-scrollbar,
-  .reports-view-tabs::-webkit-scrollbar,
-  .customer-loan-tabs::-webkit-scrollbar,
-  .collection-tabs::-webkit-scrollbar{
-    display:none;
+  .detail-grid{
+    gap:8px!important;
   }
 
-  /* Report-specific fix from screenshot: 2 cards instead of huge single-column cards */
-  .reports-cycle-report-kpi-grid{
-    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  .detail-card{
+    padding:11px!important;
+    border-radius:12px!important;
   }
 
-  .reports-cycle-report-kpi-grid .reports-kpi{
-    min-height:82px!important;
+  .detail-card dl{
+    margin-top:8px!important;
+  }
+
+  .detail-card dl div{
+    padding:7px 0!important;
+  }
+
+  .detail-section-head{
     padding:10px!important;
   }
 
-  .reports-cycle-report-kpi-grid .reports-kpi:last-child:nth-child(odd){
-    grid-column:1 / -1;
+  .customer-loan-mobile-list,
+  .customer-payment-mobile-list{
+    gap:7px!important;
+    padding:0 7px 7px!important;
   }
 
-  .reports-cycle-performance-page{
-    gap:10px!important;
-  }
-
-  /* Keep fixed mobile footer from hiding last content */
-  .mobile-bottom-nav,
-  .mobile-footer,
-  .bottom-nav,
-  .app-mobile-footer{
-    padding-bottom:max(8px,env(safe-area-inset-bottom,0px));
-  }
-
-  /* Modals / drawers */
-  .modal-backdrop,
-  .popup-backdrop,
-  .dialog-backdrop{
+  .customer-loan-mobile-card,
+  .customer-payment-mobile-card{
     padding:10px!important;
+    border-radius:11px!important;
   }
 
-  .modal,
-  .popup,
-  .dialog,
-  .drawer-panel{
-    max-width:100%!important;
+  .customer-loan-mobile-amount{
+    margin:8px 0!important;
+    padding:8px 9px!important;
   }
 
-  /* Global back button */
-  .crednivo-global-back{
-    position:fixed;
-    z-index:8500;
-    left:12px;
-    bottom:calc(82px + env(safe-area-inset-bottom,0px));
-    width:42px;
-    height:42px;
-    padding:0;
-    display:grid;
-    place-items:center;
-    border:1px solid rgba(20,119,242,.18);
-    border-radius:50%;
-    background:rgba(255,255,255,.96);
-    color:#126de8;
-    box-shadow:0 8px 24px rgba(20,50,90,.18);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    cursor:pointer;
-  }
-
-  .crednivo-global-back svg{
-    width:19px;
-    height:19px;
-  }
-
-  .crednivo-global-back:active{
-    transform:scale(.95);
-  }
-}
-
-/* Very narrow phones */
-@media (max-width:420px){
-  .module-page,
-  .page,
-  .dashboard-page,
-  .customer-details-page,
-  .reports-page{
-    padding-left:9px!important;
-    padding-right:9px!important;
-  }
-
-  .module-header h1,
-  .page-header h1,
-  .dashboard-titlebar h1,
-  .module-page h1{
-    font-size:20px!important;
-  }
-
-  .cards,
-  .summary-grid,
-  .metric-grid,
-  .dashboard-summary-cards,
-  .reports-overall-kpi-grid,
-  .reports-overall-secondary-grid,
-  .reports-overall-cycle-grid,
-  .reports-overall-activity-grid,
-  .reports-cycle-report-kpi-grid{
+  .customer-selector-grid{
+    grid-template-columns:1fr!important;
     gap:7px!important;
   }
 
-  .metric-card,
-  .summary-card,
-  .dashboard-card,
-  .reports-kpi,
-  .reports-overall-kpi,
-  .reports-overall-mini-card,
-  .reports-overall-cycle-card,
-  .reports-overall-activity-card{
+  .selected-customer-preview{
+    padding:10px!important;
+  }
+
+  /* =====================================================
+     COLLECTION / PAYMENTS / EXPENSES / CAPITAL
+     ===================================================== */
+
+  .collection-toolbar,
+  .payment-date-toolbar{
     padding:9px!important;
+    gap:7px!important;
+  }
+
+  .collection-metric-strip,
+  .expense-metric-strip,
+  .capital-metrics,
+  .capital-position-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  .payment-history-head{
+    padding:10px!important;
+    gap:8px!important;
+  }
+
+  .payment-date-field{
+    min-height:38px!important;
+    height:40px!important;
+  }
+
+  .expense-form,
+  .form-card{
+    padding:11px!important;
+  }
+
+  /* =====================================================
+     AGENTS / DOCUMENTS / SETTINGS / TODAY REPORT / SAVINGS
+     ===================================================== */
+
+  .agent-grid,
+  .document-grid{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+    padding:7px!important;
+  }
+
+  .settings-card{
+    padding:11px!important;
+  }
+
+  .settings-section+.settings-section{
+    margin-top:15px!important;
+    padding-top:15px!important;
+  }
+
+  .settings-section-head{
+    margin-bottom:10px!important;
+  }
+
+  .settings-option{
+    min-height:64px!important;
+    padding:9px!important;
+    border-radius:11px!important;
+  }
+
+  .theme-option-grid,
+  .language-option-grid{
+    grid-template-columns:1fr!important;
+    gap:7px!important;
+  }
+
+  .report-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px!important;
+  }
+
+  .report-metric{
+    min-height:72px!important;
+    padding:10px!important;
+    gap:5px!important;
+  }
+
+  .report-download-card{
+    padding:11px!important;
+    gap:9px!important;
+  }
+
+  .savings-page,
+  .capital-page,
+  .expenses-page,
+  .payments-page,
+  .loans-page,
+  .customers-page,
+  .collection-page,
+  .agents-page,
+  .documents-page,
+  .settings-page,
+  .today-report-page{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+
+  /* =====================================================
+     FORMS
+     ===================================================== */
+
+  .form-card{
+    border-radius:12px!important;
+  }
+
+  .form-section+.form-section{
+    margin-top:13px!important;
+    padding-top:13px!important;
+  }
+
+  .form-section-head{
+    margin-bottom:9px!important;
+    gap:8px!important;
+  }
+
+  .form-section-icon{
+    width:32px!important;
+    height:32px!important;
+  }
+
+  .form-grid,
+  .document-form-grid{
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+  }
+
+  .form-field.span-2,
+  .form-field.full,
+  .document-file-field{
+    grid-column:auto!important;
+  }
+
+  .form-field input,
+  .form-field select{
+    min-height:39px!important;
+  }
+
+  .form-field textarea{
+    min-height:70px!important;
+  }
+
+  .toggle-row{
+    min-height:42px!important;
+    padding:7px 10px!important;
+  }
+
+  /* =====================================================
+     TABLES / MOBILE LISTS
+     ===================================================== */
+
+  .module-table-wrap,
+  .customer-detail-desktop-table,
+  .reports-cycle-pending-table-wrap,
+  .reports-portfolio-table-wrap,
+  .reports-cycle-status-table-wrap,
+  .reports-overview-cycle-detail-table-wrap{
+    max-width:100%!important;
+    overflow-x:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+
+  .mobile-data-list{
+    gap:7px!important;
+    padding:7px!important;
+  }
+
+  .mobile-data-card{
+    padding:10px!important;
+    border-radius:11px!important;
+  }
+
+  .mobile-data-meta{
+    gap:7px!important;
+    margin-top:8px!important;
+    padding-top:7px!important;
+  }
+
+  /* =====================================================
+     MODALS / POPUPS — portable bottom sheets
+     ===================================================== */
+
+  :where(
+    .collection-modal-backdrop,
+    .capital-modal-backdrop,
+    .agent-modal-backdrop,
+    .document-modal-backdrop,
+    .customer-delete-backdrop,
+    .customer-loan-pay-backdrop,
+    .media-source-backdrop,
+    .camera-permission-backdrop,
+    .reports-download-backdrop
+  ){
+    align-items:flex-end!important;
+    padding:0!important;
+  }
+
+  :where(
+    .collection-modal,
+    .capital-modal,
+    .agent-modal,
+    .document-modal,
+    .customer-delete-modal,
+    .customer-loan-pay-modal,
+    .media-source-modal,
+    .camera-permission-modal,
+    .reports-download-dialog
+  ){
+    width:100%!important;
+    max-width:none!important;
+    max-height:min(92dvh, 92vh)!important;
+    margin:0!important;
+    overflow:auto!important;
+    border-radius:17px 17px 0 0!important;
+    padding-bottom:max(14px, env(safe-area-inset-bottom, 0px))!important;
+  }
+
+  /* =====================================================
+     MOBILE BOTTOM NAV — smaller and less obstructive
+     ===================================================== */
+
+  .mobile-bottom-nav{
+    left:8px!important;
+    right:8px!important;
+    bottom:max(6px, env(safe-area-inset-bottom))!important;
+    height:70px!important;
+    padding:5px 3px!important;
+    border-radius:18px!important;
+  }
+
+  .mobile-nav-item,
+  .mobile-nav-primary{
+    height:50px!important;
+    gap:2px!important;
+    font-size:8px!important;
+  }
+
+  .mobile-nav-primary{
+    margin-top:-21px!important;
+  }
+
+  .primary-icon{
+    width:50px!important;
+    height:50px!important;
+    border-width:4px!important;
+    border-radius:16px!important;
   }
 }
 
-/* Desktop/tablet back button */
-@media (min-width:768px){
-  .crednivo-global-back{
-    position:fixed;
-    z-index:8500;
-    left:18px;
-    top:92px;
-    width:40px;
-    height:40px;
-    padding:0;
-    display:grid;
-    place-items:center;
-    border:1px solid rgba(20,119,242,.15);
-    border-radius:10px;
-    background:#fff;
-    color:#126de8;
-    box-shadow:0 5px 16px rgba(20,50,90,.12);
-    cursor:pointer;
+/* Very narrow phones: preserve two-column summaries, but tighten text. */
+@media (max-width: 390px) {
+  .page-content{
+    padding-left:8px!important;
+    padding-right:8px!important;
   }
 
-  .crednivo-global-back svg{
-    width:18px;
-    height:18px;
+  :where(
+    .metric-strip,
+    .stats-grid,
+    .capital-metrics,
+    .capital-position-grid,
+    .expense-metric-strip,
+    .collection-metric-strip,
+    .report-grid,
+    .reports-kpi-grid,
+    .reports-overall-kpi-grid,
+    .reports-overall-secondary-grid,
+    .reports-overall-cycle-grid,
+    .reports-overall-activity-grid,
+    .reports-overall-activity-grid.with-savings,
+    .reports-cycle-report-kpi-grid,
+    .savings-metrics,
+    .savings-summary-grid
+  ){
+    gap:6px!important;
+  }
+
+  :where(
+    .mini-metric,
+    .stat-card,
+    .capital-metric,
+    .report-metric,
+    .reports-kpi,
+    .reports-overall-kpi,
+    .reports-overall-mini-card,
+    .reports-overall-cycle-card,
+    .reports-overall-activity-card
+  ){
+    padding:8px!important;
+    gap:6px!important;
+  }
+
+  .reports-loan-pie-layout{
+    grid-template-columns:96px minmax(0,1fr)!important;
+  }
+
+  .reports-loan-pie{
+    width:96px!important;
+    height:96px!important;
+    flex-basis:96px!important;
+  }
+
+  .reports-loan-pie-legend>div{
+    padding:6px!important;
+  }
+}
+
+/* Landscape phones / small tablets */
+@media (max-width: 900px) and (orientation: landscape) {
+  .page-content{
+    padding-bottom:84px!important;
+  }
+
+  .module-page{
+    gap:8px!important;
+  }
+
+  .mobile-bottom-nav{
+    height:62px!important;
   }
 }

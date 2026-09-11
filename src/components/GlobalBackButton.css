@@ -1,0 +1,40 @@
+.crednivo-global-back-row{
+  width:100%;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  margin:0 0 6px;
+}
+.crednivo-global-back{
+  min-height:36px;
+  padding:0 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--ink-700);
+  background:var(--surface);
+  box-shadow:var(--shadow-sm);
+  font:inherit;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+}
+.crednivo-global-back:hover{
+  color:var(--blue-600);
+  border-color:#bcd5f8;
+  background:var(--blue-100);
+}
+@media(max-width:767px){
+  .crednivo-global-back-row{margin-bottom:2px}
+  .crednivo-global-back{
+    min-height:34px;
+    padding:0 10px;
+    border-radius:9px;
+    font-size:9px;
+    box-shadow:none;
+  }
+  .crednivo-global-back svg{width:16px;height:16px}
+}
