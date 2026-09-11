@@ -864,6 +864,317 @@ export default function Reports() {
     savingsDetailRows,
   ]);
 
+  const overviewBankStatement = useMemo(() => {
+    const statementRows = [];
+
+    const pushStatementRow = ({
+      date,
+      particulars,
+      reference = '—',
+      credit = 0,
+      debit = 0,
+      sourceOrder = 0,
+    }) => {
+      const dateKey = String(date || '').slice(0, 10);
+      const creditAmount = Math.max(0, numberValue(credit));
+      const debitAmount = Math.max(0, numberValue(debit));
+
+      if (!dateKey || (creditAmount <= 0 && debitAmount <= 0)) return;
+
+      statementRows.push({
+        key: `${dateKey}-${reference}-${particulars}-${statementRows.length}`,
+        date: dateKey,
+        particulars: particulars || 'Transaction',
+        reference: reference || '—',
+        credit: creditAmount,
+        debit: debitAmount,
+        sourceOrder,
+      });
+    };
+
+    filteredPayments.forEach((item, paymentIndex) => {
+      const rawType = String(item.type || '').trim();
+      const type = rawType.toLowerCase().replace(/[_-]+/g, ' ');
+      const direction = String(item.direction || '').toLowerCase();
+      const note = String(item.note || '').toLowerCase();
+      const reference = String(
+        item.referenceId
+          || item.reference
+          || item.loanId
+          || item.id
+          || '—',
+      );
+      const referenceLower = reference.toLowerCase();
+      const customerName = item.customerName || item.name || '';
+      const date = item.date || item.paymentDate || item.createdAt || '';
+      const amount = Math.max(0, numberValue(item.amount));
+      const fineAmount = Math.max(0, numberValue(item.fineAmount));
+
+      const isDocumentCharge = direction === 'in'
+        && (
+          type.includes('document charge')
+          || note.includes('document charge')
+          || referenceLower.endsWith('-doc')
+        );
+
+      if (isDocumentCharge) {
+        pushStatementRow({
+          date,
+          particulars: customerName
+            ? `Document Charge - ${customerName}`
+            : 'Document Charge',
+          reference,
+          credit: amount,
+          sourceOrder: paymentIndex,
+        });
+        return;
+      }
+
+      if (direction === 'in' && type === 'collection') {
+        const hasCollectionAmount = item.collectionAmount !== null
+          && item.collectionAmount !== undefined
+          && item.collectionAmount !== '';
+
+        // Some payment payloads store the fine inside the total amount.
+        // Prefer collectionAmount when available; otherwise remove fine from
+        // the gross amount so the fine is not counted twice.
+        const collectionAmount = Math.max(
+          0,
+          hasCollectionAmount
+            ? numberValue(item.collectionAmount)
+            : amount - fineAmount,
+        );
+
+        if (collectionAmount > 0) {
+          pushStatementRow({
+            date,
+            particulars: customerName
+              ? `Collection - ${customerName}`
+              : 'Collection',
+            reference: item.loanId || reference,
+            credit: collectionAmount,
+            sourceOrder: paymentIndex,
+          });
+        }
+
+        if (fineAmount > 0) {
+          pushStatementRow({
+            date,
+            particulars: customerName
+              ? `Fine Income - ${customerName}`
+              : 'Fine Income',
+            reference: item.loanId || reference,
+            credit: fineAmount,
+            sourceOrder: paymentIndex + 0.1,
+          });
+        }
+        return;
+      }
+
+      if (direction === 'in') {
+        const isFineOnly = type.includes('fine') || fineAmount > 0;
+        pushStatementRow({
+          date,
+          particulars: isFineOnly
+            ? (customerName ? `Fine Income - ${customerName}` : 'Fine Income')
+            : (customerName ? `${rawType || 'Income'} - ${customerName}` : rawType || 'Income'),
+          reference: item.loanId || reference,
+          credit: isFineOnly && fineAmount > 0 ? fineAmount : amount,
+          sourceOrder: paymentIndex,
+        });
+        return;
+      }
+
+      if (direction === 'out') {
+        const isLoan = type === 'new loan' || type.includes('loan given');
+        pushStatementRow({
+          date,
+          particulars: isLoan
+            ? (customerName ? `Loan Disbursement - ${customerName}` : 'Loan Disbursement')
+            : rawType || 'Payment Out',
+          reference: item.loanId || reference,
+          debit: amount,
+          sourceOrder: paymentIndex,
+        });
+      }
+    });
+
+    filteredExpenses.forEach((item, expenseIndex) => {
+      pushStatementRow({
+        date: item.date || item.expenseDate || item.createdAt || '',
+        particulars: item.description
+          || item.purpose
+          || item.category
+          || item.expenseType
+          || 'Expense',
+        reference: item.referenceId || item.id || '—',
+        debit: item.amount,
+        sourceOrder: 100000 + expenseIndex,
+      });
+    });
+
+    if (isOwner) {
+      overviewSavingsEntries.forEach((item, savingIndex) => {
+        pushStatementRow({
+          date: item.date || item.createdAt || '',
+          particulars: item.note || item.description || item.purpose || 'Savings',
+          reference: item.referenceId || item.id || '—',
+          debit: item.amount,
+          sourceOrder: 200000 + savingIndex,
+        });
+      });
+    }
+
+    statementRows.sort((a, b) => {
+      const byDate = String(a.date).localeCompare(String(b.date));
+      if (byDate !== 0) return byDate;
+      return numberValue(a.sourceOrder) - numberValue(b.sourceOrder);
+    });
+
+    const totalCredit = statementRows.reduce((sum, row) => sum + row.credit, 0);
+    const totalDebit = statementRows.reduce((sum, row) => sum + row.debit, 0);
+    const netMovement = totalCredit - totalDebit;
+
+    // When the report includes the current date, we can anchor the statement's
+    // closing balance to live Available Capital and back-calculate its opening.
+    // Historical ranges end with a period movement balance because the current
+    // live capital includes transactions after that historical period.
+    const today = toInputDate();
+    const liveBalanceAnchored = !toDate || String(toDate) >= today;
+    const openingBalance = liveBalanceAnchored
+      ? currentInHandAmount - netMovement
+      : 0;
+
+    let runningBalance = openingBalance;
+    const rowsWithBalance = statementRows.map((row) => {
+      runningBalance += row.credit - row.debit;
+      return {
+        ...row,
+        creditDisplay: row.credit > 0 ? row.credit : null,
+        debitDisplay: row.debit > 0 ? row.debit : null,
+        balance: runningBalance,
+      };
+    });
+
+    const monthMap = new Map();
+
+    rowsWithBalance.forEach((row) => {
+      const monthKey = String(row.date).slice(0, 7);
+      if (!monthKey) return;
+
+      if (!monthMap.has(monthKey)) {
+        const month = getMonthMeta(monthKey);
+        monthMap.set(monthKey, {
+          key: monthKey,
+          label: month.label,
+          openingBalance: null,
+          closingBalance: null,
+          totalCredit: 0,
+          totalDebit: 0,
+          rows: [],
+        });
+      }
+
+      const month = monthMap.get(monthKey);
+
+      if (month.openingBalance === null) {
+        month.openingBalance = row.balance - row.credit + row.debit;
+      }
+
+      month.totalCredit += row.credit;
+      month.totalDebit += row.debit;
+      month.closingBalance = row.balance;
+      month.rows.push(row);
+    });
+
+    const months = [...monthMap.values()];
+
+    return {
+      liveBalanceAnchored,
+      openingBalance,
+      closingBalance: rowsWithBalance.length
+        ? rowsWithBalance[rowsWithBalance.length - 1].balance
+        : openingBalance,
+      totalCredit,
+      totalDebit,
+      netMovement,
+      transactionCount: rowsWithBalance.length,
+      balanceLabel: liveBalanceAnchored ? 'Balance' : 'Period Balance',
+      months,
+      rows: rowsWithBalance,
+    };
+  }, [
+    filteredPayments,
+    filteredExpenses,
+    overviewSavingsEntries,
+    isOwner,
+    currentInHandAmount,
+    toDate,
+  ]);
+
+  const overviewStatementSections = useMemo(() => {
+    const summaryRows = overviewBankStatement.months.map((month) => ({
+      month: month.label,
+      openingBalance: month.openingBalance,
+      totalCredit: month.totalCredit,
+      totalDebit: month.totalDebit,
+      closingBalance: month.closingBalance,
+      entries: month.rows.length,
+    }));
+
+    const monthSections = overviewBankStatement.months.flatMap((month) => ([
+      {
+        title: `${month.label} Summary`,
+        metrics: [
+          { label: 'Opening Balance', value: month.openingBalance, type: 'currency' },
+          { label: 'Total Credits', value: month.totalCredit, type: 'currency' },
+          { label: 'Total Debits', value: month.totalDebit, type: 'currency' },
+          { label: 'Closing Balance', value: month.closingBalance, type: 'currency' },
+          { label: 'Transactions', value: month.rows.length, type: 'number' },
+        ],
+      },
+      {
+        title: `${month.label} Statement`,
+        columns: [
+          { key: 'date', label: 'Date', type: 'date' },
+          { key: 'particulars', label: 'Particulars' },
+          { key: 'reference', label: 'Reference' },
+          { key: 'creditDisplay', label: 'Credit', type: 'currency' },
+          { key: 'debitDisplay', label: 'Debit', type: 'currency' },
+          { key: 'balance', label: overviewBankStatement.balanceLabel, type: 'currency' },
+        ],
+        rows: month.rows,
+      },
+    ]));
+
+    return [
+      {
+        title: 'Statement Summary',
+        metrics: [
+          { label: 'Opening Balance', value: overviewBankStatement.openingBalance, type: 'currency' },
+          { label: 'Total Credits', value: overviewBankStatement.totalCredit, type: 'currency' },
+          { label: 'Total Debits', value: overviewBankStatement.totalDebit, type: 'currency' },
+          { label: 'Net Movement', value: overviewBankStatement.netMovement, type: 'currency' },
+          { label: 'Closing Balance', value: overviewBankStatement.closingBalance, type: 'currency' },
+          { label: 'Transactions', value: overviewBankStatement.transactionCount, type: 'number' },
+        ],
+      },
+      {
+        title: 'Monthly Summary',
+        columns: [
+          { key: 'month', label: 'Month' },
+          { key: 'openingBalance', label: 'Opening Balance', type: 'currency' },
+          { key: 'totalCredit', label: 'Credits', type: 'currency' },
+          { key: 'totalDebit', label: 'Debits', type: 'currency' },
+          { key: 'closingBalance', label: 'Closing Balance', type: 'currency' },
+          { key: 'entries', label: 'Entries', type: 'number' },
+        ],
+        rows: summaryRows,
+      },
+      ...monthSections,
+    ];
+  }, [overviewBankStatement]);
+
   const overviewCycleStatusRows = useMemo(() => {
     const today = toInputDate();
 
@@ -2075,125 +2386,17 @@ export default function Reports() {
     }
 
     return {
-      fileBase: `crednivo-overview-${fromDate || 'overall'}-${toDate || 'overall'}`,
-      badge: 'Overview Report',
-      title: 'Business Overview Report',
+      fileBase: `crednivo-business-statement-${fromDate || 'all'}-${toDate || 'current'}`,
+      badge: 'Business Statement',
+      title: 'Business Statement',
       company: company?.name || 'CREDNIVO',
       generated: formatDate(toInputDate()),
       meta: reportMeta,
-      sections: [
-        {
-          title: 'Business Summary',
-          metrics: [
-            { label: 'In-Hand Amount', value: currentInHandAmount, type: 'currency' },
-            { label: 'Collection Amount', value: overviewCollectionAmount, type: 'currency' },
-            { label: 'Collected Amount', value: overview.collected, type: 'currency' },
-            { label: 'Pending Amount', value: overviewPendingAmount, type: 'currency' },
-            { label: 'Total Outstanding', value: currentTotalOutstanding, type: 'currency' },
-            { label: 'Active Loans', value: overviewActiveLoanCount, type: 'number' },
-            { label: 'Total Customers', value: overviewCustomerCount, type: 'number' },
-            { label: 'Active Customers', value: overviewActiveCustomerCount, type: 'number' },
-            { label: 'Overdue Amount', value: overview.overdue, type: 'currency' },
-          ],
-        },
-        {
-          title: 'Loan Portfolio Summary',
-          note: `New Loan Openings: ${overviewNewOpeningLabel}`,
-          columns: [
-            { key: 'category', label: 'Category' },
-            { key: 'count', label: 'Count', type: 'number' },
-            { key: 'amount', label: 'Loan Amount', type: 'currency' },
-          ],
-          rows: [
-            {
-              category: 'Total Portfolio',
-              count: overviewCustomerCount,
-              amount: overviewTotalPortfolioAmount,
-            },
-            {
-              category: 'Closed Loans',
-              count: overviewClosedLoans.length,
-              amount: overviewClosedLoanAmount,
-            },
-            {
-              category: 'New Loan Openings',
-              count: overviewNewOpeningLoans.length,
-              amount: overviewNewOpeningAmount,
-            },
-          ],
-        },
-        {
-          title: 'Overall Loan Performance',
-          columns: [
-            { key: 'status', label: 'Loan Status' },
-            { key: 'count', label: 'Loan Count', type: 'number' },
-            { key: 'share', label: 'Share' },
-          ],
-          rows: [
-            {
-              status: 'Active Loans',
-              count: overviewPerformanceReport.activeLoans,
-              share: `${overviewPerformanceReport.activePercent.toFixed(1)}%`,
-            },
-            {
-              status: 'Closed Loans',
-              count: overviewPerformanceReport.closedLoans,
-              share: `${overviewPerformanceReport.closedPercent.toFixed(1)}%`,
-            },
-          ],
-        },
-        {
-          title: 'Overall Pending Customer Risk List',
-          note: 'Normal = 1–2 pending dues · Fine Paid = 1–2 pending dues with fine paid · Risky = 3+ pending dues even if fine was paid.',
-          columns: [
-            { key: 'customerName', label: 'Customer' },
-            { key: 'customerId', label: 'Customer ID' },
-            { key: 'cyclesText', label: 'Cycle(s)' },
-            { key: 'loanIdsText', label: 'Loan ID(s)' },
-            { key: 'pendingDueCount', label: 'Pending Dues', type: 'number' },
-            { key: 'pendingAmount', label: 'Pending Amount', type: 'currency' },
-            { key: 'oldestDue', label: 'Oldest Due', type: 'date' },
-            { key: 'categoryLabel', label: 'Risk Status' },
-          ],
-          rows: overviewPerformanceReport.pendingCustomers.map((row) => ({
-            ...row,
-            cyclesText: row.cycles.join(', '),
-            loanIdsText: row.loanIds.join(', '),
-          })),
-        },
-        {
-          title: 'Business Activity',
-          metrics: [
-            { label: 'New Loans Given', value: overview.loanGiven, type: 'currency' },
-            { label: 'Expenses', value: overview.expenseTotal, type: 'currency' },
-            { label: 'Fine Income', value: overviewFineIncome, type: 'currency' },
-            { label: 'Document Charges Income', value: overviewDocumentChargeIncome, type: 'currency' },
-            ...(isOwner ? [{ label: 'Savings', value: overviewSavingsAmount, type: 'currency' }] : []),
-          ],
-        },
-        {
-          title: 'Current Collection Capacity',
-          note: 'Active loans only.',
-          columns: [
-            { key: 'cycle', label: 'Cycle' },
-            { key: 'amount', label: 'Collection / Cycle', type: 'currency' },
-            { key: 'customerCount', label: 'Customers', type: 'number' },
-            { key: 'loanCount', label: 'Active Loans', type: 'number' },
-          ],
-          rows: overviewCycleCollections,
-        },
-        {
-          title: 'Collection Status by Cycle',
-          columns: [
-            { key: 'cycle', label: 'Cycle' },
-            { key: 'loanAmount', label: 'Active Loan Amount', type: 'currency' },
-            { key: 'collectedAmount', label: 'Collected Amount', type: 'currency' },
-            { key: 'upcomingAmount', label: 'Upcoming Amount', type: 'currency' },
-            { key: 'pendingAmount', label: 'Pending Amount', type: 'currency' },
-          ],
-          rows: overviewCycleStatusRows,
-        },
-      ],
+      bankStatement: true,
+      statementMonths: overviewBankStatement.months,
+      statementBalanceLabel: overviewBankStatement.balanceLabel,
+      sections: overviewStatementSections,
+    };
     };
   };
 

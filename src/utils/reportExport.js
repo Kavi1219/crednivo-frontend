@@ -469,7 +469,198 @@ function ensureCell(ws, row, col) {
   return ws[ref];
 }
 
+function safeExcelSheetName(value, fallback = 'Statement') {
+  const cleaned = String(value || fallback)
+    .replace(/[\\/?*\[\]:]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 31);
+
+  return cleaned || fallback;
+}
+
+function buildBankStatementSheet({
+  title,
+  company,
+  period,
+  metrics = [],
+  columns = [],
+  rows = [],
+}) {
+  const ws = {};
+  const merges = [];
+  let row = 0;
+  const maxCols = Math.max(6, columns.length || 0);
+
+  const set = (r, c, value, type = 'text', style = {}) => {
+    const ref = XLSX.utils.encode_cell({ r, c });
+    const v = excelCellValue(value, type);
+    ws[ref] = {
+      t: typeof v === 'number' ? 'n' : 's',
+      v,
+    };
+
+    const numberFormat = type === 'currency'
+      ? '₹#,##0.00;[Red]-₹#,##0.00'
+      : type === 'percent'
+        ? '0.00%'
+        : type === 'number'
+          ? '#,##0'
+          : undefined;
+
+    applyExcelCellStyle(ws[ref], {
+      ...style,
+      numFmt: style.numFmt || numberFormat,
+    });
+  };
+
+  set(row, 0, company || 'CREDNIVO', 'text', {
+    font: { bold: true, sz: 17, color: { rgb: '0C3056' } },
+  });
+  merges.push({ s: { r: row, c: 0 }, e: { r: row, c: maxCols - 1 } });
+  row += 1;
+
+  set(row, 0, title || 'Business Statement', 'text', {
+    font: { bold: true, sz: 14, color: { rgb: '10203A' } },
+  });
+  merges.push({ s: { r: row, c: 0 }, e: { r: row, c: maxCols - 1 } });
+  row += 1;
+
+  if (period) {
+    set(row, 0, period, 'text', {
+      font: { sz: 9, color: { rgb: '6B7D95' } },
+    });
+    merges.push({ s: { r: row, c: 0 }, e: { r: row, c: maxCols - 1 } });
+    row += 2;
+  } else {
+    row += 1;
+  }
+
+  metrics.forEach((metric) => {
+    set(row, 0, metric.label, 'text', { font: { bold: true } });
+    set(row, 1, metric.value, metric.type || 'text');
+    row += 1;
+  });
+
+  if (metrics.length) row += 1;
+
+  if (columns.length) {
+    columns.forEach((column, c) => {
+      set(row, c, column.label, 'text', {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { patternType: 'solid', fgColor: { rgb: '0F5494' } },
+        alignment: { wrapText: true },
+      });
+    });
+    row += 1;
+
+    rows.forEach((dataRow, rowIndex) => {
+      const fill = rowIndex % 2 === 0 ? 'F8FAFD' : 'FFFFFF';
+
+      columns.forEach((column, c) => {
+        const value = Array.isArray(dataRow)
+          ? dataRow[c]
+          : dataRow?.[column.key];
+
+        set(row, c, value, column.type, {
+          fill: { patternType: 'solid', fgColor: { rgb: fill } },
+          alignment: { wrapText: true },
+        });
+      });
+
+      row += 1;
+    });
+  }
+
+  ws['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: Math.max(0, row - 1), c: maxCols - 1 },
+  });
+  ws['!merges'] = merges;
+  ws['!freeze'] = { xSplit: 0, ySplit: metrics.length ? metrics.length + 5 : 4 };
+  ws['!cols'] = Array.from({ length: maxCols }, (_, index) => {
+    if (index === 0) return { wch: 15 };
+    if (index === 1) return { wch: 34 };
+    if (index === 2) return { wch: 22 };
+    return { wch: 18 };
+  });
+  ws['!rows'] = Array.from({ length: Math.max(1, row) }, () => ({ hpt: 20 }));
+
+  return ws;
+}
+
+function exportOverviewBankStatementExcel(report) {
+  const workbook = XLSX.utils.book_new();
+  const months = Array.isArray(report?.statementMonths)
+    ? report.statementMonths
+    : [];
+
+  const summarySection = allSections(report).find(
+    (section) => section.title === 'Statement Summary',
+  );
+  const monthlySummarySection = allSections(report).find(
+    (section) => section.title === 'Monthly Summary',
+  );
+
+  const summarySheet = buildBankStatementSheet({
+    title: report?.title || 'Business Statement',
+    company: report?.company || 'CREDNIVO',
+    period: (report?.meta || []).find(([label]) => label === 'Period')?.[1] || '',
+    metrics: summarySection?.metrics || [],
+    columns: monthlySummarySection?.columns || [],
+    rows: monthlySummarySection?.rows || [],
+  });
+
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+  months.forEach((month, index) => {
+    const sheet = buildBankStatementSheet({
+      title: `${month.label} Statement`,
+      company: report?.company || 'CREDNIVO',
+      period: month.label,
+      metrics: [
+        { label: 'Opening Balance', value: month.openingBalance, type: 'currency' },
+        { label: 'Total Credits', value: month.totalCredit, type: 'currency' },
+        { label: 'Total Debits', value: month.totalDebit, type: 'currency' },
+        { label: 'Closing Balance', value: month.closingBalance, type: 'currency' },
+        { label: 'Transactions', value: month.rows?.length || 0, type: 'number' },
+      ],
+      columns: [
+        { key: 'date', label: 'Date', type: 'date' },
+        { key: 'particulars', label: 'Particulars' },
+        { key: 'reference', label: 'Reference' },
+        { key: 'creditDisplay', label: 'Credit', type: 'currency' },
+        { key: 'debitDisplay', label: 'Debit', type: 'currency' },
+        {
+          key: 'balance',
+          label: report?.statementBalanceLabel || 'Balance',
+          type: 'currency',
+        },
+      ],
+      rows: month.rows || [],
+    });
+
+    const monthName = safeExcelSheetName(
+      month.label,
+      `Month ${index + 1}`,
+    );
+
+    XLSX.utils.book_append_sheet(workbook, sheet, monthName);
+  });
+
+  XLSX.writeFile(
+    workbook,
+    `${reportFileBase(report)}.xlsx`,
+    { compression: true },
+  );
+}
+
 export async function exportReportExcel(report) {
+  if (report?.bankStatement && Array.isArray(report?.statementMonths)) {
+    exportOverviewBankStatementExcel(report);
+    return;
+  }
+
   const ws = {};
   const merges = [];
   let row = 0;
