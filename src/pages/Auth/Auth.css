@@ -3767,3 +3767,638 @@
 .auth-security-flow-form label>span{color:var(--ink-800);font-size:9px;font-weight:800}
 .auth-otp-resend-button{min-height:38px;border:0;background:transparent;color:var(--blue-600);font-size:9px;font-weight:800;cursor:pointer}
 @media(max-width:520px){.auth-login-options-v48{align-items:flex-start}.auth-forgot-link{font-size:9px}.auth-security-flow-modal{width:calc(100% - 18px)}}
+
+/* =====================================================================
+   CREDNIVO V51 — GOLD EMBLEM + BLUE GLASS LOGIN
+   Visual-only login refresh. Existing password login, Email OTP,
+   Forgot Password, Remember Me and registration flows remain unchanged.
+   ===================================================================== */
+
+.auth-login-page.auth-login-mirror{
+  --v51-bg:#020b18;
+  --v51-bg-2:#06162d;
+  --v51-bg-3:#082552;
+  --v51-blue:#1477f8;
+  --v51-blue-bright:#27a2ff;
+  --v51-blue-deep:#0759c8;
+  --v51-blue-line:rgba(69,166,255,.46);
+  --v51-text:#f5f8ff;
+  --v51-muted:#a9b9cf;
+  --v51-gold-1:#fff2bc;
+  --v51-gold-2:#f6cf69;
+  --v51-gold-3:#d79a24;
+  --v51-gold-4:#8f5a08;
+  --v51-silver-1:#ffffff;
+  --v51-silver-2:#dce6f2;
+  --v51-silver-3:#9eacc0;
+
+  min-height:100dvh;
+  overflow:auto;
+  padding-top:max(0px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
+  padding-bottom:max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  color:var(--v51-text);
+  background:
+    radial-gradient(circle at 78% 16%, rgba(23,119,248,.25), transparent 24%),
+    radial-gradient(circle at 14% 72%, rgba(11,88,196,.18), transparent 30%),
+    linear-gradient(145deg, #010814 0%, #031225 42%, #061b39 72%, #020b18 100%);
+}
+
+.auth-login-page.auth-login-mirror::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.64;
+  background:
+    radial-gradient(circle at 73% 12%, rgba(42,151,255,.28) 0 1px, transparent 1.7px) 0 0/27px 27px,
+    radial-gradient(circle at 11% 58%, rgba(255,209,105,.15) 0 1px, transparent 1.6px) 0 0/43px 43px;
+  mask-image:linear-gradient(115deg,transparent 0 10%,#000 28% 80%,transparent 100%);
+}
+
+.auth-login-page.auth-login-mirror::after{
+  content:"";
+  position:fixed;
+  inset:-10%;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 44% 108%, rgba(18,111,244,.28), transparent 38%),
+    linear-gradient(115deg, transparent 0 27%, rgba(30,131,255,.05) 29%, transparent 31% 60%, rgba(231,179,55,.035) 62%, transparent 64%);
+  filter:blur(1px);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-split{
+  width:min(1520px,95vw);
+  min-height:calc(100dvh - max(0px, var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) - max(0px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))));
+  grid-template-columns:minmax(0,1fr) minmax(460px,570px);
+  gap:clamp(44px,6vw,105px);
+  padding:clamp(26px,4vw,58px) clamp(14px,3vw,42px);
+}
+
+/* blue and gold orbital lines */
+.auth-login-page.auth-login-mirror .auth-login-split::before{
+  width:65vw;
+  height:65vw;
+  left:-51vw;
+  top:8vh;
+  border-color:rgba(36,149,255,.37);
+  box-shadow:
+    0 0 0 44px rgba(24,128,255,.025),
+    0 0 0 92px rgba(24,128,255,.018),
+    0 0 28px rgba(24,128,255,.08);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-split::after{
+  width:51vw;
+  height:51vw;
+  right:-45vw;
+  bottom:-16vh;
+  border-color:rgba(239,190,74,.46);
+  box-shadow:0 0 22px rgba(239,190,74,.07);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-brand-side{
+  min-height:470px;
+}
+
+.crednivo-cinematic-brand{
+  width:min(650px,100%);
+  gap:16px;
+  filter:drop-shadow(0 26px 45px rgba(0,0,0,.45));
+}
+
+/* ONLY the emblem is gold. The CREDNIVO wordmark below stays silver. */
+.crednivo-cinematic-symbol{
+  width:292px;
+  height:292px;
+  flex-basis:292px;
+  filter:
+    drop-shadow(0 0 18px rgba(255,205,83,.24))
+    drop-shadow(0 30px 34px rgba(0,0,0,.48));
+}
+
+.crednivo-c-ring{
+  inset:8px;
+  background:
+    conic-gradient(
+      from 48deg,
+      transparent 0deg 58deg,
+      #fff5c9 58deg 78deg,
+      #f5d06f 78deg 138deg,
+      #dda634 138deg 222deg,
+      #f0c65e 222deg 286deg,
+      #a66c10 286deg 315deg,
+      transparent 315deg 360deg
+    );
+  filter:
+    drop-shadow(0 0 11px rgba(255,220,121,.48))
+    drop-shadow(0 22px 26px rgba(0,0,0,.50));
+}
+
+.crednivo-c-ring::before{
+  content:"";
+  position:absolute;
+  inset:3px;
+  border-radius:50%;
+  pointer-events:none;
+  background:
+    linear-gradient(132deg,rgba(255,255,255,.52),transparent 24% 66%,rgba(255,245,199,.18));
+  mix-blend-mode:screen;
+  opacity:.66;
+}
+
+.crednivo-c-ring::after{
+  inset:40px;
+  background:
+    radial-gradient(circle at 32% 24%,rgba(20,97,196,.16),transparent 34%),
+    linear-gradient(145deg,#061830,#020b18 74%);
+  box-shadow:
+    inset 0 0 34px rgba(0,0,0,.78),
+    0 0 0 1px rgba(255,222,136,.10);
+}
+
+.crednivo-growth-bars{
+  left:82px;
+  bottom:66px;
+  width:122px;
+  height:130px;
+  gap:11px;
+}
+
+.crednivo-growth-bar{
+  width:26px;
+  border-radius:4px 4px 1px 1px;
+  background:linear-gradient(90deg,#a66c10 0%,#ffe99f 49%,#d79a24 100%);
+  box-shadow:
+    inset 1px 0 rgba(255,255,255,.46),
+    0 0 12px rgba(255,206,79,.24),
+    0 8px 14px rgba(0,0,0,.26);
+}
+.crednivo-growth-bar-1{height:52px}
+.crednivo-growth-bar-2{height:84px}
+.crednivo-growth-bar-3{height:116px}
+
+.crednivo-growth-arrow{
+  left:62px;
+  bottom:59px;
+  width:205px;
+  height:184px;
+}
+
+.crednivo-growth-arrow-line{
+  left:12px;
+  bottom:24px;
+  width:180px;
+  height:11px;
+  background:linear-gradient(90deg,#946009,#efbd43 45%,#fff5c4 100%);
+  box-shadow:
+    0 0 14px rgba(255,220,119,.56),
+    0 3px 4px rgba(0,0,0,.34);
+}
+
+.crednivo-growth-arrow-head{
+  right:-2px;
+  top:4px;
+  border-left-color:#ffe99f;
+  border-left-width:28px;
+  border-top-width:18px;
+  border-bottom-width:18px;
+  filter:drop-shadow(0 0 10px rgba(255,230,153,.78));
+}
+
+.crednivo-growth-arrow-glow{
+  width:30px;
+  height:30px;
+  background:#ffe7a0;
+  filter:blur(12px);
+}
+
+/* silver/white name — deliberately NOT gold */
+.crednivo-cinematic-wordmark{
+  font-size:clamp(48px,5vw,76px);
+  color:#edf3fb;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.42),
+    0 3px 0 rgba(77,92,114,.72),
+    0 15px 30px rgba(0,0,0,.46),
+    0 0 14px rgba(132,187,255,.08);
+}
+
+.crednivo-cinematic-wordmark span{
+  color:transparent;
+  background:linear-gradient(180deg,#ffffff 0%,#e2e9f3 42%,#a7b5c8 74%,#f3f6fb 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+}
+
+.crednivo-cinematic-tagline{
+  color:#ccd7e6;
+}
+.crednivo-cinematic-tagline i{
+  background:linear-gradient(90deg,transparent,#d9ae50);
+}
+.crednivo-cinematic-tagline i:last-child{
+  background:linear-gradient(90deg,#d9ae50,transparent);
+}
+
+/* Glass login panel */
+.auth-login-page.auth-login-mirror .auth-login-card{
+  max-width:570px;
+  padding:clamp(30px,3vw,44px);
+  border:1px solid rgba(71,166,255,.54);
+  border-radius:26px;
+  color:var(--v51-text);
+  background:
+    radial-gradient(circle at 14% 0%,rgba(29,132,255,.14),transparent 27%),
+    linear-gradient(145deg,rgba(9,42,82,.74),rgba(2,16,34,.83) 48%,rgba(3,13,29,.91));
+  box-shadow:
+    inset 0 1px 0 rgba(181,221,255,.17),
+    inset 0 -1px 0 rgba(23,110,220,.09),
+    0 32px 90px rgba(0,0,0,.52),
+    0 0 38px rgba(18,119,248,.14);
+  backdrop-filter:blur(25px) saturate(128%);
+  -webkit-backdrop-filter:blur(25px) saturate(128%);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-card::before{
+  background:
+    linear-gradient(115deg,rgba(114,192,255,.20),transparent 23% 76%,rgba(41,140,255,.13));
+}
+
+.auth-login-page.auth-login-mirror .auth-login-card::after{
+  background:radial-gradient(circle,rgba(34,143,255,.30),transparent 67%);
+}
+
+.auth-login-page.auth-login-mirror .auth-role-tabs-clean{
+  padding:4px;
+  border:1px solid rgba(126,186,245,.24);
+  border-radius:14px;
+  background:rgba(2,13,29,.56);
+  box-shadow:inset 0 1px 8px rgba(0,0,0,.32);
+}
+
+.auth-login-page.auth-login-mirror .auth-role-tabs-clean button{
+  min-height:58px;
+  border-radius:11px;
+  color:#b9c6d8;
+}
+
+.auth-login-page.auth-login-mirror .auth-role-tabs-clean button:hover{
+  color:#f4f8ff;
+  background:rgba(27,119,235,.10);
+}
+
+.auth-login-page.auth-login-mirror .auth-role-tabs-clean button.active{
+  color:#fff;
+  background:linear-gradient(135deg,#29a4ff 0%,#1477f8 45%,#0759c8 100%);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.26),
+    0 0 0 1px rgba(102,193,255,.36),
+    0 9px 24px rgba(7,89,200,.30),
+    0 0 23px rgba(25,132,255,.20);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-form{
+  gap:15px;
+}
+
+/* reference mockup keeps the first field clean without a heading */
+.auth-login-page.auth-login-mirror .auth-login-form > label:first-child > span{
+  display:none;
+}
+
+.auth-login-page.auth-login-mirror .auth-form label > span{
+  color:#f3f6fb;
+  font-size:12px;
+  font-weight:800;
+}
+
+.auth-login-page.auth-login-mirror .auth-line-input{
+  min-height:58px;
+  padding:0 15px;
+  border:1px solid rgba(128,175,226,.38);
+  border-radius:11px;
+  background:rgba(1,12,29,.50);
+  color:#e9f1fb;
+  box-shadow:
+    inset 0 1px 10px rgba(0,0,0,.26),
+    0 0 0 1px rgba(255,255,255,.015);
+}
+
+.auth-login-page.auth-login-mirror .auth-line-input:focus-within{
+  border-color:rgba(52,157,255,.86);
+  box-shadow:
+    0 0 0 3px rgba(20,119,248,.12),
+    0 0 24px rgba(20,119,248,.09),
+    inset 0 1px 10px rgba(0,0,0,.22);
+}
+
+.auth-login-page.auth-login-mirror .auth-line-input svg,
+.auth-login-page.auth-login-mirror .auth-password-input button{
+  color:#e8eff9;
+}
+
+.auth-login-page.auth-login-mirror .auth-line-input input{
+  color:#fff;
+}
+
+.auth-login-page.auth-login-mirror .auth-line-input input::placeholder{
+  color:#879ab3;
+}
+
+.auth-login-page.auth-login-mirror .auth-login-options{
+  margin-top:-1px;
+}
+
+.auth-login-page.auth-login-mirror .auth-remember-control{
+  color:#c6d2e2;
+}
+
+.auth-login-page.auth-login-mirror .auth-checkbox-ui{
+  border-color:rgba(90,171,255,.55);
+  background:rgba(1,12,29,.52);
+}
+
+.auth-login-page.auth-login-mirror .auth-remember-control input:checked + .auth-checkbox-ui{
+  border-color:#2ba9ff;
+  background:#1477f8;
+  box-shadow:0 0 13px rgba(20,119,248,.30);
+}
+
+.auth-login-page.auth-login-mirror .auth-forgot-link{
+  color:#2d9dff;
+  font-weight:800;
+}
+.auth-login-page.auth-login-mirror .auth-forgot-link:hover{
+  color:#76c5ff;
+}
+
+.auth-login-page.auth-login-mirror .auth-login-submit{
+  min-height:58px;
+  border:1px solid rgba(113,200,255,.70);
+  border-radius:11px;
+  color:#fff;
+  background:linear-gradient(100deg,#29adff 0%,#1477f8 48%,#0862df 100%);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.30),
+    0 13px 28px rgba(5,81,186,.32),
+    0 0 25px rgba(20,119,248,.15);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-submit:hover:not(:disabled){
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.34),
+    0 16px 32px rgba(5,81,186,.38),
+    0 0 30px rgba(30,145,255,.20);
+}
+
+.auth-login-page.auth-login-mirror .auth-otp-login-button{
+  min-height:52px;
+  border:1px solid rgba(78,159,242,.58);
+  border-radius:11px;
+  color:#e9f3ff;
+  background:linear-gradient(135deg,rgba(18,78,150,.70),rgba(6,38,82,.64));
+  box-shadow:inset 0 1px rgba(255,255,255,.07);
+}
+.auth-login-page.auth-login-mirror .auth-otp-login-button:hover{
+  border-color:rgba(86,180,255,.86);
+  background:linear-gradient(135deg,rgba(23,100,190,.82),rgba(6,48,103,.78));
+}
+
+.auth-login-page.auth-login-mirror .auth-login-divider{
+  margin:26px 0 15px;
+  border-top-color:rgba(116,163,215,.26);
+}
+.auth-login-page.auth-login-mirror .auth-login-divider span{
+  color:#dbe5f2;
+  background:#071a34;
+}
+
+/* user specifically requested this line to remain */
+.auth-login-page.auth-login-mirror .auth-create-row{
+  color:#c3cfdf;
+  gap:8px;
+}
+.auth-login-page.auth-login-mirror .auth-create-row button{
+  color:#f2c75f;
+  font-weight:850;
+  text-shadow:0 0 13px rgba(242,199,95,.18);
+}
+.auth-login-page.auth-login-mirror .auth-create-row button:hover{
+  color:#ffe49a;
+}
+
+.auth-login-page.auth-login-mirror .auth-error{
+  border-color:rgba(255,106,119,.42);
+  background:rgba(102,18,35,.42);
+  color:#ffd8dc;
+}
+
+/* Create Account + Email OTP / Forgot Password glass dialogs */
+.auth-login-page.auth-login-mirror .auth-create-overlay{
+  background:rgba(0,6,16,.70);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+.auth-login-page.auth-login-mirror .auth-create-modal{
+  border:1px solid rgba(70,160,255,.48);
+  color:#f5f8ff;
+  background:
+    radial-gradient(circle at 16% 0%,rgba(34,143,255,.16),transparent 28%),
+    linear-gradient(145deg,rgba(8,40,80,.95),rgba(2,13,29,.97));
+  box-shadow:0 32px 95px rgba(0,0,0,.62),0 0 36px rgba(20,119,248,.12);
+}
+
+.auth-login-page.auth-login-mirror .auth-create-modal p,
+.auth-login-page.auth-login-mirror .auth-create-options small{
+  color:#9fb1c8;
+}
+
+.auth-login-page.auth-login-mirror .auth-create-icon{
+  color:#f0c45c;
+  background:rgba(214,158,37,.11);
+  border-color:rgba(245,204,104,.26);
+}
+
+.auth-login-page.auth-login-mirror .auth-create-options a{
+  border-color:rgba(76,151,227,.28);
+  color:#edf5ff;
+  background:rgba(3,20,43,.62);
+}
+.auth-login-page.auth-login-mirror .auth-create-options a:hover{
+  border-color:rgba(52,159,255,.70);
+  background:rgba(10,57,112,.54);
+}
+
+.auth-login-page.auth-login-mirror .auth-create-option-icon.company,
+.auth-login-page.auth-login-mirror .auth-create-option-icon.agent{
+  color:#f1c760;
+  background:rgba(217,160,34,.10);
+}
+
+.auth-login-page.auth-login-mirror .auth-modal-close{
+  color:#d9e7f7;
+  background:rgba(5,30,62,.64);
+  border-color:rgba(70,149,230,.32);
+}
+
+.auth-login-page.auth-login-mirror .auth-security-flow-account{
+  border-color:rgba(70,151,235,.28);
+  background:rgba(3,20,43,.58);
+}
+.auth-login-page.auth-login-mirror .auth-security-flow-account span{
+  color:#f2c75f;
+}
+.auth-login-page.auth-login-mirror .auth-otp-resend-button{
+  color:#47aaff;
+}
+
+/* Keep AuthLoading consistent with the release login page. */
+.auth-loading.auth-loading-classic{
+  min-height:100dvh;
+  color:#f4f7fb;
+  background:
+    radial-gradient(circle at 50% 36%,rgba(23,119,248,.23),transparent 26%),
+    linear-gradient(145deg,#010814,#061a36 72%,#020b18);
+}
+.auth-loading.auth-loading-classic .auth-loading-new-logo{
+  filter:drop-shadow(0 0 16px rgba(245,196,75,.24));
+}
+.auth-loading.auth-loading-classic .auth-loading-c-shape,
+.auth-loading.auth-loading-classic .auth-loading-bar,
+.auth-loading.auth-loading-classic .auth-loading-arrow-line{
+  border-color:#e0aa35;
+  background:linear-gradient(135deg,#fff2bc,#d79a24);
+}
+.auth-loading.auth-loading-classic .auth-loading-arrow-head{
+  border-left-color:#f4c85f;
+}
+
+/* ---------------------------------------------------------------------
+   V51 MOBILE / ANDROID
+   --------------------------------------------------------------------- */
+@media(max-width:980px){
+  .auth-login-page.auth-login-mirror .auth-login-split{
+    width:min(720px,96vw);
+    grid-template-columns:1fr;
+    gap:12px;
+    padding:18px 12px 30px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-brand-side{
+    min-height:235px;
+  }
+
+  .crednivo-cinematic-brand{
+    gap:8px;
+  }
+
+  .crednivo-cinematic-symbol{
+    width:166px;
+    height:166px;
+    flex-basis:166px;
+    transform:scale(.76);
+  }
+
+  .crednivo-cinematic-wordmark{
+    font-size:clamp(37px,9.6vw,52px);
+  }
+
+  .crednivo-cinematic-tagline span{
+    font-size:10.5px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-card{
+    max-width:570px;
+    justify-self:center;
+    padding:24px 20px;
+    border-radius:21px;
+  }
+}
+
+@media(max-width:520px){
+  .auth-login-page.auth-login-mirror .auth-login-split{
+    width:100%;
+    padding:12px 12px 24px;
+    gap:5px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-brand-side{
+    min-height:205px;
+  }
+
+  .crednivo-cinematic-symbol{
+    width:148px;
+    height:148px;
+    flex-basis:148px;
+    transform:scale(.72);
+  }
+
+  .crednivo-cinematic-wordmark{
+    font-size:clamp(32px,9.8vw,43px);
+  }
+
+  .crednivo-cinematic-tagline{
+    gap:7px;
+  }
+  .crednivo-cinematic-tagline span{
+    font-size:9px;
+  }
+  .crednivo-cinematic-tagline i{
+    width:22px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-card{
+    padding:19px 14px 20px;
+    border-radius:18px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean{
+    margin-bottom:17px;
+  }
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean button{
+    min-height:48px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-form{
+    gap:11px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-line-input{
+    min-height:49px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-submit{
+    min-height:50px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-otp-login-button{
+    min-height:47px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-divider{
+    margin:19px 0 13px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-create-row{
+    font-size:11px;
+  }
+}
+
+@media(max-width:390px){
+  .auth-login-page.auth-login-mirror .auth-login-brand-side{
+    min-height:188px;
+  }
+  .crednivo-cinematic-symbol{
+    transform:scale(.66);
+  }
+  .crednivo-cinematic-wordmark{
+    font-size:30px;
+  }
+  .auth-login-page.auth-login-mirror .auth-login-card{
+    padding:16px 12px 18px;
+  }
+}
+

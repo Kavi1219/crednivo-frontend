@@ -28,6 +28,7 @@ function readLoginPreferences() {
   }
 }
 
+// V51 — Gold emblem + blue glass login redesign. Authentication logic is unchanged.
 export default function Login() {
   const actionLocksRef = useRef(new Set());
 
@@ -273,8 +274,8 @@ export default function Login() {
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
                   placeholder={role === 'AGENT'
-                    ? 'Enter employee ID or phone number'
-                    : 'Enter user ID or phone number'}
+                    ? 'Employee ID or mobile number'
+                    : 'Mobile number or user ID'}
                 />
               </div>
             </label>
