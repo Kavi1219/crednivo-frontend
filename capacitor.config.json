@@ -1,5 +1,11 @@
 {
   "appId": "com.crednivo.app",
   "appName": "CREDNIVO",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "hidden": false
+    }
+  }
 }

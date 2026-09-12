@@ -1,0 +1,62 @@
+/* =========================================================
+   CREDNIVO NATIVE ANDROID SAFE AREA — V41
+   Capacitor 8 / Android 16 edge-to-edge compatible.
+   ========================================================= */
+
+:root {
+  --crednivo-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --crednivo-safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --crednivo-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --crednivo-safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
+}
+
+@media (max-width: 767px) {
+  /* Keep the white header/background edge-to-edge, but keep all controls
+     below the status bar / camera cutout / notch. */
+  .app-header {
+    min-height: calc(var(--header-height) + var(--crednivo-safe-top)) !important;
+    padding-top: calc(8px + var(--crednivo-safe-top)) !important;
+    padding-right: max(10px, var(--crednivo-safe-right)) !important;
+    padding-left: max(10px, var(--crednivo-safe-left)) !important;
+  }
+
+  /* The header became taller because of the safe area; keep its popup below it. */
+  .mobile-profile-menu-wrap .profile-dropdown {
+    top: calc(70px + var(--crednivo-safe-top)) !important;
+    right: max(10px, var(--crednivo-safe-right)) !important;
+  }
+
+  /* Side drawer and footer also respect display cutouts / gesture area. */
+  .mobile-drawer {
+    padding-top: max(18px, var(--crednivo-safe-top)) !important;
+    padding-left: max(18px, var(--crednivo-safe-left)) !important;
+    padding-bottom: max(18px, var(--crednivo-safe-bottom)) !important;
+  }
+
+  .mobile-bottom-nav {
+    left: max(8px, var(--crednivo-safe-left)) !important;
+    right: max(8px, var(--crednivo-safe-right)) !important;
+    bottom: max(6px, var(--crednivo-safe-bottom)) !important;
+  }
+
+  .page-content {
+    padding-right: max(10px, var(--crednivo-safe-right)) !important;
+    padding-left: max(10px, var(--crednivo-safe-left)) !important;
+    padding-bottom: calc(
+      var(--mobile-nav-height) + 32px + var(--crednivo-safe-bottom)
+    ) !important;
+  }
+
+  /* Global floating errors must never sit underneath the status bar. */
+  :is(
+    .form-error,
+    .auth-error,
+    .agent-form-error,
+    .document-form-error,
+    .company-profile-error,
+    .settings-password-error,
+    .media-upload-error
+  ) {
+    top: calc(8px + var(--crednivo-safe-top)) !important;
+  }
+}
