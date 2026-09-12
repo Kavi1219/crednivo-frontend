@@ -2,6 +2,10 @@
   "appId": "com.crednivo.app",
   "appName": "CREDNIVO",
   "webDir": "dist",
+  "server": {
+    "url": "https://crednivo.in",
+    "cleartext": false
+  },
   "plugins": {
     "SystemBars": {
       "insetsHandling": "css",
