@@ -16,7 +16,6 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
-import premiumScene from '../../assets/crednivo-login-full-scene.png';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -29,7 +28,114 @@ function readLoginPreferences() {
   }
 }
 
-// V54 — Full-scene media login. Uses the complete approved reference image without cropping. Authentication logic is unchanged.
+
+function PremiumCrednivoBrand() {
+  return (
+    <div className="v55-brand">
+      <div className="v55-brand-logo" aria-hidden="true">
+        <svg viewBox="0 0 520 520" role="img">
+          <defs>
+            <linearGradient id="v55Gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#6f4305" />
+              <stop offset="16%" stopColor="#fff2b4" />
+              <stop offset="38%" stopColor="#d79516" />
+              <stop offset="58%" stopColor="#fff6cb" />
+              <stop offset="78%" stopColor="#d99b23" />
+              <stop offset="100%" stopColor="#704005" />
+            </linearGradient>
+            <linearGradient id="v55GoldBright" x1="0" y1="1" x2="1" y2="0">
+              <stop offset="0%" stopColor="#8d5507" />
+              <stop offset="28%" stopColor="#f0b72f" />
+              <stop offset="58%" stopColor="#fff4bd" />
+              <stop offset="100%" stopColor="#d48d11" />
+            </linearGradient>
+            <linearGradient id="v55Bar" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#7a4b07" />
+              <stop offset="22%" stopColor="#d89a1f" />
+              <stop offset="52%" stopColor="#fff0a4" />
+              <stop offset="78%" stopColor="#d2951a" />
+              <stop offset="100%" stopColor="#6d4004" />
+            </linearGradient>
+            <filter id="v55Glow" x="-70%" y="-70%" width="240%" height="240%">
+              <feGaussianBlur stdDeviation="9" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="v55Soft" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="16" stdDeviation="13" floodColor="#000000" floodOpacity=".48" />
+            </filter>
+          </defs>
+
+          <ellipse cx="250" cy="456" rx="175" ry="20" fill="#e6aa2a" opacity=".12" />
+
+          <path
+            d="M 388 105
+               C 323 54, 211 48, 132 111
+               C 44 181, 42 326, 133 407
+               C 211 477, 333 470, 405 390"
+            fill="none"
+            stroke="url(#v55Gold)"
+            strokeWidth="86"
+            strokeLinecap="round"
+            filter="url(#v55Soft)"
+          />
+          <path
+            d="M 382 111
+               C 317 67, 217 63, 145 119
+               C 66 181, 64 318, 144 393
+               C 215 459, 323 449, 392 382"
+            fill="none"
+            stroke="rgba(255,255,255,.23)"
+            strokeWidth="18"
+            strokeLinecap="round"
+          />
+
+          <g filter="url(#v55Soft)">
+            <rect x="190" y="306" width="38" height="90" rx="5" fill="url(#v55Bar)" />
+            <rect x="244" y="268" width="38" height="128" rx="5" fill="url(#v55Bar)" />
+            <rect x="298" y="218" width="38" height="178" rx="5" fill="url(#v55Bar)" />
+            <rect x="352" y="162" width="38" height="234" rx="5" fill="url(#v55Bar)" />
+            <path d="M203 306H220V395H203Z" fill="rgba(255,255,255,.20)" />
+            <path d="M257 268H274V395H257Z" fill="rgba(255,255,255,.20)" />
+            <path d="M311 218H328V395H311Z" fill="rgba(255,255,255,.20)" />
+            <path d="M365 162H382V395H365Z" fill="rgba(255,255,255,.20)" />
+          </g>
+
+          <g filter="url(#v55Glow)">
+            <path
+              d="M 172 355
+                 C 232 334, 279 304, 322 268
+                 C 359 237, 392 198, 430 145"
+              fill="none"
+              stroke="url(#v55GoldBright)"
+              strokeWidth="17"
+              strokeLinecap="round"
+            />
+            <polygon points="421,129 466,121 448,164" fill="url(#v55GoldBright)" />
+          </g>
+
+          <path
+            d="M 178 350 C 236 329, 279 300, 320 267 C 356 237, 389 198, 425 150"
+            fill="none"
+            stroke="rgba(255,255,255,.50)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+
+      <div className="v55-wordmark" aria-label="CREDNIVO">
+        <span className="v55-word-silver">CRED</span><span className="v55-word-gold">NIVO</span>
+      </div>
+      <div className="v55-brand-rule" />
+      <div className="v55-brand-tagline">Finance Management Platform</div>
+    </div>
+  );
+}
+
+// V55 — Rebuilt from code: no screenshot/background image is embedded. Authentication logic is unchanged.
 export default function Login() {
   const actionLocksRef = useRef(new Set());
 
@@ -209,13 +315,9 @@ export default function Login() {
   return (
     <main className="auth-page auth-login-page auth-login-mirror">
       <section className="auth-login-split">
-        <div className="auth-login-video-scene" aria-hidden="true">
-          <img
-            src={premiumScene}
-            alt=""
-            draggable="false"
-          />
-        </div>
+        <aside className="auth-login-brand-side v55-brand-side" aria-label="CREDNIVO">
+          <PremiumCrednivoBrand />
+        </aside>
 
         <section className="auth-login-card" aria-label="Sign in">
           <div className="auth-role-tabs auth-role-tabs-clean" role="tablist" aria-label="Login type">
