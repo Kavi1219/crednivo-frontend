@@ -28,114 +28,7 @@ function readLoginPreferences() {
   }
 }
 
-
-function PremiumCrednivoBrand() {
-  return (
-    <div className="v55-brand">
-      <div className="v55-brand-logo" aria-hidden="true">
-        <svg viewBox="0 0 520 520" role="img">
-          <defs>
-            <linearGradient id="v55Gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#6f4305" />
-              <stop offset="16%" stopColor="#fff2b4" />
-              <stop offset="38%" stopColor="#d79516" />
-              <stop offset="58%" stopColor="#fff6cb" />
-              <stop offset="78%" stopColor="#d99b23" />
-              <stop offset="100%" stopColor="#704005" />
-            </linearGradient>
-            <linearGradient id="v55GoldBright" x1="0" y1="1" x2="1" y2="0">
-              <stop offset="0%" stopColor="#8d5507" />
-              <stop offset="28%" stopColor="#f0b72f" />
-              <stop offset="58%" stopColor="#fff4bd" />
-              <stop offset="100%" stopColor="#d48d11" />
-            </linearGradient>
-            <linearGradient id="v55Bar" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#7a4b07" />
-              <stop offset="22%" stopColor="#d89a1f" />
-              <stop offset="52%" stopColor="#fff0a4" />
-              <stop offset="78%" stopColor="#d2951a" />
-              <stop offset="100%" stopColor="#6d4004" />
-            </linearGradient>
-            <filter id="v55Glow" x="-70%" y="-70%" width="240%" height="240%">
-              <feGaussianBlur stdDeviation="9" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id="v55Soft" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="16" stdDeviation="13" floodColor="#000000" floodOpacity=".48" />
-            </filter>
-          </defs>
-
-          <ellipse cx="250" cy="456" rx="175" ry="20" fill="#e6aa2a" opacity=".12" />
-
-          <path
-            d="M 388 105
-               C 323 54, 211 48, 132 111
-               C 44 181, 42 326, 133 407
-               C 211 477, 333 470, 405 390"
-            fill="none"
-            stroke="url(#v55Gold)"
-            strokeWidth="86"
-            strokeLinecap="round"
-            filter="url(#v55Soft)"
-          />
-          <path
-            d="M 382 111
-               C 317 67, 217 63, 145 119
-               C 66 181, 64 318, 144 393
-               C 215 459, 323 449, 392 382"
-            fill="none"
-            stroke="rgba(255,255,255,.23)"
-            strokeWidth="18"
-            strokeLinecap="round"
-          />
-
-          <g filter="url(#v55Soft)">
-            <rect x="190" y="306" width="38" height="90" rx="5" fill="url(#v55Bar)" />
-            <rect x="244" y="268" width="38" height="128" rx="5" fill="url(#v55Bar)" />
-            <rect x="298" y="218" width="38" height="178" rx="5" fill="url(#v55Bar)" />
-            <rect x="352" y="162" width="38" height="234" rx="5" fill="url(#v55Bar)" />
-            <path d="M203 306H220V395H203Z" fill="rgba(255,255,255,.20)" />
-            <path d="M257 268H274V395H257Z" fill="rgba(255,255,255,.20)" />
-            <path d="M311 218H328V395H311Z" fill="rgba(255,255,255,.20)" />
-            <path d="M365 162H382V395H365Z" fill="rgba(255,255,255,.20)" />
-          </g>
-
-          <g filter="url(#v55Glow)">
-            <path
-              d="M 172 355
-                 C 232 334, 279 304, 322 268
-                 C 359 237, 392 198, 430 145"
-              fill="none"
-              stroke="url(#v55GoldBright)"
-              strokeWidth="17"
-              strokeLinecap="round"
-            />
-            <polygon points="421,129 466,121 448,164" fill="url(#v55GoldBright)" />
-          </g>
-
-          <path
-            d="M 178 350 C 236 329, 279 300, 320 267 C 356 237, 389 198, 425 150"
-            fill="none"
-            stroke="rgba(255,255,255,.50)"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </div>
-
-      <div className="v55-wordmark" aria-label="CREDNIVO">
-        <span className="v55-word-silver">CRED</span><span className="v55-word-gold">NIVO</span>
-      </div>
-      <div className="v55-brand-rule" />
-      <div className="v55-brand-tagline">Finance Management Platform</div>
-    </div>
-  );
-}
-
-// V55 — Rebuilt from code: no screenshot/background image is embedded. Authentication logic is unchanged.
+// V51 — Gold emblem + blue glass login redesign. Authentication logic is unchanged.
 export default function Login() {
   const actionLocksRef = useRef(new Set());
 
@@ -315,8 +208,162 @@ export default function Login() {
   return (
     <main className="auth-page auth-login-page auth-login-mirror">
       <section className="auth-login-split">
-        <aside className="auth-login-brand-side v55-brand-side" aria-label="CREDNIVO">
-          <PremiumCrednivoBrand />
+        <aside className="auth-login-brand-side" aria-label="CREDNIVO">
+          <div className="crednivo-cinematic-brand" aria-label="CREDNIVO Finance Management Platform">
+            <div className="crednivo-cinematic-symbol crednivo-premium-symbol crednivo-classic-symbol" aria-hidden="true">
+              <svg
+                className="crednivo-premium-svg crednivo-classic-svg"
+                viewBox="0 0 360 330"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <defs>
+                  <linearGradient id="cnV54Gold" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#f4dfaa" />
+                    <stop offset="23%" stopColor="#d9b86b" />
+                    <stop offset="52%" stopColor="#9b6a22" />
+                    <stop offset="76%" stopColor="#d6ad58" />
+                    <stop offset="100%" stopColor="#f0d695" />
+                  </linearGradient>
+
+                  <linearGradient id="cnV54GoldLight" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f8e6b9" />
+                    <stop offset="45%" stopColor="#c99a43" />
+                    <stop offset="100%" stopColor="#8b5a1c" />
+                  </linearGradient>
+
+                  <linearGradient id="cnV54Steel" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ffffff" />
+                    <stop offset="28%" stopColor="#cbd3db" />
+                    <stop offset="58%" stopColor="#6f7b88" />
+                    <stop offset="78%" stopColor="#e8edf1" />
+                    <stop offset="100%" stopColor="#8995a1" />
+                  </linearGradient>
+
+                  <filter id="cnV54Shadow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feDropShadow dx="0" dy="11" stdDeviation="8" floodColor="#000000" floodOpacity=".42" />
+                  </filter>
+
+                  <filter id="cnV54SoftShine" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="2.2" result="b" />
+                    <feMerge>
+                      <feMergeNode in="b" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Classic open C */}
+                <g className="cn-v54-c" filter="url(#cnV54Shadow)" transform="rotate(-7 150 158) translate(-8 4)">
+                  <path
+                    className="cn-v54-c-main"
+                    pathLength="100"
+                    d="M258 69
+                       C226 39 184 26 143 32
+                       C86 40 46 85 42 143
+                       C37 204 75 255 131 273
+                       C178 288 228 272 258 237"
+                    fill="none"
+                    stroke="url(#cnV54Gold)"
+                    strokeWidth="43"
+                    strokeLinecap="butt"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    className="cn-v54-c-edge"
+                    pathLength="100"
+                    d="M251 67
+                       C221 43 183 34 147 39
+                       C96 46 61 87 58 140"
+                    fill="none"
+                    stroke="#f8e6b7"
+                    strokeOpacity=".72"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    className="cn-v54-c-lower-edge"
+                    pathLength="100"
+                    d="M62 210
+                       C78 242 107 264 141 273
+                       C183 284 225 270 251 241"
+                    fill="none"
+                    stroke="#704616"
+                    strokeOpacity=".58"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  />
+                </g>
+
+                {/* Slim classic growth bars */}
+                <g className="cn-v54-bars">
+                  <rect className="cn-v54-bar cn-v54-bar-1" x="104" y="204" width="24" height="54" rx="4" fill="url(#cnV54GoldLight)" />
+                  <rect className="cn-v54-bar cn-v54-bar-2" x="141" y="175" width="25" height="83" rx="4" fill="url(#cnV54GoldLight)" />
+                  <rect className="cn-v54-bar cn-v54-bar-3" x="179" y="140" width="26" height="118" rx="4" fill="url(#cnV54GoldLight)" />
+
+                  <line x1="111" y1="210" x2="111" y2="249" stroke="#fff4cf" strokeOpacity=".44" strokeWidth="2" />
+                  <line x1="148" y1="181" x2="148" y2="249" stroke="#fff4cf" strokeOpacity=".40" strokeWidth="2" />
+                  <line x1="186" y1="146" x2="186" y2="249" stroke="#fff4cf" strokeOpacity=".36" strokeWidth="2" />
+                </g>
+
+                {/* Single continuous curved growth arrow */}
+                <g className="cn-v64-arrow">
+                  <path
+                    className="cn-v64-arrow-shape"
+                    d="
+                      M112 230
+                      C143 214 173 193 198 169
+                      C222 146 245 118 266 88
+                      L256 82
+                      L290 72
+                      L288 107
+                      L278 99
+                      C254 131 231 158 206 181
+                      C180 205 150 226 118 241
+                      Z
+                    "
+                    fill="url(#cnV54Gold)"
+                    stroke="#ecd49a"
+                    strokeWidth="1.6"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    className="cn-v64-arrow-highlight"
+                    d="
+                      M119 229
+                      C148 214 176 194 200 172
+                      C224 150 245 124 264 97
+                    "
+                    fill="none"
+                    stroke="#f8e6ba"
+                    strokeOpacity=".62"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    className="cn-v64-arrow-shine"
+                    cx="284"
+                    cy="79"
+                    r="3.2"
+                    fill="#fff5cf"
+                  />
+                </g>
+              </svg>
+            </div>
+
+            <div className="crednivo-cinematic-copy">
+              <div className="crednivo-cinematic-wordmark" aria-hidden="true">
+                {'CREDNIVO'.split('').map((letter, index) => (
+                  <span key={`${letter}-${index}`}>{letter}</span>
+                ))}
+              </div>
+
+              <div className="crednivo-cinematic-tagline">
+                <i aria-hidden="true" />
+                <span>Finance Management Platform</span>
+                <i aria-hidden="true" />
+              </div>
+            </div>
+          </div>
         </aside>
 
         <section className="auth-login-card" aria-label="Sign in">
