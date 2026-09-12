@@ -5829,3 +5829,30 @@
     margin-top: 12px !important;
   }
 }
+
+
+/* V69 — replace legacy blue chart marks with the final gold CREDNIVO mark */
+.auth-brand-mark,
+.auth-site-mark {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.auth-brand-mark .crednivo-final-mark { width: 58px; height: 54px; flex-basis: 58px; }
+.auth-site-mark .crednivo-final-mark { width: 38px; height: 35px; flex-basis: 38px; }
+
+
+/* V69 — exact final gold mark for security/loading screen */
+.auth-loading-new-logo.auth-loading-final-gold {
+  width: 96px !important;
+  height: 90px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.auth-loading-final-gold .crednivo-final-mark { width: 88px; height: 81px; flex-basis: 88px; }

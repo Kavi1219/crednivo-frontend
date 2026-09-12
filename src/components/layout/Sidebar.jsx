@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Tooltip from '../common/Tooltip';
+import CrednivoMark from '../brand/CrednivoMark';
 import './Sidebar.css';
 
 const simpleItems = [
@@ -32,7 +33,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar desktop-sidebar">
       <button className="brand" onClick={() => navigate('/')} aria-label="CREDNIVO Overview">
-        <span className="brand-mark"><BarChart3 size={30} strokeWidth={2.2} /></span>
+        <span className="brand-mark"><CrednivoMark size={48} /></span>
         <span className="brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span>
       </button>
 

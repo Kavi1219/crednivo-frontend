@@ -18,3 +18,12 @@
 .payment-customer-identity{display:flex;align-items:center;gap:8px;min-width:0}
 .payment-customer-identity>div{min-width:0;display:grid;gap:2px}
 .payment-customer-avatar{width:34px;height:34px;border-radius:11px;background:#eaf2ff;color:#0868ec;font-size:10px;font-weight:850}
+
+
+/* V69 — CREDNIVO branding for payment history report */
+.payment-history-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.payment-history-brand>.crednivo-final-mark{width:48px;height:44px;flex-basis:48px}
+.payment-history-brand>div{min-width:0}
+.payment-history-brand small{display:block;margin-top:4px;color:#a77724;font-size:7.5px;font-weight:800;letter-spacing:.035em}
+@media(max-width:767px){.payment-history-brand>.crednivo-final-mark{width:42px;height:39px;flex-basis:42px}.payment-history-brand{gap:8px}}
+@media print{.payment-history-brand>.crednivo-final-mark{width:15mm!important;height:14mm!important}.payment-history-brand small{color:#8b6422!important}}

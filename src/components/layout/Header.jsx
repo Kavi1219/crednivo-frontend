@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BarChart3, Bell, Building2, ChevronDown, Edit3, KeyRound, LogOut, Mail, MapPin, Menu, Phone, Search, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { Bell, Building2, ChevronDown, Edit3, KeyRound, LogOut, Mail, MapPin, Menu, Phone, Search, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatIndianMobile } from '../../utils/finance';
 import IconButton from '../common/IconButton';
+import CrednivoMark from '../brand/CrednivoMark';
 import CompanyProfileModal from './CompanyProfileModal';
 import ChangePasswordModal from './ChangePasswordModal';
 import AccountSecurityModal from './AccountSecurityModal';
@@ -99,7 +100,7 @@ export default function Header({ onOpenMenu }) {
     <header className="app-header">
       <div className="header-title-wrap">
         <IconButton label="Open menu" onClick={onOpenMenu} className="mobile-menu-button"><Menu size={22} /></IconButton>
-        <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark"><BarChart3 size={21} strokeWidth={2.2} /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
+        <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark"><CrednivoMark size={37} /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
         <div className="desktop-header-identity">
           <h1>{title}</h1>
           {isOverview ? (

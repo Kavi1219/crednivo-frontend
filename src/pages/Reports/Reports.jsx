@@ -33,6 +33,7 @@ import { apiRequest } from '../../services/api';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Reports.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
+import CrednivoMark from '../../components/brand/CrednivoMark';
 import {
   exportReportDoc,
   exportReportExcel,
@@ -2893,6 +2894,15 @@ export default function Reports() {
           </>
         )}
       />
+
+      <div className="reports-brand-strip" aria-label="CREDNIVO report branding">
+        <CrednivoMark size={52} />
+        <div>
+          <strong>CREDNIVO</strong>
+          <span>Finance Management Platform</span>
+        </div>
+        <small>Professional Business Reports</small>
+      </div>
 
       <div className="reports-tabs-row">
         <div className="reports-view-tabs" role="tablist" aria-label="Report view">

@@ -1,91 +1,22 @@
-.crednivo-final-mark{
-  --crednivo-mark-size:48px;
-  --cn500:#777c69;
-  --cn200:#f3a51b;
-  --cn100:#9b7ab8;
-  --cn50:#36a8c8;
-  --cn20:#a8aa35;
-  --cn10:#9a673d;
-  position:relative;
-  width:var(--crednivo-mark-size);
-  height:var(--crednivo-mark-size);
-  display:inline-block;
-  flex:0 0 var(--crednivo-mark-size);
-  filter:drop-shadow(0 4px 7px rgba(0,0,0,.18));
+.crednivo-final-mark {
+  --crednivo-mark-size: 48px;
+  width: var(--crednivo-mark-size);
+  height: var(--crednivo-mark-size);
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 var(--crednivo-mark-size);
+  overflow: visible;
+  line-height: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .24));
 }
-.crednivo-final-ring{
-  position:absolute;
-  inset:3%;
-  border-radius:50%;
-  background:conic-gradient(
-    from 46deg,
-    transparent 0 16%,
-    var(--cn200) 16% 24%,
-    var(--cn500) 24% 52%,
-    var(--cn100) 52% 70%,
-    var(--cn50) 70% 83%,
-    var(--cn20) 83% 91%,
-    var(--cn10) 91% 96%,
-    transparent 96% 100%
-  );
-}
-.crednivo-final-ring::after{
-  content:"";
-  position:absolute;
-  inset:19%;
-  border-radius:50%;
-  background:var(--crednivo-mark-hole, #07130e);
-  box-shadow:inset 0 0 calc(var(--crednivo-mark-size) * .12) rgba(0,0,0,.28);
-}
-.crednivo-final-bars{
-  position:absolute;
-  left:29%;
-  bottom:23%;
-  width:39%;
-  height:45%;
-  display:flex;
-  align-items:flex-end;
-  gap:7%;
-  z-index:2;
-}
-.crednivo-final-bar{
-  display:block;
-  width:27%;
-  border-radius:8% 8% 0 0;
-  box-shadow:inset 1px 0 rgba(255,255,255,.25);
-}
-.crednivo-final-bar.bar-a{height:45%;background:linear-gradient(180deg,#c1c44d,var(--cn20))}
-.crednivo-final-bar.bar-b{height:68%;background:linear-gradient(180deg,#62c7df,var(--cn50))}
-.crednivo-final-bar.bar-c{height:91%;background:linear-gradient(180deg,#b99bd0,var(--cn100))}
-.crednivo-final-arrow{
-  position:absolute;
-  left:24%;
-  bottom:20%;
-  width:67%;
-  height:65%;
-  z-index:3;
-}
-.crednivo-final-arrow-line{
-  position:absolute;
-  left:0;
-  bottom:10%;
-  width:91%;
-  height:8%;
-  border-radius:999px;
-  background:linear-gradient(90deg,#b77a36,var(--cn200) 72%,#ffd46a);
-  transform:rotate(-39deg);
-  transform-origin:left center;
-  box-shadow:0 0 calc(var(--crednivo-mark-size) * .08) rgba(243,165,27,.28);
-}
-.crednivo-final-arrow-head{
-  position:absolute;
-  right:-1%;
-  top:5%;
-  width:0;
-  height:0;
-  border-left:calc(var(--crednivo-mark-size) * .16) solid #f6b32c;
-  border-top:calc(var(--crednivo-mark-size) * .10) solid transparent;
-  border-bottom:calc(var(--crednivo-mark-size) * .10) solid transparent;
-  transform:rotate(-39deg);
-  filter:drop-shadow(0 0 3px rgba(243,165,27,.28));
+
+.crednivo-final-mark > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
 }

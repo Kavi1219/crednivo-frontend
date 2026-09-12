@@ -1,6 +1,7 @@
 import { Download, FileSpreadsheet, Printer } from 'lucide-react';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
+import CrednivoMark from '../../components/brand/CrednivoMark';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './TodayReport.css';
 
@@ -26,7 +27,10 @@ export default function TodayReport() {
   return (
     <div className="today-report-page">
       <div className="report-heading">
-        <div><h1>Today's Report</h1><p>{formatDate(toInputDate())} · Live database summary</p></div>
+        <div className="report-heading-brand">
+          <CrednivoMark size={54} />
+          <div><h1>Today's Report</h1><p>{formatDate(toInputDate())} · Live database summary</p><small>CREDNIVO · Finance Management Platform</small></div>
+        </div>
         <div className="report-actions">
           <button onClick={download} title="Download Excel-compatible CSV"><FileSpreadsheet size={18} /> Download</button>
           <button onClick={() => window.print()} title="Print or save as PDF"><Printer size={18} /></button>

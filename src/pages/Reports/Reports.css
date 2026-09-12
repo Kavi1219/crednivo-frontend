@@ -4126,3 +4126,51 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
     font-size:14px;
   }
 }
+
+
+/* =========================================================
+   V69 — FINAL CREDNIVO GOLD BRANDING FOR ALL REPORT VIEWS
+   ========================================================= */
+.reports-brand-strip {
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--surface) 96%, #d7b46b), var(--surface));
+  box-shadow: var(--shadow-sm);
+}
+.reports-brand-strip > div { display: grid; gap: 2px; }
+.reports-brand-strip > div strong { color: var(--ink-950); font-size: 17px; font-weight: 950; letter-spacing: -.02em; }
+.reports-brand-strip > div span { color: var(--ink-500); font-size: 8px; font-weight: 700; }
+.reports-brand-strip > small { color: #a77724; font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.reports-brand-strip .crednivo-final-mark { width: 52px; height: 48px; flex-basis: 52px; }
+
+@media (max-width: 767px) {
+  .reports-brand-strip { grid-template-columns: 45px 1fr; min-height: 58px; padding: 7px 10px; gap: 10px; }
+  .reports-brand-strip .crednivo-final-mark { width: 45px; height: 42px; flex-basis: 45px; }
+  .reports-brand-strip > div strong { font-size: 15px; }
+  .reports-brand-strip > small { display: none; }
+}
+
+@media print {
+  .reports-brand-strip {
+    display: grid !important;
+    grid-template-columns: 16mm 1fr auto !important;
+    min-height: 16mm !important;
+    padding: 2mm 3mm !important;
+    margin: 0 0 4mm !important;
+    border: 0 !important;
+    border-bottom: 1px solid #dce4ee !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .reports-brand-strip .crednivo-final-mark { width: 15mm !important; height: 14mm !important; }
+  .reports-brand-strip > div strong { color: #12385d !important; font-size: 16pt !important; }
+  .reports-brand-strip > div span { color: #71839a !important; font-size: 6.5pt !important; }
+  .reports-brand-strip > small { display: block !important; color: #a77724 !important; font-size: 6.5pt !important; }
+}

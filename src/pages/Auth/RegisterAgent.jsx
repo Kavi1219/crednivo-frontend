@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  BarChart3,
   Camera,
   CheckCircle2,
   Clock3,
@@ -17,6 +16,7 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import CrednivoMark from '../../components/brand/CrednivoMark';
 import { apiRequest } from '../../services/api';
 import { AuthLoading } from './Login';
 import './Auth.css';
@@ -101,7 +101,7 @@ export default function RegisterAgent() {
     return (
       <main className="auth-page auth-registration-page auth-registration-v2">
         <header className="auth-site-header">
-          <div className="auth-site-brand"><span className="auth-site-mark"><BarChart3 size={23} /></span><strong>CREDNIVO</strong></div>
+          <div className="auth-site-brand"><span className="auth-site-mark"><CrednivoMark size={38} /></span><strong>CREDNIVO</strong></div>
           <span className="auth-secure-badge"><ShieldCheck size={16} /> Secure &amp; Encrypted</span>
         </header>
         <section className="auth-registration-shell auth-agent-success-shell">
@@ -123,7 +123,7 @@ export default function RegisterAgent() {
     <main className="auth-page auth-registration-page auth-registration-v2">
       <header className="auth-site-header">
         <div className="auth-site-brand">
-          <span className="auth-site-mark"><BarChart3 size={23} /></span>
+          <span className="auth-site-mark"><CrednivoMark size={38} /></span>
           <strong>CREDNIVO</strong>
         </div>
         <span className="auth-secure-badge"><ShieldCheck size={16} /> Secure &amp; Encrypted</span>

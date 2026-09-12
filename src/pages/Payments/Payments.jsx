@@ -20,6 +20,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Payments.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
+import CrednivoMark from '../../components/brand/CrednivoMark';
 
 export default function Payments() {
   const { customers, payments } = useCrednivo();
@@ -120,9 +121,13 @@ export default function Payments() {
 
       <section className="module-card payment-history-card">
         <div className="payment-history-head">
-          <div>
-            <h2>Payment History</h2>
-            <span>Choose a date range, then print or download the matching history.</span>
+          <div className="payment-history-brand">
+            <CrednivoMark size={48} />
+            <div>
+              <h2>Payment History</h2>
+              <span>Choose a date range, then print or download the matching history.</span>
+              <small>CREDNIVO · Finance Management Platform</small>
+            </div>
           </div>
           <div className="payment-export-actions">
             <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print / PDF</ActionButton>

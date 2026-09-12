@@ -1,8 +1,9 @@
-import { BarChart3, CheckCircle2, Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AuthLoading } from './Login';
+import CrednivoMark from '../../components/brand/CrednivoMark';
 import './Auth.css';
 
 export default function OwnerSetup() {
@@ -49,7 +50,7 @@ export default function OwnerSetup() {
   return (
     <main className="auth-page auth-setup-page">
       <section className="auth-brand-panel">
-        <div className="auth-brand-lockup"><span className="auth-brand-mark"><BarChart3 size={34} /></span><div><strong>CREDNIVO</strong><small>Finance Management Platform</small></div></div>
+        <div className="auth-brand-lockup"><span className="auth-brand-mark"><CrednivoMark size={58} /></span><div><strong>CREDNIVO</strong><small>Finance Management Platform</small></div></div>
         <div className="auth-brand-copy"><span className="auth-kicker"><ShieldCheck size={16} /> First-time Security Setup</span><h1>Create the owner login before anyone can enter the workspace.</h1><p>This password is securely hashed in PostgreSQL. CREDNIVO never stores the plain password.</p></div>
         <div className="auth-company-chip"><CheckCircle2 size={18} /><div><small>Ready to secure</small><strong>{status?.companyName || 'CREDNIVO'}</strong><span>{status?.ownerName || 'Owner'} · {status?.branch || 'Main Branch'}</span></div></div>
       </section>

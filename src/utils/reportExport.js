@@ -5,6 +5,7 @@ import {
   AlignmentType,
   BorderStyle,
   Document,
+  ImageRun,
   HeadingLevel,
   Packer,
   PageOrientation,
@@ -16,6 +17,7 @@ import {
   TextRun,
   WidthType,
 } from 'docx';
+import { getCrednivoLogoBytes, getCrednivoLogoDataUrl } from './reportBrand';
 
 const INR = new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -34,6 +36,8 @@ const PDF_FOOTER_SPACE = 19;
 const DOCX_A4_WIDTH = 11906;
 const DOCX_A4_HEIGHT = 16838;
 const DOCX_MARGIN = 850; // ~15 mm
+
+let reportLogoDataUrl = '';
 
 function sanitizeFileName(value) {
   return String(value || 'crednivo-report')
@@ -98,15 +102,24 @@ function reportOrientation(report) {
 function pdfHeader(doc, report) {
   const pageWidth = doc.internal.pageSize.getWidth();
 
+  const brandTextX = reportLogoDataUrl ? PDF_MARGIN_X + 15.5 : PDF_MARGIN_X;
+  if (reportLogoDataUrl) {
+    try {
+      doc.addImage(reportLogoDataUrl, 'PNG', PDF_MARGIN_X, 5.8, 12.8, 11.8, undefined, 'FAST');
+    } catch {
+      // Keep the report usable even if the browser cannot decode the logo.
+    }
+  }
+
   doc.setTextColor(12, 48, 86);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(17);
-  doc.text('CREDNIVO', PDF_MARGIN_X, 16);
+  doc.text('CREDNIVO', brandTextX, 16);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(92, 111, 137);
-  doc.text('Finance Management Platform', PDF_MARGIN_X, 21);
+  doc.text('Finance Management Platform', brandTextX, 21);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.2);
@@ -211,6 +224,8 @@ function pdfTableHooks(doc, report) {
 }
 
 export async function exportReportPdf(report) {
+  try { reportLogoDataUrl = await getCrednivoLogoDataUrl(); } catch { reportLogoDataUrl = ''; }
+
   // A4 portrait is the default professional report format.
   // A caller can explicitly set report.orientation = 'landscape' when needed.
   const orientation = reportOrientation(report);
@@ -853,9 +868,17 @@ function docxTableSpacing() {
 export async function exportReportDoc(report) {
   const children = [];
   const wideReport = hasWideTable(report);
+  let logoBytes = null;
+  try { logoBytes = await getCrednivoLogoBytes(); } catch { logoBytes = null; }
 
   children.push(new Paragraph({
     children: [
+      ...(logoBytes ? [new ImageRun({
+        type: 'png',
+        data: logoBytes,
+        transformation: { width: 46, height: 42 },
+        altText: { title: 'CREDNIVO', description: 'CREDNIVO logo', name: 'CREDNIVO' },
+      }), new TextRun({ text: '   ' })] : []),
       new TextRun({
         text: 'CREDNIVO',
         bold: true,

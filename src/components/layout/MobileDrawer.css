@@ -66,3 +66,21 @@
   .drawer-brand-copy strong { font-size: 20px; letter-spacing: -.03em; }
   .drawer-brand-copy small { margin-top: 4px; font-size: 8px; opacity: .82; white-space: nowrap; }
 }
+
+
+/* V69 — updated gold mark in mobile drawer */
+@media (max-width: 767px) {
+  .drawer-brand-mark {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    display: grid;
+    place-items: center;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .drawer-brand-mark .crednivo-final-mark { width: 52px; height: 48px; flex-basis: 52px; }
+}

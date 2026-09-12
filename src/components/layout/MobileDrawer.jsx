@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { BarChart3, CircleDollarSign, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import CrednivoMark from '../brand/CrednivoMark';
 import './MobileDrawer.css';
 
 const items = [
@@ -25,7 +26,7 @@ export default function MobileDrawer({ open, onClose }) {
       <button className={`drawer-overlay ${open ? 'show' : ''}`} onClick={onClose} aria-label="Close menu overlay" />
       <aside className={`mobile-drawer ${open ? 'open' : ''}`} aria-hidden={!open}>
         <div className="drawer-head">
-          <div className="drawer-brand"><span className="drawer-brand-mark"><BarChart3 size={23} strokeWidth={2.2} /></span><span className="drawer-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
+          <div className="drawer-brand"><span className="drawer-brand-mark"><CrednivoMark size={52} /></span><span className="drawer-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
           <button onClick={onClose} aria-label="Close menu"><X size={22} /></button>
         </div>
         <nav>{visible.map(([label, path, Icon]) => <NavLink key={path} to={path} onClick={onClose}><Icon size={19} />{label}</NavLink>)}</nav>

@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
+import { getCrednivoLogoDataUrl } from './reportBrand';
 
 function number(value) {
   return Number(value) || 0;
@@ -57,9 +58,12 @@ function ensureSpace(doc, y, needed = 35) {
   return 18;
 }
 
-export function downloadMonthlyReportPdf({ report, selectedMonth, company }) {
+export async function downloadMonthlyReportPdf({ report, selectedMonth, company }) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
+  let logoDataUrl = '';
+  try { logoDataUrl = await getCrednivoLogoDataUrl(); } catch { logoDataUrl = ''; }
+
   const generatedAt = new Intl.DateTimeFormat('en-IN', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -68,13 +72,17 @@ export function downloadMonthlyReportPdf({ report, selectedMonth, company }) {
   // Header band
   doc.setFillColor(7, 49, 89);
   doc.rect(0, 0, pageWidth, 36, 'F');
+  if (logoDataUrl) {
+    try { doc.addImage(logoDataUrl, 'PNG', 14, 4.8, 13.4, 12.3, undefined, 'FAST'); } catch { /* text fallback below */ }
+  }
+  const brandTextX = logoDataUrl ? 30 : 14;
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.text('CREDNIVO', 14, 15);
+  doc.text('CREDNIVO', brandTextX, 15);
   doc.setFontSize(8.5);
   doc.setFont('helvetica', 'normal');
-  doc.text('Finance Management Platform', 14, 21);
+  doc.text('Finance Management Platform', brandTextX, 21);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
