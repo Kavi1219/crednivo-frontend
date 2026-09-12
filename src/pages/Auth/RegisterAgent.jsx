@@ -8,6 +8,7 @@ import {
   EyeOff,
   KeyRound,
   MapPin,
+  Mail,
   Phone,
   ShieldCheck,
   UserRound,
@@ -25,7 +26,7 @@ export default function RegisterAgent() {
 
   const { loading, user, status, registerAgent } = useAuth();
   const [form, setForm] = useState({
-    name: '', mobile: '', companyName: '', branch: '',
+    name: '', mobile: '', email: '', companyName: '', branch: '',
     password: '', confirm: '', photoFile: null, photoPreview: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -74,9 +75,10 @@ export default function RegisterAgent() {
     event.preventDefault();
     setError('');
     const mobile = String(form.mobile || '').replace(/\D/g, '');
-    if (!form.name.trim() || mobile.length !== 10 || !form.companyName.trim() || !form.branch.trim()) {
-      setError('Enter agent name, valid mobile, company name and branch.'); return;
+    if (!form.name.trim() || mobile.length !== 10 || !form.email.trim() || !form.companyName.trim() || !form.branch.trim()) {
+      setError('Enter agent name, valid mobile, email, company name and branch.'); return;
     }
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) { setError('Enter a valid email address.'); return; }
     if (!form.photoFile) { setError('Add the agent profile photo.'); return; }
     if (form.password.length < 8) { setError('Password must contain at least 8 characters.'); return; }
     if (form.password !== form.confirm) { setError('Passwords do not match.'); return; }
@@ -155,6 +157,10 @@ export default function RegisterAgent() {
               <label>
                 <span>Mobile Number *</span>
                 <div className="auth-input-shell"><Phone size={17} /><input inputMode="numeric" maxLength={10} value={form.mobile} onChange={change('mobile')} placeholder="Enter 10-digit mobile number" /></div>
+              </label>
+              <label>
+                <span>Email Address *</span>
+                <div className="auth-input-shell"><Mail size={17} /><input type="email" autoComplete="email" value={form.email} onChange={change('email')} placeholder="agent@example.com" /></div>
               </label>
               <label>
                 <span>Company Name *</span>

@@ -7,6 +7,7 @@ import { formatIndianMobile } from '../../utils/finance';
 import IconButton from '../common/IconButton';
 import CompanyProfileModal from './CompanyProfileModal';
 import ChangePasswordModal from './ChangePasswordModal';
+import AccountSecurityModal from './AccountSecurityModal';
 import './Header.css';
 
 function getGreeting() {
@@ -21,7 +22,7 @@ function getHeaderIdentity(pathname) {
   return { title: 'Business Workspace', isOverview: false };
 }
 
-function ProfileDetails({ company, user, isOwner, onEdit, onChangePassword, onLogout }) {
+function ProfileDetails({ company, user, isOwner, onEdit, onSecurity, onChangePassword, onLogout }) {
   const avatar = user?.profilePhoto || company.logo;
   const initial = String(user?.displayName || company.name || 'C').charAt(0);
   return (
@@ -39,13 +40,12 @@ function ProfileDetails({ company, user, isOwner, onEdit, onChangePassword, onLo
         <div className="profile-detail-row"><span className="profile-detail-icon"><ShieldCheck size={16} /></span><div><small>Access</small><strong>{isOwner ? 'Owner · Full Access' : 'Agent · Field Access'}</strong></div></div>
         <div className="profile-detail-row"><span className="profile-detail-icon"><Building2 size={16} /></span><div><small>Company</small><strong>{company.name}</strong>{company.companyId && <span>{company.companyId}</span>}</div></div>
         <div className="profile-detail-row"><span className="profile-detail-icon"><Phone size={16} /></span><div><small>Login Mobile</small><strong>{formatIndianMobile(user?.mobile)}</strong></div></div>
-        {isOwner && <>
-          <div className="profile-detail-row"><span className="profile-detail-icon"><Mail size={16} /></span><div><small>Company Email</small><strong>{company.email || '—'}</strong></div></div>
-          <div className="profile-detail-row profile-detail-address"><span className="profile-detail-icon"><MapPin size={16} /></span><div><small>Address</small><strong>{company.address || '—'}</strong></div></div>
-        </>}
+        <div className="profile-detail-row"><span className="profile-detail-icon"><Mail size={16} /></span><div><small>Account Email</small><strong>{user?.email || (isOwner ? company.email : '—')}</strong><span>{user?.emailVerified ? 'Verified' : 'Verification Pending'}</span></div></div>
+        {isOwner && <div className="profile-detail-row profile-detail-address"><span className="profile-detail-icon"><MapPin size={16} /></span><div><small>Address</small><strong>{company.address || '—'}</strong></div></div>}
       </div>
       {isOwner && <button type="button" className="profile-edit-button" onClick={onEdit}><Edit3 size={15} /><span>Edit Company Profile</span></button>}
-      <button type="button" className="profile-password-button" onClick={onChangePassword}><KeyRound size={15} /><span>Change Password</span></button>
+      <button type="button" className="profile-security-button" onClick={onSecurity}><ShieldCheck size={15} /><span>{user?.emailVerified ? 'Email Verified' : 'Verify Email'}</span></button>
+      <button type="button" className="profile-password-button" onClick={onChangePassword} disabled={!user?.emailVerified} title={!user?.emailVerified ? 'Verify email before changing password' : 'Change password'}><KeyRound size={15} /><span>Change Password</span></button>
       <button type="button" className="profile-logout-button" onClick={onLogout}><LogOut size={15} /><span>Logout</span></button>
     </div>
   );
@@ -56,6 +56,7 @@ export default function Header({ onOpenMenu }) {
   const [search, setSearch] = useState('');
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [passwordEditorOpen, setPasswordEditorOpen] = useState(false);
+  const [securityEditorOpen, setSecurityEditorOpen] = useState(false);
   const desktopProfileRef = useRef(null);
   const mobileProfileRef = useRef(null);
   const { company } = useCrednivo();
@@ -91,7 +92,8 @@ export default function Header({ onOpenMenu }) {
 
   const signOut = async () => { setProfileOpen(false); await logout(); navigate('/login', { replace: true }); };
   const editCompany = () => { setProfileOpen(false); if (isOwner) setProfileEditorOpen(true); };
-  const editPassword = () => { setProfileOpen(false); setPasswordEditorOpen(true); };
+  const editSecurity = () => { setProfileOpen(false); setSecurityEditorOpen(true); };
+  const editPassword = () => { setProfileOpen(false); if (user?.emailVerified) setPasswordEditorOpen(true); else setSecurityEditorOpen(true); };
 
   return (
     <header className="app-header">
@@ -111,7 +113,7 @@ export default function Header({ onOpenMenu }) {
         <div className="notification-wrap"><IconButton label="Notifications" className="header-icon-btn"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
         <div className="profile-menu-wrap" ref={desktopProfileRef}>
           <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <img src={avatar} alt="" /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
-          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onChangePassword={editPassword} onLogout={signOut} />}
+          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} />}
         </div>
       </div>
 
@@ -120,10 +122,11 @@ export default function Header({ onOpenMenu }) {
         <div className="notification-wrap"><IconButton label="Notifications"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
         <div className="mobile-profile-menu-wrap" ref={mobileProfileRef}>
           <button className="mobile-avatar" aria-label="Signed-in profile" aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{avatar ? <img src={avatar} alt="" /> : profileInitial}</button>
-          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onChangePassword={editPassword} onLogout={signOut} />}
+          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} />}
         </div>
       </div>
       {isOwner && <CompanyProfileModal open={profileEditorOpen} onClose={() => setProfileEditorOpen(false)} />}
+      <AccountSecurityModal open={securityEditorOpen} onClose={() => setSecurityEditorOpen(false)} />
       <ChangePasswordModal open={passwordEditorOpen} onClose={() => setPasswordEditorOpen(false)} />
     </header>
   );

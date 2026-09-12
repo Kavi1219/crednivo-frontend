@@ -100,6 +100,18 @@ export function AuthProvider({ children }) {
     return result;
   };
 
+  const otpLogin = async ({ identifier, role, otp, remember = true }) => {
+    setError('');
+    const result = await apiRequest('/auth/otp-login/verify', {
+      method: 'POST',
+      skipAuth: true,
+      body: JSON.stringify({ identifier, role, otp }),
+    });
+    setAuthToken(result.token, { remember });
+    setUser(normalizeUser(result));
+    return result;
+  };
+
   const setupOwner = async ({ username, mobile, password }) => {
     setError('');
     const result = await apiRequest('/auth/setup-owner', {
@@ -136,11 +148,12 @@ export function AuthProvider({ children }) {
     return result;
   };
 
-  const registerAgent = async ({ photoFile, name, mobile, companyName, branch, password }) => {
+  const registerAgent = async ({ photoFile, name, mobile, email, companyName, branch, password }) => {
     setError('');
     const formData = new FormData();
     formData.append('name', name);
     formData.append('mobile', mobile);
+    formData.append('email', email);
     formData.append('companyName', companyName);
     formData.append('branch', branch);
     formData.append('password', password);
@@ -172,7 +185,7 @@ export function AuthProvider({ children }) {
     return Boolean(user?.permissions?.[permission]);
   }, [user]);
   const value = useMemo(() => ({
-    loading, user, status, error, login, setupOwner, registerCompany, registerAgent,
+    loading, user, status, error, login, otpLogin, setupOwner, registerCompany, registerAgent,
     logout, changePassword, refresh, isOwner, hasPermission, permissions: user?.permissions || {},
   }), [loading, user, status, error, isOwner, hasPermission, refresh]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

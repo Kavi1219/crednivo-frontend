@@ -69,7 +69,14 @@ export async function apiRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    const authPath = String(path).includes('/auth/login') || String(path).includes('/auth/setup-owner') || String(path).includes('/auth/register-company') || String(path).includes('/auth/register-agent') || String(path).includes('/auth/status');
+    const authPath = String(path).includes('/auth/login')
+      || String(path).includes('/auth/otp-login')
+      || String(path).includes('/auth/forgot-password')
+      || String(path).includes('/auth/email-security')
+      || String(path).includes('/auth/setup-owner')
+      || String(path).includes('/auth/register-company')
+      || String(path).includes('/auth/register-agent')
+      || String(path).includes('/auth/status');
     if (response.status === 401 && !authPath && typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('crednivo-auth-expired'));
     }
