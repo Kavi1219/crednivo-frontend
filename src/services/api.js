@@ -1,10 +1,27 @@
-const API_BASE_URL_VALUE =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+const LOCAL_API_BASE_URL = 'http://localhost:8080/api';
+const PRODUCTION_API_BASE_URL = 'https://crednivo-backend-production.up.railway.app/api';
 
-export const API_BASE_URL = String(API_BASE_URL_VALUE)
-  .trim()
-  .replace(/\/+$/, '');
+function resolveApiBaseUrl(value) {
+  const fallback = import.meta.env.DEV
+    ? LOCAL_API_BASE_URL
+    : PRODUCTION_API_BASE_URL;
 
+  const raw = String(value || '').trim();
+
+  // VITE_API_BASE_URL must be ONE backend URL. A comma-separated value is
+  // a CORS-origin list and is not a valid fetch base URL. Reject it safely.
+  if (!raw || raw.includes(',')) return fallback;
+
+  try {
+    const parsed = new URL(raw);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return fallback;
+    return raw.replace(/\/+$/, '');
+  } catch {
+    return fallback;
+  }
+}
+
+export const API_BASE_URL = resolveApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 export const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 
 const AUTH_TOKEN_KEY = 'crednivo-auth-token';
