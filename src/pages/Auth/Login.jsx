@@ -16,7 +16,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
-import loginEmblem from '../../assets/crednivo-login-emblem.png';
+import premiumScene from '../../assets/crednivo-login-full-scene.png';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -29,7 +29,7 @@ function readLoginPreferences() {
   }
 }
 
-// V52 — Exact mobile login design using the approved gold CREDNIVO emblem. Authentication logic is unchanged.
+// V54 — Full-scene media login. Uses the complete approved reference image without cropping. Authentication logic is unchanged.
 export default function Login() {
   const actionLocksRef = useRef(new Set());
 
@@ -209,32 +209,13 @@ export default function Login() {
   return (
     <main className="auth-page auth-login-page auth-login-mirror">
       <section className="auth-login-split">
-        <aside className="auth-login-brand-side" aria-label="CREDNIVO">
-          <div className="crednivo-cinematic-brand" aria-label="CREDNIVO Finance Management Platform">
-            <div className="crednivo-cinematic-symbol crednivo-exact-symbol">
-              <img
-                className="crednivo-login-emblem-image"
-                src={loginEmblem}
-                alt="CREDNIVO growth emblem"
-                draggable="false"
-              />
-            </div>
-
-            <div className="crednivo-cinematic-copy">
-              <div className="crednivo-cinematic-wordmark" aria-hidden="true">
-                {'CREDNIVO'.split('').map((letter, index) => (
-                  <span key={`${letter}-${index}`}>{letter}</span>
-                ))}
-              </div>
-
-              <div className="crednivo-cinematic-tagline">
-                <i aria-hidden="true" />
-                <span>Finance Management Platform</span>
-                <i aria-hidden="true" />
-              </div>
-            </div>
-          </div>
-        </aside>
+        <div className="auth-login-video-scene" aria-hidden="true">
+          <img
+            src={premiumScene}
+            alt=""
+            draggable="false"
+          />
+        </div>
 
         <section className="auth-login-card" aria-label="Sign in">
           <div className="auth-role-tabs auth-role-tabs-clean" role="tablist" aria-label="Login type">
