@@ -16,6 +16,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
+import loginEmblem from '../../assets/crednivo-login-emblem.png';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -28,7 +29,7 @@ function readLoginPreferences() {
   }
 }
 
-// V51 — Gold emblem + blue glass login redesign. Authentication logic is unchanged.
+// V52 — Exact mobile login design using the approved gold CREDNIVO emblem. Authentication logic is unchanged.
 export default function Login() {
   const actionLocksRef = useRef(new Set());
 
@@ -210,20 +211,13 @@ export default function Login() {
       <section className="auth-login-split">
         <aside className="auth-login-brand-side" aria-label="CREDNIVO">
           <div className="crednivo-cinematic-brand" aria-label="CREDNIVO Finance Management Platform">
-            <div className="crednivo-cinematic-symbol" aria-hidden="true">
-              <div className="crednivo-c-ring" />
-
-              <div className="crednivo-growth-bars">
-                <span className="crednivo-growth-bar crednivo-growth-bar-1" />
-                <span className="crednivo-growth-bar crednivo-growth-bar-2" />
-                <span className="crednivo-growth-bar crednivo-growth-bar-3" />
-              </div>
-
-              <div className="crednivo-growth-arrow">
-                <span className="crednivo-growth-arrow-line" />
-                <span className="crednivo-growth-arrow-head" />
-                <span className="crednivo-growth-arrow-glow" />
-              </div>
+            <div className="crednivo-cinematic-symbol crednivo-exact-symbol">
+              <img
+                className="crednivo-login-emblem-image"
+                src={loginEmblem}
+                alt="CREDNIVO growth emblem"
+                draggable="false"
+              />
             </div>
 
             <div className="crednivo-cinematic-copy">

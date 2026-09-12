@@ -4402,3 +4402,313 @@
   }
 }
 
+/* =====================================================================
+   CREDNIVO V52 — EXACT APPROVED MOBILE LOGIN
+   Uses the approved emblem image directly so the C/arrow/bars are
+   identical on mobile instead of being reconstructed with CSS.
+   ===================================================================== */
+
+.auth-login-page.auth-login-mirror{
+  background:
+    radial-gradient(circle at 77% 19%, rgba(22,124,255,.21), transparent 27%),
+    radial-gradient(circle at 7% 72%, rgba(6,80,181,.13), transparent 29%),
+    linear-gradient(180deg,#031125 0%,#021022 42%,#020d1d 100%);
+}
+
+.auth-login-page.auth-login-mirror::before{
+  opacity:.52;
+  background:
+    radial-gradient(circle, rgba(31,132,242,.36) 0 1.15px, transparent 1.7px) 0 0/29px 29px;
+  mask-image:linear-gradient(180deg,#000 0 45%,rgba(0,0,0,.52) 68%,transparent 96%);
+}
+
+.auth-login-page.auth-login-mirror .auth-login-split{
+  align-items:center;
+}
+
+.crednivo-exact-symbol{
+  position:relative;
+  width:clamp(300px,29vw,455px);
+  height:auto;
+  flex-basis:auto;
+  aspect-ratio:585/451;
+  transform:none !important;
+  overflow:hidden;
+  border-radius:0;
+  filter:
+    drop-shadow(0 0 12px rgba(255,205,77,.24))
+    drop-shadow(0 23px 42px rgba(0,0,0,.34));
+}
+
+.crednivo-login-emblem-image{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  user-select:none;
+  -webkit-user-drag:none;
+  pointer-events:none;
+}
+
+/* The imported image already contains the approved emblem. */
+.crednivo-exact-symbol .crednivo-c-ring,
+.crednivo-exact-symbol .crednivo-growth-bars,
+.crednivo-exact-symbol .crednivo-growth-arrow{
+  display:none !important;
+}
+
+.crednivo-cinematic-wordmark{
+  font-size:clamp(54px,5vw,82px);
+  letter-spacing:-.052em;
+  line-height:.95;
+}
+
+.crednivo-cinematic-copy{
+  margin-top:-13px;
+}
+
+.crednivo-cinematic-tagline{
+  margin-top:8px;
+}
+
+.auth-login-page.auth-login-mirror .auth-login-card{
+  border-radius:28px;
+  border-color:rgba(52,155,255,.48);
+  background:
+    linear-gradient(145deg,rgba(7,35,72,.84),rgba(2,17,37,.93) 57%,rgba(2,13,29,.97));
+  box-shadow:
+    inset 0 1px 0 rgba(153,213,255,.16),
+    0 28px 78px rgba(0,0,0,.48),
+    0 0 34px rgba(18,122,255,.12);
+}
+
+.auth-login-page.auth-login-mirror .auth-role-tabs-clean{
+  border-radius:18px;
+  padding:4px;
+}
+
+.auth-login-page.auth-login-mirror .auth-role-tabs-clean button{
+  border-radius:14px;
+}
+
+.auth-login-page.auth-login-mirror .auth-line-input{
+  border-radius:15px;
+}
+
+.auth-login-page.auth-login-mirror .auth-login-submit,
+.auth-login-page.auth-login-mirror .auth-otp-login-button{
+  border-radius:14px;
+}
+
+/* ------------------------ MOBILE / ANDROID ------------------------ */
+@media(max-width:980px){
+  .auth-login-page.auth-login-mirror .auth-login-split{
+    width:100%;
+    min-height:100%;
+    grid-template-columns:1fr;
+    align-content:start;
+    gap:0;
+    padding:
+      clamp(22px,5vh,48px)
+      14px
+      calc(34px + max(0px,var(--safe-area-inset-bottom, env(safe-area-inset-bottom,0px))));
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-brand-side{
+    min-height:0;
+    padding:0;
+    margin:0 auto 8px;
+  }
+
+  .crednivo-cinematic-brand{
+    width:100%;
+    max-width:640px;
+    gap:0;
+  }
+
+  .crednivo-exact-symbol{
+    width:clamp(245px,66vw,335px);
+    height:auto;
+    flex-basis:auto;
+    aspect-ratio:585/451;
+    margin:0 auto;
+    transform:none !important;
+  }
+
+  .crednivo-cinematic-copy{
+    margin-top:-10px;
+  }
+
+  .crednivo-cinematic-wordmark{
+    font-size:clamp(43px,11.8vw,63px);
+    letter-spacing:-.055em;
+  }
+
+  .crednivo-cinematic-tagline{
+    gap:9px;
+    margin-top:6px;
+  }
+
+  .crednivo-cinematic-tagline span{
+    font-size:clamp(10px,2.65vw,13px);
+    letter-spacing:.01em;
+  }
+
+  .crednivo-cinematic-tagline i{
+    width:31px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-card{
+    width:min(100%,790px);
+    max-width:790px;
+    margin:0 auto;
+    padding:25px 22px 27px;
+    border-radius:24px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean{
+    margin-bottom:21px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean button{
+    min-height:64px;
+    font-size:17px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean svg{
+    width:22px;
+    height:22px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-form{
+    gap:17px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-line-input{
+    min-height:65px;
+    padding:0 18px;
+    border-radius:15px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-line-input input{
+    font-size:16px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-form label > span{
+    font-size:13px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-options{
+    min-height:28px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-remember-control,
+  .auth-login-page.auth-login-mirror .auth-forgot-link{
+    font-size:12.5px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-submit{
+    min-height:64px;
+    font-size:17px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-otp-login-button{
+    min-height:59px;
+    font-size:15px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-divider{
+    margin:27px 0 18px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-create-row{
+    font-size:13px;
+    padding-bottom:2px;
+  }
+}
+
+@media(max-width:560px){
+  .auth-login-page.auth-login-mirror .auth-login-split{
+    padding-top:clamp(20px,4.2vh,35px);
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  .crednivo-exact-symbol{
+    width:clamp(230px,69vw,300px);
+  }
+
+  .crednivo-cinematic-copy{
+    margin-top:-14px;
+  }
+
+  .crednivo-cinematic-wordmark{
+    font-size:clamp(39px,11.5vw,52px);
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-card{
+    padding:20px 15px 22px;
+    border-radius:20px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean{
+    margin-bottom:17px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-role-tabs-clean button{
+    min-height:55px;
+    font-size:15px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-form{
+    gap:13px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-line-input{
+    min-height:56px;
+    padding:0 14px;
+    border-radius:13px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-line-input input{
+    font-size:14px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-form label > span{
+    font-size:12px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-submit{
+    min-height:55px;
+    font-size:15px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-otp-login-button{
+    min-height:52px;
+    font-size:13px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-divider{
+    margin:22px 0 14px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-create-row{
+    font-size:11.5px;
+  }
+}
+
+@media(max-width:390px){
+  .crednivo-exact-symbol{
+    width:225px;
+  }
+
+  .crednivo-cinematic-wordmark{
+    font-size:36px;
+  }
+
+  .auth-login-page.auth-login-mirror .auth-login-card{
+    padding:17px 12px 19px;
+  }
+}
+
