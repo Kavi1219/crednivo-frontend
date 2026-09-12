@@ -397,3 +397,77 @@ html[data-theme='dark'] .profile-dropdown-heading {
 .account-security-secondary{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);color:var(--ink-800);font-size:10px;font-weight:800;cursor:pointer}
 .account-security-secondary:disabled{opacity:.55;cursor:not-allowed}
 .auth-success-inline{padding:10px 12px;border:1px solid #bfe8d6;border-radius:10px;background:#e8f8f1;color:#0b6f4b;font-size:9px;font-weight:750;line-height:1.45}
+
+/* =========================================================
+   V50 — GLOBAL PROFILE DROPDOWN STACKING / OVERLAP FIX
+   =========================================================
+   Desktop pages render after the header in the DOM. Because the header uses
+   backdrop-filter it creates its own stacking context. Without an explicit
+   desktop z-index, normal page cards can paint above the profile dropdown.
+
+   Keep the complete header above ordinary page content, while real modals
+   (Collection, Payments, Capital, Agents, Reports, etc.) keep their own higher
+   z-index and still open above the header when required.
+   ========================================================= */
+
+@media (min-width: 768px) {
+  .app-header {
+    position: relative;
+    z-index: 100;
+    overflow: visible;
+    isolation: isolate;
+  }
+
+  .header-actions,
+  .profile-menu-wrap {
+    position: relative;
+    overflow: visible;
+  }
+
+  .profile-menu-wrap {
+    z-index: 2;
+  }
+
+  .profile-dropdown {
+    z-index: 110;
+    max-height: calc(100dvh - var(--header-height, 82px) - 24px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Mobile already uses a sticky header. Keep it below the mobile drawer but
+   above ordinary page content, and make the profile menu safely scrollable on
+   short screens. */
+@media (max-width: 767px) {
+  .app-header {
+    overflow: visible;
+  }
+
+  .mobile-profile-menu-wrap {
+    position: relative;
+  }
+
+  .mobile-profile-menu-wrap .profile-dropdown {
+    max-height: calc(100dvh - 82px - env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Keep the dropdown surface fully opaque in both themes so page cards can
+   never visually bleed through it. */
+.profile-dropdown {
+  background: var(--surface) !important;
+  border: 1px solid var(--line);
+}
+
+html[data-theme='dark'] .profile-dropdown {
+  background: var(--surface) !important;
+}
+
