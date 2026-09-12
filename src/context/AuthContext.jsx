@@ -100,12 +100,12 @@ export function AuthProvider({ children }) {
     return result;
   };
 
-  const otpLogin = async ({ identifier, role, otp, remember = true }) => {
+  const otpLogin = async ({ email, role, otp, remember = true }) => {
     setError('');
     const result = await apiRequest('/auth/otp-login/verify', {
       method: 'POST',
       skipAuth: true,
-      body: JSON.stringify({ identifier, role, otp }),
+      body: JSON.stringify({ email, role, otp }),
     });
     setAuthToken(result.token, { remember });
     setUser(normalizeUser(result));

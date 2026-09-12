@@ -43,6 +43,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [securityFlow, setSecurityFlow] = useState(null);
+  const [securityEmail, setSecurityEmail] = useState('');
   const [securityStep, setSecurityStep] = useState('start');
   const [securityOtp, setSecurityOtp] = useState('');
   const [securityPassword, setSecurityPassword] = useState('');
@@ -109,6 +110,7 @@ export default function Login() {
 
   const openSecurityFlow = (type) => {
     setSecurityFlow(type);
+    setSecurityEmail('');
     setSecurityStep('start');
     setSecurityOtp('');
     setSecurityPassword('');
@@ -119,8 +121,9 @@ export default function Login() {
 
   const sendSecurityOtp = async () => {
     setSecurityError('');
-    if (!identifier.trim()) {
-      setSecurityError('Enter your User ID / Phone Number on the login page first.');
+    const email = securityEmail.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setSecurityError('Enter your verified email address.');
       return;
     }
     setSecurityBusy(true);
@@ -131,7 +134,7 @@ export default function Login() {
       const result = await apiRequest(endpoint, {
         method: 'POST',
         skipAuth: true,
-        body: JSON.stringify({ identifier: identifier.trim(), role }),
+        body: JSON.stringify({ email, role }),
       });
       setSecurityMessage(`${result?.message || 'OTP sent.'} ${result?.maskedEmail || ''}`.trim());
       setSecurityStep('verify');
@@ -151,7 +154,7 @@ export default function Login() {
     setSecurityBusy(true);
     try {
       await otpLogin({
-        identifier: identifier.trim(),
+        email: securityEmail.trim().toLowerCase(),
         role,
         otp: securityOtp,
         remember,
@@ -185,7 +188,7 @@ export default function Login() {
         method: 'POST',
         skipAuth: true,
         body: JSON.stringify({
-          identifier: identifier.trim(),
+          email: securityEmail.trim().toLowerCase(),
           role,
           otp: securityOtp,
           newPassword: securityPassword,
@@ -336,19 +339,33 @@ export default function Login() {
             <span className="auth-create-icon"><ShieldCheck size={29} /></span>
             <h2>{securityFlow === 'otp' ? 'Login with Email OTP' : 'Forgot Password'}</h2>
             <p>{securityStep === 'start'
-              ? `We will send a verification code to the verified email for this ${role === 'OWNER' ? 'Owner' : 'Agent'} account.`
+              ? `Enter the verified email address for this ${role === 'OWNER' ? 'Owner' : 'Agent'} account.`
               : securityMessage}</p>
 
-            <div className="auth-security-flow-account">
-              <small>Account</small>
-              <strong>{identifier.trim() || 'Enter User ID / Phone Number first'}</strong>
-              <span>{role === 'OWNER' ? 'Owner' : 'Agent'}</span>
-            </div>
-
             {securityStep === 'start' && (
-              <button className="auth-primary-button" type="button" onClick={sendSecurityOtp} disabled={securityBusy || !identifier.trim()}>
-                <Mail size={17} />{securityBusy ? 'Sending...' : 'Send OTP'}
-              </button>
+              <div className="auth-security-flow-form">
+                <label>
+                  <span>Verified Email Address</span>
+                  <div className="auth-input-shell">
+                    <Mail size={17} />
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      value={securityEmail}
+                      onChange={(event) => setSecurityEmail(event.target.value)}
+                      placeholder="name@example.com"
+                    />
+                  </div>
+                </label>
+                <div className="auth-security-flow-account">
+                  <small>Account Type</small>
+                  <strong>{role === 'OWNER' ? 'Owner' : 'Agent'}</strong>
+                  <span>Email OTP only</span>
+                </div>
+                <button className="auth-primary-button" type="button" onClick={sendSecurityOtp} disabled={securityBusy}>
+                  <Mail size={17} />{securityBusy ? 'Sending...' : 'Send Email OTP'}
+                </button>
+              </div>
             )}
 
             {securityStep === 'verify' && (
