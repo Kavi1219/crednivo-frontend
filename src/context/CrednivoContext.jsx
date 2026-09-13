@@ -276,6 +276,10 @@ function mapBackendCustomer(item, documents = []) {
 function mapBackendLoan(item) {
   return {
     ...item,
+    // Preserve the API status before UI normalization.
+    // Example: backend PRECLOSED becomes display status Closed later,
+    // but collection filtering still needs to know it was specifically preclosed.
+    rawStatus: item?.rawStatus || item?.status || '',
     principal: asNumber(item.principal),
     disbursedAmount: asNumber(item.disbursedAmount),
     interestRate: asNumber(item.interestRate),

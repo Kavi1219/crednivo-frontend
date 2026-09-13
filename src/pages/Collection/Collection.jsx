@@ -216,9 +216,11 @@ export default function Collection() {
 
     (loans || []).forEach((loan) => {
       const status = String(loan?.status || '').trim().toUpperCase();
+      const rawStatus = String(loan?.rawStatus || '').trim().toUpperCase();
       const closeType = String(loan?.closeType || '').trim().toUpperCase();
 
       const isPreclosed =
+        isPrecloseMarker(rawStatus) ||
         isPrecloseMarker(status) ||
         isPrecloseMarker(closeType) ||
         Boolean(loan?.preclosedAt);
@@ -558,7 +560,16 @@ export default function Collection() {
   const isLoanClosed = (item) => {
     const loan = loanForItem(item);
     const status = String(loan?.status || '').trim().toLowerCase();
-    return !loan || isPreclosedCollection(item) || status === 'closed' || status === 'preclosed' || Number(loan.outstanding) <= 0;
+    const rawStatus = String(loan?.rawStatus || '').trim().toLowerCase();
+    return (
+      !loan ||
+      isPreclosedCollection(item) ||
+      status === 'closed' ||
+      status === 'preclosed' ||
+      rawStatus === 'preclosed' ||
+      rawStatus === 'pre-close' ||
+      Number(loan.outstanding) <= 0
+    );
   };
 
   const actionLabel = (item) => {

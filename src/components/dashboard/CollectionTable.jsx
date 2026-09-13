@@ -74,9 +74,11 @@ export default function CollectionTable() {
 
     (loans || []).forEach((loan) => {
       const status = String(loan?.status || '').trim();
+      const rawStatus = String(loan?.rawStatus || '').trim();
       const closeType = String(loan?.closeType || '').trim();
 
       const preclosed =
+        isPrecloseMarker(rawStatus) ||
         isPrecloseMarker(status) ||
         isPrecloseMarker(closeType) ||
         Boolean(loan?.preclosedAt);
