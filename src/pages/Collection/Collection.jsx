@@ -248,12 +248,68 @@ export default function Collection() {
   const isPreclosedCollection = (item) =>
     collectionMatchesLoanKeySet(item, preclosedLoanKeys);
 
+  // Some current backend flows close an early-settled loan using the generic
+  // status "Closed" rather than a distinct "Preclosed" status.
+  //
+  // We can still distinguish an EARLY/PRECLOSE settlement from a normal final
+  // installment: an early settlement leaves one or more FUTURE schedule rows
+  // cancelled. A normal final installment has no future instalments to cancel.
+  //
+  // This keeps a genuine final installment paid today visible as Paid, while
+  // removing an early/preclosed loan from Today's Collection.
+  const earlyClosedLoanKeys = useMemo(() => {
+    const keys = new Set();
+
+    (loans || []).forEach((loan) => {
+      const status = String(loan?.status || '').trim().toUpperCase();
+      const rawStatus = String(loan?.rawStatus || '').trim().toUpperCase();
+      const loanClosed =
+        status === 'CLOSED' ||
+        rawStatus === 'CLOSED' ||
+        isPrecloseMarker(status) ||
+        isPrecloseMarker(rawStatus) ||
+        Number(loan?.outstanding) <= 0;
+
+      if (!loanClosed) return;
+
+      const loanKeys = new Set(loanIdentityKeys(loan));
+      if (loanKeys.size === 0) return;
+
+      const hasCancelledFutureSchedule = (collections || []).some((entry) => {
+        if (!collectionMatchesLoanKeySet(entry, loanKeys)) return false;
+        if (!entry?.date || entry.date <= today) return false;
+
+        const entryStatus = String(entry?.status || '')
+          .trim()
+          .toUpperCase()
+          .replace(/[\s_-]+/g, '');
+
+        return entryStatus === 'CANCELLED' || entryStatus === 'CANCELED';
+      });
+
+      // IO early principal settlement also records cancelled future interest.
+      const hasCancelledFutureInterest = Number(loan?.cancelledInterestAmount || 0) > 0;
+
+      if (hasCancelledFutureSchedule || hasCancelledFutureInterest) {
+        loanKeys.forEach((key) => keys.add(key));
+      }
+    });
+
+    return keys;
+  }, [loans, collections, today]);
+
+  const excludedClosedLoanKeys = useMemo(() => {
+    const keys = new Set(preclosedLoanKeys);
+    earlyClosedLoanKeys.forEach((key) => keys.add(key));
+    return keys;
+  }, [preclosedLoanKeys, earlyClosedLoanKeys]);
+
   // Summary cards intentionally stay focused on today's workload.
   // A preclosed loan is NOT a normal due anymore, even if its old schedule row
   // was already paid/filled during the preclose operation.
   const todayCollections = useMemo(
-    () => collections.filter((item) => item.date === today && !collectionMatchesLoanKeySet(item, preclosedLoanKeys)),
-    [collections, today, preclosedLoanKeys],
+    () => collections.filter((item) => item.date === today && !collectionMatchesLoanKeySet(item, excludedClosedLoanKeys)),
+    [collections, today, excludedClosedLoanKeys],
   );
 
   const todayExpected = todayCollections.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
@@ -277,9 +333,9 @@ export default function Collection() {
   // Previous unpaid/partial entries remain in Overdue.
   const overdueCollections = useMemo(
     () => collections
-      .filter((item) => !collectionMatchesLoanKeySet(item, preclosedLoanKeys) && item.date < today && balanceOf(item) > 0)
+      .filter((item) => !collectionMatchesLoanKeySet(item, excludedClosedLoanKeys) && item.date < today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer),
-    [collections, today, preclosedLoanKeys],
+    [collections, today, excludedClosedLoanKeys],
   );
 
   // Upcoming only shows ONE next unpaid installment per active loan.
@@ -287,13 +343,13 @@ export default function Collection() {
   const upcomingCollections = useMemo(() => {
     const nextByLoan = new Map();
     collections
-      .filter((item) => !collectionMatchesLoanKeySet(item, preclosedLoanKeys) && item.date > today && balanceOf(item) > 0)
+      .filter((item) => !collectionMatchesLoanKeySet(item, excludedClosedLoanKeys) && item.date > today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer)
       .forEach((item) => {
         if (!nextByLoan.has(item.loanId)) nextByLoan.set(item.loanId, item);
       });
     return Array.from(nextByLoan.values()).sort(sortByDateThenCustomer);
-  }, [collections, today, preclosedLoanKeys]);
+  }, [collections, today, excludedClosedLoanKeys]);
 
   const activeCollections = useMemo(() => {
     const merged = [...overdueCollections, ...todayCollections, ...upcomingCollections];

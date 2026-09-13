@@ -103,10 +103,56 @@ export default function CollectionTable() {
     return keys;
   }, [loans, payments]);
 
+  // Infer early/preclose settlement even when the backend exposes only
+  // generic "Closed": early settlement cancels future schedule rows.
+  const earlyClosedLoanKeys = useMemo(() => {
+    const keys = new Set();
+
+    (loans || []).forEach((loan) => {
+      const status = String(loan?.status || '').trim().toUpperCase();
+      const rawStatus = String(loan?.rawStatus || '').trim().toUpperCase();
+      const closed =
+        status === 'CLOSED' ||
+        rawStatus === 'CLOSED' ||
+        isPrecloseMarker(status) ||
+        isPrecloseMarker(rawStatus) ||
+        Number(loan?.outstanding) <= 0;
+
+      if (!closed) return;
+
+      const loanKeys = new Set(loanIdentityKeys(loan));
+      const hasCancelledFuture = (collections || []).some((entry) => {
+        if (!matchesLoanKeys(entry, loanKeys)) return false;
+        if (!entry?.date || entry.date <= today) return false;
+
+        const entryStatus = String(entry?.status || '')
+          .trim()
+          .toUpperCase()
+          .replace(/[\s_-]+/g, '');
+
+        return entryStatus === 'CANCELLED' || entryStatus === 'CANCELED';
+      });
+
+      const hasCancelledInterest = Number(loan?.cancelledInterestAmount || 0) > 0;
+
+      if (hasCancelledFuture || hasCancelledInterest) {
+        loanKeys.forEach((key) => keys.add(key));
+      }
+    });
+
+    return keys;
+  }, [loans, collections, today]);
+
+  const excludedClosedLoanKeys = useMemo(() => {
+    const keys = new Set(preclosedLoanKeys);
+    earlyClosedLoanKeys.forEach((key) => keys.add(key));
+    return keys;
+  }, [preclosedLoanKeys, earlyClosedLoanKeys]);
+
   const todayRows = useMemo(
     () => (collections || []).filter((item) => {
       if (item.date !== today) return false;
-      if (matchesLoanKeys(item, preclosedLoanKeys)) return false;
+      if (matchesLoanKeys(item, excludedClosedLoanKeys)) return false;
 
       const itemKeys = new Set(rowLoanIdentityKeys(item));
       const loan = (loans || []).find((candidate) =>
@@ -127,7 +173,7 @@ export default function CollectionTable() {
 
       return true;
     }),
-    [collections, loans, preclosedLoanKeys, today],
+    [collections, loans, excludedClosedLoanKeys, today],
   );
 
   const collectedTodayCount = useMemo(
