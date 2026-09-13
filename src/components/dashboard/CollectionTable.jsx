@@ -10,12 +10,54 @@ import StatusBadge from '../common/StatusBadge';
 import './CollectionTable.css';
 import CustomerAvatar from '../common/CustomerAvatar';
 
+
 const COLLECTION_TABS = ['Daily', 'Weekly', 'Monthly', 'Collected Today'];
+
+function keyOf(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function loanIdentityKeys(loan) {
+  return [
+    loan?.id,
+    loan?.loanId,
+    loan?.loanCode,
+    loan?.code,
+    loan?.loanDbId,
+    loan?.dbLoanId,
+  ].map(keyOf).filter(Boolean);
+}
+
+function rowLoanIdentityKeys(row) {
+  return [
+    row?.loanId,
+    row?.loanCode,
+    row?.loanDbId,
+    row?.dbLoanId,
+    row?.loan?.id,
+    row?.loan?.loanId,
+    row?.loan?.loanCode,
+  ].map(keyOf).filter(Boolean);
+}
+
+function matchesLoanKeys(item, keySet) {
+  return rowLoanIdentityKeys(item).some((key) => keySet.has(key));
+}
+
+function isPrecloseMarker(value) {
+  const marker = String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '');
+
+  return marker === 'PRECLOSE' || marker === 'PRECLOSED';
+}
 
 export default function CollectionTable() {
   const [tab, setTab] = useState('Daily');
   const [paying, setPaying] = useState(null);
-  const { customers, collections, loans } = useCrednivo();
+  const { customers, collections, loans, payments } = useCrednivo();
   const navigate = useNavigate();
   const today = toInputDate();
 
@@ -24,9 +66,66 @@ export default function CollectionTable() {
     [customers],
   );
 
+  // A preclosed loan must disappear from Today's Collection immediately.
+  // Detect it from both the current loan record and any PRE-CLOSE transaction
+  // so older schedules cannot remain visible after settlement.
+  const preclosedLoanKeys = useMemo(() => {
+    const keys = new Set();
+
+    (loans || []).forEach((loan) => {
+      const status = String(loan?.status || '').trim();
+      const closeType = String(loan?.closeType || '').trim();
+
+      const preclosed =
+        isPrecloseMarker(status) ||
+        isPrecloseMarker(closeType) ||
+        Boolean(loan?.preclosedAt);
+
+      if (!preclosed) return;
+      loanIdentityKeys(loan).forEach((key) => keys.add(key));
+    });
+
+    (payments || []).forEach((payment) => {
+      const preclosePayment = [
+        payment?.type,
+        payment?.rawType,
+        payment?.transactionType,
+        payment?.paymentType,
+        payment?.closeType,
+      ].some(isPrecloseMarker);
+
+      if (!preclosePayment) return;
+      rowLoanIdentityKeys(payment).forEach((key) => keys.add(key));
+    });
+
+    return keys;
+  }, [loans, payments]);
+
   const todayRows = useMemo(
-    () => collections.filter((item) => item.date === today),
-    [collections, today],
+    () => (collections || []).filter((item) => {
+      if (item.date !== today) return false;
+      if (matchesLoanKeys(item, preclosedLoanKeys)) return false;
+
+      const itemKeys = new Set(rowLoanIdentityKeys(item));
+      const loan = (loans || []).find((candidate) =>
+        loanIdentityKeys(candidate).some((key) => itemKeys.has(key)),
+      );
+
+      // Closed/settled loans do not belong in today's active collection list.
+      if (!loan) return false;
+
+      const status = String(loan.status || '').trim().toUpperCase();
+      if (
+        status === 'CLOSED' ||
+        isPrecloseMarker(status) ||
+        Number(loan.outstanding) <= 0
+      ) {
+        return false;
+      }
+
+      return true;
+    }),
+    [collections, loans, preclosedLoanKeys, today],
   );
 
   const collectedTodayCount = useMemo(
@@ -48,8 +147,16 @@ export default function CollectionTable() {
 
   const openPay = (row) => {
     const balance = Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0));
-    const loan = loans.find((entry) => entry.id === row.loanId);
-    if (!loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0) return;
+    const rowKeys = new Set(rowLoanIdentityKeys(row));
+    const loan = (loans || []).find((entry) =>
+      loanIdentityKeys(entry).some((key) => rowKeys.has(key)),
+    );
+    if (
+      !loan ||
+      String(loan.status || '').trim().toUpperCase() === 'CLOSED' ||
+      isPrecloseMarker(loan.status) ||
+      Number(loan.outstanding) <= 0
+    ) return;
 
     setPaying({
       ...row,
@@ -100,8 +207,15 @@ export default function CollectionTable() {
             </thead>
             <tbody>
               {rows.map((row) => {
-                const loan = loans.find((item) => item.id === row.loanId);
-                const loanClosed = !loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0;
+                const rowKeys = new Set(rowLoanIdentityKeys(row));
+                const loan = (loans || []).find((item) =>
+                  loanIdentityKeys(item).some((key) => rowKeys.has(key)),
+                );
+                const loanClosed =
+                  !loan ||
+                  String(loan.status || '').trim().toUpperCase() === 'CLOSED' ||
+                  isPrecloseMarker(loan.status) ||
+                  Number(loan.outstanding) <= 0;
                 return (
                   <tr key={row.id}>
                     <td>{row.customerId}</td>
@@ -136,8 +250,15 @@ export default function CollectionTable() {
 
         <div className="mobile-collection-list">
           {rows.map((row) => {
-            const loan = loans.find((item) => item.id === row.loanId);
-            const loanClosed = !loan || loan.status === 'Closed' || Number(loan.outstanding) <= 0;
+            const rowKeys = new Set(rowLoanIdentityKeys(row));
+            const loan = (loans || []).find((item) =>
+              loanIdentityKeys(item).some((key) => rowKeys.has(key)),
+            );
+            const loanClosed =
+                  !loan ||
+                  String(loan.status || '').trim().toUpperCase() === 'CLOSED' ||
+                  isPrecloseMarker(loan.status) ||
+                  Number(loan.outstanding) <= 0;
             return (
               <article className="mobile-collection-row" key={row.id}>
                 <div className="mobile-row-top">
