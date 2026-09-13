@@ -16,7 +16,6 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
-import CrednivoMark from '../../components/brand/CrednivoMark';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -26,6 +25,29 @@ function readLoginPreferences() {
     return JSON.parse(localStorage.getItem(LOGIN_PREF_KEY) || '{}');
   } catch {
     return {};
+  }
+}
+
+async function saveCredentialToBrowser(identifier, password) {
+  // Never store the raw password in localStorage. Let the browser / Android
+  // password manager store it in its protected credential store instead.
+  try {
+    if (
+      typeof window === 'undefined'
+      || typeof navigator === 'undefined'
+      || !navigator.credentials?.store
+      || typeof window.PasswordCredential === 'undefined'
+    ) return;
+
+    const credential = new window.PasswordCredential({
+      id: identifier,
+      name: identifier,
+      password,
+    });
+    await navigator.credentials.store(credential);
+  } catch {
+    // Browser credential APIs are optional. Standard autocomplete attributes
+    // below still allow Chrome/Edge/Android password managers to save/autofill.
   }
 }
 
@@ -73,7 +95,14 @@ export default function Login() {
     event.preventDefault();
     setError('');
 
-    if (!identifier.trim() || !password) {
+    // Read directly from the submitted form as well as React state. This makes
+    // browser/Android password-manager autofill reliable even when a browser
+    // does not dispatch a normal React change event for an autofilled field.
+    const submitted = new FormData(event.currentTarget);
+    const submittedIdentifier = String(submitted.get('username') || identifier || '').trim();
+    const submittedPassword = String(submitted.get('password') || password || '');
+
+    if (!submittedIdentifier || !submittedPassword) {
       setError('Enter your User ID / Phone Number and password.');
       return;
     }
@@ -81,8 +110,8 @@ export default function Login() {
     try {
       setBusy(true);
       await login({
-        identifier: identifier.trim(),
-        password,
+        identifier: submittedIdentifier,
+        password: submittedPassword,
         role,
         remember,
       });
@@ -91,8 +120,9 @@ export default function Login() {
         localStorage.setItem(LOGIN_PREF_KEY, JSON.stringify({
           remember: true,
           role,
-          identifier: identifier.trim(),
+          identifier: submittedIdentifier,
         }));
+        await saveCredentialToBrowser(submittedIdentifier, submittedPassword);
       } else {
         localStorage.removeItem(LOGIN_PREF_KEY);
       }
@@ -389,12 +419,14 @@ export default function Login() {
             </button>
           </div>
 
-          <form className="auth-form auth-login-form auth-login-line-form" onSubmit={submit}>
+          <form className="auth-form auth-login-form auth-login-line-form" onSubmit={submit} autoComplete="on">
             <label>
               <span>User ID / Phone Number</span>
               <div className="auth-input-shell auth-line-input">
                 <UserRound size={18} />
                 <input
+                  id="crednivo-login-username"
+                  name="username"
                   autoComplete="username"
                   value={identifier}
                   onChange={(event) => setIdentifier(event.target.value)}
@@ -410,6 +442,8 @@ export default function Login() {
               <div className="auth-input-shell auth-password-input auth-line-input">
                 <KeyRound size={18} />
                 <input
+                  id="crednivo-login-password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   value={password}
@@ -429,6 +463,8 @@ export default function Login() {
             <div className="auth-login-options auth-login-options-v48">
               <label className="auth-remember-control">
                 <input
+                  id="crednivo-remember-me"
+                  name="remember"
                   type="checkbox"
                   checked={remember}
                   onChange={(event) => setRemember(event.target.checked)}
@@ -572,8 +608,13 @@ export default function Login() {
 export function AuthLoading() {
   return (
     <main className="auth-loading auth-loading-classic">
-      <div className="auth-loading-new-logo auth-loading-final-gold" aria-hidden="true">
-        <CrednivoMark size={88} />
+      <div className="auth-loading-new-logo" aria-hidden="true">
+        <span className="auth-loading-c-shape" />
+        <span className="auth-loading-bar auth-loading-bar-1" />
+        <span className="auth-loading-bar auth-loading-bar-2" />
+        <span className="auth-loading-bar auth-loading-bar-3" />
+        <span className="auth-loading-arrow-line" />
+        <span className="auth-loading-arrow-head" />
       </div>
 
       <strong>CREDNIVO</strong>
