@@ -1,0 +1,222 @@
+:root{
+  --crednivo-lock-height:100dvh;
+  --crednivo-lock-top:0px;
+}
+
+.native-lock-overlay{
+  position:fixed;
+  z-index:2147483000;
+  left:0;
+  right:0;
+  top:var(--crednivo-lock-top);
+  height:var(--crednivo-lock-height);
+  overflow:hidden;
+  color:#edf5ff;
+  background:
+    radial-gradient(circle at 18% 8%,rgba(25,126,235,.15),transparent 35%),
+    radial-gradient(circle at 82% 100%,rgba(196,143,46,.10),transparent 32%),
+    linear-gradient(145deg,#020a14 0%,#03152a 56%,#020912 100%);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  overscroll-behavior:none;
+}
+
+.native-lock-overlay::before,
+.native-lock-overlay::after{
+  content:"";
+  position:absolute;
+  width:min(68vw,410px);
+  aspect-ratio:1;
+  border:1px solid rgba(38,149,255,.18);
+  border-radius:50%;
+  pointer-events:none;
+}
+.native-lock-overlay::before{left:-38vw;top:-10vh;box-shadow:0 0 0 24px rgba(20,103,191,.025),0 0 0 52px rgba(20,103,191,.018)}
+.native-lock-overlay::after{right:-42vw;bottom:-24vh;border-color:rgba(217,167,59,.26)}
+
+.native-lock-shell{
+  position:relative;
+  z-index:2;
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  padding:max(18px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));
+}
+
+.native-lock-panel{
+  width:min(100%,430px);
+  max-height:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  text-align:center;
+}
+
+.native-lock-brand{display:grid;justify-items:center;gap:7px;margin-bottom:10px}
+.native-lock-brand img{width:116px;height:106px;object-fit:contain;filter:drop-shadow(0 15px 28px rgba(204,146,35,.13))}
+.native-lock-brand>div{display:grid;gap:1px}
+.native-lock-brand strong{font-size:25px;line-height:1;font-weight:900;letter-spacing:-.035em;color:#f6f8fb}
+.native-lock-brand small{font-size:9px;font-weight:700;color:#8fa4bc}
+.native-lock-brand p{margin:9px 0 0;font-size:18px;font-weight:800;color:#fff}
+.native-lock-brand.compact{gap:4px;margin-bottom:2px}
+.native-lock-brand.compact img{width:76px;height:70px}
+.native-lock-brand.compact strong{font-size:19px}
+.native-lock-brand.compact small{font-size:8px}
+.native-lock-brand.compact p{font-size:16px;margin-top:7px}
+
+.native-lock-fingerprint-panel{min-height:70%}
+.native-lock-fingerprint{
+  width:100%;
+  display:grid;
+  place-items:center;
+  gap:9px;
+  border:0;
+  color:#eaf4ff;
+  background:transparent;
+  cursor:pointer;
+  padding:14px;
+}
+.native-lock-fingerprint-ring{
+  width:112px;
+  height:112px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  border:1px solid rgba(65,169,255,.55);
+  background:radial-gradient(circle,rgba(20,127,245,.20),rgba(2,20,40,.78) 68%);
+  box-shadow:0 0 0 12px rgba(26,124,226,.04),0 0 40px rgba(30,145,255,.17),inset 0 0 26px rgba(22,117,221,.14);
+  animation:native-lock-pulse 2.2s ease-in-out infinite;
+}
+.native-lock-fingerprint-ring svg{width:55px;height:55px;stroke-width:1.45;color:#65baff}
+.native-lock-fingerprint strong{font-size:17px}
+.native-lock-fingerprint small{font-size:12px;color:#8ea6c0}
+.native-lock-use-pin{
+  margin-top:auto;
+  border:0;
+  background:transparent;
+  color:#59afff;
+  font-size:14px;
+  font-weight:800;
+  padding:12px 24px;
+  cursor:pointer;
+}
+
+.native-lock-pin-panel{height:100%;justify-content:space-between;padding:5px 0 10px}
+.native-lock-pin-main{width:100%;display:grid;justify-items:center;gap:10px;margin:auto 0}
+.native-lock-mini-icon{width:43px;height:43px;border-radius:13px;display:grid;place-items:center;color:#5db6ff;background:rgba(20,117,224,.12);border:1px solid rgba(75,161,248,.23)}
+.native-lock-mini-icon svg{width:21px;height:21px}
+.native-lock-pin-main h1{margin:2px 0 0;font-size:21px;line-height:1.2;color:#fff}
+.native-lock-pin-main>p{margin:0;color:#8ea3bb;font-size:12px}
+.native-lock-pin-main>p strong{color:#dcecff}
+.native-lock-pin-zone{width:min(100%,292px);display:grid;gap:6px;margin-top:14px}
+
+.native-lock-code-wrap{position:relative;width:100%;height:62px}
+.native-lock-code-input{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  width:100%;
+  height:100%;
+  opacity:.01;
+  color:transparent;
+  caret-color:transparent;
+  border:0;
+  background:transparent;
+  font-size:16px;
+}
+.native-lock-boxes{
+  position:relative;
+  z-index:3;
+  width:100%;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  border:0;
+  background:transparent;
+  padding:0;
+  cursor:text;
+}
+.native-lock-boxes span{
+  height:58px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(116,164,213,.38);
+  border-radius:14px;
+  background:rgba(1,14,30,.76);
+  color:#fff;
+  font-size:28px;
+  font-weight:900;
+  box-shadow:inset 0 1px 11px rgba(0,0,0,.25);
+}
+.native-lock-boxes span.filled{border-color:rgba(48,161,255,.92);box-shadow:0 0 0 3px rgba(28,137,245,.08),inset 0 1px 11px rgba(0,0,0,.22)}
+.native-lock-forgot{justify-self:end;border:0;background:transparent;color:#3da5ff;font-size:11px;font-weight:800;padding:4px 2px;cursor:pointer}
+
+.native-lock-code-wrap.six{height:54px;max-width:350px}
+.native-lock-code-wrap.six .native-lock-boxes{grid-template-columns:repeat(6,1fr);gap:7px}
+.native-lock-code-wrap.six .native-lock-boxes span{height:50px;border-radius:10px;font-size:22px}
+
+.native-lock-message,.native-lock-error,.native-lock-status{margin:2px 0 0!important;font-size:11px!important;line-height:1.45;text-align:center}
+.native-lock-message{color:#91b7dd!important}
+.native-lock-error{color:#ff9fac!important}
+.native-lock-status{display:flex;align-items:center;gap:6px;color:#8fc5f8!important}
+.native-lock-status svg{width:14px;height:14px}
+
+.native-lock-back-biometric,.native-lock-back,.native-lock-resend{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:0;
+  background:transparent;
+  color:#69b7ff;
+  font-size:12px;
+  font-weight:800;
+  padding:9px 14px;
+  cursor:pointer;
+}
+.native-lock-back-biometric svg,.native-lock-back svg{width:16px;height:16px}
+.native-lock-otp-panel{height:100%;justify-content:space-between;padding:5px 0 10px}
+.native-lock-otp-panel .native-lock-code-wrap{margin:16px auto 4px}
+.native-lock-primary{
+  min-height:48px;
+  min-width:190px;
+  margin-top:9px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid rgba(91,183,255,.55);
+  border-radius:12px;
+  color:#fff;
+  background:linear-gradient(100deg,#27adff,#1378f5 55%,#0861db);
+  font-size:13px;
+  font-weight:850;
+  box-shadow:0 12px 30px rgba(5,87,197,.24);
+}
+.native-lock-primary:disabled,.native-lock-resend:disabled{opacity:.48;cursor:not-allowed}
+.native-lock-primary svg{width:17px;height:17px}
+.native-lock-loader{width:34px;height:34px;color:#4eafff}
+.native-lock-loading-panel p{color:#91a7c0;font-size:12px}
+.spin{animation:native-lock-spin .85s linear infinite}
+
+@keyframes native-lock-spin{to{transform:rotate(360deg)}}
+@keyframes native-lock-pulse{50%{transform:scale(1.035);box-shadow:0 0 0 18px rgba(26,124,226,.025),0 0 48px rgba(30,145,255,.23),inset 0 0 30px rgba(22,117,221,.18)}}
+
+@media(max-height:680px){
+  .native-lock-shell{padding-top:10px;padding-bottom:10px}
+  .native-lock-brand img{width:80px;height:73px}
+  .native-lock-brand strong{font-size:20px}
+  .native-lock-brand p{font-size:15px;margin-top:5px}
+  .native-lock-brand.compact img{width:52px;height:48px}
+  .native-lock-brand.compact strong{font-size:16px}
+  .native-lock-pin-main{gap:7px}
+  .native-lock-mini-icon{width:35px;height:35px}
+  .native-lock-pin-main h1{font-size:18px}
+  .native-lock-pin-zone{margin-top:6px}
+  .native-lock-code-wrap{height:54px}
+  .native-lock-boxes span{height:50px}
+  .native-lock-fingerprint-ring{width:90px;height:90px}
+  .native-lock-fingerprint-ring svg{width:44px;height:44px}
+}
