@@ -82,6 +82,104 @@ function isPrecloseMarker(value) {
   return marker === 'PRECLOSE' || marker === 'PRECLOSED';
 }
 
+function dateKeyParts(value) {
+  const match = String(value || '').slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  return {
+    year: Number(match[1]),
+    month: Number(match[2]),
+    day: Number(match[3]),
+  };
+}
+
+function utcDateKey(date) {
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, '0'),
+    String(date.getUTCDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+// Mirrors the backend contract schedule rule:
+// Daily   -> start date + duration days
+// Weekly  -> start date + duration weeks
+// Monthly -> start date + duration months (LocalDate-style month clamping)
+//
+// Because duration is the number of actual scheduled collections, this gives
+// the contractual LAST due date without needing cancelled schedule rows.
+function plannedFinalDueDate(loan) {
+  const parts = dateKeyParts(loan?.startDate);
+  const duration = Math.max(0, Math.trunc(Number(loan?.duration || 0)));
+  const cycle = String(loan?.cycle || '').trim().toLowerCase();
+
+  if (!parts || duration <= 0) return '';
+
+  if (cycle === 'daily') {
+    const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+    date.setUTCDate(date.getUTCDate() + duration);
+    return utcDateKey(date);
+  }
+
+  if (cycle === 'weekly') {
+    const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+    date.setUTCDate(date.getUTCDate() + (duration * 7));
+    return utcDateKey(date);
+  }
+
+  if (cycle === 'monthly') {
+    const absoluteMonth = (parts.year * 12) + (parts.month - 1) + duration;
+    const targetYear = Math.floor(absoluteMonth / 12);
+    const targetMonthIndex = absoluteMonth % 12;
+    const lastDay = new Date(Date.UTC(targetYear, targetMonthIndex + 1, 0)).getUTCDate();
+    const targetDay = Math.min(parts.day, lastDay);
+    return utcDateKey(new Date(Date.UTC(targetYear, targetMonthIndex, targetDay)));
+  }
+
+  return '';
+}
+
+function isEarlyClosedLoan(loan) {
+  if (!loan) return false;
+
+  const status = String(loan?.status || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '');
+
+  // Backward compatibility with older Crednivo builds that explicitly stored
+  // PRE-CLOSE/PRECLOSED.
+  if (
+    isPrecloseMarker(loan?.status)
+    || isPrecloseMarker(loan?.rawStatus)
+    || isPrecloseMarker(loan?.closeType)
+    || Boolean(loan?.preclosedAt)
+  ) {
+    return true;
+  }
+
+  // Current backend closes a fully settled loan as generic CLOSED. For IO,
+  // cancelled future interest is already a direct early-settlement signal.
+  if (Number(loan?.cancelledInterestAmount || 0) > 0) return true;
+
+  const closedLike =
+    status === 'closed'
+    || Number(loan?.outstanding) <= 0
+    || Boolean(loan?.closedDate || loan?.closedAt);
+
+  if (!closedLike) return false;
+
+  const closeDate = String(
+    loan?.closedDate || loan?.closedAt || loan?.preclosedAt || '',
+  ).slice(0, 10);
+  const finalDueDate = plannedFinalDueDate(loan);
+
+  // This is the key distinction:
+  // closed BEFORE the contractual final due date = early/pre-close.
+  // closed ON the final due date = normal final installment, so it can remain
+  // visible as Paid in Today's Collection.
+  return Boolean(closeDate && finalDueDate && closeDate < finalDueDate);
+}
+
 // V40: Collection keeps tab/filter/search/scroll position when opening a customer profile.
 export default function Collection() {
   const { customers, collections, loans, payments, recordLoanPayment } = useCrednivo();
@@ -205,28 +303,16 @@ export default function Collection() {
     [customers],
   );
 
-  // A preclosed loan is finished immediately, even when its original due date
-  // is today. Detect it from BOTH the loan record and the PRE-CLOSE transaction.
-  // This is intentional: depending on API normalization, a collection row may
-  // carry SFCLN-00053 while the loan record also has a numeric database id, and
-  // some screens can normalize the final loan status to Closed. The transaction
-  // still tells us that the close type was PRE-CLOSE.
+  // CURRENT BACKEND NOTE:
+  // A loan settled early is stored as generic Closed + closedDate, not as a
+  // dedicated Preclosed status. Detect early closure by comparing closedDate to
+  // the contractual final due date derived from startDate + duration + cycle.
+  // Older PRE-CLOSE markers remain supported for backward compatibility.
   const preclosedLoanKeys = useMemo(() => {
     const keys = new Set();
 
     (loans || []).forEach((loan) => {
-      const status = String(loan?.status || '').trim().toUpperCase();
-      const rawStatus = String(loan?.rawStatus || '').trim().toUpperCase();
-      const closeType = String(loan?.closeType || '').trim().toUpperCase();
-
-      const isPreclosed =
-        Boolean(loan?.wasPreclosed || loan?.preclosed) ||
-        isPrecloseMarker(rawStatus) ||
-        isPrecloseMarker(status) ||
-        isPrecloseMarker(closeType) ||
-        Boolean(loan?.preclosedAt);
-
-      if (!isPreclosed) return;
+      if (!isEarlyClosedLoan(loan)) return;
       loanIdentityKeys(loan).forEach((key) => keys.add(key));
     });
 
@@ -249,68 +335,12 @@ export default function Collection() {
   const isPreclosedCollection = (item) =>
     collectionMatchesLoanKeySet(item, preclosedLoanKeys);
 
-  // Some current backend flows close an early-settled loan using the generic
-  // status "Closed" rather than a distinct "Preclosed" status.
-  //
-  // We can still distinguish an EARLY/PRECLOSE settlement from a normal final
-  // installment: an early settlement leaves one or more FUTURE schedule rows
-  // cancelled. A normal final installment has no future instalments to cancel.
-  //
-  // This keeps a genuine final installment paid today visible as Paid, while
-  // removing an early/preclosed loan from Today's Collection.
-  const earlyClosedLoanKeys = useMemo(() => {
-    const keys = new Set();
-
-    (loans || []).forEach((loan) => {
-      const status = String(loan?.status || '').trim().toUpperCase();
-      const rawStatus = String(loan?.rawStatus || '').trim().toUpperCase();
-      const loanClosed =
-        status === 'CLOSED' ||
-        rawStatus === 'CLOSED' ||
-        isPrecloseMarker(status) ||
-        isPrecloseMarker(rawStatus) ||
-        Number(loan?.outstanding) <= 0;
-
-      if (!loanClosed) return;
-
-      const loanKeys = new Set(loanIdentityKeys(loan));
-      if (loanKeys.size === 0) return;
-
-      const hasCancelledFutureSchedule = (collections || []).some((entry) => {
-        if (!collectionMatchesLoanKeySet(entry, loanKeys)) return false;
-        if (!entry?.date || entry.date <= today) return false;
-
-        const entryStatus = String(entry?.status || '')
-          .trim()
-          .toUpperCase()
-          .replace(/[\s_-]+/g, '');
-
-        return entryStatus === 'CANCELLED' || entryStatus === 'CANCELED';
-      });
-
-      // IO early principal settlement also records cancelled future interest.
-      const hasCancelledFutureInterest = Number(loan?.cancelledInterestAmount || 0) > 0;
-
-      if (hasCancelledFutureSchedule || hasCancelledFutureInterest) {
-        loanKeys.forEach((key) => keys.add(key));
-      }
-    });
-
-    return keys;
-  }, [loans, collections, today]);
-
-  const excludedClosedLoanKeys = useMemo(() => {
-    const keys = new Set(preclosedLoanKeys);
-    earlyClosedLoanKeys.forEach((key) => keys.add(key));
-    return keys;
-  }, [preclosedLoanKeys, earlyClosedLoanKeys]);
-
   // Summary cards intentionally stay focused on today's workload.
   // A preclosed loan is NOT a normal due anymore, even if its old schedule row
   // was already paid/filled during the preclose operation.
   const todayCollections = useMemo(
-    () => collections.filter((item) => item.date === today && !collectionMatchesLoanKeySet(item, excludedClosedLoanKeys)),
-    [collections, today, excludedClosedLoanKeys],
+    () => collections.filter((item) => item.date === today && !collectionMatchesLoanKeySet(item, preclosedLoanKeys)),
+    [collections, today, preclosedLoanKeys],
   );
 
   const todayExpected = todayCollections.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
@@ -334,9 +364,9 @@ export default function Collection() {
   // Previous unpaid/partial entries remain in Overdue.
   const overdueCollections = useMemo(
     () => collections
-      .filter((item) => !collectionMatchesLoanKeySet(item, excludedClosedLoanKeys) && item.date < today && balanceOf(item) > 0)
+      .filter((item) => !collectionMatchesLoanKeySet(item, preclosedLoanKeys) && item.date < today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer),
-    [collections, today, excludedClosedLoanKeys],
+    [collections, today, preclosedLoanKeys],
   );
 
   // Upcoming only shows ONE next unpaid installment per active loan.
@@ -344,13 +374,13 @@ export default function Collection() {
   const upcomingCollections = useMemo(() => {
     const nextByLoan = new Map();
     collections
-      .filter((item) => !collectionMatchesLoanKeySet(item, excludedClosedLoanKeys) && item.date > today && balanceOf(item) > 0)
+      .filter((item) => !collectionMatchesLoanKeySet(item, preclosedLoanKeys) && item.date > today && balanceOf(item) > 0)
       .sort(sortByDateThenCustomer)
       .forEach((item) => {
         if (!nextByLoan.has(item.loanId)) nextByLoan.set(item.loanId, item);
       });
     return Array.from(nextByLoan.values()).sort(sortByDateThenCustomer);
-  }, [collections, today, excludedClosedLoanKeys]);
+  }, [collections, today, preclosedLoanKeys]);
 
   const activeCollections = useMemo(() => {
     const merged = [...overdueCollections, ...todayCollections, ...upcomingCollections];
@@ -617,16 +647,7 @@ export default function Collection() {
   const isLoanClosed = (item) => {
     const loan = loanForItem(item);
     const status = String(loan?.status || '').trim().toLowerCase();
-    const rawStatus = String(loan?.rawStatus || '').trim().toLowerCase();
-    return (
-      !loan ||
-      isPreclosedCollection(item) ||
-      status === 'closed' ||
-      status === 'preclosed' ||
-      rawStatus === 'preclosed' ||
-      rawStatus === 'pre-close' ||
-      Number(loan.outstanding) <= 0
-    );
+    return !loan || isPreclosedCollection(item) || status === 'closed' || status === 'preclosed' || Number(loan.outstanding) <= 0;
   };
 
   const actionLabel = (item) => {
@@ -800,7 +821,7 @@ export default function Collection() {
         </div>
 
         <div className="collection-view-note">
-          {collectionView === 'Today' && 'Collections due today, including entries already paid today.'}
+          {collectionView === 'Today' && 'Collections due today for open loans, including normal entries already paid today. Early-closed loans are excluded.'}
           {collectionView === 'Overdue' && 'Previous unpaid and partial installments are grouped into one row per customer loan.'}
           {collectionView === 'Upcoming' && 'Only the next unpaid installment for each active loan is shown.'}
           {collectionView === 'All' && 'Overdue + today + one next upcoming installment per active loan.'}
