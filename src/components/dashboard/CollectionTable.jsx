@@ -78,6 +78,7 @@ export default function CollectionTable() {
       const closeType = String(loan?.closeType || '').trim();
 
       const preclosed =
+        Boolean(loan?.wasPreclosed || loan?.preclosed) ||
         isPrecloseMarker(rawStatus) ||
         isPrecloseMarker(status) ||
         isPrecloseMarker(closeType) ||

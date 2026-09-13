@@ -273,6 +273,57 @@ function mapBackendCustomer(item, documents = []) {
   };
 }
 
+
+function backendKey(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function backendLoanKeys(loan) {
+  return [
+    loan?.id,
+    loan?.loanId,
+    loan?.loanCode,
+    loan?.code,
+    loan?.loanDbId,
+    loan?.dbLoanId,
+  ].map(backendKey).filter(Boolean);
+}
+
+function backendRowLoanKeys(item) {
+  return [
+    item?.loanId,
+    item?.loanCode,
+    item?.loanDbId,
+    item?.dbLoanId,
+    item?.loan?.id,
+    item?.loan?.loanId,
+    item?.loan?.loanCode,
+  ].map(backendKey).filter(Boolean);
+}
+
+function backendMatchesLoan(item, loanKeySet) {
+  return backendRowLoanKeys(item).some((key) => loanKeySet.has(key));
+}
+
+function backendPrecloseMarker(value) {
+  const marker = String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '');
+
+  return marker === 'PRECLOSE' || marker === 'PRECLOSED';
+}
+
+function backendCancelledMarker(value) {
+  const marker = String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '');
+
+  return marker === 'CANCELLED' || marker === 'CANCELED';
+}
+
 function mapBackendLoan(item) {
   return {
     ...item,
@@ -461,21 +512,96 @@ export function CrednivoProvider({ children }) {
 
       const collectionRows = hasPermission('collections.view') ? await apiRequest('/collections') : [];
       const mappedDocuments = (documentRows || []).map(mapBackendDocument);
-      const mappedCollections = (collectionRows || [])
-        .filter((item) => item.status !== 'Cancelled')
-        .map(mapBackendCollection);
+
+      // IMPORTANT:
+      // Keep cancelled schedule rows long enough to determine whether a CLOSED
+      // loan was actually settled early. Previous builds removed CANCELLED rows
+      // first, which destroyed the evidence needed to identify a preclose.
+      const rawMappedCollections = (collectionRows || []).map(mapBackendCollection);
+      const mappedPayments = (paymentRows || []).map(mapBackendPayment);
+      const todayForPreclose = toInputDate();
+
       const canDeriveLoanScheduleStatus = hasPermission('collections.view');
-      const mappedLoans = (loanRows || []).map(mapBackendLoan).map((loan) => ({
+
+      const mappedLoansWithPreclose = (loanRows || []).map(mapBackendLoan).map((loan) => {
+        const loanKeys = new Set(backendLoanKeys(loan));
+        const rawStatus = String(loan?.rawStatus || loan?.status || '').trim();
+        const closedLike =
+          String(rawStatus).toUpperCase() === 'CLOSED' ||
+          String(loan?.status || '').toUpperCase() === 'CLOSED' ||
+          Number(loan?.outstanding || 0) <= 0;
+
+        const explicitPreclose =
+          backendPrecloseMarker(rawStatus) ||
+          backendPrecloseMarker(loan?.status) ||
+          backendPrecloseMarker(loan?.closeType) ||
+          Boolean(loan?.preclosedAt);
+
+        // Current payment settlement closes the loan as CLOSED and cancels only
+        // FUTURE schedule rows. That is the reliable difference between an early
+        // settlement and a normal final installment.
+        const hasCancelledFutureSchedule = rawMappedCollections.some((entry) =>
+          backendMatchesLoan(entry, loanKeys) &&
+          backendCancelledMarker(entry?.status) &&
+          String(entry?.date || '') > todayForPreclose
+        );
+
+        // Older preclose implementations may also expose a PRECLOSE transaction.
+        const hasPreclosePayment = mappedPayments.some((payment) => {
+          if (!backendMatchesLoan(payment, loanKeys)) return false;
+          return [
+            payment?.type,
+            payment?.rawType,
+            payment?.paymentType,
+            payment?.transactionType,
+            payment?.closeType,
+            payment?.note,
+          ].some((value) => {
+            const normalized = String(value || '').toLowerCase().replace(/[\s_-]+/g, '');
+            return normalized.includes('preclose') || normalized.includes('preclosed');
+          });
+        });
+
+        const wasPreclosed =
+          explicitPreclose ||
+          hasPreclosePayment ||
+          (closedLike && hasCancelledFutureSchedule);
+
+        return {
+          ...loan,
+          wasPreclosed,
+          preclosed: wasPreclosed,
+        };
+      });
+
+      const preclosedLoanKeys = new Set();
+      mappedLoansWithPreclose.forEach((loan) => {
+        if (!loan.wasPreclosed) return;
+        backendLoanKeys(loan).forEach((key) => preclosedLoanKeys.add(key));
+      });
+
+      // Cancelled rows never belong in active collection screens.
+      // Also remove every schedule row belonging to an early/preclosed loan.
+      const mappedCollections = rawMappedCollections.filter((item) => {
+        if (backendCancelledMarker(item?.status)) return false;
+        if (backendMatchesLoan(item, preclosedLoanKeys)) return false;
+        return true;
+      });
+
+      const mappedLoans = mappedLoansWithPreclose.map((loan) => ({
         ...loan,
-        status: canDeriveLoanScheduleStatus
-          ? deriveLoanScheduleStatus(loan, mappedCollections)
-          : loan.status,
+        status: loan.wasPreclosed
+          ? 'Closed'
+          : canDeriveLoanScheduleStatus
+            ? deriveLoanScheduleStatus(loan, mappedCollections)
+            : loan.status,
       }));
+
       const core = {
         customers: (customerRows || []).map((item) => mapBackendCustomer(item, documentRows || [])),
         loans: mappedLoans,
         collections: mappedCollections,
-        payments: (paymentRows || []).map(mapBackendPayment),
+        payments: mappedPayments,
         documents: mappedDocuments,
         expenses: (expenseRows || []).map(mapBackendExpense),
         capital: (capitalRows || []).map(mapBackendCapital),

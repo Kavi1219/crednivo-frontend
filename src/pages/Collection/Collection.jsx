@@ -220,6 +220,7 @@ export default function Collection() {
       const closeType = String(loan?.closeType || '').trim().toUpperCase();
 
       const isPreclosed =
+        Boolean(loan?.wasPreclosed || loan?.preclosed) ||
         isPrecloseMarker(rawStatus) ||
         isPrecloseMarker(status) ||
         isPrecloseMarker(closeType) ||
