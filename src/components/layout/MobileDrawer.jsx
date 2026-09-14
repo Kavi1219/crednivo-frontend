@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart3, CircleDollarSign, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { BarChart3, CircleDollarSign, Landmark, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import CrednivoMark from '../brand/CrednivoMark';
 import './MobileDrawer.css';
@@ -17,10 +17,8 @@ const items = [
 ];
 
 export default function MobileDrawer({ open, onClose }) {
-  const { isOwner, hasPermission, logout } = useAuth();
-  const navigate = useNavigate();
+  const { isOwner, hasPermission } = useAuth();
   const visible = items.filter(([, , , permission, ownerOnly, always]) => always || (ownerOnly ? isOwner : hasPermission(permission)));
-  const signOut = async () => { onClose(); await logout(); navigate('/login', { replace: true }); };
   return (
     <>
       <button className={`drawer-overlay ${open ? 'show' : ''}`} onClick={onClose} aria-label="Close menu overlay" />
@@ -30,7 +28,6 @@ export default function MobileDrawer({ open, onClose }) {
           <button onClick={onClose} aria-label="Close menu"><X size={22} /></button>
         </div>
         <nav>{visible.map(([label, path, Icon]) => <NavLink key={path} to={path} onClick={onClose}><Icon size={19} />{label}</NavLink>)}</nav>
-        <button className="drawer-logout" onClick={signOut}><LogOut size={18} /> Logout</button>
       </aside>
     </>
   );

@@ -35,7 +35,6 @@
   .mobile-drawer nav { margin-top: 14px; display: grid; gap: 4px; }
   .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 10px; }
   .mobile-drawer nav a.active { background: #0b6ee8; }
-  .drawer-logout { margin-top: auto; min-height: 49px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid #4d9cff; border-radius: 10px; color: #fff; background: transparent; }
 }
 
 /* Phase 2.25 - Drawer branding */
