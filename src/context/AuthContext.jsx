@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { apiRequest, clearAuthToken, getAuthToken, mediaUrl, setAuthToken, uploadCompanyLogo } from '../services/api';
+import { getActiveAccountId, listAccounts, removeAccount, saveAccount, switchToAccount } from '../services/accounts';
 
 const AuthContext = createContext(null);
 const UI_SETTINGS_KEY = 'crednivo-ui-settings';
@@ -31,6 +32,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [status, setStatus] = useState({ ownerSetupRequired: false, companyName: 'CREDNIVO', ownerName: 'Owner', branch: '' });
   const [error, setError] = useState('');
+  const [accounts, setAccounts] = useState(() => listAccounts());
+
+  const refreshAccountsList = useCallback(() => setAccounts(listAccounts()), []);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -96,6 +100,8 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ identifier, password, role }),
     });
     setAuthToken(result.token, { remember });
+    saveAccount(result, { remember });
+    refreshAccountsList();
     setUser(normalizeUser(result));
     return result;
   };
@@ -108,6 +114,8 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, role, otp }),
     });
     setAuthToken(result.token, { remember });
+    saveAccount(result, { remember });
+    refreshAccountsList();
     setUser(normalizeUser(result));
     return result;
   };
@@ -120,6 +128,8 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ username, mobile, password }),
     });
     setAuthToken(result.token);
+    saveAccount(result);
+    refreshAccountsList();
     setUser(normalizeUser(result));
     setStatus((current) => ({ ...current, ownerSetupRequired: false }));
     return result;
@@ -134,6 +144,8 @@ export function AuthProvider({ children }) {
       body: JSON.stringify(payload),
     });
     setAuthToken(result.token);
+    saveAccount(result);
+    refreshAccountsList();
     setUser(normalizeUser(result));
     setStatus((current) => ({ ...current, ownerSetupRequired: false, companyName: payload.companyName, ownerName: payload.ownerName, branch: payload.branch }));
     if (logoFile) {
@@ -166,6 +178,9 @@ export function AuthProvider({ children }) {
       method: 'POST',
       body: JSON.stringify({ currentPassword, newPassword }),
     });
+    const currentId = getActiveAccountId();
+    if (currentId) removeAccount(currentId);
+    refreshAccountsList();
     clearAuthToken();
     setUser(null);
     return true;
@@ -175,7 +190,34 @@ export function AuthProvider({ children }) {
     try {
       if (getAuthToken()) await apiRequest('/auth/logout', { method: 'POST' });
     } catch { /* local logout must still succeed if backend is unavailable */ }
-    finally { clearAuthToken(); setUser(null); }
+    finally {
+      const currentId = getActiveAccountId();
+      const next = currentId ? removeAccount(currentId) : null;
+      refreshAccountsList();
+      if (next) {
+        setUser(null);
+        await refresh();
+      } else {
+        clearAuthToken();
+        setUser(null);
+      }
+    }
+  };
+
+  /** Switch to another saved account (e.g. a different company) without a fresh login. */
+  const switchAccount = async (id) => {
+    const account = switchToAccount(id);
+    if (!account) return null;
+    refreshAccountsList();
+    setUser(null);
+    await refresh();
+    return account;
+  };
+
+  /** Forget a saved account from the switcher without touching its backend session. */
+  const forgetAccount = (id) => {
+    removeAccount(id);
+    refreshAccountsList();
   };
 
   const isOwner = user?.role === 'OWNER';
@@ -187,7 +229,8 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     loading, user, status, error, login, otpLogin, setupOwner, registerCompany, registerAgent,
     logout, changePassword, refresh, isOwner, hasPermission, permissions: user?.permissions || {},
-  }), [loading, user, status, error, isOwner, hasPermission, refresh]);
+    accounts, activeAccountId: getActiveAccountId(), switchAccount, forgetAccount,
+  }), [loading, user, status, error, isOwner, hasPermission, refresh, accounts]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

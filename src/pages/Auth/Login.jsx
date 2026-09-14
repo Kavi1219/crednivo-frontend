@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
 import './Auth.css';
@@ -57,6 +57,8 @@ export default function Login() {
 
   const { loading, user, login, otpLogin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const addMode = searchParams.get('mode') === 'add';
   const saved = readLoginPreferences();
   const [role, setRole] = useState(saved.role === 'AGENT' ? 'AGENT' : 'OWNER');
   const [identifier, setIdentifier] = useState(saved.remember ? (saved.identifier || '') : '');
@@ -86,7 +88,7 @@ export default function Login() {
   }, [showCreate]);
 
   if (loading) return <AuthLoading />;
-  if (user) return <Navigate to="/" replace />;
+  if (user && !addMode) return <Navigate to="/" replace />;
 
   const submit = async (event) => {
     if (actionLocksRef.current.has('submit')) return;
@@ -116,14 +118,14 @@ export default function Login() {
         remember,
       });
 
-      if (remember) {
+      if (remember && !addMode) {
         localStorage.setItem(LOGIN_PREF_KEY, JSON.stringify({
           remember: true,
           role,
           identifier: submittedIdentifier,
         }));
         await saveCredentialToBrowser(submittedIdentifier, submittedPassword);
-      } else {
+      } else if (!addMode) {
         localStorage.removeItem(LOGIN_PREF_KEY);
       }
 
@@ -398,6 +400,13 @@ export default function Login() {
         </aside>
 
         <section className="auth-login-card" aria-label="Sign in">
+          {addMode && (
+            <div className="auth-add-account-banner">
+              <UsersRound size={16} />
+              <span>Adding another company account &mdash; you'll stay signed in to your current one too.</span>
+              <button type="button" onClick={() => navigate('/', { replace: true })}>Cancel</button>
+            </div>
+          )}
           <div className="auth-role-tabs auth-role-tabs-clean" role="tablist" aria-label="Login type">
             <button
               type="button"

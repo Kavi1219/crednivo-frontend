@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Building2, ChevronDown, Edit3, KeyRound, LogOut, Mail, MapPin, Menu, Phone, Search, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { Bell, Building2, ChevronDown, Edit3, KeyRound, LogOut, Mail, MapPin, Menu, Monitor, Phone, Plus, Search, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import CrednivoMark from '../brand/CrednivoMark';
 import CompanyProfileModal from './CompanyProfileModal';
 import ChangePasswordModal from './ChangePasswordModal';
 import AccountSecurityModal from './AccountSecurityModal';
+import SessionsModal from './SessionsModal';
 import './Header.css';
 
 function getGreeting() {
@@ -23,9 +24,10 @@ function getHeaderIdentity(pathname) {
   return { title: 'Business Workspace', isOverview: false };
 }
 
-function ProfileDetails({ company, user, isOwner, onEdit, onSecurity, onChangePassword, onLogout }) {
+function ProfileDetails({ company, user, isOwner, accounts, activeAccountId, onEdit, onSecurity, onChangePassword, onLogout, onSwitchAccount, onAddAccount, onSessions }) {
   const avatar = user?.profilePhoto || company.logo;
   const initial = String(user?.displayName || company.name || 'C').charAt(0);
+  const otherAccounts = (accounts || []).filter((account) => account.id !== activeAccountId);
   return (
     <div className="profile-dropdown app-card" role="dialog" aria-label="Signed-in profile details">
       <div className="profile-dropdown-heading">
@@ -44,7 +46,22 @@ function ProfileDetails({ company, user, isOwner, onEdit, onSecurity, onChangePa
         <div className="profile-detail-row"><span className="profile-detail-icon"><Mail size={16} /></span><div><small>Account Email</small><strong>{user?.email || (isOwner ? company.email : '—')}</strong><span>{user?.emailVerified ? 'Verified' : 'Verification Pending'}</span></div></div>
         {isOwner && <div className="profile-detail-row profile-detail-address"><span className="profile-detail-icon"><MapPin size={16} /></span><div><small>Address</small><strong>{company.address || '—'}</strong></div></div>}
       </div>
+
+      {otherAccounts.length > 0 && (
+        <div className="profile-accounts-list">
+          <small className="profile-accounts-label">Switch account</small>
+          {otherAccounts.map((account) => (
+            <button key={account.id} type="button" className="profile-account-row" onClick={() => onSwitchAccount(account.id)}>
+              <span className="profile-account-avatar">{account.profilePhoto ? <img src={account.profilePhoto} alt="" /> : String(account.displayName || account.companyName || 'C').charAt(0)}</span>
+              <span className="profile-account-copy"><strong>{account.displayName || account.username}</strong><small>{account.companyName}{account.role ? ` · ${account.role === 'OWNER' ? 'Owner' : 'Agent'}` : ''}</small></span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {isOwner && <button type="button" className="profile-edit-button" onClick={onEdit}><Edit3 size={15} /><span>Edit Company Profile</span></button>}
+      <button type="button" className="profile-add-account-button" onClick={onAddAccount}><Plus size={15} /><span>Add Account</span></button>
+      <button type="button" className="profile-sessions-button" onClick={onSessions}><Monitor size={15} /><span>Active Sessions</span></button>
       <button type="button" className="profile-security-button" onClick={onSecurity}><ShieldCheck size={15} /><span>{user?.emailVerified ? 'Email Verified' : 'Verify Email'}</span></button>
       <button type="button" className="profile-password-button" onClick={onChangePassword} disabled={!user?.emailVerified} title={!user?.emailVerified ? 'Verify email before changing password' : 'Change password'}><KeyRound size={15} /><span>Change Password</span></button>
       <button type="button" className="profile-logout-button" onClick={onLogout}><LogOut size={15} /><span>Logout</span></button>
@@ -58,10 +75,11 @@ export default function Header({ onOpenMenu }) {
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [passwordEditorOpen, setPasswordEditorOpen] = useState(false);
   const [securityEditorOpen, setSecurityEditorOpen] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
   const desktopProfileRef = useRef(null);
   const mobileProfileRef = useRef(null);
   const { company } = useCrednivo();
-  const { user, isOwner, logout } = useAuth();
+  const { user, isOwner, logout, accounts, activeAccountId, switchAccount } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const greeting = getGreeting();
@@ -95,6 +113,9 @@ export default function Header({ onOpenMenu }) {
   const editCompany = () => { setProfileOpen(false); if (isOwner) setProfileEditorOpen(true); };
   const editSecurity = () => { setProfileOpen(false); setSecurityEditorOpen(true); };
   const editPassword = () => { setProfileOpen(false); if (user?.emailVerified) setPasswordEditorOpen(true); else setSecurityEditorOpen(true); };
+  const addAccount = () => { setProfileOpen(false); navigate('/login?mode=add'); };
+  const openSessions = () => { setProfileOpen(false); setSessionsOpen(true); };
+  const handleSwitchAccount = async (id) => { setProfileOpen(false); await switchAccount(id); navigate('/', { replace: true }); };
 
   return (
     <header className="app-header">
@@ -114,7 +135,7 @@ export default function Header({ onOpenMenu }) {
         <div className="notification-wrap"><IconButton label="Notifications" className="header-icon-btn"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
         <div className="profile-menu-wrap" ref={desktopProfileRef}>
           <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <img src={avatar} alt="" /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
-          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} />}
+          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} accounts={accounts} activeAccountId={activeAccountId} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} onSwitchAccount={handleSwitchAccount} onAddAccount={addAccount} onSessions={openSessions} />}
         </div>
       </div>
 
@@ -123,12 +144,13 @@ export default function Header({ onOpenMenu }) {
         <div className="notification-wrap"><IconButton label="Notifications"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
         <div className="mobile-profile-menu-wrap" ref={mobileProfileRef}>
           <button className="mobile-avatar" aria-label="Signed-in profile" aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{avatar ? <img src={avatar} alt="" /> : profileInitial}</button>
-          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} />}
+          {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} accounts={accounts} activeAccountId={activeAccountId} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} onSwitchAccount={handleSwitchAccount} onAddAccount={addAccount} onSessions={openSessions} />}
         </div>
       </div>
       {isOwner && <CompanyProfileModal open={profileEditorOpen} onClose={() => setProfileEditorOpen(false)} />}
       <AccountSecurityModal open={securityEditorOpen} onClose={() => setSecurityEditorOpen(false)} />
       <ChangePasswordModal open={passwordEditorOpen} onClose={() => setPasswordEditorOpen(false)} />
+      <SessionsModal open={sessionsOpen} onClose={() => setSessionsOpen(false)} />
     </header>
   );
 }

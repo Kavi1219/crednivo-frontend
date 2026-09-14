@@ -4419,3 +4419,30 @@
     flex-basis:94px !important;
   }
 }
+
+/* Add-account mode banner (Login page reused to sign into a second company). */
+.auth-add-account-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  color: var(--blue-700, #1d4ed8);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--blue-100, #dbeafe);
+  border: 1px solid var(--blue-200, #bfdbfe);
+  border-radius: 10px;
+}
+.auth-add-account-banner span { flex: 1; }
+.auth-add-account-banner button {
+  padding: 4px 10px;
+  color: var(--blue-700, #1d4ed8);
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--surface, #fff);
+  border: 1px solid var(--blue-200, #bfdbfe);
+  border-radius: 8px;
+  cursor: pointer;
+}

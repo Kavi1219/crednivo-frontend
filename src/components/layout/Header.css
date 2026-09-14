@@ -485,3 +485,40 @@ html[data-theme='dark'] .profile-dropdown {
   }
   .mobile-header-brand-mark .crednivo-final-mark { width: 38px; height: 35px; flex-basis: 38px; }
 }
+
+/* =========================================================
+   MULTI-ACCOUNT SWITCHER + ACTIVE SESSIONS
+   ========================================================= */
+.profile-accounts-list { display: grid; gap: 5px; margin: 4px 0 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.profile-accounts-label { display: block; color: var(--ink-500); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
+.profile-account-row { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 6px 8px; border-radius: 10px; background: var(--surface-soft); text-align: left; cursor: pointer; }
+.profile-account-row:hover { background: var(--blue-100); }
+.profile-account-avatar { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; overflow: hidden; background: var(--blue-100); color: var(--blue-600); font-size: 12px; font-weight: 800; }
+.profile-account-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.profile-account-copy { display: grid; gap: 1px; min-width: 0; }
+.profile-account-copy strong { font-size: 11px; color: var(--ink-950); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-account-copy small { font-size: 9px; color: var(--ink-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.profile-add-account-button, .profile-sessions-button {
+  width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;
+  color: var(--ink-800); font-size: 11px; font-weight: 800; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--surface-soft);
+}
+
+.sessions-modal { width: min(100%, 520px); }
+.sessions-modal-toolbar { display: flex; justify-content: flex-end; margin-top: 14px; }
+.sessions-refresh-button { display: flex; align-items: center; gap: 6px; padding: 6px 10px; color: var(--blue-600); font-size: 10px; font-weight: 800; border: 1px solid color-mix(in srgb, var(--blue-600) 24%, var(--line)); border-radius: 8px; background: var(--blue-100); }
+.sessions-refresh-button:disabled { opacity: .6; }
+.sessions-refresh-button svg.spin { animation: crednivo-spin 0.9s linear infinite; }
+@keyframes crednivo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.sessions-modal-list { display: grid; gap: 10px; margin-top: 14px; }
+.sessions-modal-empty { padding: 20px 10px; text-align: center; color: var(--ink-500); font-size: 11px; }
+.sessions-modal-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+.sessions-modal-row.current { border-color: color-mix(in srgb, var(--blue-600) 30%, var(--line)); background: var(--blue-100); }
+.sessions-modal-icon { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 10px; color: var(--blue-600); background: var(--surface); }
+.sessions-modal-info { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.sessions-modal-info strong { font-size: 12px; color: var(--ink-950); }
+.sessions-modal-info strong em { margin-left: 4px; color: var(--blue-600); font-style: normal; font-size: 9px; font-weight: 800; }
+.sessions-modal-meta { display: flex; align-items: center; gap: 4px; color: var(--ink-500); font-size: 9.5px; }
+.sessions-signout-button { flex: 0 0 auto; padding: 8px 12px; color: var(--danger); font-size: 10px; font-weight: 800; border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--line)); border-radius: 9px; background: var(--danger-soft); }
+.sessions-signout-button:disabled { opacity: .55; }
