@@ -86,9 +86,18 @@ export function AuthProvider({ children }) {
     const onVisibility = () => { if (document.visibilityState === 'visible') refreshCurrentUser(); };
     window.addEventListener('focus', refreshCurrentUser);
     document.addEventListener('visibilitychange', onVisibility);
+
+    // Poll while the app is open and visible so a session ended from another
+    // device (e.g. "Sign out" in Active Sessions) is picked up within ~30s,
+    // instead of waiting for the next manual refresh or tab focus.
+    const pollId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshCurrentUser();
+    }, 30000);
+
     return () => {
       window.removeEventListener('focus', refreshCurrentUser);
       document.removeEventListener('visibilitychange', onVisibility);
+      window.clearInterval(pollId);
     };
   }, []);
 
