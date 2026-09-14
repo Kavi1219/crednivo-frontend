@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { formatCurrency, toInputDate } from '../../utils/finance';
+import { keyOf, loanIdentityKeys, isPrecloseMarker } from '../../utils/loanIdentity';
 import IconButton from '../common/IconButton';
 import CustomerProfileLink from '../common/CustomerProfileLink';
 import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
@@ -12,22 +13,6 @@ import CustomerAvatar from '../common/CustomerAvatar';
 
 
 const COLLECTION_TABS = ['Daily', 'Weekly', 'Monthly', 'Collected Today'];
-
-function keyOf(value) {
-  if (value === null || value === undefined) return '';
-  return String(value).trim();
-}
-
-function loanIdentityKeys(loan) {
-  return [
-    loan?.id,
-    loan?.loanId,
-    loan?.loanCode,
-    loan?.code,
-    loan?.loanDbId,
-    loan?.dbLoanId,
-  ].map(keyOf).filter(Boolean);
-}
 
 function rowLoanIdentityKeys(row) {
   return [
@@ -43,15 +28,6 @@ function rowLoanIdentityKeys(row) {
 
 function matchesLoanKeys(item, keySet) {
   return rowLoanIdentityKeys(item).some((key) => keySet.has(key));
-}
-
-function isPrecloseMarker(value) {
-  const marker = String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/[\s_-]+/g, '');
-
-  return marker === 'PRECLOSE' || marker === 'PRECLOSED';
 }
 
 export default function CollectionTable() {

@@ -9,6 +9,7 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
+import { keyOf, loanIdentityKeys, isPrecloseMarker } from '../../utils/loanIdentity';
 import './Collection.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
 
@@ -41,22 +42,6 @@ function sortByDateThenCustomer(a, b) {
   return String(a.customerName || '').localeCompare(String(b.customerName || ''));
 }
 
-function keyOf(value) {
-  if (value === null || value === undefined) return '';
-  return String(value).trim();
-}
-
-function loanIdentityKeys(loan) {
-  return [
-    loan?.id,
-    loan?.loanId,
-    loan?.loanCode,
-    loan?.code,
-    loan?.loanDbId,
-    loan?.dbLoanId,
-  ].map(keyOf).filter(Boolean);
-}
-
 function collectionLoanIdentityKeys(item) {
   return [
     item?.loanId,
@@ -71,15 +56,6 @@ function collectionLoanIdentityKeys(item) {
 
 function collectionMatchesLoanKeySet(item, keySet) {
   return collectionLoanIdentityKeys(item).some((key) => keySet.has(key));
-}
-
-function isPrecloseMarker(value) {
-  const marker = String(value || '')
-    .trim()
-    .toUpperCase()
-    .replace(/[\s_-]+/g, '');
-
-  return marker === 'PRECLOSE' || marker === 'PRECLOSED';
 }
 
 function dateKeyParts(value) {
