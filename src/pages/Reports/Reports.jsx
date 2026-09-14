@@ -865,6 +865,28 @@ export default function Reports() {
     savingsDetailRows,
   ]);
 
+  // Same records as filteredPayments/filteredExpenses/overviewSavingsEntries,
+  // but only bounded by toDate (no fromDate lower bound). Used to compute a
+  // true opening balance for historical statements by summing everything
+  // that happened before the selected range, instead of defaulting to 0.
+  const paymentsUpToRange = useMemo(() => payments.filter((item) => {
+    const date = item.date || item.paymentDate || item.createdAt || '';
+    if (!inRange(date, null, toDate)) return false;
+    if (cycle === 'All') return true;
+    const linkedLoan = loanMap[item.loanId];
+    return linkedLoan?.cycle === cycle;
+  }), [payments, toDate, cycle, loanMap]);
+
+  const expensesUpToRange = useMemo(
+    () => expenses.filter((item) => inRange(item.date, null, toDate)),
+    [expenses, toDate],
+  );
+
+  const savingsUpToRange = useMemo(
+    () => savings.filter((item) => inRange(item.date, null, toDate)),
+    [savings, toDate],
+  );
+
   const overviewBankStatement = useMemo(() => {
     const statementRows = [];
 
@@ -893,7 +915,7 @@ export default function Reports() {
       });
     };
 
-    filteredPayments.forEach((item, paymentIndex) => {
+    paymentsUpToRange.forEach((item, paymentIndex) => {
       const rawType = String(item.type || '').trim();
       const type = rawType.toLowerCase().replace(/[_-]+/g, ' ');
       const direction = String(item.direction || '').toLowerCase();
@@ -1000,7 +1022,7 @@ export default function Reports() {
       }
     });
 
-    filteredExpenses.forEach((item, expenseIndex) => {
+    expensesUpToRange.forEach((item, expenseIndex) => {
       pushStatementRow({
         date: item.date || item.expenseDate || item.createdAt || '',
         particulars: item.description
@@ -1015,7 +1037,7 @@ export default function Reports() {
     });
 
     if (isOwner) {
-      overviewSavingsEntries.forEach((item, savingIndex) => {
+      savingsUpToRange.forEach((item, savingIndex) => {
         pushStatementRow({
           date: item.date || item.createdAt || '',
           particulars: item.note || item.description || item.purpose || 'Savings',
@@ -1032,22 +1054,36 @@ export default function Reports() {
       return numberValue(a.sourceOrder) - numberValue(b.sourceOrder);
     });
 
-    const totalCredit = statementRows.reduce((sum, row) => sum + row.credit, 0);
-    const totalDebit = statementRows.reduce((sum, row) => sum + row.debit, 0);
+    // statementRows spans everything up to toDate (no fromDate lower bound —
+    // see paymentsUpToRange/expensesUpToRange/savingsUpToRange above). Split
+    // it here: rows before the selected range only feed the opening balance,
+    // rows inside the range are what the statement actually displays.
+    const preRangeRows = fromDate
+      ? statementRows.filter((row) => row.date < fromDate)
+      : [];
+    const inRangeRows = fromDate
+      ? statementRows.filter((row) => row.date >= fromDate)
+      : statementRows;
+
+    const totalCredit = inRangeRows.reduce((sum, row) => sum + row.credit, 0);
+    const totalDebit = inRangeRows.reduce((sum, row) => sum + row.debit, 0);
     const netMovement = totalCredit - totalDebit;
+    const priorNetMovement = preRangeRows.reduce((sum, row) => sum + row.credit - row.debit, 0);
 
     // When the report includes the current date, we can anchor the statement's
     // closing balance to live Available Capital and back-calculate its opening.
-    // Historical ranges end with a period movement balance because the current
-    // live capital includes transactions after that historical period.
+    // Historical ranges instead take the real running balance carried forward
+    // from every transaction before the selected period — i.e. last month's
+    // closing balance becomes this period's opening balance — rather than
+    // starting from zero.
     const today = toInputDate();
     const liveBalanceAnchored = !toDate || String(toDate) >= today;
     const openingBalance = liveBalanceAnchored
       ? currentInHandAmount - netMovement
-      : 0;
+      : priorNetMovement;
 
     let runningBalance = openingBalance;
-    const rowsWithBalance = statementRows.map((row) => {
+    const rowsWithBalance = inRangeRows.map((row) => {
       runningBalance += row.credit - row.debit;
       return {
         ...row,
@@ -1105,11 +1141,12 @@ export default function Reports() {
       rows: rowsWithBalance,
     };
   }, [
-    filteredPayments,
-    filteredExpenses,
-    overviewSavingsEntries,
+    paymentsUpToRange,
+    expensesUpToRange,
+    savingsUpToRange,
     isOwner,
     currentInHandAmount,
+    fromDate,
     toDate,
   ]);
 
