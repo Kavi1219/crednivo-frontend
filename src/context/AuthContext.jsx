@@ -80,7 +80,8 @@ export function AuthProvider({ children }) {
       if (!getAuthToken()) return;
       try {
         const me = await apiRequest('/auth/me');
-        setUser(normalizeUser(me));
+        const next = normalizeUser(me);
+        setUser((current) => (current && JSON.stringify(current) === JSON.stringify(next) ? current : next));
       } catch {
         // Auth expiry is handled centrally by the API service/event listener.
       }
