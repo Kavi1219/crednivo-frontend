@@ -5,13 +5,13 @@ import './QuickActions.css';
 
 const actions = [
   ['Add Customer', '/customers/new', UserPlus, 'blue', 'customers.add'],
-  ['Create Loan', '/loans/create', WalletCards, 'green', 'loans.create'],
-  ['Add Collection', '/collection', HandCoins, 'purple', 'collections.collect'],
-  ['Add Expense', '/expenses', ReceiptText, 'orange', 'expenses.add'],
-  ['Add Capital', '/capital?add=1', Landmark, 'indigo', 'capital.manage'],
-  ['View Reports', '/reports', BarChart3, 'cyan', 'reports.full'],
-  ['Payment History', '/payments', History, 'pink', 'payments.view'],
-  ['Agent Management', '/agents', Users, 'amber', null, true],
+  ['Create Loan', '/loans/create', WalletCards, 'cyan', 'loans.create'],
+  ['Add Collection', '/collection', HandCoins, 'green', 'collections.collect'],
+  ['Add Expense', '/expenses', ReceiptText, 'pink', 'expenses.add'],
+  ['Add Capital', '/capital?add=1', Landmark, 'purple', 'capital.manage'],
+  ['View Reports', '/reports', BarChart3, 'amber', 'reports.full'],
+  ['Payment History', '/payments', History, 'orange', 'payments.view'],
+  ['Agent Management', '/agents', Users, 'blue', null, true],
 ];
 
 export default function QuickActions() {

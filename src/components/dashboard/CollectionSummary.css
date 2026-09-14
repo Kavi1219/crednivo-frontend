@@ -7,7 +7,7 @@
   width: min(100%, 204px);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: conic-gradient(#28b554 0 69.96%, #4e7df2 69.96% 89.96%, #f35d5f 89.96% 98.6%, #ff9a47 98.6% 100%);
+  background: conic-gradient(var(--success) 0 69.96%, var(--blue-600) 69.96% 89.96%, var(--danger) 89.96% 100%);
 }
 .donut-chart::after { content: ''; position: absolute; inset: 42px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
 .donut-center { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -16,7 +16,7 @@
 .summary-legend { display: grid; gap: 29px; }
 .legend-row { display: grid; grid-template-columns: 10px 1fr; gap: 10px; align-items: start; }
 .legend-dot { width: 9px; height: 9px; margin-top: 3px; border-radius: 50%; }
-.legend-dot.green { background: #28b554; }.legend-dot.blue { background: #4e7df2; }.legend-dot.red { background: #f35d5f; }
+.legend-dot.green { background: var(--success); }.legend-dot.blue { background: var(--blue-600); }.legend-dot.red { background: var(--danger); }
 .legend-row div { display: flex; flex-direction: column; gap: 6px; }
 .legend-row span { font-size: 11px; }
 .legend-row strong { font-size: 12px; }.legend-row small { color: var(--ink-600); font-weight: 500; }

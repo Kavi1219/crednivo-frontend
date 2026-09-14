@@ -16,7 +16,7 @@ export default function CollectionSummary() {
   const hasWorkload = workloadTotal > 0;
 
   const donutBackground = hasWorkload
-    ? `conic-gradient(#28b554 0 ${collectedPct}%, #4e7df2 ${collectedPct}% ${collectedPct + duePct}%, #f35d5f ${collectedPct + duePct}% 100%)`
+    ? `conic-gradient(var(--success) 0 ${collectedPct}%, var(--blue-600) ${collectedPct}% ${collectedPct + duePct}%, var(--danger) ${collectedPct + duePct}% 100%)`
     : 'var(--line)';
 
   const rows = [
