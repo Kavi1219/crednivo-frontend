@@ -310,30 +310,26 @@ export default function CollectionTable() {
                   Number(loan.outstanding) <= 0;
             return (
               <article className="mobile-collection-row" key={row.id}>
-                <div className="mobile-row-top">
-                  <div className="dashboard-mobile-customer"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><div><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId}</span></div></div>
+                <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
+                <div className="mobile-row-identity">
+                  <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
+                  <span>{row.customerId}</span>
+                </div>
+                <div className="mobile-row-amount">
+                  <b>{formatCurrency(isCollectedTab ? row.paidAmount : Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b>
                   <StatusBadge status={row.status} />
                 </div>
-                <div className="mobile-row-bottom">
-                  <span><small>Cycle</small><b>{row.cycle}</b></span>
-                  <span><small>{isCollectedTab ? 'Paid' : 'Amount'}</small><b>{formatCurrency(isCollectedTab ? row.paidAmount : Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b></span>
-                  <div className="dashboard-collection-actions mobile-actions">
-                    {!isCollectedTab && (
-                      <button
-                        className={`dashboard-pay-button compact ${loanClosed ? 'closed' : ''}`}
-                        onClick={() => !loanClosed && openPay(row)}
-                        disabled={loanClosed}
-                        aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`}
-                      >
-                        <HandCoins size={15} />
-                        <span>{loanClosed ? 'Closed' : 'Pay'}</span>
-                      </button>
-                    )}
-                    <IconButton label={`View ${row.customerName}`} size="sm" onClick={() => navigate(`/customers/${row.customerId}`)}>
-                      <Eye size={16} />
-                    </IconButton>
-                  </div>
-                </div>
+                {!isCollectedTab && (
+                  <button
+                    className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`}
+                    onClick={() => !loanClosed && openPay(row)}
+                    disabled={loanClosed}
+                    aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`}
+                    title={loanClosed ? 'Loan closed' : `Pay ${row.customerName}`}
+                  >
+                    <HandCoins size={15} />
+                  </button>
+                )}
               </article>
             );
           })}

@@ -7,8 +7,8 @@
 .collection-tabs button.active { color: var(--blue-500); border-bottom-color: var(--blue-500); font-weight: 600; }
 .collection-table-wrap { margin-top: 10px; overflow-x: auto; }
 .collection-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-.collection-table th { padding: 13px 15px; text-align: left; background: var(--surface-soft); color: var(--ink-800); font-weight: 500; white-space: nowrap; }
-.collection-table td { padding: 11px 15px; border-bottom: 1px solid var(--line); color: var(--ink-800); white-space: nowrap; }
+.collection-table th { padding: 10px 12px; text-align: left; background: var(--surface-soft); color: var(--ink-800); font-weight: 500; white-space: nowrap; }
+.collection-table td { padding: 8px 12px; border-bottom: 1px solid var(--line); color: var(--ink-800); white-space: nowrap; }
 .cycle-chip { display: inline-flex; padding: 5px 10px; color: var(--blue-500); background: var(--blue-100); border-radius: 7px; font-size: 10px; }
 .view-collections-button { margin: 10px auto 0; min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 15px; border: 1px solid var(--line); border-radius: 8px; color: var(--blue-500); background: var(--surface); cursor: pointer; font-size: 11px; }
 .mobile-collection-list { display: none; }
@@ -16,18 +16,17 @@
 @media (max-width: 767px) {
   .collection-card { padding: 16px 13px 14px; }
   .section-head h2 { font-size: 15px; }
-  .collection-tabs { margin-top: 12px; }
+  .collection-tabs { margin-top: 10px; gap: 4px; }
+  .collection-tabs button { min-width: 0; padding: 7px 8px; font-size: 10.5px; }
   .collection-table-wrap { display: none; }
-  .mobile-collection-list { display: grid; gap: 9px; margin-top: 12px; }
-  .mobile-collection-row { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
-  .mobile-row-top, .mobile-row-bottom { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .mobile-row-top > div { display: flex; flex-direction: column; gap: 4px; }
-  .mobile-row-top strong { font-size: 12px; }
-  .mobile-row-top span { color: var(--ink-600); font-size: 9.5px; }
-  .mobile-row-bottom { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line); }
-  .mobile-row-bottom > span { display: flex; flex-direction: column; gap: 3px; }
-  .mobile-row-bottom small { color: var(--ink-500); font-size: 8.5px; }
-  .mobile-row-bottom b { font-size: 10.5px; }
+  .mobile-collection-list { display: grid; gap: 6px; margin-top: 10px; }
+  .mobile-collection-row { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
+  .mobile-row-identity { min-width: 0; flex: 1 1 auto; display: grid; gap: 1px; }
+  .mobile-row-identity strong { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-row-identity span { color: var(--ink-600); font-size: 8.5px; }
+  .mobile-row-amount { flex: 0 0 auto; display: grid; justify-items: end; gap: 3px; }
+  .mobile-row-amount b { font-size: 11px; white-space: nowrap; }
+  .mobile-row-amount .status-badge { padding: 3px 7px; font-size: 8.5px; }
   .view-collections-button { width: 100%; margin-top: 12px; }
 }
 .dashboard-empty { min-height:180px; display:grid; place-items:center; color:var(--ink-500); font-size:11px; }
@@ -191,16 +190,12 @@
 .dashboard-save-payment:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (max-width: 767px) {
-  .mobile-row-bottom { align-items: flex-end; }
-  .dashboard-collection-actions.mobile-actions { margin-left: auto; }
-  .dashboard-pay-button.compact { min-height: 34px; padding: 0 10px; }
+  .dashboard-pay-button.icon-only { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 9px; }
   .dashboard-pay-modal { padding: 17px; border-radius: 16px; }
 }
 
 @media (max-width: 440px) {
   .dashboard-pay-fields { grid-template-columns: 1fr; }
-  .dashboard-pay-button.compact span { display: none; }
-  .dashboard-pay-button.compact { width: 34px; padding: 0; }
 }
 
 /* Paid collections move out of the cycle queues into their own Today tab. */
@@ -235,6 +230,7 @@
   }
   .collection-tabs::-webkit-scrollbar { display: none; }
   .collection-tabs button { flex: 0 0 auto; }
+  .collection-tabs .collected-tab { min-width: 0; gap: 4px; }
 }
 
 
