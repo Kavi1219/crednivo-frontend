@@ -1,9 +1,9 @@
 .stat-card {
   position: relative;
   min-width: 0;
-  min-height: 202px;
+  min-height: 136px;
   width: 100%;
-  padding: 18px 16px 14px;
+  padding: 14px 14px 12px;
   display: flex;
   flex-direction: column;
   text-align: left;
@@ -17,19 +17,19 @@
 .stat-card:disabled { opacity: .6; cursor: not-allowed; }
 .stat-chevron {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   opacity: .55;
 }
 .stat-main {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   align-items: start;
-  gap: 14px;
+  gap: 11px;
 }
 .stat-icon {
-  width: 58px;
-  height: 58px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -37,11 +37,11 @@
   border-radius: 50%;
   color: #fff;
 }
-.stat-icon svg { display: block; margin: 0; }
+.stat-icon svg { display: block; margin: 0; width: 22px; height: 22px; }
 .stat-copy {
   min-width: 0;
   display: grid;
-  grid-template-rows: 30px auto 31px;
+  grid-template-rows: 20px auto 18px;
   align-content: start;
 }
 .stat-copy p {
@@ -60,7 +60,7 @@
   display: block;
   align-self: start;
   margin-top: 1px;
-  font-size: 19px;
+  font-size: 17px;
   line-height: 1.1;
   letter-spacing: -.03em;
   white-space: nowrap;
@@ -141,14 +141,14 @@ html[data-theme='dark'] .stat-card.stat-orange .stat-copy p, html[data-theme='da
 html[data-theme='dark'] .stat-card.stat-purple .stat-copy p, html[data-theme='dark'] .stat-card.stat-purple .stat-copy small { color: #c3b0f7; }
 
 @media (max-width: 767px) {
-  .stat-card { min-height: 150px; padding: 13px 12px 11px; border-radius: 14px; }
-  .stat-chevron { top: 10px; right: 10px; }
-  .stat-main { grid-template-columns: 42px minmax(0, 1fr); gap: 9px; }
-  .stat-icon { width: 42px; height: 42px; }
-  .stat-icon svg { width: 21px; height: 21px; }
-  .stat-copy { grid-template-rows: 24px auto 25px; }
-  .stat-copy p { margin-top: 0; font-size: 9px; line-height: 1.2; }
-  .stat-copy strong { font-size: 14px; }
-  .stat-copy small { font-size: 8.5px; line-height: 1.2; }
+  .stat-card { min-height: 108px; padding: 11px 11px 10px; border-radius: 14px; }
+  .stat-chevron { top: 9px; right: 9px; }
+  .stat-main { grid-template-columns: 34px minmax(0, 1fr); gap: 8px; }
+  .stat-icon { width: 34px; height: 34px; }
+  .stat-icon svg { width: 17px; height: 17px; }
+  .stat-copy { grid-template-rows: 16px auto 14px; }
+  .stat-copy p { margin-top: 0; font-size: 8.5px; line-height: 1.15; }
+  .stat-copy strong { font-size: 13px; }
+  .stat-copy small { font-size: 7.5px; line-height: 1.15; }
   .stat-progress { margin-bottom: 0; height: 3px; }
 }
