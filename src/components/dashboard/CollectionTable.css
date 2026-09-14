@@ -19,14 +19,17 @@
   .collection-tabs { margin-top: 10px; gap: 4px; }
   .collection-tabs button { min-width: 0; padding: 7px 8px; font-size: 10.5px; }
   .collection-table-wrap { display: none; }
-  .mobile-collection-list { display: grid; gap: 6px; margin-top: 10px; }
-  .mobile-collection-row { display: flex; align-items: center; gap: 8px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-soft); }
-  .mobile-row-identity { min-width: 0; flex: 1 1 auto; display: grid; gap: 1px; }
-  .mobile-row-identity strong { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mobile-row-identity span { color: var(--ink-600); font-size: 8.5px; }
-  .mobile-row-amount { flex: 0 0 auto; display: grid; justify-items: end; gap: 3px; }
-  .mobile-row-amount b { font-size: 11px; white-space: nowrap; }
-  .mobile-row-amount .status-badge { padding: 3px 7px; font-size: 8.5px; }
+  .mobile-collection-list { display: grid; gap: 8px; margin-top: 10px; }
+  .mobile-collection-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+  .mobile-collection-row .dashboard-customer-avatar { width: 42px; height: 42px; font-size: 13px; }
+  .mobile-row-identity { min-width: 0; flex: 1 1 auto; display: grid; gap: 2px; }
+  .mobile-row-identity strong { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-row-identity span { color: var(--ink-600); font-size: 10px; }
+  .mobile-row-amount { flex: 0 0 auto; display: grid; justify-items: end; gap: 5px; }
+  .mobile-row-amount b { font-size: 15px; white-space: nowrap; }
+  .mobile-row-amount .status-badge { padding: 4px 10px; font-size: 9.5px; }
+  .dashboard-pay-button.icon-only { width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 12px; }
+  .dashboard-pay-button.icon-only svg { width: 19px; height: 19px; }
   .view-collections-button { width: 100%; margin-top: 12px; }
 }
 .dashboard-empty { min-height:180px; display:grid; place-items:center; color:var(--ink-500); font-size:11px; }
@@ -190,7 +193,6 @@
 .dashboard-save-payment:disabled { opacity: .5; cursor: not-allowed; }
 
 @media (max-width: 767px) {
-  .dashboard-pay-button.icon-only { width: 32px; height: 32px; min-height: 32px; padding: 0; border-radius: 9px; }
   .dashboard-pay-modal { padding: 17px; border-radius: 16px; }
 }
 
