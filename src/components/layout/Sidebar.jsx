@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   BarChart3, CircleDollarSign, Gauge,
-  HandCoins, Landmark, LogOut, PiggyBank, ReceiptText, Settings, Users, UserRound, WalletCards
+  HandCoins, Landmark, PiggyBank, ReceiptText, Settings, Users, UserRound, WalletCards
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Tooltip from '../common/Tooltip';
@@ -25,10 +25,8 @@ function NavIcon({ label, children }) {
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { user, logout, isOwner, hasPermission } = useAuth();
+  const { isOwner, hasPermission } = useAuth();
   const visibleItems = simpleItems.filter((item) => item.always || (item.ownerOnly ? isOwner : hasPermission(item.permission)));
-
-  const signOut = async () => { await logout(); navigate('/login', { replace: true }); };
 
   return (
     <aside className="sidebar desktop-sidebar">
@@ -60,10 +58,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <button className="logout-button" onClick={signOut} title={`Signed in as ${user?.displayName || ''}`}>
-        <LogOut size={19} /><span>Logout</span>
-      </button>
     </aside>
   );
 }
