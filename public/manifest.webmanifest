@@ -1,0 +1,15 @@
+{
+  "name": "Crednivo | Finance & Collection Management",
+  "short_name": "Crednivo",
+  "description": "Manage customers, loans, collections, expenses, agents and reports with Crednivo.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#06274b",
+  "theme_color": "#06274b",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
