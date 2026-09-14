@@ -77,7 +77,6 @@
 }
 .profile-dropdown { position: absolute; top: calc(100% + 8px); right: 0; width: 220px; z-index: 90; padding: 14px; display: grid; gap: 8px; }
 .profile-dropdown > span { color: var(--ink-600); font-size: 12px; margin-bottom: 5px; }
-.profile-dropdown button { text-align: left; border-radius: 8px; padding: 10px; color: var(--ink-800); background: var(--surface-soft); cursor: pointer; }
 .mobile-header-actions { display: none; }
 
 @media (max-width: 1000px) and (min-width: 768px) {
@@ -132,7 +131,6 @@
 
 html[data-theme='dark'] .app-header{border-bottom-color:rgba(74,96,122,.45)}
 html[data-theme='dark'] .notification-count{border-color:var(--surface)}
-html[data-theme='dark'] .profile-dropdown button{background:var(--surface-soft);color:var(--ink-800)}
 
 /* Phase 2.20 - Company profile details dropdown */
 .profile-chevron { transition: transform .18s ease; }
@@ -175,14 +173,6 @@ html[data-theme='dark'] .profile-dropdown button{background:var(--surface-soft);
   gap: 3px;
 }
 
-.profile-dropdown-heading small {
-  color: var(--blue-600);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
 .profile-dropdown-heading strong {
   overflow: hidden;
   color: var(--ink-950);
@@ -192,55 +182,41 @@ html[data-theme='dark'] .profile-dropdown button{background:var(--surface-soft);
   white-space: nowrap;
 }
 
-.profile-dropdown-heading span:not(.profile-dropdown-avatar) {
+.profile-dropdown-heading span {
   color: var(--ink-500);
   font-size: 10px;
 }
 
-.profile-detail-list {
+.profile-info-grid {
   display: grid;
-  padding: 8px 12px 12px;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
 }
 
-.profile-detail-row {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  padding: 10px 4px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
-}
+.profile-info-grid .profile-info-full { grid-column: 1 / -1; }
 
-.profile-detail-row:last-child { border-bottom: 0; }
-
-.profile-detail-icon {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  color: var(--blue-600);
-  background: var(--blue-100);
-}
-
-.profile-detail-row > div {
-  min-width: 0;
-  display: grid;
-  gap: 3px;
-}
-
-.profile-detail-row small {
+.profile-info-grid small {
+  display: block;
+  margin-bottom: 2px;
   color: var(--ink-500);
-  font-size: 9px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
 }
 
-.profile-detail-row strong {
+.profile-info-grid strong {
+  display: block;
   overflow-wrap: anywhere;
   color: var(--ink-800);
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 10.5px;
+  font-weight: 700;
 }
+
+.profile-info-grid strong.is-verified { color: var(--success); }
+.profile-info-grid strong.is-pending { color: var(--warning); }
 
 .mobile-profile-menu-wrap { position: relative; }
 
@@ -260,7 +236,7 @@ html[data-theme='dark'] .profile-dropdown button{background:var(--surface-soft);
     width: calc(100vw - 20px);
   }
   .profile-dropdown-heading { padding: 14px; }
-  .profile-detail-list { padding-inline: 10px; }
+  .profile-info-grid { padding-inline: 10px; }
 }
 
 html[data-theme='dark'] .profile-dropdown-heading {
@@ -323,12 +299,8 @@ html[data-theme='dark'] .profile-dropdown-heading {
 
 /* Phase 3.4 - database company profile */
 .profile-dropdown-avatar img,.profile-avatar img,.mobile-avatar img{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}
-.profile-edit-button{margin:0 12px 12px!important;min-height:38px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid color-mix(in srgb,var(--blue-500) 22%,var(--line))!important;color:var(--blue-600)!important;background:var(--blue-100)!important;font-size:10px!important;font-weight:800!important;text-align:center!important}
-.profile-edit-button svg{display:block;flex:0 0 auto}
 
 /* Phase 4.0 - authenticated profile */
-.profile-logout-button { width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; color: var(--danger); font-size: 11px; font-weight: 800; border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--line)); border-radius: 10px; background: var(--danger-soft); }
-.profile-password-button { width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; color: var(--blue-600); font-size: 11px; font-weight: 800; border: 1px solid color-mix(in srgb, var(--blue-600) 24%, var(--line)); border-radius: 10px; background: var(--blue-100); }
 .password-modal-backdrop { position: fixed; inset: 0; z-index: 160; display: grid; place-items: center; padding: 18px; background: rgba(4,17,32,.58); backdrop-filter: blur(7px); }
 .password-modal { width: min(100%, 500px); padding: 24px; }
 .password-modal-head { display: grid; grid-template-columns: 44px 1fr auto; align-items: start; gap: 12px; }
@@ -378,12 +350,6 @@ html[data-theme='dark'] .profile-dropdown-heading {
 /* =========================================================
    EMAIL OTP SECURITY — V48
    ========================================================= */
-.profile-security-button{
-  width:100%;min-height:42px;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;
-  color:#0b9361;font-size:11px;font-weight:800;border:1px solid color-mix(in srgb,#0b9361 24%,var(--line));
-  border-radius:10px;background:#e8f8f1;
-}
-.profile-password-button:disabled{opacity:.48;cursor:not-allowed}
 .account-security-modal{width:min(100%,520px)}
 .account-security-status{margin-top:20px;padding:12px 13px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft)}
 .account-security-status>span{width:38px;height:38px;display:grid;place-items:center;border-radius:10px}
@@ -487,23 +453,23 @@ html[data-theme='dark'] .profile-dropdown {
 }
 
 /* =========================================================
-   MULTI-ACCOUNT SWITCHER + ACTIVE SESSIONS
+   MULTI-ACCOUNT SWITCHER + ACTIVE SESSIONS + MENU
    ========================================================= */
-.profile-accounts-list { display: grid; gap: 5px; margin: 4px 0 10px; padding-top: 10px; border-top: 1px solid var(--line); }
-.profile-accounts-label { display: block; color: var(--ink-500); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px; }
-.profile-account-row { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 44px; padding: 6px 8px; border-radius: 10px; background: var(--surface-soft); text-align: left; cursor: pointer; }
-.profile-account-row:hover { background: var(--blue-100); }
-.profile-account-avatar { width: 30px; height: 30px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; overflow: hidden; background: var(--blue-100); color: var(--blue-600); font-size: 12px; font-weight: 800; }
+.profile-menu-list { display: grid; gap: 1px; padding: 6px 8px; }
+.profile-menu-list + .profile-menu-list { border-top: 1px solid var(--line); }
+.profile-menu-label { display: block; padding: 6px 8px 2px; color: var(--ink-500); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.profile-menu-item { width: 100%; min-height: 38px; padding: 9px 8px; border-radius: 9px; color: var(--ink-800); font-size: 11px; font-weight: 650; text-align: left; background: transparent; cursor: pointer; }
+.profile-menu-item:hover { background: var(--surface-soft); }
+.profile-menu-item:disabled { opacity: .5; cursor: not-allowed; }
+.profile-menu-item.danger { color: var(--danger); font-weight: 800; }
+.profile-menu-item.danger:hover { background: var(--danger-soft); }
+
+.profile-account-item { display: flex; align-items: center; gap: 9px; }
+.profile-account-avatar { width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 50%; overflow: hidden; background: var(--blue-100); color: var(--blue-600); font-size: 11px; font-weight: 800; }
 .profile-account-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .profile-account-copy { display: grid; gap: 1px; min-width: 0; }
 .profile-account-copy strong { font-size: 11px; color: var(--ink-950); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .profile-account-copy small { font-size: 9px; color: var(--ink-500); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.profile-add-account-button, .profile-sessions-button {
-  width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;
-  color: var(--ink-800); font-size: 11px; font-weight: 800; border: 1px solid var(--line);
-  border-radius: 10px; background: var(--surface-soft);
-}
 
 .sessions-modal { width: min(100%, 520px); }
 .sessions-modal-toolbar { display: flex; justify-content: flex-end; margin-top: 14px; }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, Building2, ChevronDown, Edit3, KeyRound, LogOut, Mail, MapPin, Menu, Monitor, Phone, Plus, Search, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { Bell, ChevronDown, Menu, Search, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -33,38 +33,42 @@ function ProfileDetails({ company, user, isOwner, accounts, activeAccountId, onE
       <div className="profile-dropdown-heading">
         <span className="profile-dropdown-avatar">{avatar ? <img src={avatar} alt="" /> : initial}</span>
         <div>
-          <small>{isOwner ? 'Owner Account' : 'Agent Account'}</small>
           <strong>{user?.displayName || company.owner}</strong>
-          <span>{user?.employeeId ? `${user.employeeId} · ` : ''}{user?.branch || company.branch}</span>
+          <span>{isOwner ? 'Owner' : 'Agent'} · {company.name}</span>
         </div>
       </div>
 
-      <div className="profile-detail-list">
-        <div className="profile-detail-row"><span className="profile-detail-icon"><ShieldCheck size={16} /></span><div><small>Access</small><strong>{isOwner ? 'Owner · Full Access' : 'Agent · Field Access'}</strong></div></div>
-        <div className="profile-detail-row"><span className="profile-detail-icon"><Building2 size={16} /></span><div><small>Company</small><strong>{company.name}</strong>{company.companyId && <span>{company.companyId}</span>}</div></div>
-        <div className="profile-detail-row"><span className="profile-detail-icon"><Phone size={16} /></span><div><small>Login Mobile</small><strong>{formatIndianMobile(user?.mobile)}</strong></div></div>
-        <div className="profile-detail-row"><span className="profile-detail-icon"><Mail size={16} /></span><div><small>Account Email</small><strong>{user?.email || (isOwner ? company.email : '—')}</strong><span>{user?.emailVerified ? 'Verified' : 'Verification Pending'}</span></div></div>
-        {isOwner && <div className="profile-detail-row profile-detail-address"><span className="profile-detail-icon"><MapPin size={16} /></span><div><small>Address</small><strong>{company.address || '—'}</strong></div></div>}
+      <div className="profile-info-grid">
+        <div><small>Access</small><strong>{isOwner ? 'Full access' : 'Field access'}</strong></div>
+        <div><small>Company ID</small><strong>{company.companyId || '—'}</strong></div>
+        <div><small>Mobile</small><strong>{formatIndianMobile(user?.mobile) || '—'}</strong></div>
+        <div><small>Email</small><strong className={user?.emailVerified ? 'is-verified' : 'is-pending'}>{user?.emailVerified ? 'Verified' : 'Pending'}</strong></div>
+        {isOwner && <div className="profile-info-full"><small>Address</small><strong>{company.address || '—'}</strong></div>}
       </div>
 
       {otherAccounts.length > 0 && (
-        <div className="profile-accounts-list">
-          <small className="profile-accounts-label">Switch account</small>
+        <div className="profile-menu-list">
+          <small className="profile-menu-label">Switch account</small>
           {otherAccounts.map((account) => (
-            <button key={account.id} type="button" className="profile-account-row" onClick={() => onSwitchAccount(account.id)}>
+            <button key={account.id} type="button" className="profile-menu-item profile-account-item" onClick={() => onSwitchAccount(account.id)}>
               <span className="profile-account-avatar">{account.profilePhoto ? <img src={account.profilePhoto} alt="" /> : String(account.displayName || account.companyName || 'C').charAt(0)}</span>
-              <span className="profile-account-copy"><strong>{account.displayName || account.username}</strong><small>{account.companyName}{account.role ? ` · ${account.role === 'OWNER' ? 'Owner' : 'Agent'}` : ''}</small></span>
+              <span className="profile-account-copy"><strong>{account.displayName || account.username}</strong><small>{account.companyName}</small></span>
             </button>
           ))}
         </div>
       )}
 
-      {isOwner && <button type="button" className="profile-edit-button" onClick={onEdit}><Edit3 size={15} /><span>Edit Company Profile</span></button>}
-      <button type="button" className="profile-add-account-button" onClick={onAddAccount}><Plus size={15} /><span>Add Account</span></button>
-      <button type="button" className="profile-sessions-button" onClick={onSessions}><Monitor size={15} /><span>Active Sessions</span></button>
-      <button type="button" className="profile-security-button" onClick={onSecurity}><ShieldCheck size={15} /><span>{user?.emailVerified ? 'Email Verified' : 'Verify Email'}</span></button>
-      <button type="button" className="profile-password-button" onClick={onChangePassword} disabled={!user?.emailVerified} title={!user?.emailVerified ? 'Verify email before changing password' : 'Change password'}><KeyRound size={15} /><span>Change Password</span></button>
-      <button type="button" className="profile-logout-button" onClick={onLogout}><LogOut size={15} /><span>Logout</span></button>
+      <div className="profile-menu-list">
+        {isOwner && <button type="button" className="profile-menu-item" onClick={onEdit}>Edit company profile</button>}
+        <button type="button" className="profile-menu-item" onClick={onAddAccount}>Add account</button>
+        <button type="button" className="profile-menu-item" onClick={onSessions}>Active sessions</button>
+        <button type="button" className="profile-menu-item" onClick={onSecurity}>{user?.emailVerified ? 'Account security' : 'Verify email'}</button>
+        <button type="button" className="profile-menu-item" onClick={onChangePassword} disabled={!user?.emailVerified} title={!user?.emailVerified ? 'Verify email before changing password' : 'Change password'}>Change password</button>
+      </div>
+
+      <div className="profile-menu-list profile-menu-danger">
+        <button type="button" className="profile-menu-item danger" onClick={onLogout}>Logout</button>
+      </div>
     </div>
   );
 }
