@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import './StatCard.css';
 
 export default function StatCard({ title, value, note, icon: Icon, tone, progress = 0, onDetails }) {
@@ -8,7 +8,14 @@ export default function StatCard({ title, value, note, icon: Icon, tone, progres
     : 0;
 
   return (
-    <article className={`stat-card app-card stat-${tone}`}>
+    <button
+      type="button"
+      className={`stat-card app-card stat-${tone}`}
+      onClick={onDetails}
+      disabled={!onDetails}
+      aria-label={`${title}: ${value}. ${note}.`}
+    >
+      <span className="stat-chevron" aria-hidden="true"><ChevronRight size={15} /></span>
       <div className="stat-main">
         <span className="stat-icon"><Icon size={28} strokeWidth={1.9} /></span>
         <div className="stat-copy">
@@ -28,16 +35,6 @@ export default function StatCard({ title, value, note, icon: Icon, tone, progres
       >
         <span style={{ width: `${safeProgress}%` }} />
       </div>
-
-      <button
-        type="button"
-        className="stat-detail"
-        onClick={onDetails}
-        disabled={!onDetails}
-        aria-label={`View details for ${title}`}
-      >
-        View Details <ArrowRight size={13} />
-      </button>
-    </article>
+    </button>
   );
 }

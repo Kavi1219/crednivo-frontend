@@ -37,25 +37,7 @@ export default function Dashboard() {
   );
   const partialCustomers = new Set(partialRows.map((item) => item.customerId)).size;
 
-  const dashboardStats = [
-    ...(canViewCapital ? [{
-      title: 'Available Capital',
-      value: formatCurrency(metrics.availableCapital ?? capitalMetrics.availableCapital),
-      note: capitalMetrics.entries ? 'Current business cash' : 'Add opening investment',
-      icon: Landmark,
-      tone: (metrics.availableCapital ?? capitalMetrics.availableCapital) < 0 ? 'orange' : 'green',
-      progress: 0,
-      onDetails: () => navigate('/capital'),
-    }] : []),
-    {
-      title: 'Active Loans',
-      value: String(metrics.activeLoans || 0),
-      note: 'Total Active Loans',
-      icon: UserRoundCheck,
-      tone: 'indigo',
-      progress: 0,
-      onDetails: () => navigate('/loans?status=Active'),
-    },
+  const dashboardStatsToday = [
     {
       title: "Today's Collection",
       value: formatCurrency(metrics.expected),
@@ -88,16 +70,37 @@ export default function Dashboard() {
       value: formatCurrency(metrics.pendingOverdue),
       note: `${formatCurrency(metrics.pending)} due today · ${formatCurrency(metrics.overdue)} overdue`,
       icon: TriangleAlert,
-      tone: 'orange',
+      tone: 'danger',
       progress: pendingProgress,
       onDetails: () => navigate('/collection?view=overdue'),
+    },
+  ];
+
+  const dashboardStatsBusiness = [
+    ...(canViewCapital ? [{
+      title: 'Available Capital',
+      value: formatCurrency(metrics.availableCapital ?? capitalMetrics.availableCapital),
+      note: capitalMetrics.entries ? 'Current business cash' : 'Add opening investment',
+      icon: Landmark,
+      tone: (metrics.availableCapital ?? capitalMetrics.availableCapital) < 0 ? 'danger' : 'green',
+      progress: 0,
+      onDetails: () => navigate('/capital'),
+    }] : []),
+    {
+      title: 'Active Loans',
+      value: String(metrics.activeLoans || 0),
+      note: 'Total Active Loans',
+      icon: UserRoundCheck,
+      tone: 'cyan',
+      progress: 0,
+      onDetails: () => navigate('/loans?status=Active'),
     },
     {
       title: 'Partial',
       value: formatCurrency(partialAmount),
       note: `From ${partialCustomers} Customer${partialCustomers === 1 ? '' : 's'}`,
       icon: CircleDollarSign,
-      tone: 'blue',
+      tone: 'orange',
       progress: 0,
       onDetails: () => navigate('/collection?view=upcoming&status=Partial'),
     },
@@ -118,8 +121,17 @@ export default function Dashboard() {
         <button className="date-button" title="Dashboard date"><CalendarDays size={15} /> {formatDate(today)}</button>
       </div>
       <QuickActions />
-      <section className="stats-grid" aria-label="Overview">
-        {dashboardStats.map((stat) => <StatCard key={stat.title} {...stat} />)}
+      <section className="stats-section" aria-labelledby="stats-today-heading">
+        <h2 id="stats-today-heading" className="stats-section-title">Today</h2>
+        <div className="stats-grid">
+          {dashboardStatsToday.map((stat) => <StatCard key={stat.title} {...stat} />)}
+        </div>
+      </section>
+      <section className="stats-section" aria-labelledby="stats-business-heading">
+        <h2 id="stats-business-heading" className="stats-section-title">Business Overview</h2>
+        <div className="stats-grid">
+          {dashboardStatsBusiness.map((stat) => <StatCard key={stat.title} {...stat} />)}
+        </div>
       </section>
       <section className="dashboard-middle"><CollectionTable /><CollectionSummary /></section>
     </div>
