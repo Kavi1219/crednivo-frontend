@@ -670,7 +670,92 @@ function exportOverviewBankStatementExcel(report) {
   );
 }
 
+function exportCashBookExcel(report) {
+  const workbook = XLSX.utils.book_new();
+  const months = Array.isArray(report?.cashBookMonths) ? report.cashBookMonths : [];
+
+  const dailyColumns = [
+    { key: 'sNo', label: 'S.No', type: 'number' },
+    { key: 'date', label: 'Date', type: 'date' },
+    { key: 'principal', label: 'Principal', type: 'currency' },
+    { key: 'profit', label: 'Profit', type: 'currency' },
+    { key: 'interest', label: 'Interest', type: 'currency' },
+    { key: 'otherIncome', label: 'Other Income', type: 'currency' },
+    { key: 'expense', label: 'Expense', type: 'currency' },
+    { key: 'lending', label: 'Lending Amount', type: 'currency' },
+    { key: 'savings', label: 'Savings', type: 'currency' },
+    { key: 'inHandAmount', label: report?.cashBookBalanceLabel || 'In Hand Amount', type: 'currency' },
+    { key: 'remarks', label: 'Remarks' },
+  ];
+
+  const summarySheet = buildBankStatementSheet({
+    title: report?.title || 'Daily Cash Book',
+    company: report?.company || 'CREDNIVO',
+    period: (report?.meta || []).find(([label]) => label === 'Period')?.[1] || '',
+    metrics: months.map((month) => ({
+      label: month.label, value: month.closingBalance, type: 'currency',
+    })),
+    columns: [
+      { key: 'month', label: 'Month' },
+      { key: 'openingBalance', label: 'Opening Balance', type: 'currency' },
+      { key: 'totalPrincipal', label: 'Principal', type: 'currency' },
+      { key: 'totalProfit', label: 'Profit', type: 'currency' },
+      { key: 'totalInterest', label: 'Interest', type: 'currency' },
+      { key: 'totalOtherIncome', label: 'Other Income', type: 'currency' },
+      { key: 'totalExpense', label: 'Expense', type: 'currency' },
+      { key: 'totalLending', label: 'Lending Amount', type: 'currency' },
+      { key: 'totalSavings', label: 'Savings', type: 'currency' },
+      { key: 'closingBalance', label: 'Closing Balance', type: 'currency' },
+    ],
+    rows: months.map((month) => ({
+      month: month.label,
+      openingBalance: month.openingBalance,
+      totalPrincipal: month.totalPrincipal,
+      totalProfit: month.totalProfit,
+      totalInterest: month.totalInterest,
+      totalOtherIncome: month.totalOtherIncome,
+      totalExpense: month.totalExpense,
+      totalLending: month.totalLending,
+      totalSavings: month.totalSavings,
+      closingBalance: month.closingBalance,
+    })),
+  });
+
+  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+  months.forEach((month, index) => {
+    const sheet = buildBankStatementSheet({
+      title: `${month.label} Cash Book`,
+      company: report?.company || 'CREDNIVO',
+      period: month.label,
+      metrics: [
+        { label: 'Opening Balance', value: month.openingBalance, type: 'currency' },
+        { label: 'Principal', value: month.totalPrincipal, type: 'currency' },
+        { label: 'Profit', value: month.totalProfit, type: 'currency' },
+        { label: 'Interest', value: month.totalInterest, type: 'currency' },
+        { label: 'Other Income', value: month.totalOtherIncome, type: 'currency' },
+        { label: 'Expense', value: month.totalExpense, type: 'currency' },
+        { label: 'Lending Amount', value: month.totalLending, type: 'currency' },
+        { label: 'Savings', value: month.totalSavings, type: 'currency' },
+        { label: 'Closing Balance', value: month.closingBalance, type: 'currency' },
+      ],
+      columns: dailyColumns,
+      rows: month.rows || [],
+    });
+
+    const monthName = safeExcelSheetName(month.label, `Month ${index + 1}`);
+    XLSX.utils.book_append_sheet(workbook, sheet, monthName);
+  });
+
+  XLSX.writeFile(workbook, `${reportFileBase(report)}.xlsx`, { compression: true });
+}
+
 export async function exportReportExcel(report) {
+  if (report?.cashBook && Array.isArray(report?.cashBookMonths)) {
+    exportCashBookExcel(report);
+    return;
+  }
+
   if (report?.bankStatement && Array.isArray(report?.statementMonths)) {
     exportOverviewBankStatementExcel(report);
     return;

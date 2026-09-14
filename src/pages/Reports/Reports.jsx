@@ -1009,6 +1009,11 @@ export default function Reports() {
       }
 
       if (direction === 'out') {
+        // Every Expense creates a mirrored Payment ledger row (type "Expense")
+        // purely for internal linking. The real amount is already added below
+        // from expensesUpToRange — counting this mirror too would double it.
+        if (type === 'expense') return;
+
         const isLoan = type === 'new loan' || type.includes('loan given');
         pushStatementRow({
           date,
@@ -1149,6 +1154,251 @@ export default function Reports() {
     fromDate,
     toDate,
   ]);
+
+  // Daily cash book matching the uploaded template: Principal / Profit /
+  // Interest (late fine) / Other Income / Expense / Lending Amount / Savings,
+  // with a running "In Hand Amount" per calendar day, grouped by month with
+  // an opening balance carried forward exactly like overviewBankStatement.
+  const cashBookStatement = useMemo(() => {
+    const dayMap = new Map();
+    const ensureDay = (dateKey) => {
+      if (!dayMap.has(dateKey)) {
+        dayMap.set(dateKey, {
+          date: dateKey, principal: 0, profit: 0, interest: 0, otherIncome: 0,
+          expense: 0, lending: 0, savings: 0,
+        });
+      }
+      return dayMap.get(dateKey);
+    };
+
+    paymentsUpToRange.forEach((item) => {
+      const dateKey = String(item.date || item.paymentDate || item.createdAt || '').slice(0, 10);
+      if (!dateKey) return;
+      const type = String(item.type || '').trim().toLowerCase();
+      const direction = String(item.direction || '').toLowerCase();
+      const day = ensureDay(dateKey);
+
+      if (type === 'collection' && direction === 'in') {
+        day.principal += Math.max(0, numberValue(item.principalPaid));
+        day.profit += Math.max(0, numberValue(item.interestPaid));
+        day.interest += Math.max(0, numberValue(item.fineAmount));
+        return;
+      }
+      if (type === 'document charge' && direction === 'in') {
+        day.otherIncome += Math.max(0, numberValue(item.amount));
+        return;
+      }
+      // Every Expense creates a mirrored Payment ledger row purely for
+      // internal linking — the real amount is added below from
+      // expensesUpToRange, so counting this mirror too would double it.
+      if (type === 'expense') return;
+      if (type === 'new loan' && direction === 'out') {
+        day.lending += Math.max(0, numberValue(item.amount));
+        return;
+      }
+      // Defensive fallback for any payment type outside the known set.
+      if (direction === 'in') day.otherIncome += Math.max(0, numberValue(item.amount));
+      else if (direction === 'out') day.lending += Math.max(0, numberValue(item.amount));
+    });
+
+    expensesUpToRange.forEach((item) => {
+      const dateKey = String(item.date || '').slice(0, 10);
+      if (!dateKey) return;
+      ensureDay(dateKey).expense += Math.max(0, numberValue(item.amount));
+    });
+
+    if (isOwner) {
+      savingsUpToRange.forEach((item) => {
+        const dateKey = String(item.date || item.createdAt || '').slice(0, 10);
+        if (!dateKey) return;
+        ensureDay(dateKey).savings += Math.max(0, numberValue(item.amount));
+      });
+    }
+
+    const dayNet = (day) => day.principal + day.profit + day.interest + day.otherIncome
+      - day.expense - day.lending - day.savings;
+
+    const activeDays = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date));
+    const preRangeDays = fromDate ? activeDays.filter((d) => d.date < fromDate) : [];
+    const inRangeActiveDays = fromDate ? activeDays.filter((d) => d.date >= fromDate) : activeDays;
+    const priorNetMovement = preRangeDays.reduce((sum, d) => sum + dayNet(d), 0);
+    const inRangeNetMovement = inRangeActiveDays.reduce((sum, d) => sum + dayNet(d), 0);
+
+    const today = toInputDate();
+    const liveBalanceAnchored = !toDate || String(toDate) >= today;
+    const openingBalance = liveBalanceAnchored
+      ? currentInHandAmount - inRangeNetMovement
+      : priorNetMovement;
+
+    // Every calendar day in the selected range gets a row (even with all
+    // zeros), matching the template, which lists every day of the month —
+    // not just days with activity — so it can be tallied day by day.
+    const rangeStart = fromDate || activeDays[0]?.date || today;
+    const rangeEnd = toDate || today;
+    const dateRows = [];
+    if (rangeStart && rangeEnd && rangeStart <= rangeEnd) {
+      const cursor = new Date(`${rangeStart}T00:00:00`);
+      const endDate = new Date(`${rangeEnd}T00:00:00`);
+      let guard = 0;
+      while (cursor <= endDate && guard < 3660) {
+        dateRows.push(toInputDate(cursor));
+        cursor.setDate(cursor.getDate() + 1);
+        guard += 1;
+      }
+    }
+
+    let runningBalance = openingBalance;
+    const rows = dateRows.map((dateKey, index) => {
+      const day = dayMap.get(dateKey) || {
+        principal: 0, profit: 0, interest: 0, otherIncome: 0, expense: 0, lending: 0, savings: 0,
+      };
+      runningBalance += dayNet(day);
+      return {
+        sNo: index + 1,
+        date: dateKey,
+        principal: day.principal,
+        profit: day.profit,
+        interest: day.interest,
+        otherIncome: day.otherIncome,
+        expense: day.expense,
+        lending: day.lending,
+        savings: day.savings,
+        inHandAmount: runningBalance,
+        remarks: index === 0 ? 'TALLY' : '',
+      };
+    });
+
+    const monthMap = new Map();
+    rows.forEach((row) => {
+      const monthKey = row.date.slice(0, 7);
+      if (!monthMap.has(monthKey)) {
+        const meta = getMonthMeta(monthKey);
+        monthMap.set(monthKey, {
+          key: monthKey,
+          label: meta.label,
+          openingBalance: null,
+          closingBalance: null,
+          totalPrincipal: 0,
+          totalProfit: 0,
+          totalInterest: 0,
+          totalOtherIncome: 0,
+          totalExpense: 0,
+          totalLending: 0,
+          totalSavings: 0,
+          rows: [],
+        });
+      }
+      const month = monthMap.get(monthKey);
+      if (month.openingBalance === null) {
+        month.openingBalance = row.inHandAmount - row.principal - row.profit - row.interest
+          - row.otherIncome + row.expense + row.lending + row.savings;
+      }
+      month.totalPrincipal += row.principal;
+      month.totalProfit += row.profit;
+      month.totalInterest += row.interest;
+      month.totalOtherIncome += row.otherIncome;
+      month.totalExpense += row.expense;
+      month.totalLending += row.lending;
+      month.totalSavings += row.savings;
+      month.closingBalance = row.inHandAmount;
+      month.rows.push(row);
+    });
+
+    return {
+      liveBalanceAnchored,
+      openingBalance,
+      closingBalance: rows.length ? rows[rows.length - 1].inHandAmount : openingBalance,
+      balanceLabel: liveBalanceAnchored ? 'In Hand Amount' : 'Period In Hand Amount',
+      months: [...monthMap.values()],
+      rows,
+    };
+  }, [
+    paymentsUpToRange,
+    expensesUpToRange,
+    savingsUpToRange,
+    isOwner,
+    currentInHandAmount,
+    fromDate,
+    toDate,
+  ]);
+
+  const cashBookSections = useMemo(() => {
+    const summaryRows = cashBookStatement.months.map((month) => ({
+      month: month.label,
+      openingBalance: month.openingBalance,
+      totalPrincipal: month.totalPrincipal,
+      totalProfit: month.totalProfit,
+      totalInterest: month.totalInterest,
+      totalOtherIncome: month.totalOtherIncome,
+      totalExpense: month.totalExpense,
+      totalLending: month.totalLending,
+      totalSavings: month.totalSavings,
+      closingBalance: month.closingBalance,
+    }));
+
+    const dailyColumns = [
+      { key: 'sNo', label: 'S.No', type: 'number' },
+      { key: 'date', label: 'Date', type: 'date' },
+      { key: 'principal', label: 'Principal', type: 'currency' },
+      { key: 'profit', label: 'Profit', type: 'currency' },
+      { key: 'interest', label: 'Interest', type: 'currency' },
+      { key: 'otherIncome', label: 'Other Income', type: 'currency' },
+      { key: 'expense', label: 'Expense', type: 'currency' },
+      { key: 'lending', label: 'Lending Amount', type: 'currency' },
+      { key: 'savings', label: 'Savings', type: 'currency' },
+      { key: 'inHandAmount', label: cashBookStatement.balanceLabel, type: 'currency' },
+      { key: 'remarks', label: 'Remarks' },
+    ];
+
+    const monthSections = cashBookStatement.months.flatMap((month) => ([
+      {
+        title: `${month.label} Summary`,
+        metrics: [
+          { label: 'Opening Balance', value: month.openingBalance, type: 'currency' },
+          { label: 'Principal', value: month.totalPrincipal, type: 'currency' },
+          { label: 'Profit', value: month.totalProfit, type: 'currency' },
+          { label: 'Interest', value: month.totalInterest, type: 'currency' },
+          { label: 'Other Income', value: month.totalOtherIncome, type: 'currency' },
+          { label: 'Expense', value: month.totalExpense, type: 'currency' },
+          { label: 'Lending Amount', value: month.totalLending, type: 'currency' },
+          { label: 'Savings', value: month.totalSavings, type: 'currency' },
+          { label: 'Closing Balance', value: month.closingBalance, type: 'currency' },
+        ],
+      },
+      {
+        title: `${month.label} Cash Book`,
+        columns: dailyColumns,
+        rows: month.rows,
+      },
+    ]));
+
+    return [
+      {
+        title: 'Cash Book Summary',
+        metrics: [
+          { label: 'Opening Balance', value: cashBookStatement.openingBalance, type: 'currency' },
+          { label: 'Closing Balance', value: cashBookStatement.closingBalance, type: 'currency' },
+        ],
+      },
+      {
+        title: 'Monthly Summary',
+        columns: [
+          { key: 'month', label: 'Month' },
+          { key: 'openingBalance', label: 'Opening Balance', type: 'currency' },
+          { key: 'totalPrincipal', label: 'Principal', type: 'currency' },
+          { key: 'totalProfit', label: 'Profit', type: 'currency' },
+          { key: 'totalInterest', label: 'Interest', type: 'currency' },
+          { key: 'totalOtherIncome', label: 'Other Income', type: 'currency' },
+          { key: 'totalExpense', label: 'Expense', type: 'currency' },
+          { key: 'totalLending', label: 'Lending Amount', type: 'currency' },
+          { key: 'totalSavings', label: 'Savings', type: 'currency' },
+          { key: 'closingBalance', label: 'Closing Balance', type: 'currency' },
+        ],
+        rows: summaryRows,
+      },
+      ...monthSections,
+    ];
+  }, [cashBookStatement]);
 
   const overviewStatementSections = useMemo(() => {
     const summaryRows = overviewBankStatement.months.map((month) => ({
@@ -2349,6 +2599,21 @@ export default function Reports() {
       };
     }
 
+    if (view === 'cashbook') {
+      return {
+        fileBase: `crednivo-cash-book-${fromDate || 'all'}-${toDate || 'current'}`,
+        badge: 'Cash Book',
+        title: 'Daily Cash Book',
+        company: company?.name || 'CREDNIVO',
+        generated: formatDate(toInputDate()),
+        meta: reportMeta,
+        cashBook: true,
+        cashBookMonths: cashBookStatement.months,
+        cashBookBalanceLabel: cashBookStatement.balanceLabel,
+        sections: cashBookSections,
+      };
+    }
+
     const periodCycle = view === 'daily'
       ? 'Daily'
       : view === 'weekly'
@@ -2944,6 +3209,7 @@ export default function Reports() {
       <div className="reports-tabs-row">
         <div className="reports-view-tabs" role="tablist" aria-label="Report view">
           <button type="button" className={view === 'overview' ? 'active' : ''} onClick={() => selectReportView('overview')}><BarChart3 size={17} />Overview</button>
+          <button type="button" className={view === 'cashbook' ? 'active' : ''} onClick={() => selectReportView('cashbook')}><WalletCards size={17} />Cash Book</button>
           <button type="button" className={view === 'daily' ? 'active' : ''} onClick={() => selectReportView('daily')}><CalendarDays size={17} />Daily</button>
           <button type="button" className={view === 'weekly' ? 'active' : ''} onClick={() => selectReportView('weekly')}><CalendarDays size={17} />Weekly</button>
           <button type="button" className={view === 'monthly' ? 'active' : ''} onClick={() => selectReportView('monthly')}><ReceiptText size={17} />Monthly</button>
@@ -3428,7 +3694,83 @@ export default function Reports() {
         </section>
       )}
 
-      {view !== 'overview' && cyclePerformanceReport && (
+      {view === 'cashbook' && (
+        <section className="reports-cycle-performance-page" aria-label="Daily cash book">
+          <div className="reports-cycle-performance-head">
+            <div>
+              <h2>Daily Cash Book</h2>
+              <p>Principal, profit, interest (late fines), other income, expense, lending and savings — with a running in-hand balance carried forward day by day and month to month.</p>
+            </div>
+          </div>
+
+          {cashBookStatement.months.length === 0 && (
+            <div className="reports-cycle-pending-empty">No transactions found for the selected date range.</div>
+          )}
+
+          {cashBookStatement.months.map((month) => (
+            <div className="reports-overview-panel" key={month.key} style={{ marginTop: 16 }}>
+              <div className="reports-cycle-performance-head">
+                <div>
+                  <h3>{month.label}</h3>
+                  <p>
+                    Opening {formatCurrency(month.openingBalance)} · Closing {formatCurrency(month.closingBalance)}
+                  </p>
+                </div>
+              </div>
+              <div className="reports-activity-detail-table-wrap">
+                <table className="reports-activity-detail-table">
+                  <thead>
+                    <tr>
+                      <th>S.No</th>
+                      <th>Date</th>
+                      <th>Principal</th>
+                      <th>Profit</th>
+                      <th>Interest</th>
+                      <th>Other Income</th>
+                      <th>Expense</th>
+                      <th>Lending Amount</th>
+                      <th>Savings</th>
+                      <th>{cashBookStatement.balanceLabel}</th>
+                      <th>Remarks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {month.rows.map((row) => (
+                      <tr key={row.date}>
+                        <td>{row.sNo}</td>
+                        <td>{formatDate(row.date)}</td>
+                        <td>{row.principal ? formatCurrency(row.principal) : '—'}</td>
+                        <td>{row.profit ? formatCurrency(row.profit) : '—'}</td>
+                        <td>{row.interest ? formatCurrency(row.interest) : '—'}</td>
+                        <td>{row.otherIncome ? formatCurrency(row.otherIncome) : '—'}</td>
+                        <td>{row.expense ? formatCurrency(row.expense) : '—'}</td>
+                        <td>{row.lending ? formatCurrency(row.lending) : '—'}</td>
+                        <td>{row.savings ? formatCurrency(row.savings) : '—'}</td>
+                        <td>{formatCurrency(row.inHandAmount)}</td>
+                        <td>{row.remarks || '—'}</td>
+                      </tr>
+                    ))}
+                    <tr className="reports-activity-detail-total-row">
+                      <td colSpan={2}>TOTAL</td>
+                      <td>{formatCurrency(month.totalPrincipal)}</td>
+                      <td>{formatCurrency(month.totalProfit)}</td>
+                      <td>{formatCurrency(month.totalInterest)}</td>
+                      <td>{formatCurrency(month.totalOtherIncome)}</td>
+                      <td>{formatCurrency(month.totalExpense)}</td>
+                      <td>{formatCurrency(month.totalLending)}</td>
+                      <td>{formatCurrency(month.totalSavings)}</td>
+                      <td>{formatCurrency(month.closingBalance)}</td>
+                      <td>—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {view !== 'overview' && view !== 'cashbook' && cyclePerformanceReport && (
         <section className="reports-cycle-performance-page" aria-label={`${cyclePerformanceReport.cycle} report`}>
           <div className="reports-cycle-performance-head">
             <div>

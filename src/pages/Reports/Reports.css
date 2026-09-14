@@ -2680,6 +2680,20 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
   border-bottom:0;
 }
 
+.reports-overview-panel{
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:var(--radius-md, 14px);
+  background:var(--surface);
+}
+
+.reports-activity-detail-total-row td{
+  font-weight:800;
+  color:var(--ink-950);
+  background:var(--surface-soft);
+  border-top:1px solid var(--line);
+}
+
 .reports-activity-detail-mobile{
   display:none;
 }
