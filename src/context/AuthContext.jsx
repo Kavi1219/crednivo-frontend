@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { apiRequest, clearAuthToken, getAuthToken, mediaUrl, setAuthToken, uploadCompanyLogo } from '../services/api';
 import { getActiveAccountId, listAccounts, removeAccount, saveAccount, switchToAccount } from '../services/accounts';
 
@@ -94,10 +96,22 @@ export function AuthProvider({ children }) {
       if (document.visibilityState === 'visible') refreshCurrentUser();
     }, 30000);
 
+    // In the Android app, the WebView pauses JS timers and web visibility
+    // events while backgrounded, so the interval/focus listeners above
+    // don't reliably fire on resume. Hook into Capacitor's native resume
+    // event directly, same pattern as NativeAppLock.jsx.
+    let nativeListenerHandle;
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) refreshCurrentUser();
+      }).then((handle) => { nativeListenerHandle = handle; });
+    }
+
     return () => {
       window.removeEventListener('focus', refreshCurrentUser);
       document.removeEventListener('visibilitychange', onVisibility);
       window.clearInterval(pollId);
+      nativeListenerHandle?.remove();
     };
   }, []);
 
