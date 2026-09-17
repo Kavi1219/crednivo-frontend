@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "16410699638",
+    "project_id": "crednivo",
+    "storage_bucket": "crednivo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:16410699638:android:752c6b6860cb1b51b13c57",
+        "android_client_info": {
+          "package_name": "com.crednivo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBORwAT9gTUMmmIfqRQP_Y65xkV33zOdds"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

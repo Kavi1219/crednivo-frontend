@@ -6,7 +6,8 @@ import './DownloadApp.css';
 // Update this list each time a new APK is published to /public/downloads.
 // Newest entry first; mark exactly one as latest: true.
 const APK_VERSIONS = [
-  { version: '1.0.2', file: 'Crednivo-v1.0.2.apk', size: '23.2 MB', latest: true },
+  { version: '1.0.3', file: 'Crednivo-v1.0.3.apk', size: '46.2 MB', latest: true },
+  { version: '1.0.2', file: 'Crednivo-v1.0.2.apk', size: '23.2 MB' },
   { version: '1.0.1', file: 'Crednivo-v1.0.1.apk', size: '11.8 MB' },
   { version: '1.0.0', file: 'Crednivo-v1.0.0.apk', size: '7.8 MB' },
 ];

@@ -12,6 +12,7 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/push-notifications": "^8.0.0",
     "docx": "^9.7.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
