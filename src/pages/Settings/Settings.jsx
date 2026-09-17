@@ -5,6 +5,7 @@ import ChangePasswordModal from '../../components/layout/ChangePasswordModal';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { isNativeCrednivoApp, readPinRecord, savePinRecord, deletePinRecord } from '../../services/nativeAppLock';
+import { isPushSupported, getPushPermission, getCurrentSubscription, enableWebPush, disableWebPush } from '../../services/push';
 import './Settings.css';
 
 const themeOptions = [
@@ -21,6 +22,7 @@ const languageOptions = [
 const baseCategories = [
   { id: 'appearance', label: 'Appearance' },
   { id: 'account', label: 'Account' },
+  { id: 'security', label: 'Security' },
 ];
 
 export default function Settings() {
@@ -34,6 +36,12 @@ export default function Settings() {
   const [lockBusy, setLockBusy] = useState(false);
   const lockEnabled = lockRecord ? lockRecord.lockEnabled !== false : true;
 
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState('');
+  const pushSupported = !native && isPushSupported();
+  const pushDenied = pushSupported && getPushPermission() === 'denied';
+
   useEffect(() => {
     if (!native) return undefined;
     let cancelled = false;
@@ -41,7 +49,14 @@ export default function Settings() {
     return () => { cancelled = true; };
   }, [native, user]);
 
-  const categories = native ? [...baseCategories, { id: 'security', label: 'Security' }] : baseCategories;
+  useEffect(() => {
+    if (!pushSupported) return undefined;
+    let cancelled = false;
+    getCurrentSubscription().then((sub) => { if (!cancelled) setPushSubscribed(Boolean(sub)); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [pushSupported]);
+
+  const categories = baseCategories;
 
   const toggleLock = async () => {
     setLockBusy(true);
@@ -65,6 +80,24 @@ export default function Settings() {
       window.dispatchEvent(new Event('crednivo-lock-settings-changed'));
     } finally {
       setLockBusy(false);
+    }
+  };
+
+  const toggleWebPush = async () => {
+    setPushBusy(true);
+    setPushError('');
+    try {
+      if (pushSubscribed) {
+        await disableWebPush();
+        setPushSubscribed(false);
+      } else {
+        await enableWebPush();
+        setPushSubscribed(true);
+      }
+    } catch (err) {
+      setPushError(err?.message || 'Could not update browser notifications.');
+    } finally {
+      setPushBusy(false);
     }
   };
 
@@ -167,37 +200,77 @@ export default function Settings() {
             <>
               <h2 className="settings-content-title">Security</h2>
 
-              <div className="settings-row">
-                <div className="settings-row-copy">
-                  <strong>App PIN & Fingerprint Lock</strong>
-                  <span>{lockEnabled
-                    ? 'Unlock with your PIN or fingerprint each time you open the app'
-                    : "Off — the app opens straight in once you're signed in"}</span>
+              {native && (
+                <div className="settings-row">
+                  <div className="settings-row-copy">
+                    <strong>App PIN & Fingerprint Lock</strong>
+                    <span>{lockEnabled
+                      ? 'Unlock with your PIN or fingerprint each time you open the app'
+                      : "Off — the app opens straight in once you're signed in"}</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={lockEnabled}
+                    aria-label="App PIN and fingerprint lock"
+                    className={`settings-switch ${lockEnabled ? 'on' : ''}`}
+                    onClick={toggleLock}
+                    disabled={lockBusy}
+                  >
+                    <span className="settings-switch-thumb" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={lockEnabled}
-                  aria-label="App PIN and fingerprint lock"
-                  className={`settings-switch ${lockEnabled ? 'on' : ''}`}
-                  onClick={toggleLock}
-                  disabled={lockBusy}
-                >
-                  <span className="settings-switch-thumb" />
-                </button>
-              </div>
+              )}
 
-              <div className="settings-note">
-                <ShieldCheck size={16} aria-hidden="true" />
-                <div>
-                  <strong>Your account stays signed in</strong>
-                  <span>
-                    Turning this on keeps a quick local PIN or fingerprint check between you and the app instead of
-                    asking for your account password every time — the same way most banking apps work. Your account
-                    password is only needed again for a brand new device or a fresh install.
-                  </span>
+              {native && (
+                <div className="settings-note">
+                  <ShieldCheck size={16} aria-hidden="true" />
+                  <div>
+                    <strong>Your account stays signed in</strong>
+                    <span>
+                      Turning this on keeps a quick local PIN or fingerprint check between you and the app instead of
+                      asking for your account password every time — the same way most banking apps work. Your account
+                      password is only needed again for a brand new device or a fresh install.
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {pushSupported && (
+                <div className="settings-row">
+                  <div className="settings-row-copy">
+                    <strong>Browser Notifications</strong>
+                    <span>{pushDenied
+                      ? 'Blocked in your browser settings — allow notifications for this site to turn it on here'
+                      : pushSubscribed
+                        ? "You'll get a popup here even when this tab isn't active"
+                        : 'Get a real browser popup for new work and updates'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={pushSubscribed}
+                    aria-label="Browser notifications"
+                    className={`settings-switch ${pushSubscribed ? 'on' : ''}`}
+                    onClick={toggleWebPush}
+                    disabled={pushBusy || pushDenied}
+                  >
+                    <span className="settings-switch-thumb" />
+                  </button>
+                </div>
+              )}
+
+              {!pushSupported && !native && (
+                <div className="settings-note">
+                  <ShieldCheck size={16} aria-hidden="true" />
+                  <div>
+                    <strong>Browser Notifications</strong>
+                    <span>Not supported in this browser.</span>
+                  </div>
+                </div>
+              )}
+
+              {pushError && <div className="settings-note"><ShieldCheck size={16} aria-hidden="true" /><div><strong>Couldn't update that</strong><span>{pushError}</span></div></div>}
             </>
           )}
         </div>
