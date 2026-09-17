@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Login, { AuthLoading } from '../pages/Auth/Login';
 import RegisterCompany from '../pages/Auth/RegisterCompany';
 import RegisterAgent from '../pages/Auth/RegisterAgent';
+import DownloadApp from '../pages/DownloadApp/DownloadApp';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import TodayReport from '../pages/TodayReport/TodayReport';
 import Customers from '../pages/Customers/Customers';
@@ -43,6 +44,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/download" element={<DownloadApp />} />
       <Route path="/register/company" element={<RegisterCompany />} />
       <Route path="/register/agent" element={<RegisterAgent />} />
       <Route path="/setup-owner" element={<Navigate to="/register/company" replace />} />
