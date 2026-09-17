@@ -86,6 +86,7 @@ export async function createPinRecord(pin, { biometricEnabled = false } = {}) {
     salt,
     pinHash: await digest(`${salt}:${pin}`),
     biometricEnabled: Boolean(biometricEnabled),
+    lockEnabled: true,
     updatedAt: new Date().toISOString(),
   };
 }

@@ -147,7 +147,14 @@ export default function NativeAppLock() {
     if (!mountedRef.current) return;
     setRecord(saved);
 
-    if (!saved) {
+    if (saved && saved.lockEnabled === false) {
+      // User turned the App Lock off in Settings, or skipped setup earlier.
+      setPhase('unlocked');
+      setBusy(false);
+      return;
+    }
+
+    if (!saved || !saved.pinHash) {
       setPhase('setup-pin');
       setBusy(false);
       return;
@@ -191,6 +198,12 @@ export default function NativeAppLock() {
       if (user && awayFor >= BACKGROUND_LOCK_MS) beginLock();
     }).then((listener) => { handle = listener; });
     return () => handle?.remove();
+  }, [beginLock, native, user]);
+
+  useEffect(() => {
+    if (!native || !user) return undefined;
+    window.addEventListener('crednivo-lock-settings-changed', beginLock);
+    return () => window.removeEventListener('crednivo-lock-settings-changed', beginLock);
   }, [beginLock, native, user]);
 
   useEffect(() => {
@@ -263,6 +276,28 @@ export default function NativeAppLock() {
       setBusy(false);
     }
   }, [holderName, unlock, user]);
+
+  const skipSetup = useCallback(async () => {
+    setBusy(true);
+    setError('');
+    try {
+      const minimalRecord = {
+        version: 1,
+        salt: '',
+        pinHash: '',
+        biometricEnabled: false,
+        lockEnabled: false,
+        updatedAt: new Date().toISOString(),
+      };
+      await savePinRecord(user, minimalRecord);
+      setRecord(minimalRecord);
+      setPhase('unlocked');
+    } catch (err) {
+      setError(err?.message || 'Could not skip setup right now.');
+    } finally {
+      setBusy(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (phase === 'setup-pin' && pin.length === 4) {
@@ -445,6 +480,11 @@ export default function NativeAppLock() {
                 {phase === 'pin' && (
                   <button type="button" className="native-lock-forgot" onClick={sendForgotPinOtp} disabled={busy}>
                     Forgot PIN?
+                  </button>
+                )}
+                {phase === 'setup-pin' && (
+                  <button type="button" className="native-lock-forgot" onClick={skipSetup} disabled={busy}>
+                    Skip for now
                   </button>
                 )}
               </div>
