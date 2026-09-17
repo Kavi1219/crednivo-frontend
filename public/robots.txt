@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /download
+Disallow: /overview
+Disallow: /customers
+Disallow: /loans
+Disallow: /collection
+Disallow: /payments
+Disallow: /capital
+Disallow: /savings
+Disallow: /expenses
+Disallow: /reports
+Disallow: /agents
+Disallow: /settings
+Disallow: /register/
+
+Sitemap: https://crednivo.in/sitemap.xml
