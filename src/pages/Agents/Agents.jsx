@@ -1,11 +1,12 @@
 import {
-  Camera, CheckCircle2, Clock3, Edit3, Search, ShieldCheck, SlidersHorizontal, Trash2,
+  Camera, CheckCircle2, ClipboardList, Clock3, Edit3, Search, ShieldCheck, SlidersHorizontal, Trash2,
   UserCheck, UserPlus, UserX, UsersRound, WalletCards, X
 } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import CreateWorkModal from '../../components/work/CreateWorkModal';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { formatCurrency, formatIndianMobile } from '../../utils/finance';
 import './Agents.css';
@@ -55,6 +56,7 @@ export default function Agents() {
   const [permissionDraft, setPermissionDraft] = useState({});
   const [permissionBusy, setPermissionBusy] = useState(false);
   const [permissionError, setPermissionError] = useState('');
+  const [workModalOpen, setWorkModalOpen] = useState(false);
 
   const filtered = useMemo(() => agents.filter((a) => `${a.id} ${a.name} ${a.mobile} ${a.branch} ${a.status}`.toLowerCase().includes(search.toLowerCase().trim())), [agents, search]);
 
@@ -193,7 +195,10 @@ export default function Agents() {
 
   return (
     <div className="module-page agents-page">
-      <ModuleHeader eyebrow="Team Management" title="Agents" description="Manage field agents, approval status, profile details and collection access." actions={<ActionButton icon={UserPlus} onClick={openCreate}>Invite Agent</ActionButton>} />
+      <ModuleHeader eyebrow="Team Management" title="Agents" description="Manage field agents, approval status, profile details and collection access." actions={<>
+        <ActionButton tone="secondary" icon={ClipboardList} onClick={() => setWorkModalOpen(true)}>Create Work</ActionButton>
+        <ActionButton icon={UserPlus} onClick={openCreate}>Invite Agent</ActionButton>
+      </>} />
 
       <section className="metric-strip">
         <article className="mini-metric module-card"><span className="mini-metric-icon"><UsersRound size={20} /></span><div><span>Total Agents</span><strong>{agents.length}</strong></div></article>
@@ -266,6 +271,8 @@ export default function Agents() {
       </div>}
 
       {deleting && <div className="agent-modal-backdrop"><section className="agent-delete-dialog app-card" role="dialog" aria-modal="true"><span className="agent-delete-icon"><Trash2 size={22} /></span><h2>Delete Agent?</h2><p>{deleting.name} · {deleting.id}</p><small>This removes the agent record from CREDNIVO.</small><div><ActionButton tone="secondary" onClick={() => setDeleting(null)}>Cancel</ActionButton><ActionButton tone="danger" icon={Trash2} onClick={remove} disabled={busy}>{busy ? 'Deleting...' : 'Delete Agent'}</ActionButton></div></section></div>}
+
+      {workModalOpen && <CreateWorkModal agents={agents} onClose={() => setWorkModalOpen(false)} onCreated={() => {}} />}
     </div>
   );
 }

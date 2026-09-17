@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ChevronDown, Menu, Search, Sparkles } from 'lucide-react';
+import { listNotifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } from '../../services/work';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -73,6 +74,89 @@ function ProfileDetails({ company, user, isOwner, accounts, activeAccountId, onE
   );
 }
 
+function NotificationBell() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const refreshUnread = async () => {
+      try {
+        const result = await unreadNotificationCount();
+        setUnread(Number(result?.count) || 0);
+      } catch { /* non-critical, quietly retry next interval */ }
+    };
+    refreshUnread();
+    const timer = window.setInterval(refreshUnread, 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onOutside = (event) => { if (!ref.current?.contains(event.target)) setOpen(false); };
+    document.addEventListener('pointerdown', onOutside);
+    return () => document.removeEventListener('pointerdown', onOutside);
+  }, [open]);
+
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      setLoading(true);
+      try {
+        const list = await listNotifications();
+        setItems(Array.isArray(list) ? list : []);
+      } catch { /* keep whatever was last shown */ }
+      finally { setLoading(false); }
+    }
+  };
+
+  const markAll = async (event) => {
+    event.stopPropagation();
+    try { await markAllNotificationsRead(); } catch { return; }
+    setItems((current) => current.map((n) => ({ ...n, read: true })));
+    setUnread(0);
+  };
+
+  const openItem = async (item) => {
+    if (!item.read) {
+      try { await markNotificationRead(item.id); } catch { /* still navigate even if this fails */ }
+      setItems((current) => current.map((n) => (n.id === item.id ? { ...n, read: true } : n)));
+      setUnread((current) => Math.max(0, current - 1));
+    }
+    setOpen(false);
+    if (item.workAssignmentId) navigate('/work');
+  };
+
+  return (
+    <div className="notification-wrap" ref={ref}>
+      <IconButton label="Notifications" className="header-icon-btn" onClick={toggle}><Bell size={19} /></IconButton>
+      {unread > 0 && <span className="notification-count">{unread > 9 ? '9+' : unread}</span>}
+      {open && (
+        <div className="notification-dropdown app-card" role="dialog" aria-label="Notifications">
+          <div className="notification-dropdown-head">
+            <strong>Notifications</strong>
+            {unread > 0 && <button type="button" onClick={markAll}>Mark all read</button>}
+          </div>
+          <div className="notification-dropdown-list">
+            {loading && <p className="notification-empty">Loading...</p>}
+            {!loading && items.length === 0 && <p className="notification-empty">No notifications yet.</p>}
+            {!loading && items.map((item) => (
+              <button type="button" key={item.id} className={`notification-item ${item.read ? '' : 'unread'}`} onClick={() => openItem(item)}>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Header({ onOpenMenu }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -136,7 +220,7 @@ export default function Header({ onOpenMenu }) {
 
       <div className="header-actions">
         <form className="search-box" onSubmit={submitSearch}><Search size={17} /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search customers, loans..." aria-label="Search customers and loans" /><Search size={17} className="search-end" /></form>
-        <div className="notification-wrap"><IconButton label="Notifications" className="header-icon-btn"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
+        <NotificationBell />
         <div className="profile-menu-wrap" ref={desktopProfileRef}>
           <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <img src={avatar} alt="" /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
           {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} accounts={accounts} activeAccountId={activeAccountId} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} onSwitchAccount={handleSwitchAccount} onAddAccount={addAccount} onSessions={openSessions} />}
@@ -145,7 +229,7 @@ export default function Header({ onOpenMenu }) {
 
       <div className="mobile-header-actions">
         <IconButton label="Search" onClick={()=>navigate('/customers')}><Search size={19} /></IconButton>
-        <div className="notification-wrap"><IconButton label="Notifications"><Bell size={19} /></IconButton><span className="notification-count">5</span></div>
+        <NotificationBell />
         <div className="mobile-profile-menu-wrap" ref={mobileProfileRef}>
           <button className="mobile-avatar" aria-label="Signed-in profile" aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{avatar ? <img src={avatar} alt="" /> : profileInitial}</button>
           {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} accounts={accounts} activeAccountId={activeAccountId} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} onSwitchAccount={handleSwitchAccount} onAddAccount={addAccount} onSessions={openSessions} />}

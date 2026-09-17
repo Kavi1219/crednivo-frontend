@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  BarChart3, CircleDollarSign, Gauge,
+  BarChart3, CircleDollarSign, ClipboardList, Gauge,
   HandCoins, Landmark, PiggyBank, ReceiptText, Settings, Users, UserRound, WalletCards
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -10,6 +10,7 @@ import './Sidebar.css';
 
 const simpleItems = [
   { label: 'Collection', path: '/collection', icon: HandCoins, permission: 'collections.view' },
+  { label: 'Work', path: '/work', icon: ClipboardList, always: true },
   { label: 'Payments', path: '/payments', icon: WalletCards, permission: 'payments.view' },
   { label: 'Capital', path: '/capital', icon: Landmark, permission: 'capital.view' },
   { label: 'Savings', path: '/savings', icon: PiggyBank, ownerOnly: true },

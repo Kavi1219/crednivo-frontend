@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { BarChart3, CircleDollarSign, Landmark, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
+import { BarChart3, CircleDollarSign, ClipboardList, Landmark, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import CrednivoMark from '../brand/CrednivoMark';
 import './MobileDrawer.css';
@@ -7,6 +7,7 @@ import './MobileDrawer.css';
 const items = [
   ['Customers', '/customers', Users, 'customers.view'],
   ['Loans', '/loans', CircleDollarSign, 'loans.view'],
+  ['Work', '/work', ClipboardList, null, false, true],
   ['Payments', '/payments', WalletCards, 'payments.view'],
   ['Expenses', '/expenses', ReceiptText, 'expenses.view'],
   ['Capital', '/capital', Landmark, 'capital.view'],

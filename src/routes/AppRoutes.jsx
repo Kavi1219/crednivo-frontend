@@ -22,6 +22,7 @@ import Expenses from '../pages/Expenses/Expenses';
 import Reports from '../pages/Reports/Reports';
 import Agents from '../pages/Agents/Agents';
 import Settings from '../pages/Settings/Settings';
+import Work from '../pages/Work/Work';
 
 function ProtectedWorkspace() {
   const { loading, user, status } = useAuth();
@@ -76,6 +77,8 @@ export default function AppRoutes() {
         <Route element={<OwnerOnly />}><Route path="/agents" element={<Agents />} /></Route>
         {/* Personal Settings are intentionally available to both Owner and Agent. */}
         <Route path="/settings" element={<Settings />} />
+        {/* Work is available to both roles too — owners assign it, agents act on it. */}
+        <Route path="/work" element={<Work />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
