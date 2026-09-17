@@ -17,7 +17,7 @@ export default function OwnerSetup() {
   const [error, setError] = useState('');
 
   if (loading) return <AuthLoading />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/overview" replace />;
   if (!status?.ownerSetupRequired) return <Navigate to="/login" replace />;
 
   const change = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
@@ -35,7 +35,7 @@ export default function OwnerSetup() {
     try {
       setBusy(true);
       await setupOwner({ username: form.username.trim(), mobile: digits, password: form.password });
-      navigate('/', { replace: true });
+      navigate('/overview', { replace: true });
     } catch (err) {
       setError(err?.message || 'Could not create owner login.');
     } finally {

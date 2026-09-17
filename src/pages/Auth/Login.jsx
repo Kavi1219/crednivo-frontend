@@ -88,7 +88,7 @@ export default function Login() {
   }, [showCreate]);
 
   if (loading) return <AuthLoading />;
-  if (user && !addMode) return <Navigate to="/" replace />;
+  if (user && !addMode) return <Navigate to="/overview" replace />;
 
   const submit = async (event) => {
     if (actionLocksRef.current.has('submit')) return;
@@ -129,7 +129,7 @@ export default function Login() {
         localStorage.removeItem(LOGIN_PREF_KEY);
       }
 
-      navigate('/', { replace: true });
+      navigate('/overview', { replace: true });
     } catch (err) {
       setError(err?.message || 'Unable to login.');
     } finally {
@@ -194,7 +194,7 @@ export default function Login() {
         remember,
       });
       setSecurityFlow(null);
-      navigate('/', { replace: true });
+      navigate('/overview', { replace: true });
     } catch (err) {
       setSecurityError(err?.message || 'OTP login failed.');
     } finally {
@@ -404,7 +404,7 @@ export default function Login() {
             <div className="auth-add-account-banner">
               <UsersRound size={16} />
               <span>Adding another company account &mdash; you'll stay signed in to your current one too.</span>
-              <button type="button" onClick={() => navigate('/', { replace: true })}>Cancel</button>
+              <button type="button" onClick={() => navigate('/overview', { replace: true })}>Cancel</button>
             </div>
           )}
           <div className="auth-role-tabs auth-role-tabs-clean" role="tablist" aria-label="Login type">

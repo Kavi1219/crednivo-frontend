@@ -6,6 +6,7 @@ import Login, { AuthLoading } from '../pages/Auth/Login';
 import RegisterCompany from '../pages/Auth/RegisterCompany';
 import RegisterAgent from '../pages/Auth/RegisterAgent';
 import DownloadApp from '../pages/DownloadApp/DownloadApp';
+import LandingPage from '../pages/Landing/LandingPage';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import TodayReport from '../pages/TodayReport/TodayReport';
 import Customers from '../pages/Customers/Customers';
@@ -43,14 +44,15 @@ function PermissionOnly({ permission }) {
 export default function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/accounts" element={<Login />} />
       <Route path="/download" element={<DownloadApp />} />
       <Route path="/register/company" element={<RegisterCompany />} />
       <Route path="/register/agent" element={<RegisterAgent />} />
       <Route path="/setup-owner" element={<Navigate to="/register/company" replace />} />
       <Route element={<ProtectedWorkspace />}>
         <Route element={<PermissionOnly permission="overview.view" />}>
-          <Route path="/" element={<Dashboard />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
         </Route>

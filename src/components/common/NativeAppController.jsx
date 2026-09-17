@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './NativeAppController.css';
 
-const ROOT_PATHS = new Set(['/', '/overview', '/login']);
+const ROOT_PATHS = new Set(['/', '/overview', '/login', '/accounts', '/download']);
 
 function fallbackRoute(pathname) {
   const path = String(pathname || '/');

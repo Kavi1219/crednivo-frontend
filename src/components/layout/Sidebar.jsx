@@ -30,13 +30,13 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar desktop-sidebar">
-      <button className="brand" onClick={() => navigate('/')} aria-label="CREDNIVO Overview">
+      <button className="brand" onClick={() => navigate('/overview')} aria-label="CREDNIVO Overview">
         <span className="brand-mark"><CrednivoMark size={48} /></span>
         <span className="brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span>
       </button>
 
       <nav className="side-nav" aria-label="Main navigation">
-        {hasPermission('overview.view') && <NavLink className={({isActive}) => `side-link ${isActive ? 'active' : ''}`} to="/" end>
+        {hasPermission('overview.view') && <NavLink className={({isActive}) => `side-link ${isActive ? 'active' : ''}`} to="/overview" end>
           <NavIcon label="Overview"><Gauge size={20} /></NavIcon><span>Overview</span>
         </NavLink>}
 

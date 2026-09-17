@@ -53,7 +53,7 @@ export default function RegisterAgent() {
   }, [loading, status?.companyName, status?.branch]);
 
   if (loading) return <AuthLoading />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/overview" replace />;
 
   const change = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
   const changeCompany = (event) => {

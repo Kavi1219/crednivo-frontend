@@ -39,7 +39,7 @@ export default function RegisterCompany() {
   const ownerMobile = String(form.ownerMobile || '').replace(/\D/g, '');
 
   if (loading) return <AuthLoading />;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/overview" replace />;
 
   const change = (key) => (event) => {
     const value = event.target.value;
@@ -126,7 +126,7 @@ export default function RegisterCompany() {
         password: form.password,
         logoFile: form.logoFile,
       });
-      navigate('/', { replace: true });
+      navigate('/overview', { replace: true });
     } catch (err) {
       setError(err?.message || 'Could not register company.');
     } finally {

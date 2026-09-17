@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import './MobileBottomNav.css';
 
 const navItems = [
-  { label: 'Home', to: '/', icon: Home, permission: 'overview.view' },
+  { label: 'Home', to: '/overview', icon: Home, permission: 'overview.view' },
   { label: 'Expenses', to: '/expenses', icon: ReceiptText, permission: 'expenses.view' },
   { label: 'New Customer', to: '/customers/new', icon: UserPlus, primary: true, permission: 'customers.add' },
   { label: 'Collections', to: '/collection', icon: HandCoins, permission: 'collections.view' },
