@@ -8,6 +8,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
+import { calculateLoanPendingFine } from '../../utils/fineCalculator';
 import './CustomerDetails.css';
 
 function documentSource(document) {
@@ -1163,6 +1164,11 @@ export default function CustomerDetails() {
           const realized = realizedLoanFigures(loan);
           const loanClosed = isClosedLoan(loan);
           const loanScheduleCount = scheduleRowsForLoan(loan.id).length;
+          const loanPendingFine = loanClosed ? 0 : calculateLoanPendingFine(
+            loan,
+            scheduleRowsForLoan(loan.id),
+            (payments || []).filter((p) => p.loanId === loan.id),
+          );
           return <article className="customer-loan-mobile-card" key={loan.id}>
           <div className="customer-loan-mobile-head">
             <div><span>Loan ID</span><strong>{loan.id}</strong></div>
@@ -1220,6 +1226,7 @@ export default function CustomerDetails() {
             <div><span>{loan.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{loan.interestRate}% · {formatCurrency(loan.interestAmount ?? (loan.principal * (Number(loan.interestRate) || 0) / 100))}</strong></div>
             <div><span>Interest Taken</span><strong>{loan.interestUpfront?'Yes':'No'}</strong></div>
             <div><span>Fine</span><strong>{loan.fineEnabled ? formatCurrency(loan.fineAmount) : 'No'}</strong></div>
+            {loanPendingFine > 0 && <div className="loan-fine-pending-item"><span>Fine Pending</span><strong>{formatCurrency(loanPendingFine)}</strong></div>}
             <div><span>Document Charges</span><strong>{loan.documentChargeEnabled ? formatCurrency(loan.documentChargeAmount) : 'No'}</strong></div>
             <div><span>Disbursed</span><strong>{formatDate(loan.startDate)}</strong></div>
             <div><span>Duration</span><strong>{loan.duration} {loan.cycle==='Daily'?'days':loan.cycle==='Weekly'?'weeks':'months'}{loan.extensionCycles > 0 ? ` · +${loan.extensionCycles} extended` : ''}</strong></div>

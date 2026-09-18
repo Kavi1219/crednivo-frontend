@@ -3728,6 +3728,11 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
   color:#c77816;
 }
 
+.reports-risk-filter button.active.pending{
+  background:#f3ecff;
+  color:#7c4fd6;
+}
+
 .reports-cycle-pending-table-wrap{
   overflow-x:auto;
 }
@@ -3793,6 +3798,11 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
 .reports-risk-badge.fine-paid{
   background:#fff4e5;
   color:#c77816;
+}
+
+.reports-risk-badge.pending{
+  background:#f3ecff;
+  color:#7c4fd6;
 }
 
 .reports-cycle-pending-mobile{

@@ -1233,6 +1233,13 @@
 .loan-current-projection-item strong{
   color:var(--blue-600) !important;
 }
+.loan-fine-pending-item{
+  border-color:rgba(235,53,82,.22) !important;
+  background:rgba(235,53,82,.05);
+}
+.loan-fine-pending-item strong{
+  color:var(--danger) !important;
+}
 
 @media(max-width:767px){
   .io-principal-reprice-preview{

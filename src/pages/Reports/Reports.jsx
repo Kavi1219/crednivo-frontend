@@ -1682,7 +1682,7 @@ export default function Reports() {
 
     const pendingCustomers = [...pendingByCustomer.values()]
       .map((row) => {
-        const finePaid = finePayments.some((payment) => {
+        const matchingFinePayments = finePayments.filter((payment) => {
           const linkedLoan = linkedLoanFor(payment);
           const paymentCustomerId = String(payment.customerId || linkedLoan.customerId || '');
           const paymentLoanId = String(payment.loanId || linkedLoan.loanId || linkedLoan.id || '');
@@ -1698,11 +1698,15 @@ export default function Reports() {
 
           return (customerMatches || loanMatches) && relatesToPendingPeriod;
         });
+        const finesPaidCount = matchingFinePayments.length;
+        const finePaid = finesPaidCount > 0;
 
-        // Same rule as Daily / Weekly / Monthly:
-        // 3+ pending dues are always Risky, even if fine was paid.
+        // 3+ pending dues: Pending if the customer has kept paying fines
+        // (2+ paid) despite falling behind; Risky if they haven't been
+        // paying fines at all. Fewer than 3 dues: Fine Paid if any fine
+        // was paid, else Normal.
         const category = row.pendingDueCount >= 3
-          ? 'risky'
+          ? (finesPaidCount >= 2 ? 'pending' : 'risky')
           : finePaid
             ? 'fine-paid'
             : 'normal';
@@ -1712,12 +1716,15 @@ export default function Reports() {
           loanIds: [...row.loanIds],
           cycles: [...row.cycles],
           finePaid,
+          finesPaidCount,
           category,
           categoryLabel: category === 'risky'
             ? 'Risky'
-            : category === 'fine-paid'
-              ? 'Fine Paid'
-              : 'Normal',
+            : category === 'pending'
+              ? 'Pending'
+              : category === 'fine-paid'
+                ? 'Fine Paid'
+                : 'Normal',
         };
       })
       .sort((a, b) => {
@@ -1737,6 +1744,7 @@ export default function Reports() {
       normalCustomers: pendingCustomers.filter((row) => row.category === 'normal'),
       riskyCustomers: pendingCustomers.filter((row) => row.category === 'risky'),
       finePaidCustomers: pendingCustomers.filter((row) => row.category === 'fine-paid'),
+      pendingTierCustomers: pendingCustomers.filter((row) => row.category === 'pending'),
     };
   }, [
     loans,
@@ -1750,6 +1758,7 @@ export default function Reports() {
 
   const filteredOverviewPendingCustomers = useMemo(() => {
     if (overviewPendingRiskFilter === 'risky') return overviewPerformanceReport.riskyCustomers;
+    if (overviewPendingRiskFilter === 'pending') return overviewPerformanceReport.pendingTierCustomers;
     if (overviewPendingRiskFilter === 'fine-paid') return overviewPerformanceReport.finePaidCustomers;
     return overviewPerformanceReport.normalCustomers;
   }, [overviewPerformanceReport, overviewPendingRiskFilter]);
@@ -1938,7 +1947,7 @@ export default function Reports() {
 
     const pendingCustomers = [...pendingByCustomer.values()]
       .map((row) => {
-        const finePaid = finePayments.some((payment) => {
+        const matchingFinePayments = finePayments.filter((payment) => {
           const linkedLoan = linkedLoanFor(payment);
           const paymentCustomerId = String(payment.customerId || linkedLoan.customerId || '');
           const paymentLoanId = String(payment.loanId || linkedLoan.loanId || linkedLoan.id || '');
@@ -1954,13 +1963,15 @@ export default function Reports() {
 
           return (customerMatches || loanMatches) && relatesToPendingPeriod;
         });
+        const finesPaidCount = matchingFinePayments.length;
+        const finePaid = finesPaidCount > 0;
 
-        // Risk rule:
-        // 3 or more overdue/pending dues are always Risky,
-        // even when the customer has already paid a fine.
-        // Fine Paid is used only for 1-2 pending dues where a fine was paid.
+        // 3+ pending dues: Pending if the customer has kept paying fines
+        // (2+ paid) despite falling behind; Risky if they haven't been
+        // paying fines at all. Fewer than 3 dues: Fine Paid if any fine
+        // was paid, else Normal.
         const category = row.pendingDueCount >= 3
-          ? 'risky'
+          ? (finesPaidCount >= 2 ? 'pending' : 'risky')
           : finePaid
             ? 'fine-paid'
             : 'normal';
@@ -1969,12 +1980,15 @@ export default function Reports() {
           ...row,
           loanIds: [...row.loanIds],
           finePaid,
+          finesPaidCount,
           category,
           categoryLabel: category === 'risky'
             ? 'Risky'
-            : category === 'fine-paid'
-              ? 'Fine Paid'
-              : 'Normal',
+            : category === 'pending'
+              ? 'Pending'
+              : category === 'fine-paid'
+                ? 'Fine Paid'
+                : 'Normal',
         };
       })
       .sort((a, b) => {
@@ -1986,6 +2000,7 @@ export default function Reports() {
     const normalCustomers = pendingCustomers.filter((row) => row.category === 'normal');
     const riskyCustomers = pendingCustomers.filter((row) => row.category === 'risky');
     const finePaidCustomers = pendingCustomers.filter((row) => row.category === 'fine-paid');
+    const pendingTierCustomers = pendingCustomers.filter((row) => row.category === 'pending');
 
     const totalPerformanceLoans = activeLoans.length + closedLoans.length;
     const activePercent = totalPerformanceLoans
@@ -2013,6 +2028,7 @@ export default function Reports() {
       normalCustomers,
       riskyCustomers,
       finePaidCustomers,
+      pendingTierCustomers,
     };
   }, [
     view,
@@ -2028,6 +2044,7 @@ export default function Reports() {
   const filteredPendingCycleCustomers = useMemo(() => {
     if (!cyclePerformanceReport) return [];
     if (pendingRiskFilter === 'risky') return cyclePerformanceReport.riskyCustomers;
+    if (pendingRiskFilter === 'pending') return cyclePerformanceReport.pendingTierCustomers;
     if (pendingRiskFilter === 'fine-paid') return cyclePerformanceReport.finePaidCustomers;
     return cyclePerformanceReport.normalCustomers;
   }, [cyclePerformanceReport, pendingRiskFilter]);
@@ -3580,7 +3597,7 @@ export default function Reports() {
                 <span>PENDING CUSTOMERS</span>
                 <strong>Overall Pending Customer List</strong>
                 <small>
-                  Normal: 1–2 dues · Fine Paid: 1–2 dues with fine paid · Risky: 3+ dues even if fine was paid
+                  Normal: 1–2 dues · Fine Paid: 1–2 dues with fine paid · Pending: 3+ dues with 2+ fines paid · Risky: 3+ dues, fines not kept up
                 </small>
               </div>
 
@@ -3595,19 +3612,27 @@ export default function Reports() {
                 </button>
                 <button
                   type="button"
-                  className={overviewPendingRiskFilter === 'risky' ? 'active risky' : 'risky'}
-                  onClick={() => setOverviewPendingRiskFilter('risky')}
-                >
-                  Risky
-                  <b>{overviewPerformanceReport.riskyCustomers.length}</b>
-                </button>
-                <button
-                  type="button"
                   className={overviewPendingRiskFilter === 'fine-paid' ? 'active fine-paid' : 'fine-paid'}
                   onClick={() => setOverviewPendingRiskFilter('fine-paid')}
                 >
                   Fine Paid
                   <b>{overviewPerformanceReport.finePaidCustomers.length}</b>
+                </button>
+                <button
+                  type="button"
+                  className={overviewPendingRiskFilter === 'pending' ? 'active pending' : 'pending'}
+                  onClick={() => setOverviewPendingRiskFilter('pending')}
+                >
+                  Pending
+                  <b>{overviewPerformanceReport.pendingTierCustomers.length}</b>
+                </button>
+                <button
+                  type="button"
+                  className={overviewPendingRiskFilter === 'risky' ? 'active risky' : 'risky'}
+                  onClick={() => setOverviewPendingRiskFilter('risky')}
+                >
+                  Risky
+                  <b>{overviewPerformanceReport.riskyCustomers.length}</b>
                 </button>
               </div>
             </div>
@@ -3687,7 +3712,7 @@ export default function Reports() {
               </>
             ) : (
               <div className="reports-cycle-pending-empty">
-                No {overviewPendingRiskFilter === 'fine-paid' ? 'Fine Paid' : overviewPendingRiskFilter === 'risky' ? 'Risky' : 'Normal'} pending customers found in the overview.
+                No {overviewPendingRiskFilter === 'fine-paid' ? 'Fine Paid' : overviewPendingRiskFilter === 'pending' ? 'Pending' : overviewPendingRiskFilter === 'risky' ? 'Risky' : 'Normal'} pending customers found in the overview.
               </div>
             )}
           </div>
@@ -3872,7 +3897,7 @@ export default function Reports() {
                 <span>PENDING CUSTOMERS</span>
                 <strong>Pending Customer List</strong>
                 <small>
-                  Normal: 1–2 dues · Fine Paid: 1–2 dues with fine paid · Risky: 3+ dues even if fine was paid
+                  Normal: 1–2 dues · Fine Paid: 1–2 dues with fine paid · Pending: 3+ dues with 2+ fines paid · Risky: 3+ dues, fines not kept up
                 </small>
               </div>
 
@@ -3887,19 +3912,27 @@ export default function Reports() {
                 </button>
                 <button
                   type="button"
-                  className={pendingRiskFilter === 'risky' ? 'active risky' : 'risky'}
-                  onClick={() => setPendingRiskFilter('risky')}
-                >
-                  Risky
-                  <b>{cyclePerformanceReport.riskyCustomers.length}</b>
-                </button>
-                <button
-                  type="button"
                   className={pendingRiskFilter === 'fine-paid' ? 'active fine-paid' : 'fine-paid'}
                   onClick={() => setPendingRiskFilter('fine-paid')}
                 >
                   Fine Paid
                   <b>{cyclePerformanceReport.finePaidCustomers.length}</b>
+                </button>
+                <button
+                  type="button"
+                  className={pendingRiskFilter === 'pending' ? 'active pending' : 'pending'}
+                  onClick={() => setPendingRiskFilter('pending')}
+                >
+                  Pending
+                  <b>{cyclePerformanceReport.pendingTierCustomers.length}</b>
+                </button>
+                <button
+                  type="button"
+                  className={pendingRiskFilter === 'risky' ? 'active risky' : 'risky'}
+                  onClick={() => setPendingRiskFilter('risky')}
+                >
+                  Risky
+                  <b>{cyclePerformanceReport.riskyCustomers.length}</b>
                 </button>
               </div>
             </div>
@@ -3970,7 +4003,7 @@ export default function Reports() {
               </>
             ) : (
               <div className="reports-cycle-pending-empty">
-                No {pendingRiskFilter === 'fine-paid' ? 'Fine Paid' : pendingRiskFilter === 'risky' ? 'Risky' : 'Normal'} pending customers found for this {cyclePerformanceReport.cycle.toLowerCase()} report.
+                No {pendingRiskFilter === 'fine-paid' ? 'Fine Paid' : pendingRiskFilter === 'pending' ? 'Pending' : pendingRiskFilter === 'risky' ? 'Risky' : 'Normal'} pending customers found for this {cyclePerformanceReport.cycle.toLowerCase()} report.
               </div>
             )}
           </div>
