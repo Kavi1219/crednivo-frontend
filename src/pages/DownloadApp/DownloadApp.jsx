@@ -3,8 +3,11 @@ import { Download, ShieldCheck, Smartphone } from 'lucide-react';
 import CrednivoMark from '../../components/brand/CrednivoMark';
 import './DownloadApp.css';
 
-// Update this list each time a new APK is published to /public/downloads.
+// Update this list each time a new APK is published as a GitHub Release
+// asset (Settings tab isn't needed — just "Releases" → "Draft a new release"
+// on the crednivo-frontend repo, tag it "downloads", and attach the APK).
 // Newest entry first; mark exactly one as latest: true.
+const RELEASE_BASE = 'https://github.com/Kavi1219/crednivo-frontend/releases/download/downloads';
 const APK_VERSIONS = [
   { version: '1.0.3', file: 'Crednivo-v1.0.3.apk', size: '46.2 MB', latest: true },
   { version: '1.0.2', file: 'Crednivo-v1.0.2.apk', size: '23.2 MB' },
@@ -24,7 +27,7 @@ export default function DownloadApp() {
           <p>Manage customers, loans and collections on the go. Install the Android app below.</p>
         </header>
 
-        <a className="download-primary" href={`/downloads/${latest.file}`} download>
+        <a className="download-primary" href={`${RELEASE_BASE}/${latest.file}`} download>
           <Download size={20} aria-hidden="true" />
           <span>
             <strong>Download for Android</strong>
@@ -64,7 +67,7 @@ export default function DownloadApp() {
                   {item.latest && <span className="download-badge">Latest</span>}
                   <small>{item.size}</small>
                 </div>
-                <a href={`/downloads/${item.file}`} download>Download</a>
+                <a href={`${RELEASE_BASE}/${item.file}`} download>Download</a>
               </li>
             ))}
           </ul>
