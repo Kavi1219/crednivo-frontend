@@ -8,7 +8,7 @@ const items = [
   ['Customers', '/customers', Users, 'customers.view'],
   ['Loans', '/loans', CircleDollarSign, 'loans.view'],
   ['Work', '/work', ClipboardList, null, false, true],
-  ['Payments', '/payments', WalletCards, 'payments.view'],
+  ['History', '/payments', WalletCards, 'payments.view'],
   ['Expenses', '/expenses', ReceiptText, 'expenses.view'],
   ['Capital', '/capital', Landmark, 'capital.view'],
   ['Savings', '/savings', PiggyBank, null, true],

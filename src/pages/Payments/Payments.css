@@ -7,7 +7,7 @@
 .payment-date-field>svg{flex:0 0 auto;display:block}.payment-date-field label{min-width:0;flex:1}.payment-date-field span{display:block;color:var(--ink-500);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}.payment-date-field input{width:100%;margin-top:2px;padding:0;border:0;outline:0;background:transparent;color:var(--ink-900);font-size:10px;font-weight:600}
 .payment-date-quick-actions{display:flex;align-items:center;gap:8px;margin-left:auto}.payment-list-toolbar{border-bottom:1px solid var(--line)}
 .payment-type-cell{display:inline-flex;align-items:center;gap:8px;min-height:30px}.payment-type-icon{width:28px;height:28px;flex:0 0 28px;display:inline-flex;align-items:center;justify-content:center;line-height:0;border-radius:8px}.payment-type-icon svg{display:block}
-.payment-type-icon.green{color:#168b40;background:#e6f8ec}.payment-type-icon.orange{color:#e27331;background:var(--surface)0e5}.payment-type-icon.blue{color:#1268dc;background:#e8f1ff}
+.payment-type-icon.green{color:#168b40;background:#e6f8ec}.payment-type-icon.orange{color:#e27331;background:var(--surface)0e5}.payment-type-icon.blue{color:#1268dc;background:#e8f1ff}.payment-type-icon.purple{color:#7c4fd6;background:#f3ecff}
 @media(max-width:900px){.payment-date-toolbar{flex-wrap:wrap}.payment-date-quick-actions{margin-left:0}}
 @media(max-width:767px){.payment-history-head{align-items:flex-start;flex-direction:column}.payment-export-actions{width:100%;justify-content:flex-start}.payment-date-toolbar{align-items:stretch;flex-direction:column}.payment-date-field{width:100%;min-width:0}.payment-date-quick-actions{width:100%;flex-wrap:wrap}}
 @media print{

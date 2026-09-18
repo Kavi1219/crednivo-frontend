@@ -5,6 +5,7 @@ import {
   Download,
   HandCoins,
   Landmark,
+  PiggyBank,
   Printer,
   ReceiptText,
   RotateCcw,
@@ -20,14 +21,13 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Payments.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
-import CrednivoMark from '../../components/brand/CrednivoMark';
 
 export default function Payments() {
-  const { customers, payments } = useCrednivo();
+  const { customers, payments, savings, capital } = useCrednivo();
   const [searchParams] = useSearchParams();
   const requestedFilter = searchParams.get('filter');
   const todayRequested = searchParams.get('today') === '1';
-  const initialFilter = ['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital'].includes(requestedFilter)
+  const initialFilter = ['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital', 'Savings'].includes(requestedFilter)
     ? requestedFilter
     : 'All';
   const initialDate = todayRequested ? toInputDate() : '';
@@ -42,11 +42,45 @@ export default function Payments() {
     [customers],
   );
 
-  const dateFiltered = useMemo(() => payments.filter((item) => {
+  // Capital and Savings don't come from the payments ledger at all, so they
+  // were previously invisible here. Normalized into the same shape so they
+  // sort, filter and export alongside every other transaction.
+  const capitalTransactions = useMemo(() => (capital || []).map((item) => ({
+    id: `capital-${item.id}`,
+    date: item.date,
+    type: 'Capital',
+    customerName: item.investorName || 'Capital',
+    customerId: '—',
+    loanId: '',
+    paymentMode: item.paymentMode || '',
+    note: item.note || item.type || '',
+    direction: item.type === 'Capital Withdrawal' ? 'out' : 'in',
+    amount: Number(item.amount) || 0,
+  })), [capital]);
+
+  const savingsTransactions = useMemo(() => (savings || []).map((item) => ({
+    id: `saving-${item.id}`,
+    date: item.date,
+    type: 'Savings',
+    customerName: 'Savings',
+    customerId: '—',
+    loanId: '',
+    paymentMode: '',
+    note: item.note || '',
+    direction: 'out',
+    amount: Number(item.amount) || 0,
+  })), [savings]);
+
+  const allTransactions = useMemo(
+    () => [...payments, ...capitalTransactions, ...savingsTransactions],
+    [payments, capitalTransactions, savingsTransactions],
+  );
+
+  const dateFiltered = useMemo(() => allTransactions.filter((item) => {
     if (fromDate && item.date < fromDate) return false;
     if (toDate && item.date > toDate) return false;
     return true;
-  }), [payments, fromDate, toDate]);
+  }), [allTransactions, fromDate, toDate]);
 
   // Search and type filters only change the history list. They do not change
   // the cash-flow cards above. Date range intentionally controls both.
@@ -72,7 +106,7 @@ export default function Payments() {
   };
 
   const download = () => downloadCsv(
-    `crednivo-payment-history-${fromDate || 'start'}-to-${toDate || 'latest'}.csv`,
+    `crednivo-history-${fromDate || 'start'}-to-${toDate || 'latest'}.csv`,
     [
       ['Date', 'Transaction', 'Customer / Purpose', 'Reference', 'Loan', 'Mode', 'Interest', 'Principal', 'Fine', 'Note', 'Direction', 'Amount'],
       ...filtered.map((item) => [
@@ -96,8 +130,8 @@ export default function Payments() {
     <div className="module-page payments-page">
       <ModuleHeader
         eyebrow="Cash Flow"
-        title="Payments"
-        description="A single transaction history for collections coming in, new loan amounts going out and business expenses."
+        title="History"
+        description="A single transaction history for collections, loans, expenses, capital and savings."
       />
 
       <section className="metric-strip">
@@ -122,11 +156,9 @@ export default function Payments() {
       <section className="module-card payment-history-card">
         <div className="payment-history-head">
           <div className="payment-history-brand">
-            <CrednivoMark size={48} />
             <div>
-              <h2>Payment History</h2>
+              <h2>History</h2>
               <span>Choose a date range, then print or download the matching history.</span>
-              <small>CREDNIVO · Finance Management Platform</small>
             </div>
           </div>
           <div className="payment-export-actions">
@@ -159,10 +191,10 @@ export default function Payments() {
         <div className="module-toolbar payment-list-toolbar">
           <label className="module-search">
             <Search size={16} />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search payment history..." />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search history..." />
           </label>
           <div className="module-toolbar-group">
-            {['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital'].map((item) => (
+            {['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital', 'Savings'].map((item) => (
               <button key={item} className={`filter-chip ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item}</button>
             ))}
           </div>
@@ -177,8 +209,8 @@ export default function Payments() {
                   <td>{formatDate(item.date)}</td>
                   <td>
                     <div className="payment-type-cell">
-                      <span className={`payment-type-icon ${item.type === 'Collection' ? 'green' : item.type === 'Expense' ? 'orange' : 'blue'}`}>
-                        {item.type === 'Collection' ? <HandCoins size={16} /> : item.type === 'Expense' ? <ReceiptText size={16} /> : <Landmark size={16} />}
+                      <span className={`payment-type-icon ${item.type === 'Collection' ? 'green' : item.type === 'Expense' ? 'orange' : item.type === 'Savings' ? 'purple' : 'blue'}`}>
+                        {item.type === 'Collection' ? <HandCoins size={16} /> : item.type === 'Expense' ? <ReceiptText size={16} /> : item.type === 'Savings' ? <PiggyBank size={16} /> : <Landmark size={16} />}
                       </span>
                       <span>{item.type}</span>
                     </div>
