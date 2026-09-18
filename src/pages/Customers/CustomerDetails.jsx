@@ -653,6 +653,11 @@ export default function CustomerDetails() {
   // The customer record keeps some legacy summary fields, but those can become
   // stale when a second loan is created. Deriving here keeps multi-loan totals correct.
   const totalOutstanding = activeCustomerLoans.reduce((sum, loan) => sum + (Number(loan.outstanding) || 0), 0);
+  const totalPendingFine = activeCustomerLoans.reduce((sum, loan) => sum + calculateLoanPendingFine(
+    loan,
+    scheduleRowsForLoan(loan.id),
+    (payments || []).filter((p) => p.loanId === loan.id),
+  ), 0);
   const collectionByCycle = activeCustomerLoans.reduce((summary, loan) => {
     const cycle = loan.cycle || 'Other';
     summary[cycle] = (summary[cycle] || 0) + (Number(loan.collectionAmount) || 0);
@@ -1068,6 +1073,10 @@ export default function CustomerDetails() {
             <span>All Loans</span>
             <strong>{customerLoans.length}</strong>
           </div>
+          {totalPendingFine > 0 && <div className="customer-fine-pending-box">
+            <span>Fine Pending</span>
+            <strong>{formatCurrency(totalPendingFine)}</strong>
+          </div>}
         </div>
       </div>
     </section>

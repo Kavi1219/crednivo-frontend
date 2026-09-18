@@ -705,7 +705,7 @@
 }
 .customer-loan-summary-grid{
   display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(84px,1fr));
   gap:8px;
 }
 .customer-loan-summary-grid>div{
@@ -714,6 +714,13 @@
   border:1px solid var(--line);
   border-radius:10px;
   background:var(--surface-soft);
+}
+.customer-fine-pending-box{
+  border-color:rgba(235,53,82,.25) !important;
+  background:rgba(235,53,82,.06) !important;
+}
+.customer-fine-pending-box strong{
+  color:var(--danger) !important;
 }
 .customer-loan-summary-grid span{
   display:block;
@@ -785,7 +792,7 @@
   .customer-loan-summary-grid{
     grid-template-columns:1fr 1fr;
   }
-  .customer-loan-summary-grid>div:last-child{
+  .customer-loan-summary-grid>div:nth-child(3):last-child{
     grid-column:1/-1;
   }
 }
