@@ -1,4 +1,9 @@
-import { numberValue, toInputDate } from './finance';
+import { toInputDate } from './finance';
+
+function numberValue(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
 
 // Uniform across Daily / Weekly / Monthly loans: 3 full days of grace after
 // the due date before any fine is shown, then it climbs daily from there.
