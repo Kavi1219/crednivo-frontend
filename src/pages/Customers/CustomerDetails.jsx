@@ -310,6 +310,7 @@ export default function CustomerDetails() {
   const [actionError, setActionError] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [deletingTransaction, setDeletingTransaction] = useState(null);
+  const [showAllHistory, setShowAllHistory] = useState(false);
   const [transactionDraft, setTransactionDraft] = useState({
     amount: '0',
     interestAmount: '0',
@@ -646,8 +647,8 @@ export default function CustomerDetails() {
     }, 0);
   const history = payments
     .filter((payment) => payment.customerId === id)
-    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-    .slice(0, 8);
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+  const visibleHistory = showAllHistory ? history : history.slice(0, 5);
 
   // Customer-level figures must come from every active loan.
   // The customer record keeps some legacy summary fields, but those can become
@@ -1273,7 +1274,7 @@ export default function CustomerDetails() {
               {isOwner && <th className="transaction-action-heading">Action</th>}
             </tr>
           </thead>
-          <tbody>{history.map((item) => {
+          <tbody>{visibleHistory.map((item) => {
             const canCorrect = canCorrectTransaction(item);
             return <tr key={item.id}>
               <td>{formatDate(item.date)}</td>
@@ -1296,7 +1297,7 @@ export default function CustomerDetails() {
       </div>
       <div className="customer-payment-mobile-list">
         {history.length === 0 && <div className="customer-mobile-empty">No payment history yet.</div>}
-        {history.map((item) => {
+        {visibleHistory.map((item) => {
           const canCorrect = canCorrectTransaction(item);
           return <article className="customer-payment-mobile-card" key={item.id}>
             <div className="customer-payment-mobile-head"><strong>{item.type}</strong><span className={item.direction==='in'?'money-in':'money-out'}>{item.direction==='in'?'+':'−'} {formatCurrency(item.amount)}</span></div>
@@ -1313,6 +1314,13 @@ export default function CustomerDetails() {
           </article>;
         })}
       </div>
+      {history.length > 5 && <button
+        type="button"
+        className="customer-history-toggle"
+        onClick={() => setShowAllHistory((current) => !current)}
+      >
+        {showAllHistory ? 'Show Less' : `View All ${history.length} Transactions`}
+      </button>}
     </section>
 
     {hasPermission('customers.delete') && <section className="customer-danger-zone module-card">
