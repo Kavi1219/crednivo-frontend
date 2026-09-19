@@ -50,105 +50,218 @@ svg { display: block; }
 
 
 /* Theme compatibility for legacy CREDNIVO component surfaces. */
-html[data-theme='dark'] body{background:var(--canvas);color:var(--ink-950)}
-html[data-theme='dark'] :is(.agent-card,.document-card,.customer-loan-mobile-card,.customer-payment-mobile-card,.profile-media-card,.document-media-card,.review-modal,.review-modal-actions,.quick-action,.view-collections-button,.date-button,.payment-date-field,.customer-loan-pay-close,.customer-loan-pay-fields input,.media-actions button){background:var(--surface)!important;border-color:var(--line)!important;color:var(--ink-800)}
-html[data-theme='dark'] :is(.agent-stats div,.loan-preview-grid>div){background:var(--surface-soft)!important;border-color:var(--line)!important}
-html[data-theme='dark'] :is(.module-table th){background:var(--surface-soft)!important;color:var(--ink-600)}
-html[data-theme='dark'] :is(.module-table td){border-color:var(--line)!important;color:var(--ink-800)}
+html[data-theme='dark'] body{background:var(--canvas);color:var(--ink-950)}html[data-theme='dark'] .agent-card,
+html[data-theme='dark'] .document-card,
+html[data-theme='dark'] .customer-loan-mobile-card,
+html[data-theme='dark'] .customer-payment-mobile-card,
+html[data-theme='dark'] .profile-media-card,
+html[data-theme='dark'] .document-media-card,
+html[data-theme='dark'] .review-modal,
+html[data-theme='dark'] .review-modal-actions,
+html[data-theme='dark'] .quick-action,
+html[data-theme='dark'] .view-collections-button,
+html[data-theme='dark'] .date-button,
+html[data-theme='dark'] .payment-date-field,
+html[data-theme='dark'] .customer-loan-pay-close,
+html[data-theme='dark'] .customer-loan-pay-fields input,
+html[data-theme='dark'] .media-actions button {background:var(--surface)!important;border-color:var(--line)!important;color:var(--ink-800)}html[data-theme='dark'] .agent-stats div,
+html[data-theme='dark'] .loan-preview-grid>div {background:var(--surface-soft)!important;border-color:var(--line)!important}html[data-theme='dark'] .module-table th {background:var(--surface-soft)!important;color:var(--ink-600)}html[data-theme='dark'] .module-table td {border-color:var(--line)!important;color:var(--ink-800)}
 html[data-theme='dark'] .module-table tbody tr:hover{background:var(--surface-hover)!important}
-html[data-theme='dark'] .donut-chart::after{background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--line)!important}
-html[data-theme='dark'] :is(.onboarding-step-icon,.settings-option-icon,.language-mark){background:var(--surface-soft)!important}
-html[data-theme='dark'] :is(input,select,textarea){color-scheme:dark}
-html[data-theme='dark'] ::selection{background:#244f7d}
-
-
+html[data-theme='dark'] .donut-chart::after{background:var(--surface)!important;box-shadow:inset 0 0 0 1px var(--line)!important}html[data-theme='dark'] .onboarding-step-icon,
+html[data-theme='dark'] .settings-option-icon,
+html[data-theme='dark'] .language-mark {background:var(--surface-soft)!important}html[data-theme='dark'] input,
+html[data-theme='dark'] select,
+html[data-theme='dark'] textarea {color-scheme:dark}
+html[data-theme='dark'] ::selection{background:#244f7d}/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .mobile-data-card,
 /* Phase 2.23 - full-app theme audit guardrails.
    Any data/form/card surface that was created before theme support is forced
    onto shared theme tokens so mobile and desktop cannot fall back to white. */
-html[data-theme='dark'] :is(
-  .mobile-data-card,
-  .agent-card,
-  .document-card,
-  .quick-action,
-  .icon-btn,
-  .payment-date-field,
-  .create-loan-search,
-  .selected-customer-preview,
-  .detail-photo-tile,
-  .detail-document-tile,
-  .customer-loan-mobile-card,
-  .customer-payment-mobile-card,
-  .customer-loan-pay-modal,
-  .customer-loan-pay-close,
-  .customer-loan-pay-fields input,
-  .media-actions button,
-  .profile-media-card,
-  .document-media-card,
-  .report-actions button,
-  .crednivo-error-card
-){
+html[data-theme='dark'] .agent-card,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .document-card,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .quick-action,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .icon-btn,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .payment-date-field,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .create-loan-search,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .selected-customer-preview,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .detail-photo-tile,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .detail-document-tile,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .customer-loan-mobile-card,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .customer-payment-mobile-card,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .customer-loan-pay-modal,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .customer-loan-pay-close,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .customer-loan-pay-fields input,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .media-actions button,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .profile-media-card,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .document-media-card,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .report-actions button,
+/* Phase 2.23 - full-app theme audit guardrails.
+   Any data/form/card surface that was created before theme support is forced
+   onto shared theme tokens so mobile and desktop cannot fall back to white. */
+html[data-theme='dark'] .crednivo-error-card {
   background:var(--surface)!important;
   border-color:var(--line)!important;
   color:var(--ink-800)!important;
-}
-
-html[data-theme='dark'] :is(
-  .agent-stats div,
-  .payment-date-toolbar,
-  .loan-preview-grid>div,
-  .customer-loan-mobile-amount,
-  .customer-loan-pay-summary,
-  .crednivo-error-card pre,
-  .profile-dropdown button
-){
+}html[data-theme='dark'] .agent-stats div,
+html[data-theme='dark'] .payment-date-toolbar,
+html[data-theme='dark'] .loan-preview-grid>div,
+html[data-theme='dark'] .customer-loan-mobile-amount,
+html[data-theme='dark'] .customer-loan-pay-summary,
+html[data-theme='dark'] .crednivo-error-card pre,
+html[data-theme='dark'] .profile-dropdown button {
   background:var(--surface-soft)!important;
   border-color:var(--line)!important;
-}
-
-html[data-theme='dark'] :is(
-  .mobile-data-card,
-  .customer-loan-mobile-card,
-  .customer-payment-mobile-card,
-  .agent-card,
-  .document-card
-) :is(strong,b,h1,h2,h3,h4,dd){color:var(--ink-950)}
-
-html[data-theme='dark'] :is(
-  .mobile-data-card,
-  .customer-loan-mobile-card,
-  .customer-payment-mobile-card,
-  .agent-card,
-  .document-card
-) :is(p,small,dt,span:not(.status-badge):not(.soft-chip)){color:var(--ink-600)}
-
-html[data-theme='dark'] :is(
-  .mobile-data-meta,
-  .customer-loan-mobile-grid>div,
-  .detail-card dl div,
-  .expense-mobile-actions,
-  .customer-rating,
-  .payment-history-head,
-  .payment-date-toolbar,
-  .payment-list-toolbar
-){border-color:var(--line)!important}
+}html[data-theme='dark'] .mobile-data-card strong,
+html[data-theme='dark'] .mobile-data-card b,
+html[data-theme='dark'] .mobile-data-card h1,
+html[data-theme='dark'] .mobile-data-card h2,
+html[data-theme='dark'] .mobile-data-card h3,
+html[data-theme='dark'] .mobile-data-card h4,
+html[data-theme='dark'] .mobile-data-card dd,
+html[data-theme='dark'] .customer-loan-mobile-card strong,
+html[data-theme='dark'] .customer-loan-mobile-card b,
+html[data-theme='dark'] .customer-loan-mobile-card h1,
+html[data-theme='dark'] .customer-loan-mobile-card h2,
+html[data-theme='dark'] .customer-loan-mobile-card h3,
+html[data-theme='dark'] .customer-loan-mobile-card h4,
+html[data-theme='dark'] .customer-loan-mobile-card dd,
+html[data-theme='dark'] .customer-payment-mobile-card strong,
+html[data-theme='dark'] .customer-payment-mobile-card b,
+html[data-theme='dark'] .customer-payment-mobile-card h1,
+html[data-theme='dark'] .customer-payment-mobile-card h2,
+html[data-theme='dark'] .customer-payment-mobile-card h3,
+html[data-theme='dark'] .customer-payment-mobile-card h4,
+html[data-theme='dark'] .customer-payment-mobile-card dd,
+html[data-theme='dark'] .agent-card strong,
+html[data-theme='dark'] .agent-card b,
+html[data-theme='dark'] .agent-card h1,
+html[data-theme='dark'] .agent-card h2,
+html[data-theme='dark'] .agent-card h3,
+html[data-theme='dark'] .agent-card h4,
+html[data-theme='dark'] .agent-card dd,
+html[data-theme='dark'] .document-card strong,
+html[data-theme='dark'] .document-card b,
+html[data-theme='dark'] .document-card h1,
+html[data-theme='dark'] .document-card h2,
+html[data-theme='dark'] .document-card h3,
+html[data-theme='dark'] .document-card h4,
+html[data-theme='dark'] .document-card dd {color:var(--ink-950)}html[data-theme='dark'] .mobile-data-card p,
+html[data-theme='dark'] .mobile-data-card small,
+html[data-theme='dark'] .mobile-data-card dt,
+html[data-theme='dark'] .mobile-data-card span:not(.status-badge):not(.soft-chip),
+html[data-theme='dark'] .customer-loan-mobile-card p,
+html[data-theme='dark'] .customer-loan-mobile-card small,
+html[data-theme='dark'] .customer-loan-mobile-card dt,
+html[data-theme='dark'] .customer-loan-mobile-card span:not(.status-badge):not(.soft-chip),
+html[data-theme='dark'] .customer-payment-mobile-card p,
+html[data-theme='dark'] .customer-payment-mobile-card small,
+html[data-theme='dark'] .customer-payment-mobile-card dt,
+html[data-theme='dark'] .customer-payment-mobile-card span:not(.status-badge):not(.soft-chip),
+html[data-theme='dark'] .agent-card p,
+html[data-theme='dark'] .agent-card small,
+html[data-theme='dark'] .agent-card dt,
+html[data-theme='dark'] .agent-card span:not(.status-badge):not(.soft-chip),
+html[data-theme='dark'] .document-card p,
+html[data-theme='dark'] .document-card small,
+html[data-theme='dark'] .document-card dt,
+html[data-theme='dark'] .document-card span:not(.status-badge):not(.soft-chip) {color:var(--ink-600)}html[data-theme='dark'] .mobile-data-meta,
+html[data-theme='dark'] .customer-loan-mobile-grid>div,
+html[data-theme='dark'] .detail-card dl div,
+html[data-theme='dark'] .expense-mobile-actions,
+html[data-theme='dark'] .customer-rating,
+html[data-theme='dark'] .payment-history-head,
+html[data-theme='dark'] .payment-date-toolbar,
+html[data-theme='dark'] .payment-list-toolbar {border-color:var(--line)!important}
 
 html[data-theme='dark'] .selected-customer-preview strong,
 html[data-theme='dark'] .customer-loan-pay-head strong,
 html[data-theme='dark'] .customer-loan-pay-summary strong,
 html[data-theme='dark'] .customer-loan-pay-fields input,
-html[data-theme='dark'] .crednivo-error-card h1{color:var(--ink-950)!important}
-html[data-theme='dark'] .selected-customer-preview :is(small,span),
+html[data-theme='dark'] .crednivo-error-card h1{color:var(--ink-950)!important}html[data-theme='dark'] .selected-customer-preview small,
 html[data-theme='dark'] .customer-loan-pay-head span,
-html[data-theme='dark'] .customer-loan-pay-summary :is(span,small),
-html[data-theme='dark'] .customer-loan-pay-fields label>span{color:var(--ink-500)!important}
+html[data-theme='dark'] .customer-loan-pay-summary span,
+html[data-theme='dark'] .customer-loan-pay-fields label>span,
+html[data-theme='dark'] .selected-customer-preview small,
+html[data-theme='dark'] .customer-loan-pay-head span,
+html[data-theme='dark'] .customer-loan-pay-summary small,
+html[data-theme='dark'] .customer-loan-pay-fields label>span,
+html[data-theme='dark'] .selected-customer-preview span,
+html[data-theme='dark'] .customer-loan-pay-head span,
+html[data-theme='dark'] .customer-loan-pay-summary span,
+html[data-theme='dark'] .customer-loan-pay-fields label>span,
+html[data-theme='dark'] .selected-customer-preview span,
+html[data-theme='dark'] .customer-loan-pay-head span,
+html[data-theme='dark'] .customer-loan-pay-summary small,
+html[data-theme='dark'] .customer-loan-pay-fields label>span {color:var(--ink-500)!important}
 
 
 html[data-theme='dark'] .mobile-bottom-nav{
   background:color-mix(in srgb,var(--surface) 96%,transparent)!important;
   border-color:var(--line)!important;
   box-shadow:0 12px 35px rgba(0,0,0,.38)!important;
-}
-
+}/* =============================================================
+   CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
+   -------------------------------------------------------------
+   Page and modal validation errors used to stay inside their
+   original layout position. When a modal was open, that could put
+   the message behind the modal or at the top of the underlying
+   page. Promote all common form errors to one highly visible toast
+   above every modal without changing existing validation logic.
+   ============================================================= */
+.form-error,
 /* =============================================================
    CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
    -------------------------------------------------------------
@@ -158,15 +271,57 @@ html[data-theme='dark'] .mobile-bottom-nav{
    page. Promote all common form errors to one highly visible toast
    above every modal without changing existing validation logic.
    ============================================================= */
-:is(
-  .form-error,
-  .auth-error,
-  .agent-form-error,
-  .document-form-error,
-  .company-profile-error,
-  .settings-password-error,
-  .media-upload-error
-) {
+.auth-error,
+/* =============================================================
+   CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
+   -------------------------------------------------------------
+   Page and modal validation errors used to stay inside their
+   original layout position. When a modal was open, that could put
+   the message behind the modal or at the top of the underlying
+   page. Promote all common form errors to one highly visible toast
+   above every modal without changing existing validation logic.
+   ============================================================= */
+.agent-form-error,
+/* =============================================================
+   CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
+   -------------------------------------------------------------
+   Page and modal validation errors used to stay inside their
+   original layout position. When a modal was open, that could put
+   the message behind the modal or at the top of the underlying
+   page. Promote all common form errors to one highly visible toast
+   above every modal without changing existing validation logic.
+   ============================================================= */
+.document-form-error,
+/* =============================================================
+   CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
+   -------------------------------------------------------------
+   Page and modal validation errors used to stay inside their
+   original layout position. When a modal was open, that could put
+   the message behind the modal or at the top of the underlying
+   page. Promote all common form errors to one highly visible toast
+   above every modal without changing existing validation logic.
+   ============================================================= */
+.company-profile-error,
+/* =============================================================
+   CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
+   -------------------------------------------------------------
+   Page and modal validation errors used to stay inside their
+   original layout position. When a modal was open, that could put
+   the message behind the modal or at the top of the underlying
+   page. Promote all common form errors to one highly visible toast
+   above every modal without changing existing validation logic.
+   ============================================================= */
+.settings-password-error,
+/* =============================================================
+   CREDNIVO GLOBAL VALIDATION / ACTION ERROR TOAST
+   -------------------------------------------------------------
+   Page and modal validation errors used to stay inside their
+   original layout position. When a modal was open, that could put
+   the message behind the modal or at the top of the underlying
+   page. Promote all common form errors to one highly visible toast
+   above every modal without changing existing validation logic.
+   ============================================================= */
+.media-upload-error {
   position: fixed !important;
   top: max(16px, env(safe-area-inset-top)) !important;
   left: 50% !important;
@@ -191,17 +346,13 @@ html[data-theme='dark'] .mobile-bottom-nav{
   line-height: 1.45 !important;
   text-align: left !important;
   animation: crednivoErrorToastIn .2s ease-out both !important;
-}
-
-:is(
-  .form-error,
-  .auth-error,
-  .agent-form-error,
-  .document-form-error,
-  .company-profile-error,
-  .settings-password-error,
-  .media-upload-error
-)::before {
+}.form-error::before,
+.auth-error::before,
+.agent-form-error::before,
+.document-form-error::before,
+.company-profile-error::before,
+.settings-password-error::before,
+.media-upload-error::before {
   content: "!";
   position: absolute;
   left: 14px;
@@ -234,17 +385,13 @@ html[data-theme='dark'] .mobile-bottom-nav{
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
   }
-}
-
-html[data-theme='dark'] :is(
-  .form-error,
-  .auth-error,
-  .agent-form-error,
-  .document-form-error,
-  .company-profile-error,
-  .settings-password-error,
-  .media-upload-error
-) {
+}html[data-theme='dark'] .form-error,
+html[data-theme='dark'] .auth-error,
+html[data-theme='dark'] .agent-form-error,
+html[data-theme='dark'] .document-form-error,
+html[data-theme='dark'] .company-profile-error,
+html[data-theme='dark'] .settings-password-error,
+html[data-theme='dark'] .media-upload-error {
   border-color: rgba(255, 112, 128, .48) !important;
   background: #35151c !important;
   color: #ffd7dc !important;
@@ -252,15 +399,13 @@ html[data-theme='dark'] :is(
 }
 
 @media (max-width: 767px) {
-  :is(
-    .form-error,
-    .auth-error,
-    .agent-form-error,
-    .document-form-error,
-    .company-profile-error,
-    .settings-password-error,
-    .media-upload-error
-  ) {
+  .form-error,
+  .auth-error,
+  .agent-form-error,
+  .document-form-error,
+  .company-profile-error,
+  .settings-password-error,
+  .media-upload-error {
     top: max(10px, env(safe-area-inset-top)) !important;
     width: calc(100vw - 20px) !important;
     min-height: 52px !important;
@@ -282,14 +427,12 @@ html[data-theme='dark'] :is(
 
 :root {
   --crednivo-popup-bottom-clearance: 56px;
-}
-
+}/* Keep popup cards away from the physical viewport bottom. */
+[class*="-backdrop"],
 /* Keep popup cards away from the physical viewport bottom. */
-:is(
-  [class*="-backdrop"],
-  .review-overlay,
-  .auth-create-overlay
-) {
+.review-overlay,
+/* Keep popup cards away from the physical viewport bottom. */
+.auth-create-overlay {
   box-sizing: border-box !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
@@ -298,18 +441,24 @@ html[data-theme='dark'] :is(
     24px,
     calc(24px + env(safe-area-inset-bottom))
   ) !important;
-}
-
+}/* Long popup shells must be allowed to shrink; their inner content
+   becomes the scroll area instead of being clipped by overflow:hidden. */
+.collection-schedule-modal,
 /* Long popup shells must be allowed to shrink; their inner content
    becomes the scroll area instead of being clipped by overflow:hidden. */
-:is(
-  .collection-schedule-modal,
-  .review-modal,
-  .customer-loan-schedule-modal,
-  .customer-loan-pay-modal,
-  .customer-media-editor-modal,
-  .customer-profile-editor-modal
-) {
+.review-modal,
+/* Long popup shells must be allowed to shrink; their inner content
+   becomes the scroll area instead of being clipped by overflow:hidden. */
+.customer-loan-schedule-modal,
+/* Long popup shells must be allowed to shrink; their inner content
+   becomes the scroll area instead of being clipped by overflow:hidden. */
+.customer-loan-pay-modal,
+/* Long popup shells must be allowed to shrink; their inner content
+   becomes the scroll area instead of being clipped by overflow:hidden. */
+.customer-media-editor-modal,
+/* Long popup shells must be allowed to shrink; their inner content
+   becomes the scroll area instead of being clipped by overflow:hidden. */
+.customer-profile-editor-modal {
   min-height: 0 !important;
 }
 
@@ -324,47 +473,63 @@ html[data-theme='dark'] :is(
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
-}
-
+}/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+.collection-schedule-scroll,
 /* Nested popup scroll areas. The ::after spacer is REAL scroll content,
    so the last row/card can never stop underneath the modal's bottom edge. */
-:is(
-  .collection-schedule-scroll,
-  .collection-schedule-mobile,
-  .review-modal-body,
-  .customer-loan-pay-body,
-  .customer-media-editor-body,
-  .customer-profile-editor-body,
-  .transaction-editor-body,
-  [class$="-modal-body"],
-  [class*="-modal-body "],
-  [class$="-modal-scroll"],
-  [class*="-modal-scroll "],
-  [class$="-schedule-scroll"],
-  [class*="-schedule-scroll "]
-) {
+.collection-schedule-mobile,
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+.review-modal-body,
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+.customer-loan-pay-body,
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+.customer-media-editor-body,
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+.customer-profile-editor-body,
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+.transaction-editor-body,
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+[class$="-modal-body"],
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+[class*="-modal-body "],
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+[class$="-modal-scroll"],
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+[class*="-modal-scroll "],
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+[class$="-schedule-scroll"],
+/* Nested popup scroll areas. The ::after spacer is REAL scroll content,
+   so the last row/card can never stop underneath the modal's bottom edge. */
+[class*="-schedule-scroll "] {
   min-height: 0 !important;
   overflow-y: auto !important;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scroll-padding-bottom: var(--crednivo-popup-bottom-clearance) !important;
-}
-
-:is(
-  .collection-schedule-scroll,
-  .collection-schedule-mobile,
-  .review-modal-body,
-  .customer-loan-pay-body,
-  .customer-media-editor-body,
-  .customer-profile-editor-body,
-  .transaction-editor-body,
-  [class$="-modal-body"],
-  [class*="-modal-body "],
-  [class$="-modal-scroll"],
-  [class*="-modal-scroll "],
-  [class$="-schedule-scroll"],
-  [class*="-schedule-scroll "]
-)::after {
+}.collection-schedule-scroll::after,
+.collection-schedule-mobile::after,
+.review-modal-body::after,
+.customer-loan-pay-body::after,
+.customer-media-editor-body::after,
+.customer-profile-editor-body::after,
+.transaction-editor-body::after,
+[class$="-modal-body"]::after,
+[class*="-modal-body "]::after,
+[class$="-modal-scroll"]::after,
+[class*="-modal-scroll "]::after,
+[class$="-schedule-scroll"]::after,
+[class*="-schedule-scroll "]::after {
   content: "";
   display: block;
   width: 100%;
@@ -374,48 +539,55 @@ html[data-theme='dark'] :is(
   );
   flex: 0 0 var(--crednivo-popup-bottom-clearance);
   pointer-events: none;
-}
-
+}/* Popups that scroll as one whole card also receive a real end spacer. */
+.agent-modal,
 /* Popups that scroll as one whole card also receive a real end spacer. */
-:is(
-  .agent-modal,
-  .agent-permission-modal,
-  .capital-modal,
-  .company-profile-modal,
-  .customer-io-extension-modal,
-  .customer-loan-edit-modal,
-  .document-modal,
-  .password-modal,
-  .record-payment-modal,
-  .savings-modal,
-  .savings-delete-modal,
-  .transaction-editor-modal,
-  .webcam-modal,
-  .auth-create-modal,
-  .preclose-modal,
-  .dashboard-detail-sheet
-) {
+.agent-permission-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.capital-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.company-profile-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.customer-io-extension-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.customer-loan-edit-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.document-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.password-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.record-payment-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.savings-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.savings-delete-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.transaction-editor-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.webcam-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.auth-create-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.preclose-modal,
+/* Popups that scroll as one whole card also receive a real end spacer. */
+.dashboard-detail-sheet {
   scroll-padding-bottom: var(--crednivo-popup-bottom-clearance) !important;
-}
-
-:is(
-  .agent-modal,
-  .agent-permission-modal,
-  .capital-modal,
-  .company-profile-modal,
-  .customer-io-extension-modal,
-  .customer-loan-edit-modal,
-  .document-modal,
-  .password-modal,
-  .record-payment-modal,
-  .savings-modal,
-  .savings-delete-modal,
-  .transaction-editor-modal,
-  .webcam-modal,
-  .auth-create-modal,
-  .preclose-modal,
-  .dashboard-detail-sheet
-)::after {
+}.agent-modal::after,
+.agent-permission-modal::after,
+.capital-modal::after,
+.company-profile-modal::after,
+.customer-io-extension-modal::after,
+.customer-loan-edit-modal::after,
+.document-modal::after,
+.password-modal::after,
+.record-payment-modal::after,
+.savings-modal::after,
+.savings-delete-modal::after,
+.transaction-editor-modal::after,
+.webcam-modal::after,
+.auth-create-modal::after,
+.preclose-modal::after,
+.dashboard-detail-sheet::after {
   content: "";
   display: block;
   width: 100%;
