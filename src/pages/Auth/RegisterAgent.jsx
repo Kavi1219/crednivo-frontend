@@ -18,7 +18,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import CrednivoMark from '../../components/brand/CrednivoMark';
 import { apiRequest } from '../../services/api';
-import { AuthLoading } from './Login';
+import AuthLoading from '../../components/common/AuthLoading';
 import './Auth.css';
 
 export default function RegisterAgent() {

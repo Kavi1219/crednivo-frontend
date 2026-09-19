@@ -1,28 +1,35 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { CrednivoProvider } from '../context/CrednivoContext';
 import { useAuth } from '../context/AuthContext';
-import Login, { AuthLoading } from '../pages/Auth/Login';
-import RegisterCompany from '../pages/Auth/RegisterCompany';
-import RegisterAgent from '../pages/Auth/RegisterAgent';
-import DownloadApp from '../pages/DownloadApp/DownloadApp';
-import LandingPage from '../pages/Landing/LandingPage';
-import Dashboard from '../pages/Dashboard/Dashboard';
-import TodayReport from '../pages/TodayReport/TodayReport';
-import Customers from '../pages/Customers/Customers';
-import NewCustomer from '../pages/Customers/NewCustomer';
-import CustomerDetails from '../pages/Customers/CustomerDetails';
-import Loans from '../pages/Loans/Loans';
-import CreateLoan from '../pages/Loans/CreateLoan';
-import Collection from '../pages/Collection/Collection';
-import Payments from '../pages/Payments/Payments';
-import Capital from '../pages/Capital/Capital';
-import Savings from '../pages/Savings/Savings';
-import Expenses from '../pages/Expenses/Expenses';
-import Reports from '../pages/Reports/Reports';
-import Agents from '../pages/Agents/Agents';
-import Settings from '../pages/Settings/Settings';
-import Work from '../pages/Work/Work';
+import AuthLoading from '../components/common/AuthLoading';
+
+// Every page below loads on demand instead of all at once — visiting the
+// Dashboard shouldn't cost downloading the Reports or Work Assignment code
+// too. AuthLoading itself stays a normal (non-lazy) import since it's what
+// shows *while* everything else is loading.
+const Login = lazy(() => import('../pages/Auth/Login'));
+const RegisterCompany = lazy(() => import('../pages/Auth/RegisterCompany'));
+const RegisterAgent = lazy(() => import('../pages/Auth/RegisterAgent'));
+const DownloadApp = lazy(() => import('../pages/DownloadApp/DownloadApp'));
+const LandingPage = lazy(() => import('../pages/Landing/LandingPage'));
+const Dashboard = lazy(() => import('../pages/Dashboard/Dashboard'));
+const TodayReport = lazy(() => import('../pages/TodayReport/TodayReport'));
+const Customers = lazy(() => import('../pages/Customers/Customers'));
+const NewCustomer = lazy(() => import('../pages/Customers/NewCustomer'));
+const CustomerDetails = lazy(() => import('../pages/Customers/CustomerDetails'));
+const Loans = lazy(() => import('../pages/Loans/Loans'));
+const CreateLoan = lazy(() => import('../pages/Loans/CreateLoan'));
+const Collection = lazy(() => import('../pages/Collection/Collection'));
+const Payments = lazy(() => import('../pages/Payments/Payments'));
+const Capital = lazy(() => import('../pages/Capital/Capital'));
+const Savings = lazy(() => import('../pages/Savings/Savings'));
+const Expenses = lazy(() => import('../pages/Expenses/Expenses'));
+const Reports = lazy(() => import('../pages/Reports/Reports'));
+const Agents = lazy(() => import('../pages/Agents/Agents'));
+const Settings = lazy(() => import('../pages/Settings/Settings'));
+const Work = lazy(() => import('../pages/Work/Work'));
 
 function ProtectedWorkspace() {
   const { loading, user, status } = useAuth();
@@ -44,43 +51,45 @@ function PermissionOnly({ permission }) {
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/accounts" element={<Login />} />
-      <Route path="/download" element={<DownloadApp />} />
-      <Route path="/register/company" element={<RegisterCompany />} />
-      <Route path="/register/agent" element={<RegisterAgent />} />
-      <Route path="/setup-owner" element={<Navigate to="/register/company" replace />} />
-      <Route element={<ProtectedWorkspace />}>
-        <Route element={<PermissionOnly permission="overview.view" />}>
-          <Route path="/overview" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
+    <Suspense fallback={<AuthLoading />}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/accounts" element={<Login />} />
+        <Route path="/download" element={<DownloadApp />} />
+        <Route path="/register/company" element={<RegisterCompany />} />
+        <Route path="/register/agent" element={<RegisterAgent />} />
+        <Route path="/setup-owner" element={<Navigate to="/register/company" replace />} />
+        <Route element={<ProtectedWorkspace />}>
+          <Route element={<PermissionOnly permission="overview.view" />}>
+            <Route path="/overview" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Navigate to="/overview" replace />} />
+          </Route>
+          <Route element={<PermissionOnly permission="todayReport.view" />}><Route path="/today-report" element={<TodayReport />} /></Route>
+          <Route element={<PermissionOnly permission="customers.view" />}>
+            <Route path="/customers" element={<Customers />} />
+            <Route path="/customers/daily" element={<Customers />} />
+            <Route path="/customers/weekly" element={<Customers />} />
+            <Route path="/customers/monthly" element={<Customers />} />
+            <Route path="/customers/:id" element={<CustomerDetails />} />
+          </Route>
+          <Route element={<PermissionOnly permission="customers.add" />}><Route path="/customers/new" element={<NewCustomer />} /></Route>
+          <Route element={<PermissionOnly permission="loans.view" />}><Route path="/loans" element={<Loans />} /></Route>
+          <Route element={<PermissionOnly permission="loans.create" />}><Route path="/loans/create" element={<CreateLoan />} /></Route>
+          <Route element={<PermissionOnly permission="collections.view" />}><Route path="/collection" element={<Collection />} /></Route>
+          <Route element={<PermissionOnly permission="payments.view" />}><Route path="/payments" element={<Payments />} /></Route>
+          <Route element={<PermissionOnly permission="expenses.view" />}><Route path="/expenses" element={<Expenses />} /></Route>
+          <Route element={<PermissionOnly permission="capital.view" />}><Route path="/capital" element={<Capital />} /></Route>
+          <Route element={<OwnerOnly />}><Route path="/savings" element={<Savings />} /></Route>
+          <Route element={<PermissionOnly permission="reports.full" />}><Route path="/reports" element={<Reports />} /></Route>
+          <Route element={<OwnerOnly />}><Route path="/agents" element={<Agents />} /></Route>
+          {/* Personal Settings are intentionally available to both Owner and Agent. */}
+          <Route path="/settings" element={<Settings />} />
+          {/* Work is available to both roles too — owners assign it, agents act on it. */}
+          <Route path="/work" element={<Work />} />
         </Route>
-        <Route element={<PermissionOnly permission="todayReport.view" />}><Route path="/today-report" element={<TodayReport />} /></Route>
-        <Route element={<PermissionOnly permission="customers.view" />}>
-          <Route path="/customers" element={<Customers />} />
-          <Route path="/customers/daily" element={<Customers />} />
-          <Route path="/customers/weekly" element={<Customers />} />
-          <Route path="/customers/monthly" element={<Customers />} />
-          <Route path="/customers/:id" element={<CustomerDetails />} />
-        </Route>
-        <Route element={<PermissionOnly permission="customers.add" />}><Route path="/customers/new" element={<NewCustomer />} /></Route>
-        <Route element={<PermissionOnly permission="loans.view" />}><Route path="/loans" element={<Loans />} /></Route>
-        <Route element={<PermissionOnly permission="loans.create" />}><Route path="/loans/create" element={<CreateLoan />} /></Route>
-        <Route element={<PermissionOnly permission="collections.view" />}><Route path="/collection" element={<Collection />} /></Route>
-        <Route element={<PermissionOnly permission="payments.view" />}><Route path="/payments" element={<Payments />} /></Route>
-        <Route element={<PermissionOnly permission="expenses.view" />}><Route path="/expenses" element={<Expenses />} /></Route>
-        <Route element={<PermissionOnly permission="capital.view" />}><Route path="/capital" element={<Capital />} /></Route>
-        <Route element={<OwnerOnly />}><Route path="/savings" element={<Savings />} /></Route>
-        <Route element={<PermissionOnly permission="reports.full" />}><Route path="/reports" element={<Reports />} /></Route>
-        <Route element={<OwnerOnly />}><Route path="/agents" element={<Agents />} /></Route>
-        {/* Personal Settings are intentionally available to both Owner and Agent. */}
-        <Route path="/settings" element={<Settings />} />
-        {/* Work is available to both roles too — owners assign it, agents act on it. */}
-        <Route path="/work" element={<Work />} />
-      </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 import { Link, Navigate } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { AuthLoading } from '../Auth/Login';
+import AuthLoading from '../../components/common/AuthLoading';
 import CrednivoMark from '../../components/brand/CrednivoMark';
 import './LandingPage.css';
 

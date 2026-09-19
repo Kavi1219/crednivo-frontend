@@ -5,7 +5,7 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AuthLoading } from './Login';
+import AuthLoading from '../../components/common/AuthLoading';
 import './Auth.css';
 
 const initialForm = {

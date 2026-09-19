@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { calculateLoan, getFirstDueDate, normalizeIndianMobile, toInputDate } from '../utils/finance';
 import { apiRequest, mediaUrl, uploadAgentPhoto, uploadCompanyLogo, uploadCustomerDocument, uploadProfilePhoto, uploadVaultDocument } from '../services/api';
 import { useAuth } from './AuthContext';
@@ -483,10 +483,15 @@ function mapBackendCapitalMetrics(item = {}) {
 export function CrednivoProvider({ children }) {
   const { isOwner, user, hasPermission } = useAuth();
   const companyCacheKey = `${STORAGE_KEY}:${user?.companyId || 'unassigned'}`;
+  // Captured once, before loadInitialData can write anything — tells us
+  // whether this is a brand new session (no cache, about to show seed/demo
+  // data briefly) versus a returning one (cached real data to show right away).
+  const hadCacheOnMount = useRef(Boolean(localStorage.getItem(companyCacheKey)));
   const [data, setData] = useState(() => loadInitialData(companyCacheKey));
   const [uiSettings, setUiSettings] = useState(loadUiSettings);
   const [resolvedTheme, setResolvedTheme] = useState('light');
   const [backendStatus, setBackendStatus] = useState({ loading: true, connected: false, error: '' });
+  const isFirstLoad = !hadCacheOnMount.current && backendStatus.loading;
 
   const syncCoreData = async () => {
     try {
@@ -1252,6 +1257,7 @@ export function CrednivoProvider({ children }) {
       resolvedTheme,
       updateUiSettings,
       backendStatus,
+      isFirstLoad,
       refreshCoreData: syncCoreData,
     }}>
       {children}

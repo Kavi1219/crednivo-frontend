@@ -2,7 +2,7 @@ import { CheckCircle2, Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { AuthLoading } from './Login';
+import AuthLoading from '../../components/common/AuthLoading';
 import CrednivoMark from '../../components/brand/CrednivoMark';
 import './Auth.css';
 

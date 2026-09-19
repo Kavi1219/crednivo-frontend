@@ -16,6 +16,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { apiRequest } from '../../services/api';
+import AuthLoading from '../../components/common/AuthLoading';
 import './Auth.css';
 
 const LOGIN_PREF_KEY = 'crednivo-login-preferences';
@@ -614,20 +615,3 @@ export default function Login() {
   );
 }
 
-export function AuthLoading() {
-  return (
-    <main className="auth-loading auth-loading-classic">
-      <div className="auth-loading-new-logo" aria-hidden="true">
-        <span className="auth-loading-c-shape" />
-        <span className="auth-loading-bar auth-loading-bar-1" />
-        <span className="auth-loading-bar auth-loading-bar-2" />
-        <span className="auth-loading-bar auth-loading-bar-3" />
-        <span className="auth-loading-arrow-line" />
-        <span className="auth-loading-arrow-head" />
-      </div>
-
-      <strong>CREDNIVO</strong>
-      <small>Securing workspace...</small>
-    </main>
-  );
-}
