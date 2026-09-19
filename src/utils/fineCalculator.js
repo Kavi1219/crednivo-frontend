@@ -9,6 +9,17 @@ function numberValue(value) {
 // the due date before any fine is shown, then it climbs daily from there.
 const GRACE_DAYS = 3;
 
+// How many days one fine-rate period covers, by the loan's own cycle. A
+// Weekly loan's fineAmount is "per week" (÷7); a Monthly loan's is "per
+// month" (÷30, a flat approximation, not the exact days in that calendar
+// month); a Daily loan's fineAmount already IS the per-day amount (÷1).
+function cycleDays(loan) {
+  const cycle = String(loan?.cycle || '').trim().toLowerCase();
+  if (cycle === 'weekly') return 7;
+  if (cycle === 'monthly') return 30;
+  return 1;
+}
+
 function daysLate(dueDate, today) {
   const due = new Date(`${dueDate}T00:00:00`);
   const now = new Date(`${today}T00:00:00`);
@@ -18,21 +29,23 @@ function daysLate(dueDate, today) {
 
 /**
  * Fine currently owed for ONE overdue due date, given a loan's configured
- * weekly-equivalent fine rate (loan.fineAmount, e.g. 200 = "Rs 200/week").
- * Grace covers days 0-3 past the due date. Day 4 first shows 3 days' worth
- * (200/7 * 3 = 85.71); each day's own portion only reflects in the total
- * starting the following day, so it keeps climbing by ~28.57/day after that.
+ * fine rate (loan.fineAmount) for one full cycle of that loan (e.g. Rs 1000
+ * for a Monthly loan = Rs 1000 per month late). Grace covers days 0-3 past
+ * the due date; day 4 first shows 3 days' worth, climbing daily after that
+ * — but never past one full cycle's fine amount for that single due, since
+ * a due can only ever be "one cycle" fully late before the next one starts.
  */
 export function calculateFineForDue(loan, dueDate, today = toInputDate()) {
   if (!loan?.fineEnabled) return 0;
-  const weeklyRate = numberValue(loan.fineAmount);
-  if (weeklyRate <= 0 || !dueDate) return 0;
+  const cycleRate = numberValue(loan.fineAmount);
+  if (cycleRate <= 0 || !dueDate) return 0;
 
   const late = daysLate(dueDate, today);
   if (late < GRACE_DAYS + 1) return 0;
 
-  const dailyRate = weeklyRate / 7;
-  return Math.round((late - 1) * dailyRate * 100) / 100;
+  const dailyRate = cycleRate / cycleDays(loan);
+  const accrued = (late - 1) * dailyRate;
+  return Math.round(Math.min(accrued, cycleRate) * 100) / 100;
 }
 
 /**
