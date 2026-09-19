@@ -7,6 +7,7 @@ import StatCard from '../../components/dashboard/StatCard';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
+import { calculateCycleTargets } from '../../utils/collectionTargets';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -41,16 +42,10 @@ export default function Dashboard() {
   // cycle contributes its own periodic amount, regardless of which day
   // each customer's own due date happens to fall on. A loan drops out the
   // moment it closes; a new loan's amount joins in immediately.
-  const isActiveLoan = (loan) => loan.status !== 'Closed' && Number(loan.outstanding) > 0;
-  const cycleTarget = (cycleName) => {
-    const loansInCycle = (loans || []).filter((loan) => isActiveLoan(loan) && loan.cycle === cycleName);
-    const amount = loansInCycle.reduce((sum, loan) => sum + (Number(loan.collectionAmount) || 0), 0);
-    const customerCount = new Set(loansInCycle.map((loan) => loan.customerId)).size;
-    return { amount, customerCount };
-  };
-  const dailyTarget = cycleTarget('Daily');
-  const weeklyTarget = cycleTarget('Weekly');
-  const monthlyTarget = cycleTarget('Monthly');
+  const cycleTargets = calculateCycleTargets(loans);
+  const dailyTarget = cycleTargets.daily;
+  const weeklyTarget = cycleTargets.weekly;
+  const monthlyTarget = cycleTargets.monthly;
 
   const dashboardStatsToday = [
     {

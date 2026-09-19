@@ -1,15 +1,23 @@
-import { CalendarDays, Check, Filter, HandCoins, IndianRupee, List, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
+import { CalendarDays, Filter, HandCoins, IndianRupee, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import StatCard from '../../components/dashboard/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import { keyOf, loanIdentityKeys, isPrecloseMarker } from '../../utils/loanIdentity';
+import {
+  calculateCycleTargets,
+  getWeekRange,
+  calculateWeekTarget,
+  calculatePendingDueCounts,
+  getRiskTier,
+} from '../../utils/collectionTargets';
 import './Collection.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
 
@@ -170,7 +178,7 @@ export default function Collection() {
   })();
   const initialStatus = (() => {
     const requested = String(searchParams.get('status') || 'All');
-    const allowed = ['All', 'Unpaid', 'Partial', 'Pending', 'Paid', 'Overdue'];
+    const allowed = ['All', 'Very Good', 'Good', 'Normal', 'Risky'];
     return allowed.includes(requested) ? requested : 'All';
   })();
   const initialCycle = (() => {
@@ -274,6 +282,26 @@ export default function Collection() {
 
   const today = toInputDate();
 
+  // Section 1: same standing Daily/Weekly/Monthly capacity shown on Home.
+  const cycleTargets = calculateCycleTargets(loans);
+
+  // Section 2: This Week — Daily loans recur every day of the week, Weekly
+  // loans are already a full week's worth, Monthly loans only count if
+  // their own due date actually falls inside this specific week.
+  const weekRange = useMemo(() => getWeekRange(today), [today]);
+  const weekTarget = useMemo(() => calculateWeekTarget(loans, weekRange), [loans, weekRange]);
+  const weekAchieved = useMemo(
+    () => (payments || [])
+      .filter((item) => item.type === 'Collection' && item.date >= weekRange.from && item.date <= weekRange.to)
+      .reduce((sum, item) => sum + Number(item.collectionAmount ?? item.amount ?? 0), 0),
+    [payments, weekRange],
+  );
+  const weekPending = Math.max(0, weekTarget - weekAchieved);
+
+  // Section 4: how many currently-unpaid dues each customer has right now,
+  // used to sort them into Very Good / Good / Normal / Risky.
+  const pendingDueCounts = useMemo(() => calculatePendingDueCounts(collections, today), [collections, today]);
+
   const customerPhotoById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
     [customers],
@@ -320,22 +348,17 @@ export default function Collection() {
   );
 
   const todayExpected = todayCollections.reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
-
-  // Actual cash received today. This intentionally includes:
-  // - normal collections due today
-  // - early payments for future installments
-  // - overdue recoveries collected today
-  const todayCollected = useMemo(
-    () => (payments || [])
-      .filter((item) => item.date === today && item.type === 'Collection')
-      .reduce((sum, item) => sum + Number(item.collectionAmount ?? item.amount ?? 0), 0),
-    [payments, today],
-  );
-
   const todayPending = todayCollections.reduce((sum, item) => sum + balanceOf(item), 0);
-  const todayTotalEntries = todayCollections.length;
-  const todayPaidEntries = todayCollections.filter((item) => getDisplayStatus(item, today) === 'Paid').length;
-  const todayUnpaidEntries = Math.max(0, todayTotalEntries - todayPaidEntries);
+
+  // Section 3: Today's Collection Status — amount/customerCount for each of
+  // target, achieved and pending, built from the same todayCollections set
+  // the existing "Expected Today" metrics already use.
+  const todayTargetCustomers = new Set(todayCollections.map((item) => item.customerId)).size;
+  const todayAchievedCustomers = new Set(
+    todayCollections.filter((item) => getDisplayStatus(item, today) === 'Paid').map((item) => item.customerId),
+  ).size;
+  const todayPendingCustomers = Math.max(0, todayTargetCustomers - todayAchievedCustomers);
+  const todayAchievedAmount = Math.max(0, todayExpected - todayPending);
 
   // Previous unpaid/partial entries remain in Overdue.
   const overdueCollections = useMemo(
@@ -380,12 +403,12 @@ export default function Collection() {
 
   const filtered = useMemo(() => viewRows.filter((item) => {
     const q = search.toLowerCase().trim();
-    const displayStatus = getDisplayStatus(item, today);
     const matchesCycle = cycle === 'All' || item.cycle === cycle;
-    const matchesStatus = statusFilter === 'All' || displayStatus === statusFilter;
+    const riskTier = getRiskTier(pendingDueCounts.get(String(item.customerId || '')) || 0);
+    const matchesStatus = statusFilter === 'All' || riskTier === statusFilter;
     const matchesSearch = !q || `${item.customerName} ${item.customerId} ${item.loanId}`.toLowerCase().includes(q);
     return matchesCycle && matchesStatus && matchesSearch;
-  }), [viewRows, cycle, statusFilter, search, today]);
+  }), [viewRows, cycle, statusFilter, search, pendingDueCounts]);
 
   // OVERDUE VIEW RULE:
   // Keep the Overdue tab badge as the number of missed installments, but show
@@ -653,32 +676,96 @@ export default function Collection() {
 
       {actionError && <div className="form-error">{actionError}</div>}
 
-      <section className="metric-strip collection-metric-strip">
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><IndianRupee size={20} /></span>
-          <div><span>Expected Today</span><strong>{formatCurrency(todayExpected)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><HandCoins size={20} /></span>
-          <div><span>Collected Today</span><strong>{formatCurrency(todayCollected)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><TriangleAlert size={20} /></span>
-          <div><span>Pending Today</span><strong>{formatCurrency(todayPending)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><List size={20} /></span>
-          <div><span>Due Today Entries</span><strong>{todayTotalEntries}</strong></div>
-        </article>
-        <article className="mini-metric module-card collection-entry-split">
-          <span className="mini-metric-icon"><Check size={20} /></span>
-          <div>
-            <span>Today's Due Paid / Unpaid</span>
-            <strong>{todayPaidEntries} / {todayUnpaidEntries}</strong>
-            <small>Paid / Unpaid</small>
-          </div>
-        </article>
+      <section className="stats-section" aria-labelledby="collection-target-heading">
+        <h2 id="collection-target-heading" className="stats-section-title">Collection Target</h2>
+        <div className="stats-grid">
+          <StatCard
+            title="Daily Target"
+            value={`${formatCurrency(cycleTargets.daily.amount)} / ${cycleTargets.daily.customerCount}`}
+            note={`${cycleTargets.daily.customerCount} daily customers`}
+            icon={IndianRupee}
+            tone="blue"
+            progress={0}
+          />
+          <StatCard
+            title="Weekly Target"
+            value={`${formatCurrency(cycleTargets.weekly.amount)} / ${cycleTargets.weekly.customerCount}`}
+            note={`${cycleTargets.weekly.customerCount} weekly customers`}
+            icon={IndianRupee}
+            tone="blue"
+            progress={0}
+          />
+          <StatCard
+            title="Monthly Target"
+            value={`${formatCurrency(cycleTargets.monthly.amount)} / ${cycleTargets.monthly.customerCount}`}
+            note={`${cycleTargets.monthly.customerCount} monthly customers`}
+            icon={IndianRupee}
+            tone="blue"
+            progress={0}
+          />
+        </div>
       </section>
+
+      <section className="stats-section" aria-labelledby="week-target-heading">
+        <h2 id="week-target-heading" className="stats-section-title">This Week Target</h2>
+        <div className="stats-grid">
+          <StatCard
+            title="This Week Target"
+            value={formatCurrency(weekTarget)}
+            note="Daily×7 + Weekly + Monthly dues falling this week"
+            icon={CalendarDays}
+            tone="blue"
+            progress={0}
+          />
+          <StatCard
+            title="Achievement"
+            value={formatCurrency(weekAchieved)}
+            note="Collected so far this week"
+            icon={HandCoins}
+            tone="green"
+            progress={weekTarget > 0 ? (weekAchieved / weekTarget) * 100 : 0}
+          />
+          <StatCard
+            title="Pending"
+            value={formatCurrency(weekPending)}
+            note="Still owed for this week"
+            icon={TriangleAlert}
+            tone="orange"
+            progress={0}
+          />
+        </div>
+      </section>
+
+      <section className="stats-section" aria-labelledby="today-status-heading">
+        <h2 id="today-status-heading" className="stats-section-title">Today's Collection Status</h2>
+        <div className="stats-grid">
+          <StatCard
+            title="Today's Target"
+            value={`${formatCurrency(todayExpected)} / ${todayTargetCustomers}`}
+            note={`${todayTargetCustomers} customers due today`}
+            icon={IndianRupee}
+            tone="blue"
+            progress={0}
+          />
+          <StatCard
+            title="Achieved"
+            value={`${formatCurrency(todayAchievedAmount)} / ${todayAchievedCustomers}`}
+            note={`${todayAchievedCustomers} customers paid`}
+            icon={HandCoins}
+            tone="green"
+            progress={todayExpected > 0 ? (todayAchievedAmount / todayExpected) * 100 : 0}
+          />
+          <StatCard
+            title="Pending"
+            value={`${formatCurrency(todayPending)} / ${todayPendingCustomers}`}
+            note={`${todayPendingCustomers} customers pending`}
+            icon={TriangleAlert}
+            tone="orange"
+            progress={0}
+          />
+        </div>
+      </section>
+
 
       <section className="module-card">
         <div className="collection-view-tabs" role="tablist" aria-label="Collection view">
@@ -761,7 +848,7 @@ export default function Collection() {
                 <div className="collection-filter-section">
                   <span className="collection-filter-label">Status</span>
                   <div className="collection-filter-options">
-                    {['All', 'Unpaid', 'Partial', 'Pending', 'Paid', 'Overdue'].map((item) => (
+                    {['All', 'Very Good', 'Good', 'Normal', 'Risky'].map((item) => (
                       <button
                         type="button"
                         className={`filter-chip ${statusFilter === item ? 'active' : ''}`}
