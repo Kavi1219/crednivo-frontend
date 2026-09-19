@@ -38,7 +38,7 @@ export default function Sidebar() {
 
       <nav className="side-nav" aria-label="Main navigation">
         {hasPermission('overview.view') && <NavLink className={({isActive}) => `side-link ${isActive ? 'active' : ''}`} to="/overview" end>
-          <NavIcon label="Overview"><Gauge size={20} /></NavIcon><span>Overview</span>
+          <NavIcon label="Home"><Gauge size={20} /></NavIcon><span>Home</span>
         </NavLink>}
 
         {hasPermission('customers.view') && (

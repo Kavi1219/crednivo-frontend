@@ -10,7 +10,7 @@ import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { metrics, capitalMetrics, collections } = useCrednivo();
+  const { metrics, capitalMetrics, collections, loans } = useCrednivo();
   const { hasPermission } = useAuth();
   const navigate = useNavigate();
   const today = toInputDate();
@@ -36,6 +36,21 @@ export default function Dashboard() {
     0,
   );
   const partialCustomers = new Set(partialRows.map((item) => item.customerId)).size;
+
+  // Standing per-cycle collection capacity — every active loan of that
+  // cycle contributes its own periodic amount, regardless of which day
+  // each customer's own due date happens to fall on. A loan drops out the
+  // moment it closes; a new loan's amount joins in immediately.
+  const isActiveLoan = (loan) => loan.status !== 'Closed' && Number(loan.outstanding) > 0;
+  const cycleTarget = (cycleName) => {
+    const loansInCycle = (loans || []).filter((loan) => isActiveLoan(loan) && loan.cycle === cycleName);
+    const amount = loansInCycle.reduce((sum, loan) => sum + (Number(loan.collectionAmount) || 0), 0);
+    const customerCount = new Set(loansInCycle.map((loan) => loan.customerId)).size;
+    return { amount, customerCount };
+  };
+  const dailyTarget = cycleTarget('Daily');
+  const weeklyTarget = cycleTarget('Weekly');
+  const monthlyTarget = cycleTarget('Monthly');
 
   const dashboardStatsToday = [
     {
@@ -73,6 +88,36 @@ export default function Dashboard() {
       tone: 'danger',
       progress: pendingProgress,
       onDetails: () => navigate('/collection?view=overdue'),
+    },
+  ];
+
+  const dashboardStatsTarget = [
+    {
+      title: 'Daily Target',
+      value: `${formatCurrency(dailyTarget.amount)} / ${dailyTarget.customerCount}`,
+      note: `${dailyTarget.customerCount} daily customers`,
+      icon: WalletCards,
+      tone: 'blue',
+      progress: 0,
+      onDetails: () => navigate('/customers/daily'),
+    },
+    {
+      title: 'Weekly Target',
+      value: `${formatCurrency(weeklyTarget.amount)} / ${weeklyTarget.customerCount}`,
+      note: `${weeklyTarget.customerCount} weekly customers`,
+      icon: WalletCards,
+      tone: 'blue',
+      progress: 0,
+      onDetails: () => navigate('/customers/weekly'),
+    },
+    {
+      title: 'Monthly Target',
+      value: `${formatCurrency(monthlyTarget.amount)} / ${monthlyTarget.customerCount}`,
+      note: `${monthlyTarget.customerCount} monthly customers`,
+      icon: WalletCards,
+      tone: 'blue',
+      progress: 0,
+      onDetails: () => navigate('/customers/monthly'),
     },
   ];
 
@@ -131,6 +176,12 @@ export default function Dashboard() {
         <h2 id="stats-business-heading" className="stats-section-title">Business Overview</h2>
         <div className="stats-grid">
           {dashboardStatsBusiness.map((stat) => <StatCard key={stat.title} {...stat} />)}
+        </div>
+      </section>
+      <section className="stats-section" aria-labelledby="stats-collection-target-heading">
+        <h2 id="stats-collection-target-heading" className="stats-section-title">Collection Target</h2>
+        <div className="stats-grid">
+          {dashboardStatsTarget.map((stat) => <StatCard key={stat.title} {...stat} />)}
         </div>
       </section>
       <section className="dashboard-middle"><CollectionTable /><CollectionSummary /></section>

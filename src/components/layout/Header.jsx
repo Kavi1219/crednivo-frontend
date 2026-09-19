@@ -21,7 +21,7 @@ function getGreeting() {
 }
 
 function getHeaderIdentity(pathname) {
-  if (pathname.startsWith('/overview')) return { title: 'Overview', isOverview: true };
+  if (pathname.startsWith('/overview')) return { title: 'Home', isOverview: true };
   return { title: 'Business Workspace', isOverview: false };
 }
 
