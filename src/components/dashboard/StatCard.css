@@ -1,15 +1,16 @@
 .stat-card {
   position: relative;
   min-width: 0;
-  min-height: 136px;
+  min-height: 104px;
   width: 100%;
-  padding: 14px 14px 12px;
+  padding: 12px 12px 10px;
   display: flex;
   flex-direction: column;
   text-align: left;
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
+  border: 1px solid transparent;
   transition: transform .15s ease, box-shadow .15s ease;
 }
 .stat-card:not(:disabled):hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
@@ -17,50 +18,51 @@
 .stat-card:disabled { opacity: .6; cursor: not-allowed; }
 .stat-chevron {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   opacity: .55;
 }
 .stat-main {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr);
   align-items: start;
-  gap: 11px;
+  gap: 9px;
 }
 .stat-icon {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   padding: 0;
   line-height: 0;
   border-radius: 50%;
   color: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .14);
 }
-.stat-icon svg { display: block; margin: 0; width: 22px; height: 22px; }
+.stat-icon svg { display: block; margin: 0; width: 18px; height: 18px; }
 .stat-copy {
   min-width: 0;
   display: grid;
-  grid-template-rows: 20px auto 18px;
+  grid-template-rows: 18px auto 16px;
   align-content: start;
 }
 .stat-copy p {
   min-width: 0;
-  margin: 2px 0 0;
+  margin: 1px 0 0;
   display: flex;
   align-items: flex-start;
   color: var(--ink-600);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: normal;
   overflow-wrap: anywhere;
 }
 .stat-copy strong {
   display: block;
   align-self: start;
-  margin-top: 1px;
-  font-size: 17px;
+  margin-top: 0;
+  font-size: 16px;
   line-height: 1.1;
   letter-spacing: -.03em;
   white-space: nowrap;
@@ -71,8 +73,8 @@
   display: block;
   align-self: end;
   color: var(--ink-500);
-  font-size: 9.5px;
-  line-height: 1.25;
+  font-size: 9px;
+  line-height: 1.2;
   white-space: normal;
   overflow-wrap: anywhere;
   opacity: .85;
@@ -92,39 +94,41 @@
 }
 .stat-progress.is-empty span { width: 0 !important; }
 
-/* Each tone tints the whole card (not just the icon), using the app's
-   existing color tokens so dark mode keeps working automatically. */
-.stat-card.stat-blue { background: var(--blue-100); }
+/* Each tone tints the whole card (not just the icon) and gets a matching
+   border for more visual presence — boosted with color-mix() scoped only
+   to this component, so the shared --*-soft tokens used elsewhere in the
+   app stay untouched. */
+.stat-card.stat-blue { background: color-mix(in srgb, var(--blue-100) 65%, var(--blue-600) 10%); border-color: color-mix(in srgb, var(--blue-600) 28%, transparent); }
 .stat-card.stat-blue .stat-icon { background: var(--blue-600); }
 .stat-card.stat-blue .stat-copy p, .stat-card.stat-blue .stat-copy small { color: #185fa5; }
 .stat-card.stat-blue .stat-progress span { background: var(--blue-600); }
 
-.stat-card.stat-green { background: var(--success-soft); }
+.stat-card.stat-green { background: color-mix(in srgb, var(--success-soft) 65%, var(--success) 10%); border-color: color-mix(in srgb, var(--success) 28%, transparent); }
 .stat-card.stat-green .stat-icon { background: var(--success); }
 .stat-card.stat-green .stat-copy p, .stat-card.stat-green .stat-copy small { color: #1f7a3d; }
 .stat-card.stat-green .stat-progress span { background: var(--success); }
 
-.stat-card.stat-pink { background: var(--pink-soft); }
+.stat-card.stat-pink { background: color-mix(in srgb, var(--pink-soft) 65%, var(--pink) 10%); border-color: color-mix(in srgb, var(--pink) 28%, transparent); }
 .stat-card.stat-pink .stat-icon { background: var(--pink); }
 .stat-card.stat-pink .stat-copy p, .stat-card.stat-pink .stat-copy small { color: #a23a5d; }
 .stat-card.stat-pink .stat-progress span { background: var(--pink); }
 
-.stat-card.stat-danger { background: var(--danger-soft); }
+.stat-card.stat-danger { background: color-mix(in srgb, var(--danger-soft) 65%, var(--danger) 10%); border-color: color-mix(in srgb, var(--danger) 28%, transparent); }
 .stat-card.stat-danger .stat-icon { background: var(--danger); }
 .stat-card.stat-danger .stat-copy p, .stat-card.stat-danger .stat-copy small { color: #b3323d; }
 .stat-card.stat-danger .stat-progress span { background: var(--danger); }
 
-.stat-card.stat-cyan { background: var(--cyan-soft); }
+.stat-card.stat-cyan { background: color-mix(in srgb, var(--cyan-soft) 65%, var(--cyan) 10%); border-color: color-mix(in srgb, var(--cyan) 28%, transparent); }
 .stat-card.stat-cyan .stat-icon { background: var(--cyan); }
 .stat-card.stat-cyan .stat-copy p, .stat-card.stat-cyan .stat-copy small { color: #0f6f96; }
 .stat-card.stat-cyan .stat-progress span { background: var(--cyan); }
 
-.stat-card.stat-orange { background: var(--warning-soft); }
+.stat-card.stat-orange { background: color-mix(in srgb, var(--warning-soft) 65%, var(--warning) 10%); border-color: color-mix(in srgb, var(--warning) 28%, transparent); }
 .stat-card.stat-orange .stat-icon { background: var(--warning); }
 .stat-card.stat-orange .stat-copy p, .stat-card.stat-orange .stat-copy small { color: #a2531f; }
 .stat-card.stat-orange .stat-progress span { background: var(--warning); }
 
-.stat-card.stat-purple { background: var(--purple-soft); }
+.stat-card.stat-purple { background: color-mix(in srgb, var(--purple-soft) 65%, var(--purple) 10%); border-color: color-mix(in srgb, var(--purple) 28%, transparent); }
 .stat-card.stat-purple .stat-icon { background: var(--purple); }
 .stat-card.stat-purple .stat-copy p, .stat-card.stat-purple .stat-copy small { color: #4d2fa0; }
 .stat-card.stat-purple .stat-progress span { background: var(--purple); }
@@ -141,14 +145,14 @@ html[data-theme='dark'] .stat-card.stat-orange .stat-copy p, html[data-theme='da
 html[data-theme='dark'] .stat-card.stat-purple .stat-copy p, html[data-theme='dark'] .stat-card.stat-purple .stat-copy small { color: #c3b0f7; }
 
 @media (max-width: 767px) {
-  .stat-card { min-height: 108px; padding: 11px 11px 10px; border-radius: 14px; }
-  .stat-chevron { top: 9px; right: 9px; }
-  .stat-main { grid-template-columns: 34px minmax(0, 1fr); gap: 8px; }
-  .stat-icon { width: 34px; height: 34px; }
-  .stat-icon svg { width: 17px; height: 17px; }
-  .stat-copy { grid-template-rows: 16px auto 14px; }
-  .stat-copy p { margin-top: 0; font-size: 8.5px; line-height: 1.15; }
-  .stat-copy strong { font-size: 13px; }
-  .stat-copy small { font-size: 7.5px; line-height: 1.15; }
+  .stat-card { min-height: 92px; padding: 10px 10px 9px; border-radius: 14px; }
+  .stat-chevron { top: 8px; right: 8px; }
+  .stat-main { grid-template-columns: 30px minmax(0, 1fr); gap: 7px; }
+  .stat-icon { width: 30px; height: 30px; }
+  .stat-icon svg { width: 15px; height: 15px; }
+  .stat-copy { grid-template-rows: 15px auto 13px; }
+  .stat-copy p { margin-top: 0; font-size: 8px; line-height: 1.15; }
+  .stat-copy strong { font-size: 12px; }
+  .stat-copy small { font-size: 7px; line-height: 1.15; }
   .stat-progress { margin-bottom: 0; height: 3px; }
 }
