@@ -1,5 +1,12 @@
-.collection-metric-strip { grid-template-columns:repeat(5,minmax(0,1fr)); }
-.collection-entry-split small { display:block; margin-top:3px; color:var(--ink-500); font-size:8px; }
+.stats-section { display: grid; gap: 10px; margin-bottom: 20px; }
+.stats-section-title { margin: 0; font-size: 13px; font-weight: 800; color: var(--ink-950); letter-spacing: -.01em; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 11px; }
+
+@media (max-width: 1350px) { .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 980px) { .stats-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 767px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; } }
+
+
 
 .collection-toolbar { align-items:center; }
 .collection-filter-menu { position:relative; flex:0 0 auto; }
