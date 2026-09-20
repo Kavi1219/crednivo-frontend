@@ -36,6 +36,45 @@
 .settings-note strong, .settings-note span { display: block; }
 .settings-note strong { color: var(--ink-900); font-size: 10px; }
 .settings-note span { margin-top: 3px; font-size: 9px; line-height: 1.45; }
+.settings-note-success { background: var(--success-soft); color: #1f7a3d; }
+.settings-note-success svg { color: var(--success); }
+.settings-note-error { background: var(--danger-soft); color: #b3323d; }
+.settings-note-error svg { color: var(--danger); }
+
+.settings-subtext { margin: 6px 0 14px; font-size: 11px; line-height: 1.5; color: var(--ink-600); max-width: 520px; }
+
+.settings-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  max-width: 640px;
+}
+.settings-form-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 10.5px; font-weight: 700; color: var(--ink-700); }
+.settings-form-grid input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-950);
+  font-size: 12.5px;
+}
+.settings-form-grid input:focus { outline: none; border-color: var(--blue-600); box-shadow: 0 0 0 3px rgba(20,119,242,.12); }
+
+.settings-primary-btn {
+  align-self: end;
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.settings-primary-btn:disabled { opacity: .6; cursor: not-allowed; }
+.settings-primary-btn:not(:disabled):hover { filter: brightness(1.05); }
 
 @media (max-width: 767px) {
   .settings-shell { flex-direction: column; }

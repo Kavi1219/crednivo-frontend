@@ -6,6 +6,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { isNativeCrednivoApp, readPinRecord, savePinRecord, deletePinRecord } from '../../services/nativeAppLock';
 import { isPushSupported, getPushPermission, getCurrentSubscription, enableWebPush, disableWebPush } from '../../services/push';
+import { apiRequest } from '../../services/api';
 import './Settings.css';
 
 const themeOptions = [
@@ -30,6 +31,30 @@ export default function Settings() {
   const { user, isOwner } = useAuth();
   const [activeTab, setActiveTab] = useState('appearance');
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+
+  const [coOwnerForm, setCoOwnerForm] = useState({ ownerName: '', ownerMobile: '', email: '', username: '', password: '' });
+  const [coOwnerBusy, setCoOwnerBusy] = useState(false);
+  const [coOwnerMessage, setCoOwnerMessage] = useState('');
+  const [coOwnerError, setCoOwnerError] = useState('');
+
+  const submitCoOwner = async (event) => {
+    event.preventDefault();
+    setCoOwnerBusy(true);
+    setCoOwnerError('');
+    setCoOwnerMessage('');
+    try {
+      const result = await apiRequest('/auth/add-owner', {
+        method: 'POST',
+        body: JSON.stringify(coOwnerForm),
+      });
+      setCoOwnerMessage(result?.message || 'Co-owner account created.');
+      setCoOwnerForm({ ownerName: '', ownerMobile: '', email: '', username: '', password: '' });
+    } catch (err) {
+      setCoOwnerError(err?.message || 'Could not create the account.');
+    } finally {
+      setCoOwnerBusy(false);
+    }
+  };
 
   const native = isNativeCrednivoApp();
   const [lockRecord, setLockRecord] = useState(null);
@@ -194,6 +219,64 @@ export default function Settings() {
                     : 'Theme, language and your own password stay available even when business permissions are restricted by the Owner.'}</span>
                 </div>
               </div>
+
+              {isOwner && (
+                <>
+                  <h2 className="settings-content-title" style={{ marginTop: 24 }}>Add Co-Owner / MD</h2>
+                  <p className="settings-subtext">
+                    Give another person full Owner-level access to this same company. They'll be able to do
+                    everything you can — there's no hierarchy between Owner accounts on the same company.
+                  </p>
+                  <form className="settings-form-grid" onSubmit={submitCoOwner}>
+                    <label>
+                      <span>Owner / MD Name</span>
+                      <input
+                        value={coOwnerForm.ownerName}
+                        onChange={(e) => setCoOwnerForm((f) => ({ ...f, ownerName: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span>Mobile</span>
+                      <input
+                        value={coOwnerForm.ownerMobile}
+                        onChange={(e) => setCoOwnerForm((f) => ({ ...f, ownerMobile: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span>Email (optional)</span>
+                      <input
+                        type="email"
+                        value={coOwnerForm.email}
+                        onChange={(e) => setCoOwnerForm((f) => ({ ...f, email: e.target.value }))}
+                      />
+                    </label>
+                    <label>
+                      <span>Username</span>
+                      <input
+                        value={coOwnerForm.username}
+                        onChange={(e) => setCoOwnerForm((f) => ({ ...f, username: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span>Password</span>
+                      <input
+                        type="password"
+                        value={coOwnerForm.password}
+                        onChange={(e) => setCoOwnerForm((f) => ({ ...f, password: e.target.value }))}
+                        required
+                      />
+                    </label>
+                    <button type="submit" className="settings-primary-btn" disabled={coOwnerBusy}>
+                      {coOwnerBusy ? 'Adding…' : 'Add Co-Owner'}
+                    </button>
+                  </form>
+                  {coOwnerMessage && <div className="settings-note settings-note-success">{coOwnerMessage}</div>}
+                  {coOwnerError && <div className="settings-note settings-note-error">{coOwnerError}</div>}
+                </>
+              )}
             </>
           )}
           {activeTab === 'security' && (
