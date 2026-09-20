@@ -5,54 +5,33 @@ function numberValue(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-// How many days one fine-rate period covers, by the loan's own cycle. A
-// Weekly loan's fineAmount is "per week" (÷7); a Monthly loan's is "per
-// month" (÷30, a flat approximation, not the exact days in that calendar
-// month); a Daily loan's fineAmount already IS the per-day amount (÷1).
-function cycleDays(loan) {
-  const cycle = String(loan?.cycle || '').trim().toLowerCase();
-  if (cycle === 'weekly') return 7;
-  if (cycle === 'monthly') return 30;
-  return 1;
-}
-
-function daysLate(dueDate, today) {
-  const due = new Date(`${dueDate}T00:00:00`);
-  const now = new Date(`${today}T00:00:00`);
-  if (Number.isNaN(due.getTime()) || Number.isNaN(now.getTime())) return 0;
-  return Math.floor((now - due) / 86400000);
-}
-
 /**
- * Fine currently owed for ONE overdue due date: number of days late ×
- * (loan.fineAmount ÷ the loan's cycle length). No grace period — counts
- * from day 1 late. No cap — keeps growing the longer it's unpaid.
+ * How many of this loan's installments are currently unpaid and due (date
+ * has arrived, balance still > 0) — each one counts as one missed period,
+ * regardless of how many days late it's been.
  */
-export function calculateFineForDue(loan, dueDate, today = toInputDate()) {
-  if (!loan?.fineEnabled) return 0;
-  const cycleRate = numberValue(loan.fineAmount);
-  if (cycleRate <= 0 || !dueDate) return 0;
-
-  const late = daysLate(dueDate, today);
-  if (late < 1) return 0;
-
-  const dailyRate = cycleRate / cycleDays(loan);
-  return Math.round(late * dailyRate * 100) / 100;
+function pendingDueCount(collectionEntries, today) {
+  return (collectionEntries || []).filter((item) => {
+    const dueDate = String(item.date || '').slice(0, 10);
+    if (!dueDate || dueDate > today) return false;
+    const balance = Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount));
+    return balance > 0;
+  }).length;
 }
 
 /**
- * Total fine currently accrued across every unpaid, overdue collection
- * entry for one loan (a customer can be late on more than one due at once).
+ * Total fine accrued for one loan: a flat fineAmount charged for EACH
+ * currently-pending due period — not based on days late, not based on the
+ * due's own balance. E.g. fineAmount=500, 4 pending dues (4 months behind)
+ * -> 500 x 4 = 2000. A due that's only slightly late still counts as one
+ * full missed period, the same as one that's very late.
  */
 export function calculateLoanAccruedFine(loan, collectionEntries, today = toInputDate()) {
   if (!loan?.fineEnabled) return 0;
-  return (collectionEntries || []).reduce((sum, item) => {
-    const balance = Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount));
-    if (balance <= 0) return sum;
-    const dueDate = String(item.date || '').slice(0, 10);
-    if (!dueDate || dueDate > today) return sum;
-    return sum + calculateFineForDue(loan, dueDate, today);
-  }, 0);
+  const fineRate = numberValue(loan.fineAmount);
+  if (fineRate <= 0) return 0;
+  const count = pendingDueCount(collectionEntries, today);
+  return Math.round(fineRate * count * 100) / 100;
 }
 
 /** Sum of fine amounts already recorded as paid against a set of payments. */
@@ -61,8 +40,8 @@ export function sumFinePaid(paymentsForLoan) {
 }
 
 /**
- * Net fine still pending for one loan: what's accrued, minus what's
- * already been paid toward it. Never negative.
+ * Net fine still pending for one loan: what's accrued (flat rate x missed
+ * periods), minus what's already been paid toward it. Never negative.
  */
 export function calculateLoanPendingFine(loan, collectionEntries, paymentsForLoan, today = toInputDate()) {
   const accrued = calculateLoanAccruedFine(loan, collectionEntries, today);
