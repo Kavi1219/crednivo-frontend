@@ -5,10 +5,6 @@ function numberValue(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-// Uniform across Daily / Weekly / Monthly loans: 3 full days of grace after
-// the due date before any fine is shown, then it climbs daily from there.
-const GRACE_DAYS = 3;
-
 // How many days one fine-rate period covers, by the loan's own cycle. A
 // Weekly loan's fineAmount is "per week" (÷7); a Monthly loan's is "per
 // month" (÷30, a flat approximation, not the exact days in that calendar
@@ -28,12 +24,9 @@ function daysLate(dueDate, today) {
 }
 
 /**
- * Fine currently owed for ONE overdue due date, given a loan's configured
- * fine rate (loan.fineAmount) for one full cycle of that loan (e.g. Rs 1000
- * for a Monthly loan = Rs 1000 per month late). Grace covers days 0-3 past
- * the due date; day 4 first shows 3 days' worth, climbing daily after that
- * — but never past one full cycle's fine amount for that single due, since
- * a due can only ever be "one cycle" fully late before the next one starts.
+ * Fine currently owed for ONE overdue due date: number of days late ×
+ * (loan.fineAmount ÷ the loan's cycle length). No grace period — counts
+ * from day 1 late. No cap — keeps growing the longer it's unpaid.
  */
 export function calculateFineForDue(loan, dueDate, today = toInputDate()) {
   if (!loan?.fineEnabled) return 0;
@@ -41,11 +34,10 @@ export function calculateFineForDue(loan, dueDate, today = toInputDate()) {
   if (cycleRate <= 0 || !dueDate) return 0;
 
   const late = daysLate(dueDate, today);
-  if (late < GRACE_DAYS + 1) return 0;
+  if (late < 1) return 0;
 
   const dailyRate = cycleRate / cycleDays(loan);
-  const accrued = (late - 1) * dailyRate;
-  return Math.round(Math.min(accrued, cycleRate) * 100) / 100;
+  return Math.round(late * dailyRate * 100) / 100;
 }
 
 /**
