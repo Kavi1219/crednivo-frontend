@@ -765,27 +765,27 @@ export default function Collection() {
         <div className="stats-grid">
           <StatCard
             title="Daily Target"
-            value={`${formatCurrency(cycleTargets.daily.amount)} / ${cycleTargets.daily.customerCount}`}
-            note={`${cycleTargets.daily.customerCount} daily customers`}
+            value={formatCurrency(cycleTargets.daily.amount)}
+            note={`${cycleTargets.daily.customerCount} ${cycleTargets.daily.customerCount === 1 ? 'daily customer' : 'daily customers'}`}
             icon={IndianRupee}
             tone="blue"
-            progress={0}
+            showProgress={false}
           />
           <StatCard
             title="Weekly Target"
-            value={`${formatCurrency(cycleTargets.weekly.amount)} / ${cycleTargets.weekly.customerCount}`}
-            note={`${cycleTargets.weekly.customerCount} weekly customers`}
+            value={formatCurrency(cycleTargets.weekly.amount)}
+            note={`${cycleTargets.weekly.customerCount} ${cycleTargets.weekly.customerCount === 1 ? 'weekly customer' : 'weekly customers'}`}
             icon={IndianRupee}
             tone="blue"
-            progress={0}
+            showProgress={false}
           />
           <StatCard
             title="Monthly Target"
-            value={`${formatCurrency(cycleTargets.monthly.amount)} / ${cycleTargets.monthly.customerCount}`}
-            note={`${cycleTargets.monthly.customerCount} monthly customers`}
+            value={formatCurrency(cycleTargets.monthly.amount)}
+            note={`${cycleTargets.monthly.customerCount} ${cycleTargets.monthly.customerCount === 1 ? 'monthly customer' : 'monthly customers'}`}
             icon={IndianRupee}
             tone="blue"
-            progress={0}
+            showProgress={false}
           />
         </div>
       </section>
@@ -799,7 +799,7 @@ export default function Collection() {
             note="Daily×7 + Weekly + Monthly dues falling this week"
             icon={CalendarDays}
             tone="blue"
-            progress={0}
+            showProgress={false}
           />
           <StatCard
             title="Achievement"
@@ -815,7 +815,7 @@ export default function Collection() {
             note="Still owed for this week"
             icon={TriangleAlert}
             tone="orange"
-            progress={0}
+            showProgress={false}
           />
         </div>
       </section>
@@ -825,27 +825,27 @@ export default function Collection() {
         <div className="stats-grid">
           <StatCard
             title="Today's Target"
-            value={`${formatCurrency(todayExpected)} / ${todayTargetCustomers}`}
-            note={`${todayTargetCustomers} customers due today`}
+            value={formatCurrency(todayExpected)}
+            note={`${todayTargetCustomers} ${todayTargetCustomers === 1 ? 'customer' : 'customers'} due today`}
             icon={IndianRupee}
             tone="blue"
-            progress={0}
+            showProgress={false}
           />
           <StatCard
             title="Achieved"
-            value={`${formatCurrency(todayAchievedAmount)} / ${todayAchievedCustomers}`}
-            note={`${todayAchievedCustomers} customers paid`}
+            value={formatCurrency(todayAchievedAmount)}
+            note={`${todayAchievedCustomers} ${todayAchievedCustomers === 1 ? 'customer' : 'customers'} paid`}
             icon={HandCoins}
             tone="green"
             progress={todayExpected > 0 ? (todayAchievedAmount / todayExpected) * 100 : 0}
           />
           <StatCard
             title="Pending"
-            value={`${formatCurrency(todayPending)} / ${todayPendingCustomers}`}
-            note={`${todayPendingCustomers} customers pending`}
+            value={formatCurrency(todayPending)}
+            note={`${todayPendingCustomers} ${todayPendingCustomers === 1 ? 'customer' : 'customers'} pending`}
             icon={TriangleAlert}
             tone="orange"
-            progress={0}
+            showProgress={false}
           />
         </div>
       </section>
