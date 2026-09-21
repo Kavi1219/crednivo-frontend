@@ -2,18 +2,68 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 600;
+  min-height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
-.status-due-today { color: #11843a; background: #e4f7e9; }
-.status-paid { color: #0c8133; background: #dbf4e2; }
-.status-overdue { color: #d42c37; background: #ffe4e7; }
 
-.status-pending { color: #c56a18; background: #fff0df; }
-.status-unpaid { color:#b65c15; background:#fff0df; }
+.status-due-today {
+  color: #11843a;
+  background: #e4f7e9;
+  border-color: #bfe8ca;
+}
 
-.status-partial { color:#1b63c9; background:#e7f0ff; }
+.status-paid {
+  color: #0c8133;
+  background: #dbf4e2;
+  border-color: #b9e8c6;
+}
+
+.status-overdue {
+  color: #d42c37;
+  background: #ffe4e7;
+  border-color: #ffc5cb;
+}
+
+.status-pending,
+.status-unpaid {
+  color: #c56a18;
+  background: #fff0df;
+  border-color: #ffd7b0;
+}
+
+.status-partial {
+  color: #1b63c9;
+  background: #e7f0ff;
+  border-color: #c5d9ff;
+}
+
+.status-very-good {
+  color: #0d7a43;
+  background: #e2f7ea;
+  border-color: #b9e5c8;
+}
+
+.status-good {
+  color: #1f63d8;
+  background: #e8f1ff;
+  border-color: #c7d9ff;
+}
+
+.status-normal {
+  color: #9a6700;
+  background: #fff4d6;
+  border-color: #ffe2a8;
+}
+
+.status-risky {
+  color: #c43d33;
+  background: #ffe7e3;
+  border-color: #ffc7c0;
+}
