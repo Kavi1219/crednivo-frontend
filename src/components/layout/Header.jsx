@@ -6,6 +6,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatIndianMobile } from '../../utils/finance';
 import IconButton from '../common/IconButton';
+import CustomerAvatar from '../common/CustomerAvatar';
 import CrednivoMark from '../brand/CrednivoMark';
 import CompanyProfileModal from './CompanyProfileModal';
 import ChangePasswordModal from './ChangePasswordModal';
@@ -166,7 +167,7 @@ export default function Header({ onOpenMenu }) {
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const desktopProfileRef = useRef(null);
   const mobileProfileRef = useRef(null);
-  const { company } = useCrednivo();
+  const { company, customers } = useCrednivo();
   const { user, isOwner, logout, accounts, activeAccountId, switchAccount } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -175,6 +176,25 @@ export default function Header({ onOpenMenu }) {
   const { title, isOverview } = headerIdentity;
   const avatar = user?.profilePhoto || company.logo;
   const profileInitial = String(user?.displayName || company.name || 'C').charAt(0);
+  const searchWrapRef = useRef(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const searchResults = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return (customers || [])
+      .filter((c) => `${c.name} ${c.id} ${c.mobile}`.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [customers, search]);
+
+  useEffect(() => {
+    if (!searchOpen) return undefined;
+    const handleOutsidePress = (event) => {
+      if (!searchWrapRef.current?.contains(event.target)) setSearchOpen(false);
+    };
+    document.addEventListener('pointerdown', handleOutsidePress);
+    return () => document.removeEventListener('pointerdown', handleOutsidePress);
+  }, [searchOpen]);
 
   useEffect(() => {
     if (!profileOpen) return undefined;
@@ -193,8 +213,15 @@ export default function Header({ onOpenMenu }) {
 
   const submitSearch = (event) => {
     event.preventDefault();
-    if (!search.trim()) return;
-    navigate(`/customers?search=${encodeURIComponent(search.trim())}`);
+    if (searchResults.length) {
+      openSearchResult(searchResults[0].id);
+    }
+  };
+
+  const openSearchResult = (customerId) => {
+    setSearch('');
+    setSearchOpen(false);
+    navigate(`/customers/${customerId}`);
   };
 
   const signOut = async () => { setProfileOpen(false); await logout(); navigate('/login', { replace: true }); };
@@ -219,7 +246,34 @@ export default function Header({ onOpenMenu }) {
       </div>
 
       <div className="header-actions">
-        <form className="search-box" onSubmit={submitSearch}><Search size={17} /><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search customers, loans..." aria-label="Search customers and loans" /><Search size={17} className="search-end" /></form>
+        <div className="search-box-wrap" ref={searchWrapRef}>
+          <form className="search-box" onSubmit={submitSearch}>
+            <Search size={17} />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)}
+              placeholder="Search customers, loans..."
+              aria-label="Search customers and loans"
+            />
+            <Search size={17} className="search-end" />
+          </form>
+          {searchOpen && search.trim() && (
+            searchResults.length ? (
+              <div className="search-results-dropdown">
+                {searchResults.map((c) => (
+                  <button key={c.id} type="button" className="search-result-row" onClick={() => openSearchResult(c.id)}>
+                    <CustomerAvatar photo={c.photo} name={c.name} />
+                    <div className="search-result-identity"><strong>{c.name}</strong><span>{c.id} · {c.mobile}</span></div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="search-results-dropdown search-results-empty">No customers match "{search.trim()}".</div>
+            )
+          )}
+        </div>
         <NotificationBell />
         <div className="profile-menu-wrap" ref={desktopProfileRef}>
           <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <img src={avatar} alt="" /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
