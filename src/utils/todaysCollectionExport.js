@@ -172,7 +172,7 @@ export async function exportTodayCollectionPdf({
           safeText(row.customerName),
           customerPhone(row, phoneById),
           amountFor(row),
-          safeText(row.status, 'Due Today'),
+          '',
         ]);
       });
     }
@@ -193,7 +193,7 @@ export async function exportTodayCollectionPdf({
 
   autoTable(doc, {
     startY: doc.lastAutoTable.finalY + 5,
-    head: [['Customer ID', 'Customer Name', 'Phone Number', 'Amount to Collect', 'Status']],
+    head: [['Customer ID', 'Customer Name', 'Phone Number', 'Amount to Collect', 'Remarks']],
     body: tableBody,
     margin: { top: 36, bottom: 27, left: margin, right: margin },
     theme: 'grid',
@@ -298,7 +298,7 @@ export async function exportTodayCollectionXlsx({
   setCell(ws, row, 1, safeText(createdBy, 'Admin'));
   row += 2;
 
-  const headers = ['Customer ID', 'Customer Name', 'Phone Number', 'Amount to Collect', 'Status'];
+  const headers = ['Customer ID', 'Customer Name', 'Phone Number', 'Amount to Collect', 'Remarks'];
   headers.forEach((header, c) => setCell(ws, row, c, header, {
     font: { bold: true, color: { rgb: 'FFFFFF' } },
     fill: { patternType: 'solid', fgColor: { rgb: '0F5494' } },
@@ -340,7 +340,7 @@ export async function exportTodayCollectionXlsx({
           safeText(dataRow.customerName),
           customerPhone(dataRow, phoneById),
           amountFor(dataRow),
-          safeText(dataRow.status, 'Due Today'),
+          '',
         ];
         vals.forEach((value, c) => {
           const currency = c === 3;
