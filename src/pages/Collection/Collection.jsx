@@ -1,4 +1,4 @@
-import { CalendarDays, Filter, HandCoins, IndianRupee, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
+import { CalendarDays, ChevronDown, Filter, HandCoins, IndianRupee, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -193,9 +193,9 @@ export default function Collection() {
   const [cycle, setCycle] = useState(initialCycle);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [amountFilter, setAmountFilter] = useState('');
-  const [amountCompare, setAmountCompare] = useState('Above');
+  const [amountCompare, setAmountCompare] = useState('Any');
   const [dueFilter, setDueFilter] = useState('');
-  const [dueCompare, setDueCompare] = useState('Above');
+  const [dueCompare, setDueCompare] = useState('Any');
   const [search, setSearch] = useState(initialSearch);
   const searchInputRef = useRef(null);
 
@@ -214,6 +214,7 @@ export default function Collection() {
   const [paymentDate, setPaymentDate] = useState(() => toInputDate());
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [openFilterSection, setOpenFilterSection] = useState(null);
   const [rescheduling, setRescheduling] = useState(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
@@ -257,9 +258,9 @@ export default function Collection() {
     setCycle('All');
     setStatusFilter('All');
     setAmountFilter('');
-    setAmountCompare('Above');
+    setAmountCompare('Any');
     setDueFilter('');
-    setDueCompare('Above');
+    setDueCompare('Any');
     const next = new URLSearchParams(searchParams);
     next.delete('cycle');
     next.delete('status');
@@ -319,6 +320,27 @@ export default function Collection() {
   // Section 4: how many currently-unpaid dues each customer has right now,
   // used to sort them into Very Good / Good / Normal / Risky.
   const pendingDueCounts = useMemo(() => calculatePendingDueCounts(collections, today), [collections, today]);
+
+  // Customer pending summary used by the list + filters.
+  // pendingAmount = total unpaid balance from all due/overdue installments.
+  // pendingDueCount = number of those unpaid installments.
+  const pendingSummaryByCustomer = useMemo(() => {
+    const summary = new Map();
+    (collections || []).forEach((item) => {
+      if (String(item.status || '').toLowerCase() === 'cancelled') return;
+      const dueDate = String(item.date || '').slice(0, 10);
+      if (!dueDate || dueDate > today) return;
+      const balance = balanceOf(item);
+      if (balance <= 0) return;
+      const key = String(item.customerId || '');
+      if (!key) return;
+      const current = summary.get(key) || { amount: 0, count: 0 };
+      current.amount += balance;
+      current.count += 1;
+      summary.set(key, current);
+    });
+    return summary;
+  }, [collections, today]);
 
   const customerPhotoById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
@@ -421,7 +443,7 @@ export default function Collection() {
     return activeCollections;
   }, [collectionView, todayCollections, overdueCollections, upcomingCollections, activeCollections]);
 
-  const activeFilterCount = Number(cycle !== 'All') + Number(statusFilter !== 'All') + Number(Boolean(amountFilter)) + Number(Boolean(dueFilter));
+  const activeFilterCount = Number(cycle !== 'All') + Number(statusFilter !== 'All') + Number(Boolean(amountFilter) && amountCompare !== 'Any') + Number(Boolean(dueFilter) && dueCompare !== 'Any');
 
   const filtered = useMemo(() => viewRows.filter((item) => {
     const q = search.toLowerCase().trim();
@@ -493,15 +515,21 @@ export default function Collection() {
     return Array.from(grouped.values())
       .map((item) => {
         const outstanding = Number(item.outstanding || 0);
-        const due = Number(item.dueAmount || 0);
+        const pendingSummary = pendingSummaryByCustomer.get(String(item.customerId || '')) || { amount: 0, count: 0 };
+        const pendingAmount = Number(pendingSummary.amount || 0);
+        const pendingDueCount = Number(pendingSummary.count || 0);
         const amountLimit = Number(amountFilter || 0);
         const dueLimit = Number(dueFilter || 0);
-        const matchesAmount = !amountFilter || (amountCompare === 'Above' ? outstanding >= amountLimit : outstanding <= amountLimit);
-        const matchesDue = !dueFilter || (dueCompare === 'Above' ? due >= dueLimit : due <= dueLimit);
+        const matchesAmount = !amountFilter || amountCompare === 'Any'
+          || (amountCompare === 'Less' ? pendingAmount < amountLimit : pendingAmount > amountLimit);
+        const matchesDue = !dueFilter || dueCompare === 'Any'
+          || (dueCompare === 'Less' ? pendingDueCount < dueLimit : pendingDueCount > dueLimit);
         return {
           ...item,
           cycle: Array.from(item.cycles).join(', '),
           outstanding,
+          pendingAmount,
+          pendingDueCount,
           riskTier: getRiskTier(pendingDueCounts.get(String(item.customerId || '')) || 0),
           matchesAmount,
           matchesDue,
@@ -509,7 +537,7 @@ export default function Collection() {
       })
       .filter((item) => item.matchesAmount && item.matchesDue)
       .sort((a, b) => String(a.customerName || '').localeCompare(String(b.customerName || '')));
-  }, [filtered, loans, today, amountFilter, amountCompare, dueFilter, dueCompare, pendingDueCounts]);
+  }, [filtered, loans, today, amountFilter, amountCompare, dueFilter, dueCompare, pendingDueCounts, pendingSummaryByCustomer]);
 
   const scheduleRows = useMemo(() => {
     if (!scheduleLoanId) return [];
@@ -886,60 +914,72 @@ export default function Collection() {
                   </button>
                 </div>
 
-                <div className="collection-filter-section">
-                  <span className="collection-filter-label">Cycle</span>
-                  <div className="collection-filter-options">
-                    {['All', 'Daily', 'Weekly', 'Monthly'].map((item) => (
-                      <button
-                        type="button"
-                        className={`filter-chip ${cycle === item ? 'active' : ''}`}
-                        key={item}
-                        onClick={() => changeCycle(item)}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
+                <div className={`collection-filter-section ${openFilterSection === 'cycle' ? 'open' : ''}`}>
+                  <button type="button" className="collection-filter-section-toggle" onClick={() => setOpenFilterSection((value) => value === 'cycle' ? null : 'cycle')}>
+                    <span>Cycle</span><ChevronDown size={16} />
+                  </button>
+                  {openFilterSection === 'cycle' && (
+                    <div className="collection-filter-section-body">
+                      <div className="collection-filter-options">
+                        {['All', 'Daily', 'Weekly', 'Monthly'].map((item) => (
+                          <button type="button" className={`filter-chip ${cycle === item ? 'active' : ''}`} key={item} onClick={() => changeCycle(item)}>{item}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="collection-filter-section">
-                  <span className="collection-filter-label">Status</span>
-                  <div className="collection-filter-options">
-                    {['All', 'Very Good', 'Good', 'Normal', 'Risky'].map((item) => (
-                      <button
-                        type="button"
-                        className={`filter-chip ${statusFilter === item ? 'active' : ''}`}
-                        key={item}
-                        onClick={() => changeStatus(item)}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
+                <div className={`collection-filter-section ${openFilterSection === 'status' ? 'open' : ''}`}>
+                  <button type="button" className="collection-filter-section-toggle" onClick={() => setOpenFilterSection((value) => value === 'status' ? null : 'status')}>
+                    <span>Status</span><ChevronDown size={16} />
+                  </button>
+                  {openFilterSection === 'status' && (
+                    <div className="collection-filter-section-body">
+                      <div className="collection-filter-options">
+                        {['All', 'Very Good', 'Good', 'Normal', 'Risky'].map((item) => (
+                          <button type="button" className={`filter-chip ${statusFilter === item ? 'active' : ''}`} key={item} onClick={() => changeStatus(item)}>{item}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="collection-filter-section">
-                  <span className="collection-filter-label">Amount (Outstanding)</span>
-                  <div className="collection-number-filter">
-                    <input type="number" min="0" value={amountFilter} onChange={(event) => setAmountFilter(event.target.value)} placeholder="Enter amount" />
-                    {amountFilter && (
-                      <select value={amountCompare} onChange={(event) => setAmountCompare(event.target.value)}>
-                        <option>Above</option><option>Below</option>
-                      </select>
-                    )}
-                  </div>
+                <div className={`collection-filter-section ${openFilterSection === 'amount' ? 'open' : ''}`}>
+                  <button type="button" className="collection-filter-section-toggle" onClick={() => setOpenFilterSection((value) => value === 'amount' ? null : 'amount')}>
+                    <span>Pending Amount</span><ChevronDown size={16} />
+                  </button>
+                  {openFilterSection === 'amount' && (
+                    <div className="collection-filter-section-body">
+                      <label className="collection-filter-input-shell">
+                        <IndianRupee size={15} />
+                        <input type="number" min="0" value={amountFilter} onChange={(event) => setAmountFilter(event.target.value)} placeholder="Enter pending amount" />
+                      </label>
+                      <div className="collection-compare-toggle" role="group" aria-label="Pending amount comparison">
+                        <button type="button" className={amountCompare === 'Less' ? 'active' : ''} onClick={() => setAmountCompare('Less')}><span>&lt;</span><small>Less</small></button>
+                        <button type="button" className={amountCompare === 'Any' ? 'active center' : 'center'} onClick={() => setAmountCompare('Any')}><span>•</span><small>Off</small></button>
+                        <button type="button" className={amountCompare === 'Greater' ? 'active' : ''} onClick={() => setAmountCompare('Greater')}><span>&gt;</span><small>Greater</small></button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="collection-filter-section">
-                  <span className="collection-filter-label">Due</span>
-                  <div className="collection-number-filter">
-                    <input type="number" min="0" value={dueFilter} onChange={(event) => setDueFilter(event.target.value)} placeholder="Enter due amount" />
-                    {dueFilter && (
-                      <select value={dueCompare} onChange={(event) => setDueCompare(event.target.value)}>
-                        <option>Above</option><option>Below</option>
-                      </select>
-                    )}
-                  </div>
+                <div className={`collection-filter-section ${openFilterSection === 'due' ? 'open' : ''}`}>
+                  <button type="button" className="collection-filter-section-toggle" onClick={() => setOpenFilterSection((value) => value === 'due' ? null : 'due')}>
+                    <span>Pending Due</span><ChevronDown size={16} />
+                  </button>
+                  {openFilterSection === 'due' && (
+                    <div className="collection-filter-section-body">
+                      <label className="collection-filter-input-shell due-count">
+                        <span className="collection-filter-input-prefix">#</span>
+                        <input type="number" min="0" step="1" value={dueFilter} onChange={(event) => setDueFilter(event.target.value)} placeholder="Enter pending due count" />
+                      </label>
+                      <div className="collection-compare-toggle" role="group" aria-label="Pending due comparison">
+                        <button type="button" className={dueCompare === 'Less' ? 'active' : ''} onClick={() => setDueCompare('Less')}><span>&lt;</span><small>Less</small></button>
+                        <button type="button" className={dueCompare === 'Any' ? 'active center' : 'center'} onClick={() => setDueCompare('Any')}><span>•</span><small>Off</small></button>
+                        <button type="button" className={dueCompare === 'Greater' ? 'active' : ''} onClick={() => setDueCompare('Greater')}><span>&gt;</span><small>Greater</small></button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="collection-filter-actions">
@@ -975,7 +1015,7 @@ export default function Collection() {
           <table className="module-table">
             <thead>
               <tr>
-                <th>Customer</th><th>Phone Number</th><th>Cycle</th><th>Due Amount</th><th>Outstanding</th><th>Status</th><th>Action</th>
+                <th>Customer</th><th>Phone Number</th><th>Cycle</th><th>Due Amount</th><th>Outstanding</th><th>Pending</th><th>Status</th><th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -998,6 +1038,7 @@ export default function Collection() {
                     <td><span className="soft-chip blue">{item.cycle}</span></td>
                     <td><strong>{formatCurrency(Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)))}</strong></td>
                     <td><strong>{formatCurrency(item.outstanding)}</strong></td>
+                    <td><div className="collection-pending-value"><strong>{formatCurrency(item.pendingAmount)}</strong><span>/ {item.pendingDueCount}</span></div></td>
                     <td><StatusBadge status={item.riskTier} /></td>
                     <td>
                       <div className="collection-row-actions">
@@ -1030,7 +1071,7 @@ export default function Collection() {
                 );
               })}
               {displayRows.length === 0 && (
-                <tr><td colSpan={7}>
+                <tr><td colSpan={8}>
                   <div className="collection-empty-state">
                     <CalendarDays size={22} /><strong>{emptyMessage}</strong><span>Try another view or adjust the filters.</span>
                   </div>
@@ -1062,6 +1103,7 @@ export default function Collection() {
                   <div><span>Cycle</span><strong>{item.cycle}</strong></div>
                   <div><span>Due Amount</span><strong>{formatCurrency(Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)))}</strong></div>
                   <div><span>Outstanding</span><strong>{formatCurrency(item.outstanding)}</strong></div>
+                  <div><span>Pending</span><strong>{formatCurrency(item.pendingAmount)} / {item.pendingDueCount}</strong></div>
                 </div>
                 <div className="collection-mobile-action">
                   {hasPermission('collections.collect') && (
