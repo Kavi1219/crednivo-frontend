@@ -317,6 +317,7 @@ export default function CollectionTable() {
                         <tr>
                           <th>Customer ID</th>
                           <th>Customer Name</th>
+                          <th>Phone Number</th>
                           <th>Amount to Pay</th>
                           <th>Status</th>
                           <th>Action</th>
@@ -331,15 +332,16 @@ export default function CollectionTable() {
                             <tr key={row.id}>
                               <td>{row.customerId}</td>
                               <td><div className="dashboard-customer-cell"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></div></td>
+                              <td>{customerPhoneById[String(row.customerId)] || '—'}</td>
                               <td><strong>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</strong></td>
                               <td><StatusBadge status={row.status} /></td>
                               <td>
                                 <div className="dashboard-collection-actions">
-                                  <button className={`dashboard-pay-button ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed — no additional payment allowed' : `Pay ${row.customerName}`}>
-                                    <HandCoins size={15} /><span>{loanClosed ? 'Closed' : 'Pay'}</span>
-                                  </button>
                                   <button type="button" className="dashboard-reschedule-button" onClick={() => openReschedule(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}>
                                     <CalendarDays size={15} /><span>Reschedule</span>
+                                  </button>
+                                  <button className={`dashboard-pay-button ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed — no additional payment allowed' : `Collect from ${row.customerName}`}>
+                                    <HandCoins size={15} /><span>{loanClosed ? 'Closed' : 'Collect'}</span>
                                   </button>
                                 </div>
                               </td>
@@ -358,11 +360,11 @@ export default function CollectionTable() {
                       return (
                         <article className="mobile-collection-row" key={row.id}>
                           <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
-                          <div className="mobile-row-identity"><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId}</span></div>
+                          <div className="mobile-row-identity"><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId} · {customerPhoneById[String(row.customerId)] || '—'}</span></div>
                           <div className="mobile-row-amount"><b>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b><StatusBadge status={row.status} /></div>
                           <div className="mobile-collection-actions">
-                            <button className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Pay ${row.customerName}`}><HandCoins size={15} /></button>
                             <button type="button" className="dashboard-reschedule-button icon-only" onClick={() => openReschedule(row)} disabled={loanClosed} aria-label={`Reschedule ${row.customerName}`} title="Reschedule"><CalendarDays size={16} /></button>
+                            <button className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} aria-label={loanClosed ? `${row.customerName} loan closed` : `Collect from ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Collect from ${row.customerName}`}><HandCoins size={15} /></button>
                           </div>
                         </article>
                       );
