@@ -43,10 +43,10 @@ export default function Loans() {
     <ModuleHeader eyebrow="Loan Management" title={status === 'All' ? 'All Loans' : `${status} Loans`} description="Track every loan, its cycle, repayment plan, balance and current status." actions={hasPermission('loans.create') ? <ActionButton icon={Plus} onClick={()=>navigate('/loans/create')}>Create Loan</ActionButton> : null} />
     <section className="stats-section">
       <div className="stats-grid">
-        <StatCard title="Total Loans" value={String(statusLoans.length)} note="" icon={WalletCards} tone="blue" showProgress={false} />
-        <StatCard title="Principal" value={formatCurrency(principal)} note="" icon={IndianRupee} tone="cyan" showProgress={false} />
-        <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
-        <StatCard title="Active" value={String(statusLoans.filter(item=>item.status!=='Closed').length)} note="" icon={Activity} tone="green" showProgress={false} />
+        <StatCard title="Total Loans" value={String(statusLoans.length)} note="In this view" icon={WalletCards} tone="blue" showProgress={false} />
+        <StatCard title="Principal" value={formatCurrency(principal)} note="Total disbursed" icon={IndianRupee} tone="cyan" showProgress={false} />
+        <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="Total pending balance" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
+        <StatCard title="Active" value={String(statusLoans.filter(item=>item.status!=='Closed').length)} note="Currently active" icon={Activity} tone="green" showProgress={false} />
       </div>
     </section>
     <section className="module-card">

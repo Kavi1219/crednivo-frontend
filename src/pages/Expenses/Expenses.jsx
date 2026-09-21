@@ -140,8 +140,8 @@ export default function Expenses() {
 
       <section className="stats-section">
         <div className="stats-grid">
-          <StatCard title="Today's Expenses" value={formatCurrency(total)} note="" icon={ReceiptText} tone="pink" showProgress={false} />
-          <StatCard title="Overall Expenses" value={formatCurrency(overall)} note="" icon={ReceiptText} tone="orange" showProgress={false} />
+          <StatCard title="Today's Expenses" value={formatCurrency(total)} note="Recorded today" icon={ReceiptText} tone="pink" showProgress={false} />
+          <StatCard title="Overall Expenses" value={formatCurrency(overall)} note="All-time total" icon={ReceiptText} tone="orange" showProgress={false} />
         </div>
       </section>
 

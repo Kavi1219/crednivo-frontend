@@ -203,10 +203,10 @@ export default function Agents() {
 
       <section className="stats-section">
         <div className="stats-grid">
-          <StatCard title="Total Agents" value={String(agents.length)} note="" icon={UsersRound} tone="blue" showProgress={false} />
-          <StatCard title="Active" value={String(agents.filter((a) => a.status === 'Active').length)} note="" icon={CheckCircle2} tone="green" showProgress={false} />
-          <StatCard title="Pending Approval" value={String(agents.filter((a) => a.status === 'Pending Approval').length)} note="" icon={Clock3} tone="orange" showProgress={false} />
-          <StatCard title="Collected" value={formatCurrency(agents.reduce((sum, agent) => sum + Number(agent.collected || 0), 0))} note="" icon={WalletCards} tone="purple" showProgress={false} />
+          <StatCard title="Total Agents" value={String(agents.length)} note="All registered agents" icon={UsersRound} tone="blue" showProgress={false} />
+          <StatCard title="Active" value={String(agents.filter((a) => a.status === 'Active').length)} note="Currently active" icon={CheckCircle2} tone="green" showProgress={false} />
+          <StatCard title="Pending Approval" value={String(agents.filter((a) => a.status === 'Pending Approval').length)} note="Awaiting owner approval" icon={Clock3} tone="orange" showProgress={false} />
+          <StatCard title="Collected" value={formatCurrency(agents.reduce((sum, agent) => sum + Number(agent.collected || 0), 0))} note="Total by all agents" icon={WalletCards} tone="purple" showProgress={false} />
         </div>
       </section>
 

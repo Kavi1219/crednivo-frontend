@@ -137,10 +137,10 @@ export default function Payments() {
 
       <section className="stats-section">
         <div className="stats-grid">
-          <StatCard title="Total Incoming" value={formatCurrency(incoming)} note="" icon={ArrowDownLeft} tone="green" showProgress={false} />
-          <StatCard title="Total Outgoing" value={formatCurrency(outgoing)} note="" icon={ArrowUpRight} tone="danger" showProgress={false} />
-          <StatCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="" icon={WalletCards} tone="blue" showProgress={false} />
-          <StatCard title="Transactions" value={String(dateFiltered.length)} note="" icon={HandCoins} tone="purple" showProgress={false} />
+          <StatCard title="Total Incoming" value={formatCurrency(incoming)} note="Collections received" icon={ArrowDownLeft} tone="green" showProgress={false} />
+          <StatCard title="Total Outgoing" value={formatCurrency(outgoing)} note="Loans & expenses paid" icon={ArrowUpRight} tone="danger" showProgress={false} />
+          <StatCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="Incoming minus outgoing" icon={WalletCards} tone="blue" showProgress={false} />
+          <StatCard title="Transactions" value={String(dateFiltered.length)} note="In current date range" icon={HandCoins} tone="purple" showProgress={false} />
         </div>
       </section>
 

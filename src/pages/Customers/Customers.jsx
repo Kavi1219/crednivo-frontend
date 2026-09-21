@@ -80,10 +80,10 @@ export default function Customers() {
 
       <section className="stats-section">
         <div className="stats-grid">
-          <StatCard title="Total Customers" value={String(cycleCustomers.length)} note="" icon={UsersRound} tone="blue" showProgress={false} />
-          <StatCard title="Active Customers" value={String(active)} note="" icon={WalletCards} tone="green" showProgress={false} />
-          <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
-          <StatCard title="Cycle" value={cycle} note="" icon={CalendarDays} tone="purple" showProgress={false} />
+          <StatCard title="Total Customers" value={String(cycleCustomers.length)} note="All registered customers" icon={UsersRound} tone="blue" showProgress={false} />
+          <StatCard title="Active Customers" value={String(active)} note="Currently active" icon={WalletCards} tone="green" showProgress={false} />
+          <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="Total pending amount" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
+          <StatCard title="Cycle" value={cycle} note="Selected filter" icon={CalendarDays} tone="purple" showProgress={false} />
         </div>
       </section>
 

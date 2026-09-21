@@ -87,10 +87,10 @@ export default function Documents() {
 
       <section className="stats-section">
         <div className="stats-grid">
-          <StatCard title="Total Documents" value={String(documents.length)} note="" icon={FolderOpen} tone="blue" showProgress={false} />
-          <StatCard title="Customer KYC" value={String(documents.filter((d) => d.type === 'Customer KYC' || d.type === 'Jamin KYC').length)} note="" icon={FileCheck2} tone="green" showProgress={false} />
-          <StatCard title="Loan Agreements" value={String(documents.filter((d) => d.type === 'Loan Agreement').length)} note="" icon={FileText} tone="cyan" showProgress={false} />
-          <StatCard title="Company Docs" value={String(documents.filter((d) => d.type === 'Company').length)} note="" icon={FileText} tone="purple" showProgress={false} />
+          <StatCard title="Total Documents" value={String(documents.length)} note="All uploaded files" icon={FolderOpen} tone="blue" showProgress={false} />
+          <StatCard title="Customer KYC" value={String(documents.filter((d) => d.type === 'Customer KYC' || d.type === 'Jamin KYC').length)} note="Customer & Jamin KYC" icon={FileCheck2} tone="green" showProgress={false} />
+          <StatCard title="Loan Agreements" value={String(documents.filter((d) => d.type === 'Loan Agreement').length)} note="Signed agreements" icon={FileText} tone="cyan" showProgress={false} />
+          <StatCard title="Company Docs" value={String(documents.filter((d) => d.type === 'Company').length)} note="Company documents" icon={FileText} tone="purple" showProgress={false} />
         </div>
       </section>
 
