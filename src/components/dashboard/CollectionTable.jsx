@@ -1,9 +1,11 @@
-import { ArrowRight, CalendarDays, Download, HandCoins, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, ChevronDown, Download, FileSpreadsheet, FileText, HandCoins, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
+import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, toInputDate } from '../../utils/finance';
 import { keyOf, loanIdentityKeys, isPrecloseMarker } from '../../utils/loanIdentity';
+import { exportTodayCollectionPdf, exportTodayCollectionXlsx } from '../../utils/todaysCollectionExport';
 import IconButton from '../common/IconButton';
 import CustomerProfileLink from '../common/CustomerProfileLink';
 import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
@@ -36,12 +38,19 @@ export default function CollectionTable() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
   const [rescheduleError, setRescheduleError] = useState('');
-  const { customers, collections, loans, payments, rescheduleCollection } = useCrednivo();
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const { customers, collections, loans, payments, rescheduleCollection, company } = useCrednivo();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const today = toInputDate();
 
   const customerPhotoById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
+    [customers],
+  );
+
+  const customerPhoneById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.mobile || ''])),
     [customers],
   );
 
@@ -178,30 +187,28 @@ export default function CollectionTable() {
     return new Date(year, month - 1, day).toLocaleDateString('en-IN', { weekday: 'long' });
   }, [today]);
 
-  const downloadTodayCollections = () => {
-    const rows = COLLECTION_CYCLES.flatMap((cycle) => (cycleRows[cycle] || []).map((row) => ({ cycle, row })));
-    const escapeCsv = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
-    const lines = [
-      ['Customer ID', 'Customer Name', 'Cycle', 'Amount to Collect', 'Status'],
-      ...rows.map(({ cycle, row }) => [
-        row.customerId,
-        row.customerName,
-        cycle,
-        Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)),
-        row.status,
-      ]),
-    ];
-    const csv = lines.map((line) => line.map(escapeCsv).join(',')).join('\n');
-    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `crednivo-todays-collection-${today}.csv`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+  const buildExportPayload = () => ({
+    date: today,
+    createdBy: user?.displayName || company?.owner || 'Admin',
+    company: {
+      name: company?.name || user?.companyName || 'Company',
+      branch: user?.branch || company?.branch || 'Main Branch',
+      logo: company?.logo || '',
+    },
+    cycleRows,
+    phoneById: customerPhoneById,
+  });
+
+  const downloadTodayCollections = async (format) => {
+    setDownloadOpen(false);
+    const payload = buildExportPayload();
+    if (format === 'pdf') {
+      await exportTodayCollectionPdf(payload);
+      return;
+    }
+    await exportTodayCollectionXlsx(payload);
   };
+
 
   const openPay = (row) => {
     const balance = Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0));
@@ -264,9 +271,28 @@ export default function CollectionTable() {
         <h2>Today's Collection</h2>
         <div className="collection-home-head-actions">
           <span className="collection-weekday"><CalendarDays size={15} />{currentWeekDay}</span>
-          <button type="button" className="collection-download-button" onClick={downloadTodayCollections}>
-            <Download size={15} /> Download
-          </button>
+          <div className="collection-download-menu">
+            <button
+              type="button"
+              className="collection-download-button"
+              onClick={() => setDownloadOpen((open) => !open)}
+              aria-expanded={downloadOpen}
+            >
+              <Download size={15} /> Download <ChevronDown size={13} className={downloadOpen ? 'open' : ''} />
+            </button>
+            {downloadOpen && (
+              <div className="collection-download-popdown">
+                <button type="button" onClick={() => downloadTodayCollections('pdf')}>
+                  <FileText size={16} />
+                  <span><strong>PDF</strong><small>Professional printable report</small></span>
+                </button>
+                <button type="button" onClick={() => downloadTodayCollections('xlsx')}>
+                  <FileSpreadsheet size={16} />
+                  <span><strong>XLSX</strong><small>Excel collection report</small></span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

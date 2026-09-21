@@ -517,3 +517,84 @@ html[data-theme='dark'] .dashboard-pay-modal { background: var(--surface); borde
     min-width: 20px;
   }
 }
+
+/* Home collection download format selector */
+.collection-download-menu {
+  position: relative;
+  z-index: 6;
+}
+
+.collection-download-button .open {
+  transform: rotate(180deg);
+}
+
+.collection-download-button svg:last-child {
+  transition: transform .16s ease;
+}
+
+.collection-download-popdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 238px;
+  padding: 7px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 16px 38px rgba(6, 32, 65, .16);
+}
+
+.collection-download-popdown button {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-800);
+  text-align: left;
+  cursor: pointer;
+}
+
+.collection-download-popdown button:hover {
+  background: var(--surface-soft);
+}
+
+.collection-download-popdown button > svg {
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+  color: var(--blue-600);
+  background: var(--blue-100);
+}
+
+.collection-download-popdown button span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.collection-download-popdown button strong {
+  color: var(--ink-950);
+  font-size: 11px;
+}
+
+.collection-download-popdown button small {
+  color: var(--ink-500);
+  font-size: 8.8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .collection-download-popdown {
+    right: 0;
+    width: min(238px, calc(100vw - 28px));
+  }
+}
