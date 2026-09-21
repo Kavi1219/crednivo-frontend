@@ -322,3 +322,34 @@
   flex: 1 1 auto;
   min-height: 0;
 }
+
+/* =========================================================
+   Collection customer-list + advanced filter + reschedule
+   ========================================================= */
+.collection-number-filter{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px}
+.collection-number-filter input,.collection-number-filter select,.collection-reschedule-field input{
+  width:100%;min-height:40px;padding:0 11px;border:1px solid var(--line);border-radius:9px;
+  color:var(--ink-950);background:var(--surface);outline:none;font:inherit
+}
+.collection-number-filter input:focus,.collection-number-filter select:focus,.collection-reschedule-field input:focus{
+  border-color:#1681f4;box-shadow:0 0 0 3px rgba(22,129,244,.10)
+}
+.collection-filter-popover{width:min(520px,calc(100vw - 32px));max-height:min(78vh,720px);overflow:auto}
+.collection-reschedule-button{
+  min-height:36px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;
+  border:1px solid var(--line);border-radius:9px;color:var(--blue-600);background:var(--surface);
+  cursor:pointer;font-size:9px;font-weight:800;white-space:nowrap
+}
+.collection-reschedule-button:hover:not(:disabled){background:var(--surface-hover);border-color:#b7d1fa}
+.collection-reschedule-button:disabled{opacity:.48;cursor:not-allowed}
+.collection-reschedule-chip{display:inline-flex;align-items:center;width:max-content;margin-top:9px;padding:5px 8px;border-radius:999px;background:var(--blue-100);color:var(--blue-700);font-size:8.5px;font-weight:800}
+.collection-reschedule-modal{width:min(460px,100%);padding:18px;box-shadow:0 20px 60px rgba(3,29,56,.25)}
+.collection-reschedule-info{display:grid;grid-template-columns:1fr auto;gap:8px 14px;margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft)}
+.collection-reschedule-info span{color:var(--ink-500);font-size:9px}.collection-reschedule-info strong{font-size:10px;color:var(--ink-900)}
+.collection-reschedule-field{display:grid;gap:7px}.collection-reschedule-field span{color:var(--ink-600);font-size:9px;font-weight:800}
+
+@media(max-width:767px){
+  .collection-filter-popover{inset:12px 12px calc(var(--mobile-nav-height) + 12px) 12px;width:auto;max-height:none;border-radius:16px}
+  .collection-number-filter{grid-template-columns:1fr}
+  .collection-mobile-action{justify-content:space-between}
+}

@@ -166,7 +166,7 @@ function isEarlyClosedLoan(loan) {
 
 // V40: Collection keeps tab/filter/search/scroll position when opening a customer profile.
 export default function Collection() {
-  const { customers, collections, loans, payments, recordLoanPayment } = useCrednivo();
+  const { customers, collections, loans, payments, recordLoanPayment, rescheduleCollection } = useCrednivo();
   const { hasPermission } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = (() => {
@@ -192,6 +192,10 @@ export default function Collection() {
 
   const [cycle, setCycle] = useState(initialCycle);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [amountFilter, setAmountFilter] = useState('');
+  const [amountCompare, setAmountCompare] = useState('Above');
+  const [dueFilter, setDueFilter] = useState('');
+  const [dueCompare, setDueCompare] = useState('Above');
   const [search, setSearch] = useState(initialSearch);
   const searchInputRef = useRef(null);
 
@@ -210,6 +214,9 @@ export default function Collection() {
   const [paymentDate, setPaymentDate] = useState(() => toInputDate());
   const [paymentMode, setPaymentMode] = useState('Cash');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [rescheduling, setRescheduling] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
   const [actionError, setActionError] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
   const paymentSubmitLockRef = useRef(false);
@@ -249,6 +256,10 @@ export default function Collection() {
   const resetCollectionFilters = () => {
     setCycle('All');
     setStatusFilter('All');
+    setAmountFilter('');
+    setAmountCompare('Above');
+    setDueFilter('');
+    setDueCompare('Above');
     const next = new URLSearchParams(searchParams);
     next.delete('cycle');
     next.delete('status');
@@ -311,6 +322,10 @@ export default function Collection() {
 
   const customerPhotoById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
+    [customers],
+  );
+  const customerPhoneById = useMemo(
+    () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.mobile || ''])),
     [customers],
   );
 
@@ -406,84 +421,95 @@ export default function Collection() {
     return activeCollections;
   }, [collectionView, todayCollections, overdueCollections, upcomingCollections, activeCollections]);
 
-  const activeFilterCount = Number(cycle !== 'All') + Number(statusFilter !== 'All');
+  const activeFilterCount = Number(cycle !== 'All') + Number(statusFilter !== 'All') + Number(Boolean(amountFilter)) + Number(Boolean(dueFilter));
 
   const filtered = useMemo(() => viewRows.filter((item) => {
     const q = search.toLowerCase().trim();
     const matchesCycle = cycle === 'All' || item.cycle === cycle;
     const riskTier = getRiskTier(pendingDueCounts.get(String(item.customerId || '')) || 0);
     const matchesStatus = statusFilter === 'All' || riskTier === statusFilter;
-    const matchesSearch = !q || `${item.customerName} ${item.customerId} ${item.loanId}`.toLowerCase().includes(q);
+    const matchesSearch = !q || `${item.customerName} ${item.customerId} ${item.loanId} ${customerPhoneById[String(item.customerId)] || ''}`.toLowerCase().includes(q);
     return matchesCycle && matchesStatus && matchesSearch;
-  }), [viewRows, cycle, statusFilter, search, pendingDueCounts]);
+  }), [viewRows, cycle, statusFilter, search, pendingDueCounts, customerPhoneById]);
 
-  // OVERDUE VIEW RULE:
-  // Keep the Overdue tab badge as the number of missed installments, but show
-  // only ONE summary row per customer loan inside the Overdue table/list.
+  // CUSTOMER LIST RULE: show each customer only once in the list.
+  // Multiple due rows/loans are merged into one customer row while the Collect
+  // and Reschedule actions continue with the earliest actionable due.
   const displayRows = useMemo(() => {
-    if (collectionView !== 'Overdue') return filtered;
-
     const grouped = new Map();
 
     filtered.forEach((item) => {
-      const identity = collectionLoanIdentityKeys(item)[0] || keyOf(item.loanId);
-      const key = `${keyOf(item.customerId || item.customerName)}-${identity}`;
-      const existing = grouped.get(key);
+      const customerKey = keyOf(item.customerId || item.customerName);
+      const current = grouped.get(customerKey);
+      const itemLoanKeys = new Set(collectionLoanIdentityKeys(item));
+      const loan = (loans || []).find((entry) => loanIdentityKeys(entry).some((key) => itemLoanKeys.has(key)));
 
-      if (!existing) {
-        grouped.set(key, {
+      if (!current) {
+        grouped.set(customerKey, {
           ...item,
-          id: `overdue-group-${key}`,
-          overdueCount: 1,
+          id: `customer-group-${customerKey}`,
+          primaryItem: item,
+          sourceRows: [item],
+          cycles: new Set([item.cycle]),
+          loanKeys: new Set(collectionLoanIdentityKeys(item)),
           dueAmount: Number(item.dueAmount || 0),
           paidAmount: Number(item.paidAmount || 0),
           fine: Number(item.fine || 0),
-          firstOverdueDate: item.date,
-          lastOverdueDate: item.date,
-          groupedOverdue: true,
+          outstanding: Number(loan?.outstanding || 0),
+          maxRescheduleCount: Number(item.rescheduleCount || 0),
+          firstDueDate: item.date,
+          overdueCount: item.date < today && balanceOf(item) > 0 ? 1 : 0,
         });
         return;
       }
 
-      existing.overdueCount += 1;
-      existing.dueAmount += Number(item.dueAmount || 0);
-      existing.paidAmount += Number(item.paidAmount || 0);
-      existing.fine += Number(item.fine || 0);
+      current.sourceRows.push(item);
+      current.cycles.add(item.cycle);
+      current.dueAmount += Number(item.dueAmount || 0);
+      current.paidAmount += Number(item.paidAmount || 0);
+      current.fine += Number(item.fine || 0);
+      current.maxRescheduleCount = Math.max(current.maxRescheduleCount, Number(item.rescheduleCount || 0));
+      if (!current.firstDueDate || String(item.date || '') < String(current.firstDueDate || '')) current.firstDueDate = item.date;
+      if (item.date < today && balanceOf(item) > 0) current.overdueCount += 1;
 
-      if (!existing.firstOverdueDate || String(item.date || '') < String(existing.firstOverdueDate || '')) {
-        existing.firstOverdueDate = item.date;
-        existing.date = item.date;
+      const loanKeys = collectionLoanIdentityKeys(item);
+      const isNewLoan = !loanKeys.some((key) => current.loanKeys.has(key));
+      if (isNewLoan) {
+        loanKeys.forEach((key) => current.loanKeys.add(key));
+        current.outstanding += Number(loan?.outstanding || 0);
       }
-      if (!existing.lastOverdueDate || String(item.date || '') > String(existing.lastOverdueDate || '')) {
-        existing.lastOverdueDate = item.date;
+
+      const currentPrimary = current.primaryItem;
+      const currentPaid = getDisplayStatus(currentPrimary, today) === 'Paid';
+      const itemPaid = getDisplayStatus(item, today) === 'Paid';
+      if ((currentPaid && !itemPaid) || (!itemPaid && String(item.date || '') < String(currentPrimary.date || ''))) {
+        current.primaryItem = item;
+        current.loanId = item.loanId;
+        current.date = item.date;
+        current.rescheduleCount = item.rescheduleCount;
       }
     });
 
-    return Array.from(grouped.values()).map((item) => {
-      const itemKeys = new Set(collectionLoanIdentityKeys(item));
-      const loan = (loans || []).find((entry) =>
-        loanIdentityKeys(entry).some((key) => itemKeys.has(key)),
-      );
-      const allKeys = new Set([
-        ...collectionLoanIdentityKeys(item),
-        ...loanIdentityKeys(loan),
-      ]);
-
-      const loanPaid = (payments || [])
-        .filter((payment) =>
-          collectionLoanIdentityKeys(payment).some((key) => allKeys.has(key)) &&
-          String(payment.type || '').toLowerCase() === 'collection' &&
-          String(payment.direction || '').toLowerCase() !== 'out'
-        )
-        .reduce((sum, payment) => sum + Number(payment.collectionAmount ?? payment.amount ?? 0), 0);
-
-      return {
-        ...item,
-        loanPaid,
-        loanOutstanding: Number(loan?.outstanding || 0),
-      };
-    }).sort(sortByDateThenCustomer);
-  }, [collectionView, filtered, loans, payments]);
+    return Array.from(grouped.values())
+      .map((item) => {
+        const outstanding = Number(item.outstanding || 0);
+        const due = Number(item.dueAmount || 0);
+        const amountLimit = Number(amountFilter || 0);
+        const dueLimit = Number(dueFilter || 0);
+        const matchesAmount = !amountFilter || (amountCompare === 'Above' ? outstanding >= amountLimit : outstanding <= amountLimit);
+        const matchesDue = !dueFilter || (dueCompare === 'Above' ? due >= dueLimit : due <= dueLimit);
+        return {
+          ...item,
+          cycle: Array.from(item.cycles).join(', '),
+          outstanding,
+          riskTier: getRiskTier(pendingDueCounts.get(String(item.customerId || '')) || 0),
+          matchesAmount,
+          matchesDue,
+        };
+      })
+      .filter((item) => item.matchesAmount && item.matchesDue)
+      .sort((a, b) => String(a.customerName || '').localeCompare(String(b.customerName || '')));
+  }, [filtered, loans, today, amountFilter, amountCompare, dueFilter, dueCompare, pendingDueCounts]);
 
   const scheduleRows = useMemo(() => {
     if (!scheduleLoanId) return [];
@@ -643,6 +669,29 @@ export default function Collection() {
     }
   };
 
+  const openReschedule = (item) => {
+    const source = item?.primaryItem || item;
+    if (!source || getDisplayStatus(source, today) === 'Paid') return;
+    setActionError('');
+    setRescheduling(source);
+    setRescheduleDate(source.date > today ? source.date : '');
+  };
+
+  const submitReschedule = async () => {
+    if (!rescheduling || !rescheduleDate || rescheduleSaving) return;
+    setRescheduleSaving(true);
+    setActionError('');
+    try {
+      await rescheduleCollection(rescheduling.id, rescheduleDate);
+      setRescheduling(null);
+      setRescheduleDate('');
+    } catch (apiError) {
+      setActionError(apiError?.message || 'Could not reschedule this collection.');
+    } finally {
+      setRescheduleSaving(false);
+    }
+  };
+
   const loanForItem = (item) => {
     const itemKeys = new Set(collectionLoanIdentityKeys(item));
     return (loans || []).find((loan) =>
@@ -684,7 +733,7 @@ export default function Collection() {
       {actionError && <div className="form-error">{actionError}</div>}
 
       <section className="stats-section" aria-labelledby="collection-target-heading">
-        <h2 id="collection-target-heading" className="stats-section-title">Collection Target</h2>
+        <h2 id="collection-target-heading" className="stats-section-title">Cycle Target</h2>
         <div className="stats-grid">
           <StatCard
             title="Daily Target"
@@ -714,10 +763,10 @@ export default function Collection() {
       </section>
 
       <section className="stats-section" aria-labelledby="week-target-heading">
-        <h2 id="week-target-heading" className="stats-section-title">This Week Target</h2>
+        <h2 id="week-target-heading" className="stats-section-title">Current Week</h2>
         <div className="stats-grid">
           <StatCard
-            title="This Week Target"
+            title="Current Week"
             value={formatCurrency(weekTarget)}
             note="Daily×7 + Weekly + Monthly dues falling this week"
             icon={CalendarDays}
@@ -744,7 +793,7 @@ export default function Collection() {
       </section>
 
       <section className="stats-section" aria-labelledby="today-status-heading">
-        <h2 id="today-status-heading" className="stats-section-title">Today's Collection Status</h2>
+        <h2 id="today-status-heading" className="stats-section-title">Today’s Status</h2>
         <div className="stats-grid">
           <StatCard
             title="Today's Target"
@@ -869,6 +918,30 @@ export default function Collection() {
                   </div>
                 </div>
 
+                <div className="collection-filter-section">
+                  <span className="collection-filter-label">Amount (Outstanding)</span>
+                  <div className="collection-number-filter">
+                    <input type="number" min="0" value={amountFilter} onChange={(event) => setAmountFilter(event.target.value)} placeholder="Enter amount" />
+                    {amountFilter && (
+                      <select value={amountCompare} onChange={(event) => setAmountCompare(event.target.value)}>
+                        <option>Above</option><option>Below</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                <div className="collection-filter-section">
+                  <span className="collection-filter-label">Due</span>
+                  <div className="collection-number-filter">
+                    <input type="number" min="0" value={dueFilter} onChange={(event) => setDueFilter(event.target.value)} placeholder="Enter due amount" />
+                    {dueFilter && (
+                      <select value={dueCompare} onChange={(event) => setDueCompare(event.target.value)}>
+                        <option>Above</option><option>Below</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+
                 <div className="collection-filter-actions">
                   <button
                     type="button"
@@ -901,79 +974,55 @@ export default function Collection() {
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table">
             <thead>
-              {collectionView === 'Overdue' ? (
-                <tr>
-                  <th>Customer</th><th>Loan</th><th>Cycle</th><th>Overdue Dues</th><th>Paid</th><th>Pending</th><th>Outstanding</th><th>Fine</th><th>Oldest Due</th><th>Status</th><th>Action</th>
-                </tr>
-              ) : (
-                <tr>
-                  <th>Customer</th><th>Loan</th><th>Cycle</th><th>Due</th><th>Paid</th><th>Balance</th><th>Fine</th><th>Date</th><th>Status</th><th>Action</th>
-                </tr>
-              )}
+              <tr>
+                <th>Customer</th><th>Phone Number</th><th>Cycle</th><th>Due Amount</th><th>Outstanding</th><th>Status</th><th>Action</th>
+              </tr>
             </thead>
             <tbody>
               {displayRows.map((item) => {
-                const displayStatus = getDisplayStatus(item, today);
-                const balance = balanceOf(item);
-                const isFuture = item.date > today;
-                const loanClosed = isLoanClosed(item);
-                const currentLoan = loanForItem(item);
-                const outstanding = item.groupedOverdue
-                  ? Number(item.loanOutstanding || currentLoan?.outstanding || 0)
-                  : Number(currentLoan?.outstanding || 0);
+                const source = item.primaryItem || item;
+                const loanClosed = isLoanClosed(source);
+                const paid = getDisplayStatus(source, today) === 'Paid';
                 return (
                   <tr key={item.id}>
                     <td>
                       <div className="row-title">
                         <CustomerAvatar className="row-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
-                        <div><strong onClickCapture={saveCollectionReturnPosition}><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId}</small></div>
+                        <div>
+                          <strong onClickCapture={saveCollectionReturnPosition}><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong>
+                          <small>{item.customerId}{item.maxRescheduleCount > 0 && item.date === today ? ` · Re-schedule ${item.maxRescheduleCount}` : ''}</small>
+                        </div>
                       </div>
                     </td>
-                    <td>{item.loanId}</td>
+                    <td>{customerPhoneById[String(item.customerId)] || '—'}</td>
                     <td><span className="soft-chip blue">{item.cycle}</span></td>
-                    {collectionView === 'Overdue' ? (
-                      <>
-                        <td>
-                          <strong>{item.overdueCount || 1}</strong>
-                          <small style={{ display: 'block', marginTop: 3 }}>
-                            {formatCurrency(item.dueAmount)}
-                          </small>
-                        </td>
-                        <td>{formatCurrency(item.loanPaid || 0)}</td>
-                        <td><strong>{formatCurrency(balance)}</strong></td>
-                        <td><strong>{formatCurrency(outstanding)}</strong></td>
-                        <td>{formatCurrency(item.fine)}</td>
-                        <td>{formatDate(item.firstOverdueDate || item.date)}</td>
-                        <td><StatusBadge status="Overdue" /></td>
-                      </>
-                    ) : (
-                      <>
-                        <td>{formatCurrency(item.dueAmount)}</td>
-                        <td>{formatCurrency(item.paidAmount)}</td>
-                        <td><strong>{formatCurrency(balance)}</strong></td>
-                        <td>{formatCurrency(item.fine)}</td>
-                        <td>{formatDate(item.date)}</td>
-                        <td><StatusBadge status={displayStatus} /></td>
-                      </>
-                    )}
+                    <td><strong>{formatCurrency(Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)))}</strong></td>
+                    <td><strong>{formatCurrency(item.outstanding)}</strong></td>
+                    <td><StatusBadge status={item.riskTier} /></td>
                     <td>
                       <div className="collection-row-actions">
-                        {isFuture && (
-                          <button type="button" className="collection-schedule-button" onClick={() => setScheduleLoanId(item.loanId)}>
-                            <CalendarDays size={14} /> Schedule
-                          </button>
-                        )}
                         {hasPermission('collections.collect') && (
-                          <ActionButton
-                            tone={loanClosed ? 'secondary' : (displayStatus === 'Paid' ? 'secondary' : 'success')}
-                            icon={HandCoins}
-                            onClick={() => !loanClosed && openPay(item)}
-                            disabled={loanClosed}
-                            className={loanClosed ? 'collection-closed-action' : ''}
-                            title={loanClosed ? 'Loan closed — no additional payment allowed' : actionLabel(item)}
-                          >
-                            {actionLabel(item)}
-                          </ActionButton>
+                          <>
+                            <ActionButton
+                              tone={loanClosed || paid ? 'secondary' : 'success'}
+                              icon={HandCoins}
+                              onClick={() => !loanClosed && !paid && openPay(source)}
+                              disabled={loanClosed || paid}
+                              className={loanClosed ? 'collection-closed-action' : ''}
+                              title={loanClosed ? 'Loan closed — no additional payment allowed' : 'Collect'}
+                            >
+                              Collect
+                            </ActionButton>
+                            <button
+                              type="button"
+                              className="collection-reschedule-button"
+                              onClick={() => openReschedule(source)}
+                              disabled={loanClosed || paid}
+                              title="Reschedule collection"
+                            >
+                              <CalendarDays size={14} /> Reschedule
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -981,15 +1030,11 @@ export default function Collection() {
                 );
               })}
               {displayRows.length === 0 && (
-                <tr>
-                  <td colSpan={collectionView === 'Overdue' ? 11 : 10}>
-                    <div className="collection-empty-state">
-                      <CalendarDays size={22} />
-                      <strong>{emptyMessage}</strong>
-                      <span>Try another view or adjust the filters.</span>
-                    </div>
-                  </td>
-                </tr>
+                <tr><td colSpan={7}>
+                  <div className="collection-empty-state">
+                    <CalendarDays size={22} /><strong>{emptyMessage}</strong><span>Try another view or adjust the filters.</span>
+                  </div>
+                </td></tr>
               )}
             </tbody>
           </table>
@@ -997,66 +1042,37 @@ export default function Collection() {
 
         <div className="mobile-data-list">
           {displayRows.map((item) => {
-            const displayStatus = getDisplayStatus(item, today);
-            const balance = balanceOf(item);
-            const isFuture = item.date > today;
-            const loanClosed = isLoanClosed(item);
-            const currentLoan = loanForItem(item);
-            const outstanding = item.groupedOverdue
-              ? Number(item.loanOutstanding || currentLoan?.outstanding || 0)
-              : Number(currentLoan?.outstanding || 0);
+            const source = item.primaryItem || item;
+            const loanClosed = isLoanClosed(source);
+            const paid = getDisplayStatus(source, today) === 'Paid';
             return (
               <article className="mobile-data-card" key={item.id}>
                 <div className="mobile-data-top">
                   <div className="row-title">
                     <CustomerAvatar className="row-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName} />
-                    <div><strong onClickCapture={saveCollectionReturnPosition}><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong><small>{item.customerId} · {item.cycle}</small></div>
+                    <div>
+                      <strong onClickCapture={saveCollectionReturnPosition}><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></strong>
+                      <small>{customerPhoneById[String(item.customerId)] || '—'}</small>
+                    </div>
                   </div>
-                  <StatusBadge status={collectionView === 'Overdue' ? 'Overdue' : displayStatus} />
+                  <StatusBadge status={item.riskTier} />
                 </div>
-
-                {collectionView === 'Overdue' ? (
-                  <>
-                    <div className="collection-mobile-date">
-                      <CalendarDays size={14} />
-                      {item.overdueCount || 1} overdue due{Number(item.overdueCount || 1) > 1 ? 's' : ''}
-                      {' · '}Oldest {formatDate(item.firstOverdueDate || item.date)}
-                    </div>
-                    <div className="mobile-data-meta">
-                      <div><span>Paid</span><strong>{formatCurrency(item.loanPaid || 0)}</strong></div>
-                      <div><span>Pending</span><strong>{formatCurrency(balance)}</strong></div>
-                      <div><span>Outstanding</span><strong>{formatCurrency(outstanding)}</strong></div>
-                      <div><span>Fine</span><strong>{formatCurrency(item.fine)}</strong></div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="collection-mobile-date"><CalendarDays size={14} /> {formatDate(item.date)}</div>
-                    <div className="mobile-data-meta">
-                      <div><span>Due</span><strong>{formatCurrency(item.dueAmount)}</strong></div>
-                      <div><span>Paid</span><strong>{formatCurrency(item.paidAmount)}</strong></div>
-                      <div><span>Pending</span><strong>{formatCurrency(balance)}</strong></div>
-                      <div><span>Fine</span><strong>{formatCurrency(item.fine)}</strong></div>
-                    </div>
-                  </>
-                )}
+                {item.maxRescheduleCount > 0 && item.date === today && <div className="collection-reschedule-chip">Re-schedule {item.maxRescheduleCount}</div>}
+                <div className="mobile-data-meta">
+                  <div><span>Cycle</span><strong>{item.cycle}</strong></div>
+                  <div><span>Due Amount</span><strong>{formatCurrency(Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)))}</strong></div>
+                  <div><span>Outstanding</span><strong>{formatCurrency(item.outstanding)}</strong></div>
+                </div>
                 <div className="collection-mobile-action">
-                  {isFuture && (
-                    <button type="button" className="collection-schedule-button" onClick={() => setScheduleLoanId(item.loanId)}>
-                      <CalendarDays size={14} /> Schedule
-                    </button>
-                  )}
                   {hasPermission('collections.collect') && (
-                    <ActionButton
-                      tone={loanClosed ? 'secondary' : 'success'}
-                      icon={HandCoins}
-                      onClick={() => !loanClosed && openPay(item)}
-                      disabled={loanClosed}
-                      className={loanClosed ? 'collection-closed-action' : ''}
-                      title={loanClosed ? 'Loan closed — no additional payment allowed' : actionLabel(item)}
-                    >
-                      {actionLabel(item)}
-                    </ActionButton>
+                    <>
+                      <button type="button" className="collection-reschedule-button" onClick={() => openReschedule(source)} disabled={loanClosed || paid}>
+                        <CalendarDays size={14} /> Reschedule
+                      </button>
+                      <ActionButton tone={loanClosed || paid ? 'secondary' : 'success'} icon={HandCoins} onClick={() => !loanClosed && !paid && openPay(source)} disabled={loanClosed || paid}>
+                        Collect
+                      </ActionButton>
+                    </>
                   )}
                 </div>
               </article>
@@ -1064,13 +1080,36 @@ export default function Collection() {
           })}
           {displayRows.length === 0 && (
             <div className="collection-empty-state mobile">
-              <CalendarDays size={22} />
-              <strong>{emptyMessage}</strong>
-              <span>Try another view or adjust the filters.</span>
+              <CalendarDays size={22} /><strong>{emptyMessage}</strong><span>Try another view or adjust the filters.</span>
             </div>
           )}
         </div>
       </section>
+
+      {rescheduling && (
+        <div className="collection-modal-backdrop" onMouseDown={() => !rescheduleSaving && setRescheduling(null)}>
+          <div className="collection-reschedule-modal module-card" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="collection-modal-head">
+              <div><strong>Reschedule Collection</strong><span>{rescheduling.customerName} · {rescheduling.cycle}</span></div>
+              <IconButton label="Close" onClick={() => !rescheduleSaving && setRescheduling(null)}><X size={18} /></IconButton>
+            </div>
+            <div className="collection-reschedule-info">
+              <span>Current due date</span><strong>{formatDate(rescheduling.date)}</strong>
+              <span>Due amount</span><strong>{formatCurrency(balanceOf(rescheduling))}</strong>
+            </div>
+            <label className="collection-reschedule-field">
+              <span>New collection date</span>
+              <input type="date" min={today} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} />
+            </label>
+            <div className="collection-filter-actions">
+              <button type="button" className="collection-filter-reset" onClick={() => setRescheduling(null)} disabled={rescheduleSaving}>Cancel</button>
+              <button type="button" className="collection-filter-done" onClick={submitReschedule} disabled={!rescheduleDate || rescheduleSaving}>
+                {rescheduleSaving ? 'Saving...' : 'Confirm Reschedule'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {scheduleLoanId && (
         <div className="collection-modal-backdrop" onMouseDown={() => setScheduleLoanId(null)}>

@@ -360,6 +360,8 @@ function mapBackendCollection(item) {
     paidAmount: asNumber(item.paidAmount),
     balance: asNumber(item.balance),
     fine: asNumber(item.fine),
+    rescheduleCount: Number(item.rescheduleCount || 0),
+    originalDueDate: item.originalDueDate || null,
   };
 }
 
@@ -908,6 +910,16 @@ export function CrednivoProvider({ children }) {
     return true;
   };
 
+  const rescheduleCollection = async (collectionId, date) => {
+    if (!collectionId || !date) return null;
+    const saved = await apiRequest(`/collections/${collectionId}/reschedule`, {
+      method: 'POST',
+      body: JSON.stringify({ date }),
+    });
+    await syncCoreData();
+    return saved;
+  };
+
   const updatePayment = async (paymentId, changes) => {
     if (!paymentId) return null;
     const payload = {
@@ -1235,6 +1247,7 @@ export function CrednivoProvider({ children }) {
       extendIoLoan,
       recordCollection,
       recordLoanPayment,
+      rescheduleCollection,
       updatePayment,
       deletePayment,
       saveCapitalEntry,
