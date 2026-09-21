@@ -796,7 +796,7 @@ export default function Collection() {
           <StatCard
             title="Current Week"
             value={formatCurrency(weekTarget)}
-            note="Daily×7 + Weekly + Monthly dues falling this week"
+            note="Expected"
             icon={CalendarDays}
             tone="blue"
             showProgress={false}
@@ -804,7 +804,7 @@ export default function Collection() {
           <StatCard
             title="Achievement"
             value={formatCurrency(weekAchieved)}
-            note="Collected so far this week"
+            note="collected so far"
             icon={HandCoins}
             tone="green"
             progress={weekTarget > 0 ? (weekAchieved / weekTarget) * 100 : 0}
@@ -812,7 +812,7 @@ export default function Collection() {
           <StatCard
             title="Pending"
             value={formatCurrency(weekPending)}
-            note="Still owed for this week"
+            note="Remaining collection"
             icon={TriangleAlert}
             tone="orange"
             showProgress={false}
