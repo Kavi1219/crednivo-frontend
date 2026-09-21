@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import './StatCard.css';
 
-export default function StatCard({ title, value, note, icon: Icon, tone, progress = 0, onDetails }) {
+export default function StatCard({ title, value, note, icon: Icon, tone, progress = 0, showProgress = true, onDetails }) {
   const numericProgress = Number(progress);
   const safeProgress = Number.isFinite(numericProgress)
     ? Math.max(0, Math.min(100, numericProgress))
@@ -25,16 +25,18 @@ export default function StatCard({ title, value, note, icon: Icon, tone, progres
         </div>
       </div>
 
-      <div
-        className={`stat-progress ${safeProgress === 0 ? 'is-empty' : ''}`}
-        role="progressbar"
-        aria-label={`${title} indicator`}
-        aria-valuemin="0"
-        aria-valuemax="100"
-        aria-valuenow={Math.round(safeProgress)}
-      >
-        <span style={{ width: `${safeProgress}%` }} />
-      </div>
+      {showProgress && (
+        <div
+          className={`stat-progress ${safeProgress === 0 ? 'is-empty' : ''}`}
+          role="progressbar"
+          aria-label={`${title} indicator`}
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow={Math.round(safeProgress)}
+        >
+          <span style={{ width: `${safeProgress}%` }} />
+        </div>
+      )}
     </button>
   );
 }

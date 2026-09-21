@@ -1,0 +1,51 @@
+.add-expense-backdrop{
+  position:fixed; inset:0; z-index:460;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(9,22,45,.5);
+  backdrop-filter:blur(5px);
+  padding:16px;
+}
+.add-expense-modal{
+  width:100%; max-width:420px;
+  background:var(--surface);
+  border-radius:18px;
+  border:1px solid var(--line);
+  box-shadow:0 24px 60px rgba(0,0,0,.28);
+  padding:20px;
+}
+.add-expense-head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px;
+}
+.add-expense-head h2{ margin:0; font-size:16px; font-weight:800; color:var(--ink-950); }
+.add-expense-close{
+  width:32px; height:32px; border:0; border-radius:9px;
+  background:var(--surface-soft); color:var(--ink-600);
+  display:grid; place-items:center; cursor:pointer;
+}
+.add-expense-close:hover{ background:var(--line); }
+
+.add-expense-form{ display:flex; flex-direction:column; gap:12px; }
+.add-expense-form label{ display:flex; flex-direction:column; gap:5px; font-size:11px; font-weight:700; color:var(--ink-700); }
+.add-expense-form input,
+.add-expense-form select{
+  height:40px; padding:0 12px;
+  border:1px solid var(--line); border-radius:10px;
+  background:var(--surface); color:var(--ink-950); font-size:13px;
+}
+.add-expense-form input:focus,
+.add-expense-form select:focus{ outline:none; border-color:var(--blue-600); box-shadow:0 0 0 3px rgba(20,119,242,.12); }
+
+.add-expense-error{
+  padding:10px 12px; border-radius:10px;
+  background:var(--danger-soft); color:#b3323d; font-size:11.5px;
+}
+
+.add-expense-submit{
+  height:42px; border:0; border-radius:10px;
+  background:var(--blue-600); color:#fff;
+  font-size:13px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  cursor:pointer; margin-top:4px;
+}
+.add-expense-submit:disabled{ opacity:.6; cursor:not-allowed; }

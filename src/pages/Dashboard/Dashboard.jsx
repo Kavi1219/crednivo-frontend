@@ -1,6 +1,6 @@
 import { CalendarDays, CircleDollarSign, Landmark, ReceiptText, TriangleAlert, UserRoundCheck, WalletCards, WalletMinimal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import CollectionSummary from '../../components/dashboard/CollectionSummary';
+import DashboardQuickSearch from '../../components/dashboard/DashboardQuickSearch';
 import CollectionTable from '../../components/dashboard/CollectionTable';
 import QuickActions from '../../components/dashboard/QuickActions';
 import StatCard from '../../components/dashboard/StatCard';
@@ -19,6 +19,18 @@ export default function Dashboard() {
   const collectionProgress = metrics.expected > 0
     ? Math.min(100, Math.max(0, (metrics.collected / metrics.expected) * 100))
     : 0;
+
+  // "Today's Collection" card shows what's STILL owed today, not the static
+  // original target — it shrinks live as each customer actually pays.
+  const todayRemainingRows = (collections || []).filter((item) => {
+    if (item.date !== today) return false;
+    return Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)) > 0;
+  });
+  const todayRemainingAmount = todayRemainingRows.reduce(
+    (sum, item) => sum + Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)),
+    0,
+  );
+  const todayRemainingCustomers = new Set(todayRemainingRows.map((item) => item.customerId)).size;
 
   const recoveryBase = Math.max(0, Number(metrics.expected) + Number(metrics.overdue));
   const pendingProgress = recoveryBase > 0
@@ -50,8 +62,8 @@ export default function Dashboard() {
   const dashboardStatsToday = [
     {
       title: "Today's Collection",
-      value: formatCurrency(metrics.expected),
-      note: `From ${metrics.dueCustomers || 0} Customers`,
+      value: formatCurrency(todayRemainingAmount),
+      note: `${todayRemainingCustomers} Customers Remaining`,
       icon: WalletCards,
       tone: 'blue',
       progress: collectionProgress,
@@ -93,7 +105,7 @@ export default function Dashboard() {
       note: `${dailyTarget.customerCount} daily customers`,
       icon: WalletCards,
       tone: 'blue',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/customers/daily'),
     },
     {
@@ -102,7 +114,7 @@ export default function Dashboard() {
       note: `${weeklyTarget.customerCount} weekly customers`,
       icon: WalletCards,
       tone: 'blue',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/customers/weekly'),
     },
     {
@@ -111,7 +123,7 @@ export default function Dashboard() {
       note: `${monthlyTarget.customerCount} monthly customers`,
       icon: WalletCards,
       tone: 'blue',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/customers/monthly'),
     },
   ];
@@ -123,7 +135,7 @@ export default function Dashboard() {
       note: capitalMetrics.entries ? 'Current business cash' : 'Add opening investment',
       icon: Landmark,
       tone: (metrics.availableCapital ?? capitalMetrics.availableCapital) < 0 ? 'danger' : 'green',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/capital'),
     }] : []),
     {
@@ -132,7 +144,7 @@ export default function Dashboard() {
       note: 'Total Active Loans',
       icon: UserRoundCheck,
       tone: 'cyan',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/loans?status=Active'),
     },
     {
@@ -141,7 +153,7 @@ export default function Dashboard() {
       note: `From ${partialCustomers} Customer${partialCustomers === 1 ? '' : 's'}`,
       icon: CircleDollarSign,
       tone: 'orange',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/collection?view=upcoming&status=Partial'),
     },
     {
@@ -150,7 +162,7 @@ export default function Dashboard() {
       note: `From ${metrics.upcomingCustomers || 0} Customers`,
       icon: CalendarDays,
       tone: 'purple',
-      progress: 0,
+      showProgress: false,
       onDetails: () => navigate('/collection?view=upcoming'),
     },
   ];
@@ -179,7 +191,7 @@ export default function Dashboard() {
           {dashboardStatsTarget.map((stat) => <StatCard key={stat.title} {...stat} />)}
         </div>
       </section>
-      <section className="dashboard-middle"><CollectionTable /><CollectionSummary /></section>
+      <section className="dashboard-middle"><CollectionTable /><DashboardQuickSearch /></section>
     </div>
   );
 }

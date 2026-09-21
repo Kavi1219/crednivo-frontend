@@ -193,6 +193,13 @@ export default function Collection() {
   const [cycle, setCycle] = useState(initialCycle);
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [search, setSearch] = useState(initialSearch);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    if (searchParams.get('focus') === 'search') {
+      searchInputRef.current?.focus();
+    }
+  }, []);
   const [collectionView, setCollectionView] = useState(initialView);
   const [scheduleLoanId, setScheduleLoanId] = useState(null);
   const [paying, setPaying] = useState(null);
@@ -793,6 +800,7 @@ export default function Collection() {
           <label className="module-search">
             <Search size={16} />
             <input
+              ref={searchInputRef}
               value={search}
               onChange={(event) => changeSearch(event.target.value)}
               placeholder="Search customer or loan..."

@@ -153,20 +153,34 @@ export default function CollectionTable() {
     [collections, loans, excludedClosedLoanKeys, today],
   );
 
-  const collectedTodayCount = useMemo(
-    () => todayRows.filter((item) => item.status === 'Paid').length,
-    [todayRows],
+  const collectedTodayRows = useMemo(
+    () => (payments || [])
+      .filter((item) => item.date === today && item.type === 'Collection')
+      .map((item) => ({
+        id: item.id,
+        customerId: item.customerId,
+        customerName: item.customerName,
+        loanId: item.loanId,
+        cycle: item.cycle || '-',
+        dueAmount: Number(item.collectionAmount ?? item.amount ?? 0),
+        paidAmount: Number(item.collectionAmount ?? item.amount ?? 0),
+        status: 'Paid',
+        date: item.date,
+      })),
+    [payments, today],
   );
+
+  const collectedTodayCount = collectedTodayRows.length;
 
   const rows = useMemo(() => {
     if (tab === 'Collected Today') {
-      return todayRows.filter((item) => item.status === 'Paid').slice(0, 5);
+      return collectedTodayRows.slice(0, 5);
     }
 
     return todayRows
       .filter((item) => item.cycle === tab && item.status !== 'Paid')
       .slice(0, 5);
-  }, [todayRows, tab]);
+  }, [todayRows, collectedTodayRows, tab]);
 
   const isCollectedTab = tab === 'Collected Today';
 
