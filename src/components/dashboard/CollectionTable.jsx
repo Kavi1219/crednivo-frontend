@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, HandCoins, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, Download, HandCoins, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -12,7 +12,7 @@ import './CollectionTable.css';
 import CustomerAvatar from '../common/CustomerAvatar';
 
 
-const COLLECTION_TABS = ['Daily', 'Weekly', 'Monthly', 'Collected Today'];
+const COLLECTION_CYCLES = ['Daily', 'Weekly', 'Monthly'];
 
 function rowLoanIdentityKeys(row) {
   return [
@@ -31,7 +31,6 @@ function matchesLoanKeys(item, keySet) {
 }
 
 export default function CollectionTable() {
-  const [tab, setTab] = useState('Daily');
   const [paying, setPaying] = useState(null);
   const [rescheduling, setRescheduling] = useState(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
@@ -157,36 +156,52 @@ export default function CollectionTable() {
     [collections, loans, excludedClosedLoanKeys, today],
   );
 
-  const collectedTodayRows = useMemo(
-    () => (payments || [])
-      .filter((item) => item.date === today && item.type === 'Collection')
-      .map((item) => ({
-        id: item.id,
-        customerId: item.customerId,
-        customerName: item.customerName,
-        loanId: item.loanId,
-        cycle: item.cycle || '-',
-        dueAmount: Number(item.collectionAmount ?? item.amount ?? 0),
-        paidAmount: Number(item.collectionAmount ?? item.amount ?? 0),
-        status: 'Paid',
-        date: item.date,
-      })),
-    [payments, today],
-  );
+  const cycleRows = useMemo(() => Object.fromEntries(
+    COLLECTION_CYCLES.map((cycle) => [
+      cycle,
+      todayRows.filter((item) => item.cycle === cycle && item.status !== 'Paid'),
+    ]),
+  ), [todayRows]);
 
-  const collectedTodayCount = collectedTodayRows.length;
+  const cycleTotals = useMemo(() => Object.fromEntries(
+    COLLECTION_CYCLES.map((cycle) => [
+      cycle,
+      (cycleRows[cycle] || []).reduce(
+        (sum, item) => sum + Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)),
+        0,
+      ),
+    ]),
+  ), [cycleRows]);
 
-  const rows = useMemo(() => {
-    if (tab === 'Collected Today') {
-      return collectedTodayRows.slice(0, 5);
-    }
+  const currentWeekDay = useMemo(() => {
+    const [year, month, day] = today.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('en-IN', { weekday: 'long' });
+  }, [today]);
 
-    return todayRows
-      .filter((item) => item.cycle === tab && item.status !== 'Paid')
-      .slice(0, 5);
-  }, [todayRows, collectedTodayRows, tab]);
-
-  const isCollectedTab = tab === 'Collected Today';
+  const downloadTodayCollections = () => {
+    const rows = COLLECTION_CYCLES.flatMap((cycle) => (cycleRows[cycle] || []).map((row) => ({ cycle, row })));
+    const escapeCsv = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const lines = [
+      ['Customer ID', 'Customer Name', 'Cycle', 'Amount to Collect', 'Status'],
+      ...rows.map(({ cycle, row }) => [
+        row.customerId,
+        row.customerName,
+        cycle,
+        Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)),
+        row.status,
+      ]),
+    ];
+    const csv = lines.map((line) => line.map(escapeCsv).join(',')).join('\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `crednivo-todays-collection-${today}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  };
 
   const openPay = (row) => {
     const balance = Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0));
@@ -245,143 +260,96 @@ export default function CollectionTable() {
 
   return (
     <section className="collection-card app-card">
-      <div className="section-head">
+      <div className="section-head collection-home-head">
         <h2>Today's Collection</h2>
-        <button onClick={() => navigate('/collection')}>View All <ArrowRight size={15} /></button>
-      </div>
-
-      <div className="collection-tabs" role="tablist">
-        {COLLECTION_TABS.map((item) => (
-          <button
-            key={item}
-            className={`${tab === item ? 'active' : ''} ${item === 'Collected Today' ? 'collected-tab' : ''}`}
-            onClick={() => setTab(item)}
-          >
-            {item}
-            {item === 'Collected Today' && <span className="collection-tab-count">{collectedTodayCount}</span>}
+        <div className="collection-home-head-actions">
+          <span className="collection-weekday"><CalendarDays size={15} />{currentWeekDay}</span>
+          <button type="button" className="collection-download-button" onClick={downloadTodayCollections}>
+            <Download size={15} /> Download
           </button>
-        ))}
+        </div>
       </div>
 
-      {rows.length ? <>
-        <div className="collection-table-wrap">
-          <table className="collection-table">
-            <thead>
-              <tr>
-                <th>Customer ID</th>
-                <th>Customer Name</th>
-                <th>Cycle</th>
-                <th>{isCollectedTab ? 'Amount Paid' : 'Amount to Pay'}</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => {
-                const rowKeys = new Set(rowLoanIdentityKeys(row));
-                const loan = (loans || []).find((item) =>
-                  loanIdentityKeys(item).some((key) => rowKeys.has(key)),
-                );
-                const loanClosed =
-                  !loan ||
-                  String(loan.status || '').trim().toUpperCase() === 'CLOSED' ||
-                  isPrecloseMarker(loan.status) ||
-                  Number(loan.outstanding) <= 0;
-                return (
-                  <tr key={row.id}>
-                    <td>{row.customerId}</td>
-                    <td><div className="dashboard-customer-cell"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></div></td>
-                    <td><span className="cycle-chip">{row.cycle}</span></td>
-                    <td>{formatCurrency(isCollectedTab ? row.paidAmount : Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</td>
-                    <td><StatusBadge status={row.status} /></td>
-                    <td>
-                      <div className="dashboard-collection-actions">
-                        {!isCollectedTab && (
-                          <button
-                            className={`dashboard-pay-button ${loanClosed ? 'closed' : ''}`}
-                            onClick={() => !loanClosed && openPay(row)}
-                            disabled={loanClosed}
-                            title={loanClosed ? 'Loan closed — no additional payment allowed' : `Pay ${row.customerName}`}
-                          >
-                            <HandCoins size={15} />
-                            <span>{loanClosed ? 'Closed' : 'Pay'}</span>
-                          </button>
-                        )}
-                        {!isCollectedTab && (
-                          <button
-                            type="button"
-                            className="dashboard-reschedule-button"
-                            onClick={() => openReschedule(row)}
-                            disabled={loanClosed}
-                            title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}
-                          >
-                            <CalendarDays size={15} />
-                            <span>Reschedule</span>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="collection-cycle-stack">
+        {COLLECTION_CYCLES.map((cycle) => {
+          const rows = cycleRows[cycle] || [];
+          return (
+            <section className="collection-cycle-section" key={cycle}>
+              <div className="collection-cycle-heading">
+                <h3>{cycle}</h3>
+                <div className="collection-cycle-total">
+                  <span>Amount to collect</span>
+                  <strong>{formatCurrency(cycleTotals[cycle] || 0)}</strong>
+                </div>
+              </div>
 
-        <div className="mobile-collection-list">
-          {rows.map((row) => {
-            const rowKeys = new Set(rowLoanIdentityKeys(row));
-            const loan = (loans || []).find((item) =>
-              loanIdentityKeys(item).some((key) => rowKeys.has(key)),
-            );
-            const loanClosed =
-                  !loan ||
-                  String(loan.status || '').trim().toUpperCase() === 'CLOSED' ||
-                  isPrecloseMarker(loan.status) ||
-                  Number(loan.outstanding) <= 0;
-            return (
-              <article className="mobile-collection-row" key={row.id}>
-                <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
-                <div className="mobile-row-identity">
-                  <strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong>
-                  <span>{row.customerId}</span>
-                </div>
-                <div className="mobile-row-amount">
-                  <b>{formatCurrency(isCollectedTab ? row.paidAmount : Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b>
-                  <StatusBadge status={row.status} />
-                </div>
-                {!isCollectedTab && (
-                  <div className="mobile-collection-actions">
-                    <button
-                      className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`}
-                      onClick={() => !loanClosed && openPay(row)}
-                      disabled={loanClosed}
-                      aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`}
-                      title={loanClosed ? 'Loan closed' : `Pay ${row.customerName}`}
-                    >
-                      <HandCoins size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className="dashboard-reschedule-button icon-only"
-                      onClick={() => openReschedule(row)}
-                      disabled={loanClosed}
-                      aria-label={`Reschedule ${row.customerName}`}
-                      title="Reschedule"
-                    >
-                      <CalendarDays size={16} />
-                    </button>
+              {rows.length ? (
+                <>
+                  <div className="collection-table-wrap collection-cycle-table-wrap">
+                    <table className="collection-table">
+                      <thead>
+                        <tr>
+                          <th>Customer ID</th>
+                          <th>Customer Name</th>
+                          <th>Amount to Pay</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row) => {
+                          const rowKeys = new Set(rowLoanIdentityKeys(row));
+                          const loan = (loans || []).find((item) => loanIdentityKeys(item).some((key) => rowKeys.has(key)));
+                          const loanClosed = !loan || String(loan.status || '').trim().toUpperCase() === 'CLOSED' || isPrecloseMarker(loan.status) || Number(loan.outstanding) <= 0;
+                          return (
+                            <tr key={row.id}>
+                              <td>{row.customerId}</td>
+                              <td><div className="dashboard-customer-cell"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></div></td>
+                              <td><strong>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</strong></td>
+                              <td><StatusBadge status={row.status} /></td>
+                              <td>
+                                <div className="dashboard-collection-actions">
+                                  <button className={`dashboard-pay-button ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed — no additional payment allowed' : `Pay ${row.customerName}`}>
+                                    <HandCoins size={15} /><span>{loanClosed ? 'Closed' : 'Pay'}</span>
+                                  </button>
+                                  <button type="button" className="dashboard-reschedule-button" onClick={() => openReschedule(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}>
+                                    <CalendarDays size={15} /><span>Reschedule</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      </> : (
-        <div className="dashboard-empty">
-          {isCollectedTab ? 'No fully paid collections yet today.' : `No unpaid ${tab.toLowerCase()} collections due today.`}
-        </div>
-      )}
+
+                  <div className="mobile-collection-list collection-cycle-mobile-list">
+                    {rows.map((row) => {
+                      const rowKeys = new Set(rowLoanIdentityKeys(row));
+                      const loan = (loans || []).find((item) => loanIdentityKeys(item).some((key) => rowKeys.has(key)));
+                      const loanClosed = !loan || String(loan.status || '').trim().toUpperCase() === 'CLOSED' || isPrecloseMarker(loan.status) || Number(loan.outstanding) <= 0;
+                      return (
+                        <article className="mobile-collection-row" key={row.id}>
+                          <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
+                          <div className="mobile-row-identity"><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId}</span></div>
+                          <div className="mobile-row-amount"><b>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b><StatusBadge status={row.status} /></div>
+                          <div className="mobile-collection-actions">
+                            <button className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Pay ${row.customerName}`}><HandCoins size={15} /></button>
+                            <button type="button" className="dashboard-reschedule-button icon-only" onClick={() => openReschedule(row)} disabled={loanClosed} aria-label={`Reschedule ${row.customerName}`} title="Reschedule"><CalendarDays size={16} /></button>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="dashboard-empty collection-cycle-empty">No {cycle.toLowerCase()} customers due today.</div>
+              )}
+            </section>
+          );
+        })}
+      </div>
 
       <button className="view-collections-button" onClick={() => navigate('/collection')}>
         View All Today's Collections <ArrowRight size={15} />

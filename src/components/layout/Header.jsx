@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ChevronDown, Menu, Search, Sparkles } from 'lucide-react';
+import { Bell, ChevronDown, House, Menu, Search, Sparkles } from 'lucide-react';
 import { listNotifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } from '../../services/work';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -233,12 +233,12 @@ export default function Header({ onOpenMenu }) {
   const handleSwitchAccount = async (id) => { setProfileOpen(false); await switchAccount(id); navigate('/', { replace: true }); };
 
   return (
-    <header className="app-header">
+    <header className={`app-header ${isOverview ? 'overview-header' : ''}`}>
       <div className="header-title-wrap">
         <IconButton label="Open menu" onClick={onOpenMenu} className="mobile-menu-button"><Menu size={22} /></IconButton>
         <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark"><CrednivoMark size={37} /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
         <div className="desktop-header-identity">
-          <h1>{title}</h1>
+          <h1>{isOverview && <House size={22} className="header-title-icon" aria-hidden="true" />}{title}</h1>
           {isOverview ? (
             <p className="overview-greeting"><span>{greeting}, {user?.displayName || company.owner}</span><Sparkles size={14} aria-hidden="true" /><span className="overview-greeting-divider">•</span><span className="overview-greeting-context">Your CREDNIVO snapshot for today</span></p>
           ) : <p className="overview-greeting"><span>{company.name}</span><span className="overview-greeting-divider">•</span><span className="overview-greeting-context">{user?.branch || company.branch}</span></p>}

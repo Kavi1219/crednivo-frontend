@@ -11,7 +11,8 @@
   border-bottom: 1px solid rgba(228,234,242,.7);
 }
 .header-title-wrap { display: flex; align-items: center; gap: 16px; min-width: 260px; }
-.header-title-wrap h1 { margin: 0; font-size: 26px; line-height: 1.15; letter-spacing: -.035em; }
+.header-title-wrap h1 { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 26px; line-height: 1.15; letter-spacing: -.035em; }
+.header-title-icon { flex: 0 0 auto; color: var(--blue-500); }
 .header-title-wrap p { margin: 7px 0 0; font-size: 13px; color: var(--ink-600); }
 .mobile-menu-button { display: none; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
@@ -491,6 +492,14 @@ html[data-theme='dark'] .profile-dropdown-heading {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-gutter: stable;
+  }
+}
+
+
+@media (min-width: 768px) {
+  .app-header.overview-header {
+    position: sticky;
+    top: 0;
   }
 }
 
