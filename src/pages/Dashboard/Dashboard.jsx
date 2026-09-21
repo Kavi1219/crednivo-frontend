@@ -15,6 +15,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const today = toInputDate();
 
+  const collectionProgress = metrics.expected > 0
+    ? Math.min(100, Math.max(0, (metrics.collected / metrics.expected) * 100))
+    : 0;
+
   // "Today's Collection" card shows what's STILL owed today, not the static
   // original target — it shrinks live as each customer actually pays.
   const todayRemainingRows = (collections || []).filter((item) => {
@@ -26,6 +30,11 @@ export default function Dashboard() {
     0,
   );
   const todayRemainingCustomers = new Set(todayRemainingRows.map((item) => item.customerId)).size;
+
+  const recoveryBase = Math.max(0, Number(metrics.expected) + Number(metrics.overdue));
+  const pendingProgress = recoveryBase > 0
+    ? Math.min(100, Math.max(0, (Number(metrics.pendingOverdue) / recoveryBase) * 100))
+    : 0;
 
   const canViewCapital = hasPermission('capital.view');
 
@@ -56,6 +65,7 @@ export default function Dashboard() {
       note: `${todayRemainingCustomers} Customers Remaining`,
       icon: WalletCards,
       tone: 'blue',
+      progress: collectionProgress,
       onDetails: () => navigate('/collection?view=today'),
     },
     {
@@ -64,6 +74,7 @@ export default function Dashboard() {
       note: 'Actual collections received',
       icon: WalletMinimal,
       tone: 'green',
+      progress: collectionProgress,
       onDetails: () => navigate('/payments?filter=Collection&today=1'),
     },
     {
@@ -72,6 +83,7 @@ export default function Dashboard() {
       note: 'Business expenses',
       icon: ReceiptText,
       tone: 'pink',
+      progress: 0,
       onDetails: () => navigate('/expenses'),
     },
     {
@@ -80,6 +92,7 @@ export default function Dashboard() {
       note: `${formatCurrency(metrics.pending)} due today · ${formatCurrency(metrics.overdue)} overdue`,
       icon: TriangleAlert,
       tone: 'danger',
+      progress: pendingProgress,
       onDetails: () => navigate('/collection?view=overdue'),
     },
   ];
@@ -91,6 +104,7 @@ export default function Dashboard() {
       note: `${dailyTarget.customerCount} daily customers`,
       icon: WalletCards,
       tone: 'blue',
+      showProgress: false,
       onDetails: () => navigate('/customers/daily'),
     },
     {
@@ -99,6 +113,7 @@ export default function Dashboard() {
       note: `${weeklyTarget.customerCount} weekly customers`,
       icon: WalletCards,
       tone: 'blue',
+      showProgress: false,
       onDetails: () => navigate('/customers/weekly'),
     },
     {
@@ -107,6 +122,7 @@ export default function Dashboard() {
       note: `${monthlyTarget.customerCount} monthly customers`,
       icon: WalletCards,
       tone: 'blue',
+      showProgress: false,
       onDetails: () => navigate('/customers/monthly'),
     },
   ];
@@ -118,6 +134,7 @@ export default function Dashboard() {
       note: capitalMetrics.entries ? 'Current business cash' : 'Add opening investment',
       icon: Landmark,
       tone: (metrics.availableCapital ?? capitalMetrics.availableCapital) < 0 ? 'danger' : 'green',
+      showProgress: false,
       onDetails: () => navigate('/capital'),
     }] : []),
     {
@@ -126,6 +143,7 @@ export default function Dashboard() {
       note: 'Total Active Loans',
       icon: UserRoundCheck,
       tone: 'cyan',
+      showProgress: false,
       onDetails: () => navigate('/loans?status=Active'),
     },
     {
@@ -134,6 +152,7 @@ export default function Dashboard() {
       note: `From ${partialCustomers} Customer${partialCustomers === 1 ? '' : 's'}`,
       icon: CircleDollarSign,
       tone: 'orange',
+      showProgress: false,
       onDetails: () => navigate('/collection?view=upcoming&status=Partial'),
     },
     {
@@ -142,6 +161,7 @@ export default function Dashboard() {
       note: `From ${metrics.upcomingCustomers || 0} Customers`,
       icon: CalendarDays,
       tone: 'purple',
+      showProgress: false,
       onDetails: () => navigate('/collection?view=upcoming'),
     },
   ];
