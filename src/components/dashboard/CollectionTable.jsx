@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, HandCoins } from 'lucide-react';
+import { ArrowRight, CalendarDays, HandCoins, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -33,7 +33,11 @@ function matchesLoanKeys(item, keySet) {
 export default function CollectionTable() {
   const [tab, setTab] = useState('Daily');
   const [paying, setPaying] = useState(null);
-  const { customers, collections, loans, payments } = useCrednivo();
+  const [rescheduling, setRescheduling] = useState(null);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState('');
+  const { customers, collections, loans, payments, rescheduleCollection } = useCrednivo();
   const navigate = useNavigate();
   const today = toInputDate();
 
@@ -211,6 +215,34 @@ export default function CollectionTable() {
     setPaying(null);
   };
 
+  const openReschedule = (row) => {
+    if (!row || String(row.status || '').trim().toLowerCase() === 'paid') return;
+    setRescheduleError('');
+    setRescheduling(row);
+    setRescheduleDate(row.date > today ? row.date : '');
+  };
+
+  const closeReschedule = () => {
+    if (rescheduleSaving) return;
+    setRescheduling(null);
+    setRescheduleDate('');
+    setRescheduleError('');
+  };
+
+  const submitReschedule = async () => {
+    if (!rescheduling?.id || !rescheduleDate || rescheduleSaving) return;
+    setRescheduleSaving(true);
+    setRescheduleError('');
+    try {
+      await rescheduleCollection(rescheduling.id, rescheduleDate);
+      closeReschedule();
+    } catch (error) {
+      setRescheduleError(error?.message || 'Could not reschedule this collection.');
+    } finally {
+      setRescheduleSaving(false);
+    }
+  };
+
   return (
     <section className="collection-card app-card">
       <div className="section-head">
@@ -275,9 +307,18 @@ export default function CollectionTable() {
                             <span>{loanClosed ? 'Closed' : 'Pay'}</span>
                           </button>
                         )}
-                        <IconButton label={`View ${row.customerName}`} size="sm" onClick={() => navigate(`/customers/${row.customerId}`)}>
-                          <Eye size={16} />
-                        </IconButton>
+                        {!isCollectedTab && (
+                          <button
+                            type="button"
+                            className="dashboard-reschedule-button"
+                            onClick={() => openReschedule(row)}
+                            disabled={loanClosed}
+                            title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}
+                          >
+                            <CalendarDays size={15} />
+                            <span>Reschedule</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -310,15 +351,27 @@ export default function CollectionTable() {
                   <StatusBadge status={row.status} />
                 </div>
                 {!isCollectedTab && (
-                  <button
-                    className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`}
-                    onClick={() => !loanClosed && openPay(row)}
-                    disabled={loanClosed}
-                    aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`}
-                    title={loanClosed ? 'Loan closed' : `Pay ${row.customerName}`}
-                  >
-                    <HandCoins size={15} />
-                  </button>
+                  <div className="mobile-collection-actions">
+                    <button
+                      className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`}
+                      onClick={() => !loanClosed && openPay(row)}
+                      disabled={loanClosed}
+                      aria-label={loanClosed ? `${row.customerName} loan closed` : `Pay ${row.customerName}`}
+                      title={loanClosed ? 'Loan closed' : `Pay ${row.customerName}`}
+                    >
+                      <HandCoins size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className="dashboard-reschedule-button icon-only"
+                      onClick={() => openReschedule(row)}
+                      disabled={loanClosed}
+                      aria-label={`Reschedule ${row.customerName}`}
+                      title="Reschedule"
+                    >
+                      <CalendarDays size={16} />
+                    </button>
+                  </div>
                 )}
               </article>
             );
@@ -333,6 +386,41 @@ export default function CollectionTable() {
       <button className="view-collections-button" onClick={() => navigate('/collection')}>
         View All Today's Collections <ArrowRight size={15} />
       </button>
+
+      {rescheduling && (
+        <div className="dashboard-reschedule-backdrop" onMouseDown={closeReschedule}>
+          <div className="dashboard-reschedule-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="dashboard-reschedule-head">
+              <div>
+                <strong>Reschedule Collection</strong>
+                <span>{rescheduling.customerName} · {rescheduling.cycle}</span>
+              </div>
+              <button type="button" className="dashboard-reschedule-close" onClick={closeReschedule} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="dashboard-reschedule-summary">
+              <div><span>Current date</span><strong>{rescheduling.date}</strong></div>
+              <div><span>Amount to pay</span><strong>{formatCurrency(Math.max(0, Number(rescheduling.dueAmount || 0) - Number(rescheduling.paidAmount || 0)))}</strong></div>
+            </div>
+
+            <label className="dashboard-reschedule-field">
+              <span>New collection date</span>
+              <input type="date" min={today} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} />
+            </label>
+
+            {rescheduleError && <div className="dashboard-reschedule-error">{rescheduleError}</div>}
+
+            <div className="dashboard-reschedule-actions">
+              <button type="button" className="secondary" onClick={closeReschedule} disabled={rescheduleSaving}>Cancel</button>
+              <button type="button" className="primary" onClick={submitReschedule} disabled={!rescheduleDate || rescheduleSaving}>
+                {rescheduleSaving ? 'Saving...' : 'Confirm Reschedule'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <RecordLoanPaymentModal
         open={Boolean(paying)}
