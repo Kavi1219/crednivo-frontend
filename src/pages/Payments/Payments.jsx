@@ -15,6 +15,7 @@ import {
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
+import StatCard from '../../components/dashboard/StatCard';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -134,23 +135,13 @@ export default function Payments() {
         description="A single transaction history for collections, loans, expenses, capital and savings."
       />
 
-      <section className="metric-strip">
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><ArrowDownLeft size={20} /></span>
-          <div><span>Total Incoming</span><strong>{formatCurrency(incoming)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><ArrowUpRight size={20} /></span>
-          <div><span>Total Outgoing</span><strong>{formatCurrency(outgoing)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><WalletCards size={20} /></span>
-          <div><span>Net Cash Flow</span><strong>{formatCurrency(incoming - outgoing)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><HandCoins size={20} /></span>
-          <div><span>Transactions</span><strong>{dateFiltered.length}</strong></div>
-        </article>
+      <section className="stats-section">
+        <div className="stats-grid">
+          <StatCard title="Total Incoming" value={formatCurrency(incoming)} note="" icon={ArrowDownLeft} tone="green" showProgress={false} />
+          <StatCard title="Total Outgoing" value={formatCurrency(outgoing)} note="" icon={ArrowUpRight} tone="danger" showProgress={false} />
+          <StatCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="" icon={WalletCards} tone="blue" showProgress={false} />
+          <StatCard title="Transactions" value={String(dateFiltered.length)} note="" icon={HandCoins} tone="purple" showProgress={false} />
+        </div>
       </section>
 
       <section className="module-card payment-history-card">

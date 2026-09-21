@@ -2,6 +2,7 @@ import { Eye, Search, UserPlus, UsersRound, WalletCards, CalendarDays, BadgeIndi
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
+import StatCard from '../../components/dashboard/StatCard';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
@@ -77,11 +78,13 @@ export default function Customers() {
         actions={hasPermission('customers.add') ? <ActionButton icon={UserPlus} onClick={() => navigate('/customers/new')}>New Customer</ActionButton> : null}
       />
 
-      <section className="metric-strip">
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><UsersRound size={20}/></span><div><span>Total Customers</span><strong>{cycleCustomers.length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><WalletCards size={20}/></span><div><span>Active Customers</span><strong>{active}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><BadgeIndianRupee size={20}/></span><div><span>Outstanding</span><strong>{formatCurrency(outstanding)}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><CalendarDays size={20}/></span><div><span>Cycle</span><strong>{cycle}</strong></div></article>
+      <section className="stats-section">
+        <div className="stats-grid">
+          <StatCard title="Total Customers" value={String(cycleCustomers.length)} note="" icon={UsersRound} tone="blue" showProgress={false} />
+          <StatCard title="Active Customers" value={String(active)} note="" icon={WalletCards} tone="green" showProgress={false} />
+          <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
+          <StatCard title="Cycle" value={cycle} note="" icon={CalendarDays} tone="purple" showProgress={false} />
+        </div>
       </section>
 
       <section className="module-card">

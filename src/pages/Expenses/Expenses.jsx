@@ -1,6 +1,7 @@
 import { Check, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
+import StatCard from '../../components/dashboard/StatCard';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -137,15 +138,11 @@ export default function Expenses() {
         actions={hasPermission('expenses.add') ? <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton> : null}
       />
 
-      <section className="metric-strip expense-metric-strip">
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><ReceiptText size={20} /></span>
-          <div><span>Today's Expenses</span><strong>{formatCurrency(total)}</strong></div>
-        </article>
-        <article className="mini-metric module-card">
-          <span className="mini-metric-icon"><ReceiptText size={20} /></span>
-          <div><span>Overall Expenses</span><strong>{formatCurrency(overall)}</strong></div>
-        </article>
+      <section className="stats-section">
+        <div className="stats-grid">
+          <StatCard title="Today's Expenses" value={formatCurrency(total)} note="" icon={ReceiptText} tone="pink" showProgress={false} />
+          <StatCard title="Overall Expenses" value={formatCurrency(overall)} note="" icon={ReceiptText} tone="orange" showProgress={false} />
+        </div>
       </section>
 
       <section className="module-card">

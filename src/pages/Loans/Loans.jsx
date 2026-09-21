@@ -2,6 +2,7 @@ import { Eye, Plus, Search, WalletCards, IndianRupee, BadgeIndianRupee, Activity
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
+import StatCard from '../../components/dashboard/StatCard';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
@@ -40,11 +41,13 @@ export default function Loans() {
   const outstanding = statusLoans.reduce((sum, item) => sum + item.outstanding, 0);
   return <div className="module-page loans-page">
     <ModuleHeader eyebrow="Loan Management" title={status === 'All' ? 'All Loans' : `${status} Loans`} description="Track every loan, its cycle, repayment plan, balance and current status." actions={hasPermission('loans.create') ? <ActionButton icon={Plus} onClick={()=>navigate('/loans/create')}>Create Loan</ActionButton> : null} />
-    <section className="metric-strip">
-      <article className="mini-metric module-card"><span className="mini-metric-icon"><WalletCards size={20}/></span><div><span>Total Loans</span><strong>{statusLoans.length}</strong></div></article>
-      <article className="mini-metric module-card"><span className="mini-metric-icon"><IndianRupee size={20}/></span><div><span>Principal</span><strong>{formatCurrency(principal)}</strong></div></article>
-      <article className="mini-metric module-card"><span className="mini-metric-icon"><BadgeIndianRupee size={20}/></span><div><span>Outstanding</span><strong>{formatCurrency(outstanding)}</strong></div></article>
-      <article className="mini-metric module-card"><span className="mini-metric-icon"><Activity size={20}/></span><div><span>Active</span><strong>{statusLoans.filter(item=>item.status!=='Closed').length}</strong></div></article>
+    <section className="stats-section">
+      <div className="stats-grid">
+        <StatCard title="Total Loans" value={String(statusLoans.length)} note="" icon={WalletCards} tone="blue" showProgress={false} />
+        <StatCard title="Principal" value={formatCurrency(principal)} note="" icon={IndianRupee} tone="cyan" showProgress={false} />
+        <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
+        <StatCard title="Active" value={String(statusLoans.filter(item=>item.status!=='Closed').length)} note="" icon={Activity} tone="green" showProgress={false} />
+      </div>
     </section>
     <section className="module-card">
       <div className="module-toolbar"><label className="module-search"><Search size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search loan, customer or ID..."/></label><div className="module-toolbar-group">{['All','Active','Overdue','Closed'].map(item=><button key={item} className={`filter-chip ${status===item?'active':''}`} onClick={()=>setStatus(item)}>{item}</button>)}</div></div>

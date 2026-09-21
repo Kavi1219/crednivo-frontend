@@ -1,6 +1,7 @@
 import { Download, Eye, FileCheck2, FileText, FolderOpen, Search, Trash2, Upload, X } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
+import StatCard from '../../components/dashboard/StatCard';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -84,11 +85,13 @@ export default function Documents() {
     <div className="module-page documents-page">
       <ModuleHeader eyebrow="Document Vault" title="Documents" description="Keep customer KYC, Jamin proofs, agreements and company documents organized in PostgreSQL-backed storage." actions={hasPermission('documents.upload') ? <ActionButton icon={Upload} onClick={() => { setUploadOpen(true); setError(''); }}>Upload Document</ActionButton> : null} />
 
-      <section className="metric-strip">
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><FolderOpen size={20} /></span><div><span>Total Documents</span><strong>{documents.length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><FileCheck2 size={20} /></span><div><span>Customer KYC</span><strong>{documents.filter((d) => d.type === 'Customer KYC' || d.type === 'Jamin KYC').length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><FileText size={20} /></span><div><span>Loan Agreements</span><strong>{documents.filter((d) => d.type === 'Loan Agreement').length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><FileText size={20} /></span><div><span>Company Docs</span><strong>{documents.filter((d) => d.type === 'Company').length}</strong></div></article>
+      <section className="stats-section">
+        <div className="stats-grid">
+          <StatCard title="Total Documents" value={String(documents.length)} note="" icon={FolderOpen} tone="blue" showProgress={false} />
+          <StatCard title="Customer KYC" value={String(documents.filter((d) => d.type === 'Customer KYC' || d.type === 'Jamin KYC').length)} note="" icon={FileCheck2} tone="green" showProgress={false} />
+          <StatCard title="Loan Agreements" value={String(documents.filter((d) => d.type === 'Loan Agreement').length)} note="" icon={FileText} tone="cyan" showProgress={false} />
+          <StatCard title="Company Docs" value={String(documents.filter((d) => d.type === 'Company').length)} note="" icon={FileText} tone="purple" showProgress={false} />
+        </div>
       </section>
 
       <section className="module-card">

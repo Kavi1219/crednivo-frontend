@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
+import StatCard from '../../components/dashboard/StatCard';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import CreateWorkModal from '../../components/work/CreateWorkModal';
@@ -200,11 +201,13 @@ export default function Agents() {
         <ActionButton icon={UserPlus} onClick={openCreate}>Invite Agent</ActionButton>
       </>} />
 
-      <section className="metric-strip">
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><UsersRound size={20} /></span><div><span>Total Agents</span><strong>{agents.length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><CheckCircle2 size={20} /></span><div><span>Active</span><strong>{agents.filter((a) => a.status === 'Active').length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><Clock3 size={20} /></span><div><span>Pending Approval</span><strong>{agents.filter((a) => a.status === 'Pending Approval').length}</strong></div></article>
-        <article className="mini-metric module-card"><span className="mini-metric-icon"><WalletCards size={20} /></span><div><span>Collected</span><strong>{formatCurrency(agents.reduce((sum, agent) => sum + Number(agent.collected || 0), 0))}</strong></div></article>
+      <section className="stats-section">
+        <div className="stats-grid">
+          <StatCard title="Total Agents" value={String(agents.length)} note="" icon={UsersRound} tone="blue" showProgress={false} />
+          <StatCard title="Active" value={String(agents.filter((a) => a.status === 'Active').length)} note="" icon={CheckCircle2} tone="green" showProgress={false} />
+          <StatCard title="Pending Approval" value={String(agents.filter((a) => a.status === 'Pending Approval').length)} note="" icon={Clock3} tone="orange" showProgress={false} />
+          <StatCard title="Collected" value={formatCurrency(agents.reduce((sum, agent) => sum + Number(agent.collected || 0), 0))} note="" icon={WalletCards} tone="purple" showProgress={false} />
+        </div>
       </section>
 
       <section className="module-card">
