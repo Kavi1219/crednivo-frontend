@@ -323,6 +323,7 @@ export default function CreateLoan() {
           <div><span>Duration</span><strong>{terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</strong></div>
           <div><span>Disbursed Date</span><strong>{form.startDate ? formatDate(form.startDate) : '—'}</strong></div>
           <div><span>First Collection Date</span><strong>{effectiveFirstDueDate ? formatDate(effectiveFirstDueDate) : '—'}</strong></div>
+          <div><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
         </div>
 
         <div className="create-loan-preview-section">
@@ -334,10 +335,6 @@ export default function CreateLoan() {
           </div>
         </div>
 
-        <div className="create-loan-preview-note">
-          <h4>Good to know</h4>
-          <p>{effectiveFirstDueDate ? `The first collection date is set to ${cycleSummary(effectiveFirstDueDate, form.cycle).replace(/^\w+\s·\s/, '')}.` : 'Choose a valid disbursed date to calculate the first collection date.'}</p>
-        </div>
       </aside>
     </div>
 
