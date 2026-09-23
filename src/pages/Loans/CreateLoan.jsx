@@ -1,8 +1,7 @@
-import { Check, CheckCircle2, Pencil, Search, UserPlus, UserRound, WalletCards, X } from 'lucide-react';
+import { ArrowLeft, Check, CheckCircle2, Pencil, Search, UserPlus, UserRound, WalletCards, X } from 'lucide-react';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
-import ModuleHeader from '../../components/common/ModuleHeader';
 import ReviewModal from '../../components/common/ReviewModal';
 import LoanSetupFields from '../../components/loan/LoanSetupFields';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -161,17 +160,16 @@ export default function CreateLoan() {
   const goToLoans = () => navigate('/loans');
 
   return <div className="module-page create-loan-page create-loan-redesign">
-    <ModuleHeader
-      eyebrow="Loan Management"
-      title="Create Loan"
-      description="Set up the loan terms and preferences for the customer."
-      actions={
-        <div className="create-loan-header-actions">
-          <ActionButton tone="secondary" type="button" onClick={goToLoans}>Cancel</ActionButton>
-          <ActionButton icon={CheckCircle2} type="button" onClick={requestCreate}>Create Loan</ActionButton>
-        </div>
-      }
-    />
+    <div className="create-loan-page-header">
+      <button type="button" className="create-loan-back-link" onClick={goToLoans}>
+        <ArrowLeft size={16}/>
+        <span>Back to Loans</span>
+      </button>
+      <div className="create-loan-page-title">
+        <h1>Create Loan</h1>
+        <p>Enter the loan details below to create a new loan for your customer.</p>
+      </div>
+    </div>
     {error&&<div className="form-error">{error}</div>}
     <div className="create-loan-layout">
       <section className="module-card create-loan-main-card">
@@ -184,21 +182,12 @@ export default function CreateLoan() {
         </div>
 
         <div className="create-loan-main-body">
-          <div className="form-section create-loan-customer-block">
-            <div className="form-section-head">
-              <span className="form-section-icon"><UserRound size={19}/></span>
-              <div>
-                <h2>{customerFromProfile ? 'Customer' : 'Select Customer'}</h2>
-                <p>{customerFromProfile ? 'This loan will be created for the selected customer profile.' : 'Search by Customer ID or customer name, then select the profile'}</p>
-              </div>
-              {!customerFromProfile && canAddCustomer ? <button type="button" className="create-loan-inline-link" onClick={goToNewCustomer}><UserPlus size={14}/> New Customer</button> : null}
-            </div>
-
+          <div className="create-loan-customer-inline">
+            <div className="create-loan-inline-customer-label">Customer</div>
             {customerFromProfile ? (
-              <div className="profile-loan-customer create-loan-selected-customer">
+              <div className="profile-loan-customer create-loan-selected-customer create-loan-selected-customer-compact">
                 <span className="selected-customer-avatar">{String(selectedCustomer?.name || '?').charAt(0).toUpperCase()}</span>
                 <div className="create-loan-selected-copy">
-                  <small>Customer</small>
                   <strong>{selectedCustomer?.name || 'Loading customer...'}</strong>
                   {selectedCustomer && (
                     <div className="create-loan-customer-id-row">
@@ -220,18 +209,18 @@ export default function CreateLoan() {
                 </div>
               </div>
             ) : (
-              <div className="create-loan-customer-picker">
-                <label className="create-loan-customer-search-label">Search Customer *</label>
-                <div className="create-loan-search create-loan-search-large">
-                  <Search size={19}/>
+              <>
+                <div className="create-loan-search create-loan-customer-inline-search">
+                  <Search size={18}/>
                   <input
                     type="search"
                     value={customerSearch}
                     onChange={(event)=>handleCustomerSearch(event.target.value)}
-                    placeholder="Search by customer name, Customer ID or mobile number..."
+                    placeholder="Search customer by name, Customer ID or mobile number"
                     autoComplete="off"
                     aria-label="Search customer for new loan"
                   />
+                  {!customerSearch && canAddCustomer ? <button type="button" className="create-loan-inline-link" onClick={goToNewCustomer}><UserPlus size={14}/> New Customer</button> : null}
                 </div>
 
                 {customerSearch.trim() && (
@@ -265,10 +254,9 @@ export default function CreateLoan() {
                 )}
 
                 {selectedCustomer && (
-                  <div className="selected-customer-preview selected-customer-preview-confirmed">
+                  <div className="selected-customer-preview selected-customer-preview-confirmed create-loan-selected-customer-compact">
                     <span className="selected-customer-avatar">{String(selectedCustomer.name || '?').charAt(0).toUpperCase()}</span>
                     <div className="create-loan-selected-copy">
-                      <small>Selected Customer</small>
                       <strong>{selectedCustomer.name}</strong>
                       <span>{selectedCustomer.mobile ? formatIndianMobile(selectedCustomer.mobile) : '—'}</span>
                       <div className="create-loan-customer-id-row">
@@ -287,13 +275,10 @@ export default function CreateLoan() {
                         )}
                       </div>
                     </div>
-                    <button type="button" className="change-selected-customer" onClick={()=>{
-                      change('customerId','');
-                      setCustomerSearch('');
-                    }}>Change</button>
+                    <button type="button" className="change-selected-customer" onClick={()=>{ change('customerId',''); setCustomerSearch(''); }}>Change</button>
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
@@ -303,44 +288,55 @@ export default function CreateLoan() {
             <LoanSetupFields form={form} change={change}/>
           </div>
         </div>
+
+        <div className="create-loan-form-actions">
+          <ActionButton tone="secondary" type="button" onClick={goToLoans}>Cancel</ActionButton>
+          <ActionButton icon={CheckCircle2} type="button" onClick={requestCreate}>Create Loan</ActionButton>
+        </div>
       </section>
 
-      <aside className="module-card create-loan-summary-card">
-        <div className="create-loan-summary-head">
-          <span className="create-loan-summary-icon"><WalletCards size={20}/></span>
-          <div>
-            <h3>Loan Summary</h3>
-            <p>Key details at a glance.</p>
-          </div>
-        </div>
-
-        {selectedCustomer && (
-          <div className="create-loan-summary-customer">
-            <span className="selected-customer-avatar">{String(selectedCustomer.name || '?').charAt(0).toUpperCase()}</span>
+      <aside className="module-card create-loan-summary-card create-loan-preview-card">
+        <div className="create-loan-preview-top">
+          <div className="create-loan-summary-head">
+            <span className="create-loan-summary-icon"><WalletCards size={20}/></span>
             <div>
-              <strong>{selectedCustomer.name}</strong>
-              <span>{selectedCustomer.id}</span>
+              <h3>Loan Preview</h3>
+              <p>Review the details before creating</p>
             </div>
           </div>
-        )}
+          <span className="create-loan-ready-badge"><span className="dot"/>Ready to create</span>
+        </div>
 
-        <div className="create-loan-summary-rows">
-          <div><span>Loan Amount</span><strong>{formatCurrency(terms.principal)}</strong></div>
+        <div className="create-loan-hero-card">
+          <div>
+            <span className="create-loan-hero-label">Loan Amount</span>
+            <strong>{formatCurrency(terms.principal)}</strong>
+            <small>{form.loanType} • {form.cycle} • {terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</small>
+          </div>
+          <span className="create-loan-hero-icon"><WalletCards size={22}/></span>
+        </div>
+
+        <div className="create-loan-summary-rows create-loan-preview-rows">
           <div><span>Loan Type</span><strong>{form.loanType}</strong></div>
-          <div><span>Interest Rate</span><strong>{form.interestRate}% p.a.</strong></div>
           <div><span>Cycle</span><strong>{form.cycle}</strong></div>
+          <div><span>Interest Rate</span><strong>{form.interestRate}%</strong></div>
           <div><span>Duration</span><strong>{terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</strong></div>
           <div><span>Disbursed Date</span><strong>{form.startDate ? formatDate(form.startDate) : '—'}</strong></div>
           <div><span>First Collection Date</span><strong>{effectiveFirstDueDate ? formatDate(effectiveFirstDueDate) : '—'}</strong></div>
-          <div><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
-          <div><span>Collection / Cycle</span><strong>{formatCurrency(terms.collectionAmount)}</strong></div>
-          <div><span>{form.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(terms.totalRepayment)}</strong></div>
         </div>
 
-        <div className="create-loan-next-collection">
-          <span className="create-loan-next-collection-label">Next Collection</span>
-          <strong>{effectiveFirstDueDate ? formatDate(effectiveFirstDueDate) : '—'}</strong>
-          <small>{cycleSummary(effectiveFirstDueDate, form.cycle)}</small>
+        <div className="create-loan-preview-section">
+          <h4>Additional Options</h4>
+          <div className="create-loan-preview-options">
+            <div><span>Interest taken upfront</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
+            <div><span>Fine applicable</span><strong>{form.fineEnabled ? 'Yes' : 'No'}</strong></div>
+            <div><span>Document Charges applicable</span><strong>{form.documentChargeEnabled ? 'Yes' : 'No'}</strong></div>
+          </div>
+        </div>
+
+        <div className="create-loan-preview-note">
+          <h4>Good to know</h4>
+          <p>{effectiveFirstDueDate ? `The first collection date is set to ${cycleSummary(effectiveFirstDueDate, form.cycle).replace(/^\w+\s·\s/, '')}.` : 'Choose a valid disbursed date to calculate the first collection date.'}</p>
         </div>
       </aside>
     </div>
