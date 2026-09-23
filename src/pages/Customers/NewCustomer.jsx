@@ -28,8 +28,9 @@ function financialYearCode(dateValue = toInputDate()) {
   return `${String(start).slice(-2)}${String(start + 1).slice(-2)}`;
 }
 
-function nextCustomerPreviewId(list, customerDate) {
-  const prefix = `SFC-${financialYearCode(customerDate)}-`;
+function nextCustomerPreviewId(list, customerDate, companyPrefix = 'SFC') {
+  const safePrefix = String(companyPrefix || 'SFC').toUpperCase().replace(/[^A-Z0-9]/g, '') || 'SFC';
+  const prefix = `${safePrefix}-${financialYearCode(customerDate)}-`;
   const used = list
     .map((item) => String(item.id || '').toUpperCase())
     .filter((id) => id.startsWith(prefix) && /^\d{4}$/.test(id.slice(prefix.length)))
@@ -37,6 +38,13 @@ function nextCustomerPreviewId(list, customerDate) {
   let next = 0;
   while (used.includes(next)) next += 1;
   return `${prefix}${String(next).padStart(4, '0')}`;
+}
+
+
+function companyInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  const initials = parts.map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 4);
+  return initials.length >= 2 ? initials : 'C';
 }
 
 function nextPreviewId(prefix, list, pad) {
@@ -300,7 +308,9 @@ function OptionalPhone({ value, onChange, id }) {
 export default function NewCustomer() {
   const actionLocksRef = useRef(new Set());
   const { saveCustomerProfile, saveJaminProfile, addLoan, updateCustomerId, customers, loans } = useCrednivo();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user, status } = useAuth();
+  const companyName = user?.companyName || status?.companyName || 'Company';
+  const companyCode = companyInitials(companyName);
   const canCreateLoan = hasPermission('loans.create');
   const navigate = useNavigate();
 
@@ -317,7 +327,7 @@ export default function NewCustomer() {
 
   const terms = useMemo(() => calculateLoan(form), [form]);
   const effectiveFirstDueDate = form.firstDueDate || getFirstDueDate(form.startDate, form.cycle);
-  const previewCustomerId = useMemo(() => nextCustomerPreviewId(customers, form.date), [customers, form.date]);
+  const previewCustomerId = useMemo(() => nextCustomerPreviewId(customers, form.date, companyCode), [customers, form.date, companyCode]);
   const defaultCustomerId = serverNextCustomerId || previewCustomerId;
   const customerId = savedCustomerId || customerIdDraft || defaultCustomerId;
   const loanId = useMemo(() => nextPreviewId('SFCLN-', loans, 5), [loans]);
@@ -466,10 +476,10 @@ export default function NewCustomer() {
       <div className="registration-shell module-card">
         <aside className="registration-sidebar">
           <div className="registration-brand-block">
-            <span className="registration-brand-mark">SFC</span>
+            <span className="registration-brand-mark">{companyCode}</span>
             <div>
               <strong>Customer Registration</strong>
-              <small>Sangam Fin Capital</small>
+              <small>{companyName}</small>
             </div>
           </div>
 
