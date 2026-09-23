@@ -1,4 +1,4 @@
-import { Check, X } from 'lucide-react';
+import { Banknote, CalendarDays, Check, Coins, CreditCard, ReceiptText, WalletCards, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -170,8 +170,15 @@ export default function RecordLoanPaymentModal({
   const subtitle = [
     loan.id,
     loan.cycle,
-    customerName || customerId,
   ].filter(Boolean).join(' · ');
+
+  const displayCustomerName = customerName || customerId || title;
+  const customerInitials = String(displayCustomerName || 'C')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
 
   const isEarlyPayment = Boolean(scheduleDate && scheduleDate > toInputDate());
 
@@ -185,41 +192,51 @@ export default function RecordLoanPaymentModal({
       )}
       <section className="record-payment-modal" onMouseDown={(event) => event.stopPropagation()}>
         <header className="record-payment-head">
-          <div>
-            <h2>{title}</h2>
-            <p>{subtitle}</p>
+          <div className="record-payment-customer">
+            <div className="record-payment-avatar" aria-hidden="true">{customerInitials}</div>
+            <div>
+              <h2>{displayCustomerName}</h2>
+              <p>{subtitle}</p>
+            </div>
           </div>
           <button type="button" className="record-payment-close" onClick={close} disabled={saving} title="Close">
-            <X size={20} />
+            <X size={22} />
           </button>
         </header>
 
         <div className="record-payment-body">
           <div className="record-payment-summary">
-            <div>
-              <span>{isIo ? 'Interest / Cycle' : 'Collection / Cycle'}</span>
-              <strong>{formatCurrency(displayAmount)}</strong>
+            <div className="record-payment-summary-card record-payment-summary-card-collection">
+              <div className="record-payment-summary-icon"><Coins size={22} /></div>
+              <div>
+                <span>{isIo ? 'Interest / Cycle' : 'Collection / Cycle'}</span>
+                <strong>{formatCurrency(displayAmount)}</strong>
+              </div>
             </div>
-            <div>
-              <span>{isIo ? 'Principal Outstanding' : 'Outstanding'}</span>
-              <strong>{formatCurrency(loan.outstanding)}</strong>
+            <div className="record-payment-summary-card record-payment-summary-card-outstanding">
+              <div className="record-payment-summary-icon"><WalletCards size={22} /></div>
+              <div>
+                <span>{isIo ? 'Principal Outstanding' : 'Outstanding'}</span>
+                <strong>{formatCurrency(loan.outstanding)}</strong>
+              </div>
             </div>
-            <small>
-              {isIo
-                ? 'Interest and principal are separate. Fine can also be collected by itself.'
-                : 'Partial payment, overpayment, and fine-only payment are allowed. Fine is recorded separately.'}
-            </small>
-            {isEarlyPayment && (
-              <small className="record-payment-schedule-note">
-                Scheduled for {formatDate(scheduleDate)}. Use the actual date the money was received.
-              </small>
-            )}
           </div>
 
+          <div className="record-payment-info-note">
+            <span className="record-payment-info-icon">i</span>
+            <span>{isIo
+              ? 'Interest and principal are separate. Fine can also be collected by itself.'
+              : 'Partial payment, overpayment, and fine-only payment are allowed. Fine is recorded separately.'}</span>
+          </div>
+          {isEarlyPayment && (
+            <div className="record-payment-schedule-note">
+              Scheduled for {formatDate(scheduleDate)}. Use the actual date the money was received.
+            </div>
+          )}
 
           <div className="record-payment-fields">
             <label className="record-payment-date">
-              <span>Payment Date</span>
+              <span className="record-payment-label"><CalendarDays size={16} /> Payment Date</span>
               <input
                 type="date"
                 min={loan.startDate || undefined}
@@ -238,11 +255,12 @@ export default function RecordLoanPaymentModal({
             {isIo ? (
               <>
                 <label>
-                  <span>Interest Paid</span>
+                  <span className="record-payment-label"><Banknote size={16} /> Interest Paid</span>
                   <input
                     autoFocus
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
                     value={interestAmount}
                     onChange={(event) => {
                     setInterestAmount(event.target.value);
@@ -252,11 +270,11 @@ export default function RecordLoanPaymentModal({
                 </label>
 
                 <label>
-                  <span>Principal Paid</span>
+                  <span className="record-payment-label"><Coins size={16} /> Principal Paid</span>
                   <input
-                    type="number"
-                    min="0"
-                    max={Number(loan.outstanding) || undefined}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="[0-9]*[.]?[0-9]*"
                     value={principalAmount}
                     onChange={(event) => {
                     setPrincipalAmount(event.target.value);
@@ -288,11 +306,12 @@ export default function RecordLoanPaymentModal({
               </>
             ) : (
               <label>
-                <span>Amount Paid</span>
+                <span className="record-payment-label"><Banknote size={16} /> Amount Paid</span>
                 <input
                   autoFocus
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
                   value={amount}
                   onChange={(event) => {
                     setAmount(event.target.value);
@@ -305,10 +324,11 @@ export default function RecordLoanPaymentModal({
 
             {canFine && (
               <label>
-                <span>Fine Paid</span>
+                <span className="record-payment-label"><ReceiptText size={16} /> Fine Paid</span>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
                   value={fine}
                   onChange={(event) => {
                     setFine(event.target.value);
@@ -319,7 +339,7 @@ export default function RecordLoanPaymentModal({
             )}
 
             <label>
-              <span>Payment Mode</span>
+              <span className="record-payment-label"><CreditCard size={16} /> Payment Mode</span>
               <select
                 value={paymentMode}
                 onChange={(event) => {
@@ -375,6 +395,10 @@ export default function RecordLoanPaymentModal({
         </div>
 
         <footer className="record-payment-footer">
+          <button type="button" className="record-payment-cancel" onClick={close} disabled={saving}>
+            <X size={17} />
+            <span>Cancel</span>
+          </button>
           <button type="button" className="record-payment-save" onClick={submit} disabled={saving}>
             <Check size={18} />
             <span>{saving ? 'Saving…' : 'Save Collection'}</span>
