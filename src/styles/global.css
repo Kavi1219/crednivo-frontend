@@ -632,3 +632,21 @@ button[aria-busy="true"],
   flex: 0 0 var(--crednivo-popup-bottom-clearance, 56px) !important;
   pointer-events: none !important;
 }
+
+/* Hide visible scrollbars across Crednivo while preserving scroll behavior */
+html,
+body,
+#root,
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
