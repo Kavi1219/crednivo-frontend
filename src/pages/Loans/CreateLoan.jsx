@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import ReviewModal from '../../components/common/ReviewModal';
-import LoanPreview from '../../components/loan/LoanPreview';
 import LoanSetupFields from '../../components/loan/LoanSetupFields';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -159,151 +158,198 @@ export default function CreateLoan() {
   };
 
   const goToNewCustomer = () => navigate('/customers/new');
+  const goToLoans = () => navigate('/loans');
 
-  return <div className="module-page create-loan-page">
+  return <div className="module-page create-loan-page create-loan-redesign">
     <ModuleHeader
-      eyebrow="Existing Customer"
+      eyebrow="Loan Management"
       title="Create Loan"
-      description="Add another Daily, Weekly or Monthly loan with manual duration and an automatic repayment calculation."
+      description="Set up the loan terms and preferences for the customer."
       actions={
         <div className="create-loan-header-actions">
-          {canAddCustomer && <ActionButton icon={UserPlus} tone="secondary" type="button" onClick={goToNewCustomer}>New Customer</ActionButton>}
-          <ActionButton icon={CheckCircle2} type="button" onClick={requestCreate}>Add Loan</ActionButton>
+          <ActionButton tone="secondary" type="button" onClick={goToLoans}>Cancel</ActionButton>
+          <ActionButton icon={CheckCircle2} type="button" onClick={requestCreate}>Create Loan</ActionButton>
         </div>
       }
     />
     {error&&<div className="form-error">{error}</div>}
-    <section className="form-card module-card">
-      <div className="form-section">
-        <div className="form-section-head">
-          <span className="form-section-icon"><UserRound size={19}/></span>
+    <div className="create-loan-layout">
+      <section className="module-card create-loan-main-card">
+        <div className="create-loan-main-header">
+          <span className="create-loan-main-icon"><WalletCards size={20}/></span>
           <div>
-            <h2>{customerFromProfile ? 'Customer' : 'Select Customer'}</h2>
-            <p>{customerFromProfile ? 'This loan will be created for the selected customer profile.' : 'Search by Customer ID or customer name, then select the profile'}</p>
+            <h2>Loan Details</h2>
+            <p>Enter the loan information and schedule.</p>
           </div>
         </div>
 
-        {customerFromProfile ? (
-          <div className="profile-loan-customer create-loan-selected-customer">
-            <span className="selected-customer-avatar">{String(selectedCustomer?.name || '?').charAt(0).toUpperCase()}</span>
-            <div className="create-loan-selected-copy">
-              <small>Customer</small>
-              <strong>{selectedCustomer?.name || 'Loading customer...'}</strong>
-              {selectedCustomer && (
-                <div className="create-loan-customer-id-row">
-                  <span className="create-loan-customer-id-label">Customer ID</span>
-                  {editingCustomerId ? (
-                    <div className="create-loan-customer-id-editor">
-                      <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
-                      <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
-                      <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
-                    </div>
-                  ) : (
-                    <div className="create-loan-customer-id-display">
-                      <b>{selectedCustomer.id}</b>
-                      <button type="button" onClick={beginCustomerIdEdit} title="Edit Customer ID"><Pencil size={13}/> Edit</button>
+        <div className="create-loan-main-body">
+          <div className="form-section create-loan-customer-block">
+            <div className="form-section-head">
+              <span className="form-section-icon"><UserRound size={19}/></span>
+              <div>
+                <h2>{customerFromProfile ? 'Customer' : 'Select Customer'}</h2>
+                <p>{customerFromProfile ? 'This loan will be created for the selected customer profile.' : 'Search by Customer ID or customer name, then select the profile'}</p>
+              </div>
+              {!customerFromProfile && canAddCustomer ? <button type="button" className="create-loan-inline-link" onClick={goToNewCustomer}><UserPlus size={14}/> New Customer</button> : null}
+            </div>
+
+            {customerFromProfile ? (
+              <div className="profile-loan-customer create-loan-selected-customer">
+                <span className="selected-customer-avatar">{String(selectedCustomer?.name || '?').charAt(0).toUpperCase()}</span>
+                <div className="create-loan-selected-copy">
+                  <small>Customer</small>
+                  <strong>{selectedCustomer?.name || 'Loading customer...'}</strong>
+                  {selectedCustomer && (
+                    <div className="create-loan-customer-id-row">
+                      <span className="create-loan-customer-id-label">Customer ID</span>
+                      {editingCustomerId ? (
+                        <div className="create-loan-customer-id-editor">
+                          <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
+                          <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
+                          <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
+                        </div>
+                      ) : (
+                        <div className="create-loan-customer-id-display">
+                          <b>{selectedCustomer.id}</b>
+                          <button type="button" onClick={beginCustomerIdEdit} title="Edit Customer ID"><Pencil size={13}/> Edit</button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="create-loan-customer-picker">
-            <label className="create-loan-customer-search-label">Search Customer *</label>
-            <div className="create-loan-search create-loan-search-large">
-              <Search size={19}/>
-              <input
-                type="search"
-                value={customerSearch}
-                onChange={(event)=>handleCustomerSearch(event.target.value)}
-                placeholder="Search by customer name, Customer ID or mobile number..."
-                autoComplete="off"
-                aria-label="Search customer for new loan"
-              />
-            </div>
-
-            {!customerSearch.trim() && !selectedCustomer && (
-              <div className="customer-picker-hint">
-                Start typing to find the customer for this loan. No customer is selected by default.
               </div>
-            )}
-
-            {customerSearch.trim() && (
-              <div className="customer-search-results" role="listbox" aria-label="Matching customers">
-                <div className="customer-search-results-head">
-                  <span>Search Results</span>
-                  <small>{filteredCustomers.length} found</small>
+            ) : (
+              <div className="create-loan-customer-picker">
+                <label className="create-loan-customer-search-label">Search Customer *</label>
+                <div className="create-loan-search create-loan-search-large">
+                  <Search size={19}/>
+                  <input
+                    type="search"
+                    value={customerSearch}
+                    onChange={(event)=>handleCustomerSearch(event.target.value)}
+                    placeholder="Search by customer name, Customer ID or mobile number..."
+                    autoComplete="off"
+                    aria-label="Search customer for new loan"
+                  />
                 </div>
-                {filteredCustomers.length ? (
-                  filteredCustomers.slice(0, 10).map((customer) => (
-                    <button
-                      type="button"
-                      key={customer.id}
-                      className="customer-search-result"
-                      onClick={()=>selectCustomer(customer)}
-                    >
-                      <span className="selected-customer-avatar">{String(customer.name || '?').charAt(0).toUpperCase()}</span>
-                      <span className="customer-search-result-copy">
-                        <strong>{customer.name}</strong>
-                        <small>{customer.id}{customer.mobile ? ` · ${formatIndianMobile(customer.mobile)}` : ''}</small>
-                      </span>
-                      <span className="customer-search-select-text">Select</span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="customer-search-empty">
-                    No customer matches “{customerSearch}”.
+
+                {!customerSearch.trim() && !selectedCustomer && (
+                  <div className="customer-picker-hint">
+                    Start typing to find the customer for this loan. No customer is selected by default.
+                  </div>
+                )}
+
+                {customerSearch.trim() && (
+                  <div className="customer-search-results" role="listbox" aria-label="Matching customers">
+                    <div className="customer-search-results-head">
+                      <span>Search Results</span>
+                      <small>{filteredCustomers.length} found</small>
+                    </div>
+                    {filteredCustomers.length ? (
+                      filteredCustomers.slice(0, 10).map((customer) => (
+                        <button
+                          type="button"
+                          key={customer.id}
+                          className="customer-search-result"
+                          onClick={()=>selectCustomer(customer)}
+                        >
+                          <span className="selected-customer-avatar">{String(customer.name || '?').charAt(0).toUpperCase()}</span>
+                          <span className="customer-search-result-copy">
+                            <strong>{customer.name}</strong>
+                            <small>{customer.id}{customer.mobile ? ` · ${formatIndianMobile(customer.mobile)}` : ''}</small>
+                          </span>
+                          <span className="customer-search-select-text">Select</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="customer-search-empty">
+                        No customer matches “{customerSearch}”.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedCustomer && (
+                  <div className="selected-customer-preview selected-customer-preview-confirmed">
+                    <span className="selected-customer-avatar">{String(selectedCustomer.name || '?').charAt(0).toUpperCase()}</span>
+                    <div className="create-loan-selected-copy">
+                      <small>Selected Customer</small>
+                      <strong>{selectedCustomer.name}</strong>
+                      <span>{selectedCustomer.mobile ? formatIndianMobile(selectedCustomer.mobile) : '—'}</span>
+                      <div className="create-loan-customer-id-row">
+                        <span className="create-loan-customer-id-label">Customer ID</span>
+                        {editingCustomerId ? (
+                          <div className="create-loan-customer-id-editor">
+                            <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
+                            <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
+                            <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
+                          </div>
+                        ) : (
+                          <div className="create-loan-customer-id-display">
+                            <b>{selectedCustomer.id}</b>
+                            <button type="button" onClick={beginCustomerIdEdit} title="Edit Customer ID"><Pencil size={13}/> Edit</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button type="button" className="change-selected-customer" onClick={()=>{
+                      change('customerId','');
+                      setCustomerSearch('');
+                    }}>Change</button>
                   </div>
                 )}
               </div>
             )}
+          </div>
 
-            {selectedCustomer && (
-              <div className="selected-customer-preview selected-customer-preview-confirmed">
-                <span className="selected-customer-avatar">{String(selectedCustomer.name || '?').charAt(0).toUpperCase()}</span>
-                <div className="create-loan-selected-copy">
-                  <small>Selected Customer</small>
-                  <strong>{selectedCustomer.name}</strong>
-                  <span>{selectedCustomer.mobile ? formatIndianMobile(selectedCustomer.mobile) : '—'}</span>
-                  <div className="create-loan-customer-id-row">
-                    <span className="create-loan-customer-id-label">Customer ID</span>
-                    {editingCustomerId ? (
-                      <div className="create-loan-customer-id-editor">
-                        <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
-                        <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
-                        <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
-                      </div>
-                    ) : (
-                      <div className="create-loan-customer-id-display">
-                        <b>{selectedCustomer.id}</b>
-                        <button type="button" onClick={beginCustomerIdEdit} title="Edit Customer ID"><Pencil size={13}/> Edit</button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button type="button" className="change-selected-customer" onClick={()=>{
-                  change('customerId','');
-                  setCustomerSearch('');
-                }}>Change</button>
-              </div>
-            )}
+          <div className="create-loan-section-divider"/>
+
+          <div className="form-section create-loan-details-block">
+            <LoanSetupFields form={form} change={change}/>
+          </div>
+        </div>
+      </section>
+
+      <aside className="module-card create-loan-summary-card">
+        <div className="create-loan-summary-head">
+          <span className="create-loan-summary-icon"><WalletCards size={20}/></span>
+          <div>
+            <h3>Loan Summary</h3>
+            <p>Key details at a glance.</p>
+          </div>
+        </div>
+
+        {selectedCustomer && (
+          <div className="create-loan-summary-customer">
+            <span className="selected-customer-avatar">{String(selectedCustomer.name || '?').charAt(0).toUpperCase()}</span>
+            <div>
+              <strong>{selectedCustomer.name}</strong>
+              <span>{selectedCustomer.id}</span>
+            </div>
           </div>
         )}
-      </div>
 
-      <div className="form-section">
-        <div className="form-section-head"><span className="form-section-icon"><WalletCards size={19}/></span><div><h2>Loan Details</h2><p>Cycle, loan type, interest, manual duration and disbursed date</p></div></div>
-        <LoanSetupFields form={form} change={change}/>
-      </div>
-    </section>
+        <div className="create-loan-summary-rows">
+          <div><span>Loan Amount</span><strong>{formatCurrency(terms.principal)}</strong></div>
+          <div><span>Loan Type</span><strong>{form.loanType}</strong></div>
+          <div><span>Interest Rate</span><strong>{form.interestRate}% p.a.</strong></div>
+          <div><span>Cycle</span><strong>{form.cycle}</strong></div>
+          <div><span>Duration</span><strong>{terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</strong></div>
+          <div><span>Disbursed Date</span><strong>{form.startDate ? formatDate(form.startDate) : '—'}</strong></div>
+          <div><span>First Collection Date</span><strong>{effectiveFirstDueDate ? formatDate(effectiveFirstDueDate) : '—'}</strong></div>
+          <div><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
+          <div><span>Collection / Cycle</span><strong>{formatCurrency(terms.collectionAmount)}</strong></div>
+          <div><span>{form.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(terms.totalRepayment)}</strong></div>
+        </div>
 
-    <LoanPreview form={form} terms={terms}>
-      <div className="loan-preview-actions">
-        {canAddCustomer && <ActionButton icon={UserPlus} tone="secondary" type="button" onClick={goToNewCustomer}>New Customer</ActionButton>}
-        <ActionButton icon={CheckCircle2} type="button" className="loan-add-button" onClick={requestCreate}>Add Loan</ActionButton>
-      </div>
-    </LoanPreview>
+        <div className="create-loan-next-collection">
+          <span className="create-loan-next-collection-label">Next Collection</span>
+          <strong>{effectiveFirstDueDate ? formatDate(effectiveFirstDueDate) : '—'}</strong>
+          <small>{cycleSummary(effectiveFirstDueDate, form.cycle)}</small>
+        </div>
+      </aside>
+    </div>
 
     <ReviewModal open={reviewOpen} title="Review Loan Summary" subtitle={`Confirm the loan for ${selectedCustomer?.name || 'selected customer'}.`} badge={loanId} icon={WalletCards} onClose={()=>setReviewOpen(false)} onConfirm={confirmCreate} busy={saving} confirmLabel={saving ? "Saving..." : "Confirm & Add Loan"}>
       <div className="review-summary-grid">
