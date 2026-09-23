@@ -471,7 +471,8 @@ html[data-theme='dark'] .profile-dropdown-heading {
 
 @media (min-width: 768px) {
   .app-header {
-    position: relative;
+    position: sticky;
+    top: 0;
     z-index: 100;
     overflow: visible;
     isolation: isolate;
@@ -498,13 +499,6 @@ html[data-theme='dark'] .profile-dropdown-heading {
   }
 }
 
-
-@media (min-width: 768px) {
-  .app-header.overview-header {
-    position: sticky;
-    top: 0;
-  }
-}
 
 /* Mobile already uses a sticky header. Keep it below the mobile drawer but
    above ordinary page content, and make the profile menu safely scrollable on
