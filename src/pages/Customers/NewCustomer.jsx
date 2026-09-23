@@ -7,6 +7,7 @@ import LoanSetupFields from '../../components/loan/LoanSetupFields';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { calculateLoan, formatCurrency, formatDate, formatIndianMobile, formatIndianMobileLocal, getFirstDueDate, isValidIndianMobile, normalizeIndianMobile, toInputDate } from '../../utils/finance';
+import { apiRequest } from '../../services/api';
 import '../Loans/CreateLoan.css';
 import './NewCustomer.css';
 
@@ -89,17 +90,38 @@ export default function NewCustomer() {
   const [customerIdEditing, setCustomerIdEditing] = useState(false);
   const [customerIdDraft, setCustomerIdDraft] = useState('');
   const [customerIdTouched, setCustomerIdTouched] = useState(false);
+  const [serverNextCustomerId, setServerNextCustomerId] = useState('');
 
   const terms = useMemo(() => calculateLoan(form), [form]);
   const effectiveFirstDueDate = form.firstDueDate || getFirstDueDate(form.startDate, form.cycle);
   const previewCustomerId = useMemo(() => nextCustomerPreviewId(customers, form.date), [customers, form.date]);
-  const customerId = savedCustomerId || customerIdDraft || previewCustomerId;
+  const defaultCustomerId = serverNextCustomerId || previewCustomerId;
+  const customerId = savedCustomerId || customerIdDraft || defaultCustomerId;
   const loanId = useMemo(() => nextPreviewId('SFCLN-', loans, 5), [loans]);
   const change = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
   useEffect(() => {
-    if (!customerIdTouched && !savedCustomerId) setCustomerIdDraft(previewCustomerId);
-  }, [previewCustomerId, customerIdTouched, savedCustomerId]);
+    let active = true;
+    if (savedCustomerId || customerIdTouched) return () => { active = false; };
+
+    const query = form.date ? `?date=${encodeURIComponent(form.date)}` : '';
+    apiRequest(`/customers/next-id${query}`)
+      .then((result) => {
+        if (!active) return;
+        const nextId = String(result?.customerId || '').trim();
+        if (nextId) {
+          setServerNextCustomerId(nextId);
+          setCustomerIdDraft(nextId);
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        setServerNextCustomerId('');
+        setCustomerIdDraft(previewCustomerId);
+      });
+
+    return () => { active = false; };
+  }, [form.date, previewCustomerId, customerIdTouched, savedCustomerId]);
 
   const validateCustomer = () => {
     if (form.mobile && !isValidIndianMobile(form.mobile)) {
@@ -200,7 +222,7 @@ export default function NewCustomer() {
       <label>Customer ID</label>
       <div className={`registration-id-control ${customerIdEditing ? 'editing' : ''}`}>
         <input
-          value={customerIdDraft || previewCustomerId}
+          value={customerIdDraft || defaultCustomerId}
           readOnly={!customerIdEditing}
           onChange={(event) => {
             setCustomerIdTouched(true);
