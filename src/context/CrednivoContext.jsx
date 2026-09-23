@@ -877,6 +877,13 @@ export function CrednivoProvider({ children }) {
     return saved;
   };
 
+  const deleteLoan = async (loanId) => {
+    if (!loanId) return false;
+    await apiRequest(`/loans/${loanId}`, { method: 'DELETE' });
+    await syncCoreData();
+    return true;
+  };
+
   const getIoSettlementPreview = async (loanId, paymentDate = toInputDate()) => {
     if (!loanId) return null;
     const date = normalizePaymentDate(paymentDate);
@@ -1264,6 +1271,7 @@ export function CrednivoProvider({ children }) {
       saveCustomerMedia,
       addLoan,
       updateLoan,
+      deleteLoan,
       getIoSettlementPreview,
       extendIoLoan,
       recordCollection,

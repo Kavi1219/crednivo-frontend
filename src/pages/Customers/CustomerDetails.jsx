@@ -237,7 +237,7 @@ export default function CustomerDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { customers, loans, collections, payments, updateLoan, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
+  const { customers, loans, collections, payments, updateLoan, deleteLoan, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
 
   const handleBack = () => {
@@ -257,6 +257,7 @@ export default function CustomerDetails() {
   const [loanTab, setLoanTab] = useState('Active');
   const [scheduleLoan, setScheduleLoan] = useState(null);
   const [editingLoan, setEditingLoan] = useState(null);
+  const [deletingLoan, setDeletingLoan] = useState(null);
   const [loanEditBusy, setLoanEditBusy] = useState(false);
   const [loanDraft, setLoanDraft] = useState({
     amount: '',
@@ -489,6 +490,22 @@ export default function CustomerDetails() {
   const closeLoanEditor = () => {
     if (loanEditBusy) return;
     setEditingLoan(null);
+  };
+
+  const confirmLoanDelete = async () => {
+    if (!deletingLoan || loanEditBusy || !isOwner) return;
+    try {
+      setLoanEditBusy(true);
+      setActionError('');
+      await deleteLoan(deletingLoan.id);
+      setDeletingLoan(null);
+      setEditingLoan(null);
+    } catch (apiError) {
+      setDeletingLoan(null);
+      setActionError(apiError?.message || 'Could not delete the loan.');
+    } finally {
+      setLoanEditBusy(false);
+    }
   };
 
   const saveLoanEdit = async () => {
@@ -1695,9 +1712,28 @@ export default function CustomerDetails() {
         </div>
 
         <div className="customer-loan-edit-actions">
-          <button type="button" className="customer-loan-edit-cancel" onClick={closeLoanEditor} disabled={loanEditBusy}>Cancel</button>
-          <button type="button" className="customer-loan-edit-save" onClick={saveLoanEdit} disabled={loanEditBusy}>
-            <Save size={16}/><span>{loanEditBusy ? 'Saving...' : 'Save Loan'}</span>
+          <button type="button" className="customer-loan-edit-delete" onClick={()=>setDeletingLoan(editingLoan)} disabled={loanEditBusy}>
+            <Trash2 size={16}/><span>Delete Loan</span>
+          </button>
+          <div className="customer-loan-edit-actions-right">
+            <button type="button" className="customer-loan-edit-cancel" onClick={closeLoanEditor} disabled={loanEditBusy}>Cancel</button>
+            <button type="button" className="customer-loan-edit-save" onClick={saveLoanEdit} disabled={loanEditBusy}>
+              <Save size={16}/><span>{loanEditBusy ? 'Saving...' : 'Save Loan'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>}
+
+    {deletingLoan && <div className="customer-delete-backdrop" onMouseDown={()=>!loanEditBusy&&setDeletingLoan(null)}>
+      <div className="customer-delete-modal" onMouseDown={(event)=>event.stopPropagation()}>
+        <div className="customer-delete-modal-icon"><AlertTriangle size={24}/></div>
+        <h2>Delete loan {deletingLoan.id}?</h2>
+        <p>This permanently removes this loan, its collection schedule and every payment/transaction linked to this loan. This action cannot be undone.</p>
+        <div className="customer-delete-modal-actions">
+          <button type="button" className="customer-delete-cancel" onClick={()=>setDeletingLoan(null)} disabled={loanEditBusy}>Cancel</button>
+          <button type="button" className="customer-delete-confirm" onClick={confirmLoanDelete} disabled={loanEditBusy}>
+            <Trash2 size={16}/><span>{loanEditBusy ? 'Deleting...' : 'Delete Permanently'}</span>
           </button>
         </div>
       </div>
