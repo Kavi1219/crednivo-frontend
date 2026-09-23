@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Camera, Check, CheckCircle2, FileText, Pencil, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Check, CheckCircle2, FileText, FolderOpen, Pencil, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ReviewModal from '../../components/common/ReviewModal';
@@ -65,36 +65,67 @@ function readRegistrationFile(file, callback) {
 }
 
 function RegistrationMediaButtons({ photo, document, onPhotoChange, onDocumentChange }) {
+  const [openMenu, setOpenMenu] = useState(null);
+  const profileCameraRef = useRef(null);
+  const profileFilesRef = useRef(null);
+  const documentCameraRef = useRef(null);
+  const documentFilesRef = useRef(null);
+
+  const handleProfileFile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    readRegistrationFile(file, (result) => onPhotoChange(result.data));
+    event.target.value = '';
+    setOpenMenu(null);
+  };
+
+  const handleDocumentFile = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    readRegistrationFile(file, onDocumentChange);
+    event.target.value = '';
+    setOpenMenu(null);
+  };
+
   return (
-    <div className="registration-media-row">
-      <label className={`registration-media-button ${photo ? 'has-file' : ''}`}>
-        <Camera size={17}/>
-        <span>{photo ? 'Profile Photo Added' : 'Profile Photo'}</span>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            readRegistrationFile(file, (result) => onPhotoChange(result.data));
-            event.target.value = '';
-          }}
-        />
-      </label>
-      <label className={`registration-media-button ${document ? 'has-file' : ''}`}>
-        <FileText size={17}/>
-        <span>{document ? 'Document Photo Added' : 'Document Photo'}</span>
-        <input
-          type="file"
-          accept="image/*,application/pdf,.pdf"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            readRegistrationFile(file, onDocumentChange);
-            event.target.value = '';
-          }}
-        />
-      </label>
+    <div className="registration-media-row registration-media-row-top">
+      <div className="registration-media-picker">
+        <button
+          type="button"
+          className={`registration-media-button ${photo ? 'has-file' : ''}`}
+          onClick={() => setOpenMenu((current) => current === 'profile' ? null : 'profile')}
+        >
+          <Camera size={17}/>
+          <span>{photo ? 'Profile Photo Added' : 'Profile Photo'}</span>
+        </button>
+        {openMenu === 'profile' && (
+          <div className="registration-media-menu">
+            <button type="button" onClick={() => profileCameraRef.current?.click()}><Camera size={16}/><span>Camera</span></button>
+            <button type="button" onClick={() => profileFilesRef.current?.click()}><FolderOpen size={16}/><span>Files</span></button>
+          </div>
+        )}
+        <input ref={profileCameraRef} className="registration-media-hidden-input" type="file" accept="image/*" capture="environment" onChange={handleProfileFile}/>
+        <input ref={profileFilesRef} className="registration-media-hidden-input" type="file" accept="image/*" onChange={handleProfileFile}/>
+      </div>
+
+      <div className="registration-media-picker">
+        <button
+          type="button"
+          className={`registration-media-button ${document ? 'has-file' : ''}`}
+          onClick={() => setOpenMenu((current) => current === 'document' ? null : 'document')}
+        >
+          <FileText size={17}/>
+          <span>{document ? 'Document Photo Added' : 'Document Photo'}</span>
+        </button>
+        {openMenu === 'document' && (
+          <div className="registration-media-menu">
+            <button type="button" onClick={() => documentCameraRef.current?.click()}><Camera size={16}/><span>Camera</span></button>
+            <button type="button" onClick={() => documentFilesRef.current?.click()}><FolderOpen size={16}/><span>Files</span></button>
+          </div>
+        )}
+        <input ref={documentCameraRef} className="registration-media-hidden-input" type="file" accept="image/*" capture="environment" onChange={handleDocumentFile}/>
+        <input ref={documentFilesRef} className="registration-media-hidden-input" type="file" accept="image/*,application/pdf,.pdf" onChange={handleDocumentFile}/>
+      </div>
     </div>
   );
 }
@@ -321,10 +352,21 @@ export default function NewCustomer() {
 
           {step === 0 && (
             <section className="registration-panel onboarding-panel">
-              <div className="registration-panel-head">
-                <span>YOUR CUSTOMER DETAILS</span>
-                <h1>Customer</h1>
-                <p>Enter the available customer information. All fields on this step are optional.</p>
+              <div className="registration-panel-top">
+                <div className="registration-panel-head">
+                  <span>YOUR CUSTOMER DETAILS</span>
+                  <h1>Customer</h1>
+                  <p>Enter the available customer information. All fields on this step are optional.</p>
+                </div>
+                <RegistrationMediaButtons
+                  photo={form.photo}
+                  document={form.customerDocument}
+                  onPhotoChange={(value) => change('photo', value)}
+                  onDocumentChange={(value) => {
+                    change('customerDocument', value);
+                    change('customerDocuments', value ? [value] : []);
+                  }}
+                />
               </div>
 
               {renderCustomerId()}
@@ -370,17 +412,6 @@ export default function NewCustomer() {
               </div>
 
 
-              <div className="registration-section-title">PHOTOS & DOCUMENTS</div>
-              <RegistrationMediaButtons
-                photo={form.photo}
-                document={form.customerDocument}
-                onPhotoChange={(value) => change('photo', value)}
-                onDocumentChange={(value) => {
-                  change('customerDocument', value);
-                  change('customerDocuments', value ? [value] : []);
-                }}
-              />
-
               <div className="registration-actions">
                 <ActionButton tone="secondary" type="button" onClick={() => navigate('/customers')}>Cancel</ActionButton>
                 <ActionButton icon={ArrowRight} type="button" onClick={saveCustomerStep}>Next</ActionButton>
@@ -390,10 +421,21 @@ export default function NewCustomer() {
 
           {step === 1 && (
             <section className="registration-panel onboarding-panel">
-              <div className="registration-panel-head">
-                <span>WITNESS DETAILS</span>
-                <h1>Witness</h1>
-                <p>Enter the available witness information. All fields on this step are optional.</p>
+              <div className="registration-panel-top">
+                <div className="registration-panel-head">
+                  <span>WITNESS DETAILS</span>
+                  <h1>Witness</h1>
+                  <p>Enter the available witness information. All fields on this step are optional.</p>
+                </div>
+                <RegistrationMediaButtons
+                  photo={form.jaminPhoto}
+                  document={form.jaminDocument}
+                  onPhotoChange={(value) => change('jaminPhoto', value)}
+                  onDocumentChange={(value) => {
+                    change('jaminDocument', value);
+                    change('jaminDocuments', value ? [value] : []);
+                  }}
+                />
               </div>
 
               <div className="registration-section-title">PERSONAL DETAILS</div>
@@ -436,17 +478,6 @@ export default function NewCustomer() {
                 </div>
               </div>
 
-
-              <div className="registration-section-title">PHOTOS & DOCUMENTS</div>
-              <RegistrationMediaButtons
-                photo={form.jaminPhoto}
-                document={form.jaminDocument}
-                onPhotoChange={(value) => change('jaminPhoto', value)}
-                onDocumentChange={(value) => {
-                  change('jaminDocument', value);
-                  change('jaminDocuments', value ? [value] : []);
-                }}
-              />
 
               <div className="registration-actions split">
                 <ActionButton type="button" tone="secondary" icon={ArrowLeft} onClick={() => setStep(0)}>Customer</ActionButton>

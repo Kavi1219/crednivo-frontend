@@ -744,3 +744,98 @@ html[data-theme='dark'] .registration-step-icon {
 @media(max-width:620px){
   .registration-media-row{grid-template-columns:1fr}
 }
+
+/* Customer/Witness media controls moved into the top blank area */
+.registration-panel-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:24px;
+}
+.registration-panel-top .registration-panel-head{
+  margin-bottom:0;
+  min-width:0;
+  flex:1;
+}
+.registration-media-row-top{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,190px));
+  gap:10px;
+  margin-top:0;
+}
+.registration-media-picker{
+  position:relative;
+  min-width:0;
+}
+.registration-media-row-top .registration-media-button{
+  width:100%;
+  min-height:46px;
+  padding:0 13px;
+  white-space:nowrap;
+}
+.registration-media-menu{
+  position:absolute;
+  top:calc(100% + 7px);
+  right:0;
+  z-index:40;
+  min-width:150px;
+  padding:6px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  box-shadow:0 14px 34px rgba(24,45,76,.16);
+}
+.registration-media-menu button{
+  width:100%;
+  min-height:38px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:0 10px;
+  border:0;
+  border-radius:9px;
+  color:var(--ink-800);
+  background:transparent;
+  font:inherit;
+  font-size:11px;
+  font-weight:750;
+  text-align:left;
+  cursor:pointer;
+}
+.registration-media-menu button:hover{
+  color:var(--blue-600);
+  background:rgba(20,119,242,.07);
+}
+.registration-media-hidden-input{
+  display:none!important;
+}
+
+@media(max-width:980px){
+  .registration-panel-top{
+    flex-direction:column;
+    gap:14px;
+  }
+  .registration-media-row-top{
+    width:100%;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:620px){
+  .registration-media-row-top{
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+  }
+  .registration-media-row-top .registration-media-button{
+    min-height:44px;
+    padding:0 9px;
+    font-size:10px;
+  }
+  .registration-media-menu{
+    left:0;
+    right:auto;
+    min-width:140px;
+  }
+}
