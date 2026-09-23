@@ -273,7 +273,7 @@ export default function NewCustomer() {
           </nav>
         </aside>
 
-        <main className="registration-content">
+        <main className={`registration-content ${step === 2 ? 'loan-active' : ''}`}>
           {error && <div className="form-error">{error}</div>}
 
           {step === 0 && (
@@ -390,12 +390,6 @@ export default function NewCustomer() {
 
           {step === 2 && canCreateLoan && (
             <section className="registration-panel onboarding-panel registration-loan-step">
-              <div className="registration-panel-head">
-                <span>LOAN DETAILS</span>
-                <h1>Loan</h1>
-                <p>Use the same loan setup and preview format as the Create Loan page.</p>
-              </div>
-
               <div className="create-loan-layout registration-loan-layout">
                 <section className="module-card create-loan-main-card">
                   <div className="create-loan-main-header">
@@ -420,12 +414,11 @@ export default function NewCustomer() {
                 </section>
 
                 <aside className="module-card create-loan-summary-card create-loan-preview-card">
-                  <div className="create-loan-preview-top">
+                  <div className="create-loan-preview-top registration-preview-title-only">
                     <div className="create-loan-summary-head">
                       <span className="create-loan-summary-icon"><WalletCards size={20}/></span>
-                      <div><h3>Loan Preview</h3><p>Review the details before creating</p></div>
+                      <div><h3>Loan Preview</h3></div>
                     </div>
-                    <span className="create-loan-ready-badge"><span className="dot"/>Ready to create</span>
                   </div>
 
                   <div className="create-loan-hero-card">
@@ -445,15 +438,9 @@ export default function NewCustomer() {
                     <div><span>Disbursed Date</span><strong>{formatDate(form.startDate)}</strong></div>
                     <div><span>First Collection Date</span><strong>{formatDate(effectiveFirstDueDate)}</strong></div>
                     <div><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
-                  </div>
-
-                  <div className="create-loan-preview-section">
-                    <h4>Additional Options</h4>
-                    <div className="create-loan-preview-options">
-                      <div><span>Interest taken ?</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
-                      <div><span>Fine applicable ?</span><strong>{form.fineEnabled ? 'Yes' : 'No'}</strong></div>
-                      <div><span>Document Charges ?</span><strong>{form.documentChargeEnabled ? 'Yes' : 'No'}</strong></div>
-                    </div>
+                    <div><span>Interest Amount</span><strong>{formatCurrency(terms.interestAmount)}</strong></div>
+                    <div><span>Fine</span><strong>{formatCurrency(form.fineEnabled ? Number(form.fineAmount || 0) : 0)}</strong></div>
+                    <div><span>Charges</span><strong>{formatCurrency(form.documentChargeEnabled ? Number(form.documentChargeAmount || 0) : 0)}</strong></div>
                   </div>
                 </aside>
               </div>

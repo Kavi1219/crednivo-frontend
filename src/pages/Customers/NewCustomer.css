@@ -632,3 +632,77 @@ html[data-theme='dark'] .registration-step-icon {
     grid-template-columns: 1fr;
   }
 }
+
+/* Registration: three independent panels inside one viewport */
+@media (min-width: 768px) {
+  .registration-page-v2 {
+    overflow: hidden;
+  }
+
+  .registration-page-v2 .registration-shell {
+    height: calc(100dvh - 112px);
+    min-height: 590px;
+    max-height: 900px;
+    overflow: hidden;
+  }
+
+  .registration-page-v2 .registration-sidebar {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .registration-page-v2 .registration-content {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .registration-page-v2 .registration-content.loan-active {
+    overflow: hidden;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+
+  .registration-page-v2 .registration-loan-step,
+  .registration-page-v2 .registration-loan-layout {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .registration-page-v2 .registration-loan-layout {
+    margin-top: 0;
+    grid-template-columns: minmax(0, 1.55fr) minmax(350px, .82fr);
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .registration-page-v2 .registration-loan-layout > .create-loan-main-card,
+  .registration-page-v2 .registration-loan-layout > .create-loan-preview-card {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .registration-page-v2 .registration-loan-layout > .create-loan-preview-card {
+    position: static;
+    top: auto;
+  }
+}
+
+.registration-preview-title-only {
+  align-items: center;
+}
+
+.registration-preview-title-only .create-loan-summary-head {
+  padding-bottom: 0;
+}
+
+.registration-preview-title-only .create-loan-summary-head h3 {
+  font-size: 20px;
+}
