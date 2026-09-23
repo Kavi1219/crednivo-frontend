@@ -706,3 +706,41 @@ html[data-theme='dark'] .registration-step-icon {
 .registration-preview-title-only .create-loan-summary-head h3 {
   font-size: 20px;
 }
+
+
+/* Customer/Witness media upload buttons */
+.registration-media-row{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,220px));
+  gap:12px;
+  margin-top:4px;
+}
+.registration-media-button{
+  min-height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:0 14px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  color:var(--blue-600);
+  background:var(--surface);
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.16s ease;
+}
+.registration-media-button:hover{
+  border-color:rgba(20,119,242,.34);
+  background:rgba(20,119,242,.05);
+}
+.registration-media-button.has-file{
+  color:#0d8a47;
+  border-color:rgba(13,138,71,.28);
+  background:rgba(13,138,71,.07);
+}
+.registration-media-button input{display:none}
+@media(max-width:620px){
+  .registration-media-row{grid-template-columns:1fr}
+}

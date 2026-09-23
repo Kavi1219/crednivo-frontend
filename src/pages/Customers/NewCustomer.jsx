@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Pencil, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Check, CheckCircle2, FileText, Pencil, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ReviewModal from '../../components/common/ReviewModal';
@@ -54,6 +54,49 @@ function cycleSummary(firstDueDate, cycle) {
   if (cycle === 'Weekly') return `Every ${new Intl.DateTimeFormat('en-IN', { weekday: 'long' }).format(due)}`;
   if (cycle === 'Monthly') return `Pay date ${due.getDate()}`;
   return `First pay ${formatDate(firstDueDate)}`;
+}
+
+
+function readRegistrationFile(file, callback) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => callback({ name: file.name, type: file.type, size: file.size, data: reader.result });
+  reader.readAsDataURL(file);
+}
+
+function RegistrationMediaButtons({ photo, document, onPhotoChange, onDocumentChange }) {
+  return (
+    <div className="registration-media-row">
+      <label className={`registration-media-button ${photo ? 'has-file' : ''}`}>
+        <Camera size={17}/>
+        <span>{photo ? 'Profile Photo Added' : 'Profile Photo'}</span>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            readRegistrationFile(file, (result) => onPhotoChange(result.data));
+            event.target.value = '';
+          }}
+        />
+      </label>
+      <label className={`registration-media-button ${document ? 'has-file' : ''}`}>
+        <FileText size={17}/>
+        <span>{document ? 'Document Photo Added' : 'Document Photo'}</span>
+        <input
+          type="file"
+          accept="image/*,application/pdf,.pdf"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            readRegistrationFile(file, onDocumentChange);
+            event.target.value = '';
+          }}
+        />
+      </label>
+    </div>
+  );
 }
 
 function OptionalPhone({ value, onChange, id }) {
@@ -326,6 +369,18 @@ export default function NewCustomer() {
                 </div>
               </div>
 
+
+              <div className="registration-section-title">PHOTOS & DOCUMENTS</div>
+              <RegistrationMediaButtons
+                photo={form.photo}
+                document={form.customerDocument}
+                onPhotoChange={(value) => change('photo', value)}
+                onDocumentChange={(value) => {
+                  change('customerDocument', value);
+                  change('customerDocuments', value ? [value] : []);
+                }}
+              />
+
               <div className="registration-actions">
                 <ActionButton tone="secondary" type="button" onClick={() => navigate('/customers')}>Cancel</ActionButton>
                 <ActionButton icon={ArrowRight} type="button" onClick={saveCustomerStep}>Next</ActionButton>
@@ -380,6 +435,18 @@ export default function NewCustomer() {
                   <input value={form.jaminWorkAddress} onChange={(e) => change('jaminWorkAddress', e.target.value)} placeholder="Work address"/>
                 </div>
               </div>
+
+
+              <div className="registration-section-title">PHOTOS & DOCUMENTS</div>
+              <RegistrationMediaButtons
+                photo={form.jaminPhoto}
+                document={form.jaminDocument}
+                onPhotoChange={(value) => change('jaminPhoto', value)}
+                onDocumentChange={(value) => {
+                  change('jaminDocument', value);
+                  change('jaminDocuments', value ? [value] : []);
+                }}
+              />
 
               <div className="registration-actions split">
                 <ActionButton type="button" tone="secondary" icon={ArrowLeft} onClick={() => setStep(0)}>Customer</ActionButton>
