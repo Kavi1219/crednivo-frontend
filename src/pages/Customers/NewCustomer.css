@@ -26,3 +26,126 @@
   font-size: inherit;
   font-weight: 750;
 }
+
+/* Customer onboarding progress: line stepper instead of rectangular cards */
+.new-customer-page .onboarding-stepper {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  padding: 6px 18px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.new-customer-page .onboarding-stepper::before {
+  content: '';
+  position: absolute;
+  left: calc(16.666% + 26px);
+  right: calc(16.666% + 26px);
+  top: 26px;
+  height: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.new-customer-page .onboarding-step {
+  position: relative;
+  z-index: 1;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
+  color: var(--ink-500);
+  background: transparent !important;
+  box-shadow: none;
+  text-align: center;
+}
+
+.new-customer-page .onboarding-step-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink-500);
+  background: var(--surface);
+  box-shadow: 0 0 0 6px var(--surface);
+}
+
+.new-customer-page .onboarding-step.active .onboarding-step-icon {
+  border-color: var(--blue-600);
+  color: #fff;
+  background: var(--blue-600);
+}
+
+.new-customer-page .onboarding-step.done .onboarding-step-icon {
+  border-color: #28a868;
+  color: #fff;
+  background: #28a868;
+}
+
+.new-customer-page .onboarding-step small {
+  display: none;
+}
+
+.new-customer-page .onboarding-step strong {
+  display: block;
+  margin: 0;
+  color: currentColor;
+  font-size: 10.5px;
+  font-weight: 750;
+}
+
+.new-customer-page .onboarding-step.active {
+  color: var(--blue-600);
+}
+
+.new-customer-page .onboarding-step.done {
+  color: #178a50;
+}
+
+.new-customer-page .onboarding-step:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+@media (max-width: 767px) {
+  .new-customer-page .onboarding-stepper {
+    top: 0;
+    padding: 6px 6px 10px;
+    box-shadow: none;
+    background: var(--surface);
+  }
+  .new-customer-page .onboarding-stepper::before {
+    left: calc(16.666% + 20px);
+    right: calc(16.666% + 20px);
+    top: 23px;
+  }
+  .new-customer-page .onboarding-step {
+    min-height: 52px;
+    padding: 0 4px;
+  }
+  .new-customer-page .onboarding-step-icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+    box-shadow: 0 0 0 4px var(--surface);
+  }
+  .new-customer-page .onboarding-step > span:last-child {
+    display: block;
+  }
+  .new-customer-page .onboarding-step strong {
+    font-size: 9.5px;
+  }
+}

@@ -43,12 +43,13 @@ function financialYearCode(dateValue = toInputDate()) {
 }
 
 function nextCustomerPreviewId(companyName, list, customerDate) {
-  const prefix = `${companyInitials(companyName)}${financialYearCode(customerDate)}`;
+  const prefix = `${companyInitials(companyName)}-${financialYearCode(customerDate)}-`;
   const used = list
     .map((item) => String(item.id || '').toUpperCase())
     .filter((id) => id.startsWith(prefix) && /^\d{4}$/.test(id.slice(prefix.length)))
     .map((id) => Number(id.slice(prefix.length)));
-  const next = used.length ? Math.max(...used) + 1 : 1;
+  let next = 0;
+  while (used.includes(next)) next += 1;
   return `${prefix}${String(next).padStart(4, '0')}`;
 }
 function cycleSummary(firstDueDate, cycle) {

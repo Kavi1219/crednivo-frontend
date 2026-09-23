@@ -101,7 +101,7 @@ export default function CreateLoan() {
 
   const saveCustomerIdEdit = async () => {
     if (!selectedCustomer || customerIdSaving) return;
-    const nextId = String(customerIdDraft || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const nextId = String(customerIdDraft || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
     if (nextId.length < 6) {
       setError('Customer ID must contain at least 6 letters/numbers.');
       return;
@@ -194,7 +194,7 @@ export default function CreateLoan() {
                       <span className="create-loan-customer-id-label">Customer ID</span>
                       {editingCustomerId ? (
                         <div className="create-loan-customer-id-editor">
-                          <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
+                          <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,''))} autoFocus />
                           <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
                           <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
                         </div>
@@ -263,7 +263,7 @@ export default function CreateLoan() {
                         <span className="create-loan-customer-id-label">Customer ID</span>
                         {editingCustomerId ? (
                           <div className="create-loan-customer-id-editor">
-                            <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
+                            <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,''))} autoFocus />
                             <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
                             <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
                           </div>

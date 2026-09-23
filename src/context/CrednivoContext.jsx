@@ -742,7 +742,7 @@ export function CrednivoProvider({ children }) {
   };
 
   const updateCustomerId = async (currentCustomerId, nextCustomerId) => {
-    const cleaned = String(nextCustomerId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const cleaned = String(nextCustomerId || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
     if (!currentCustomerId || !cleaned) return null;
     const saved = await apiRequest(`/customers/${encodeURIComponent(currentCustomerId)}/customer-id`, {
       method: 'PUT',
