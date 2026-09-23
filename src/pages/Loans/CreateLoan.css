@@ -1174,3 +1174,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Stack loan option cards vertically */
+.create-loan-details-block .form-grid .create-loan-options-row {
+  grid-template-columns: 1fr !important;
+}
