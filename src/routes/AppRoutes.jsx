@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import { CrednivoProvider } from '../context/CrednivoContext';
@@ -31,6 +32,35 @@ const Agents = lazy(() => import('../pages/Agents/Agents'));
 const Settings = lazy(() => import('../pages/Settings/Settings'));
 const Work = lazy(() => import('../pages/Work/Work'));
 
+
+function RootEntry() {
+  const { loading, user, status } = useAuth();
+
+  // The Android APK is a Capacitor shell around crednivo.in. It should open
+  // like an app, not like the public marketing website.
+  if (Capacitor.isNativePlatform()) {
+    if (loading) return <AuthLoading />;
+    if (status?.ownerSetupRequired) return <Navigate to="/register/company" replace />;
+    return <Navigate to={user ? '/overview' : '/login'} replace />;
+  }
+
+  return <LandingPage />;
+}
+
+function DownloadEntry() {
+  const { loading, user, status } = useAuth();
+
+  // Download instructions only make sense on the website. Never show the APK
+  // download page inside the already-installed Android app.
+  if (Capacitor.isNativePlatform()) {
+    if (loading) return <AuthLoading />;
+    if (status?.ownerSetupRequired) return <Navigate to="/register/company" replace />;
+    return <Navigate to={user ? '/overview' : '/login'} replace />;
+  }
+
+  return <DownloadApp />;
+}
+
 function ProtectedWorkspace() {
   const { loading, user, status } = useAuth();
   if (loading) return <AuthLoading />;
@@ -53,10 +83,10 @@ export default function AppRoutes() {
   return (
     <Suspense fallback={<AuthLoading />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<RootEntry />} />
         <Route path="/login" element={<Login />} />
         <Route path="/accounts" element={<Login />} />
-        <Route path="/download" element={<DownloadApp />} />
+        <Route path="/download" element={<DownloadEntry />} />
         <Route path="/register/company" element={<RegisterCompany />} />
         <Route path="/register/agent" element={<RegisterAgent />} />
         <Route path="/setup-owner" element={<Navigate to="/register/company" replace />} />

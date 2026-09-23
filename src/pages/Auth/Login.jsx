@@ -15,6 +15,7 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { Capacitor } from '@capacitor/core';
 import { apiRequest } from '../../services/api';
 import AuthLoading from '../../components/common/AuthLoading';
 import './Auth.css';
@@ -65,7 +66,8 @@ export default function Login() {
   const [identifier, setIdentifier] = useState(saved.remember ? (saved.identifier || '') : '');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(Boolean(saved.remember));
+  const isNativeApp = Capacitor.isNativePlatform();
+  const [remember, setRemember] = useState(isNativeApp ? true : Boolean(saved.remember));
   const [showCreate, setShowCreate] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -471,17 +473,19 @@ export default function Login() {
             </label>
 
             <div className="auth-login-options auth-login-options-v48">
-              <label className="auth-remember-control">
-                <input
-                  id="crednivo-remember-me"
-                  name="remember"
-                  type="checkbox"
-                  checked={remember}
-                  onChange={(event) => setRemember(event.target.checked)}
-                />
-                <span className="auth-checkbox-ui" aria-hidden="true" />
-                <span>Remember me</span>
-              </label>
+              {!isNativeApp && (
+                <label className="auth-remember-control">
+                  <input
+                    id="crednivo-remember-me"
+                    name="remember"
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(event) => setRemember(event.target.checked)}
+                  />
+                  <span className="auth-checkbox-ui" aria-hidden="true" />
+                  <span>Remember me</span>
+                </label>
+              )}
               <button type="button" className="auth-forgot-link" onClick={() => openSecurityFlow('forgot')}>Forgot Password?</button>
             </div>
 

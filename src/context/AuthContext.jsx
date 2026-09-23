@@ -123,8 +123,9 @@ export function AuthProvider({ children }) {
       skipAuth: true,
       body: JSON.stringify({ identifier, password, role }),
     });
-    setAuthToken(result.token, { remember });
-    saveAccount(result, { remember });
+    const persistSession = Capacitor.isNativePlatform() ? true : remember;
+    setAuthToken(result.token, { remember: persistSession });
+    saveAccount(result, { remember: persistSession });
     refreshAccountsList();
     setUser(normalizeUser(result));
     return result;
@@ -137,8 +138,9 @@ export function AuthProvider({ children }) {
       skipAuth: true,
       body: JSON.stringify({ email, role, otp }),
     });
-    setAuthToken(result.token, { remember });
-    saveAccount(result, { remember });
+    const persistSession = Capacitor.isNativePlatform() ? true : remember;
+    setAuthToken(result.token, { remember: persistSession });
+    saveAccount(result, { remember: persistSession });
     refreshAccountsList();
     setUser(normalizeUser(result));
     return result;
