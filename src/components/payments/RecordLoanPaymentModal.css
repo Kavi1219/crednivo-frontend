@@ -4,83 +4,83 @@
   z-index:460;
   display:grid;
   place-items:center;
-  padding:18px;
+  padding:14px;
   background:rgba(10,24,40,.46);
   backdrop-filter:blur(6px);
 }
 .record-payment-modal{
-  width:min(780px,100%);
-  max-height:calc(100vh - 36px);
+  width:min(640px,100%);
+  max-height:calc(100vh - 28px);
   overflow:auto;
   border:1px solid var(--line);
-  border-radius:22px;
+  border-radius:20px;
   background:var(--surface);
-  box-shadow:0 28px 80px rgba(5,24,47,.24);
+  box-shadow:0 22px 64px rgba(5,24,47,.20);
 }
 .record-payment-head{
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:18px;
-  padding:20px 24px 16px;
+  gap:10px;
+  padding:16px 18px 12px;
 }
 .record-payment-customer{
   display:flex;
   align-items:center;
   min-width:0;
-  gap:14px;
+  gap:10px;
 }
 .record-payment-avatar{
-  width:58px;
-  height:58px;
+  width:48px;
+  height:48px;
   display:grid;
   place-items:center;
-  flex:0 0 58px;
-  border-radius:18px;
+  flex:0 0 48px;
+  border-radius:16px;
   color:#0b6cf0;
   background:#e8f2ff;
-  font-size:20px;
+  font-size:17px;
   font-weight:850;
   letter-spacing:-.02em;
 }
 .record-payment-head h2{
   margin:0;
   color:var(--ink-950);
-  font-size:25px;
+  font-size:19px;
   line-height:1.08;
   letter-spacing:-.035em;
 }
 .record-payment-head p{
-  margin:6px 0 0;
+  margin:4px 0 0;
   color:var(--ink-500);
-  font-size:12px;
+  font-size:10px;
   font-weight:600;
 }
 .record-payment-close{
-  width:46px;
-  height:46px;
+  width:40px;
+  height:40px;
   display:grid;
   place-items:center;
-  flex:0 0 46px;
+  flex:0 0 40px;
   border:1px solid var(--line);
-  border-radius:14px;
+  border-radius:11px;
   color:var(--ink-600);
   background:var(--surface);
   cursor:pointer;
 }
 .record-payment-close:disabled{opacity:.55;cursor:not-allowed}
-.record-payment-body{padding:6px 24px 20px}
+.record-payment-body{padding:4px 18px 14px}
 .record-payment-summary{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:14px;
+  gap:10px;
 }
 .record-payment-summary-card{
-  min-height:100px;
+  min-height:82px;
   display:flex;
   align-items:center;
-  gap:14px;
-  padding:18px 20px;
+  gap:10px;
+  padding:14px 16px;
   border:1px solid transparent;
   border-radius:16px;
 }
@@ -93,11 +93,11 @@
   border-color:#d8f1e2;
 }
 .record-payment-summary-icon{
-  width:46px;
-  height:46px;
+  width:40px;
+  height:40px;
   display:grid;
   place-items:center;
-  flex:0 0 46px;
+  flex:0 0 40px;
   border-radius:50%;
 }
 .record-payment-summary-card-collection .record-payment-summary-icon{
@@ -111,23 +111,23 @@
 .record-payment-summary-card span{
   display:block;
   color:var(--ink-500);
-  font-size:11px;
+  font-size:10px;
   font-weight:650;
 }
 .record-payment-summary-card strong{
   display:block;
   margin-top:5px;
   color:var(--ink-950);
-  font-size:22px;
+  font-size:18px;
   line-height:1;
 }
 .record-payment-info-note{
   display:flex;
   align-items:flex-start;
-  gap:9px;
-  margin:13px 2px 0;
+  gap:7px;
+  margin:10px 2px 0;
   color:var(--ink-500);
-  font-size:10px;
+  font-size:8.5px;
   line-height:1.45;
 }
 .record-payment-info-icon{
@@ -139,48 +139,48 @@
   border-radius:50%;
   color:#fff;
   background:#4b94f5;
-  font-size:12px;
+  font-size:10px;
   font-weight:900;
 }
 .record-payment-schedule-note{
-  margin:8px 2px 0;
+  margin:6px 2px 0;
   color:var(--blue-600);
-  font-size:10px;
+  font-size:8.5px;
   font-weight:650;
 }
 .record-payment-fields{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:15px 18px;
-  margin-top:18px;
+  gap:12px 14px;
+  margin-top:14px;
 }
 .record-payment-fields label{
   display:grid;
   align-content:start;
-  gap:7px;
+  gap:6px;
   min-width:0;
 }
 .record-payment-label{
   display:flex;
   align-items:center;
-  gap:7px;
+  gap:6px;
   color:var(--ink-700);
-  font-size:11px;
+  font-size:10px;
   font-weight:750;
 }
-.record-payment-label svg{color:var(--ink-500)}
+.record-payment-label svg{color:var(--ink-500);width:14px;height:14px}
 .record-payment-fields input,
 .record-payment-fields select{
   width:100%;
-  min-height:48px;
-  padding:0 14px;
+  min-height:44px;
+  padding:0 12px;
   border:1px solid var(--line);
-  border-radius:11px;
+  border-radius:10px;
   outline:none;
   color:var(--ink-950);
   background:var(--surface);
   font:inherit;
-  font-size:14px;
+  font-size:13px;
 }
 .record-payment-fields input:focus,
 .record-payment-fields select:focus{
@@ -189,7 +189,7 @@
 }
 .record-payment-fields label>small{
   color:var(--ink-500);
-  font-size:9px;
+  font-size:8.5px;
   line-height:1.4;
 }
 .record-payment-date{grid-column:1/-1}
@@ -197,8 +197,8 @@
   grid-column:1/-1;
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
-  padding:13px;
+  gap:10px;
+  padding:11px;
   border:1px solid var(--line);
   border-radius:13px;
   background:var(--surface-soft);
@@ -208,10 +208,10 @@
 .record-payment-reprice strong{display:block;margin-top:4px;color:var(--ink-950);font-size:13px}
 .record-payment-reprice>small{grid-column:1/-1;line-height:1.45}
 .record-payment-settlement{
-  margin-top:16px;
-  padding:13px;
+  margin-top:10px;
+  padding:11px;
   border:1px solid var(--line);
-  border-radius:14px;
+  border-radius:11px;
   background:var(--surface-soft);
 }
 .record-payment-settlement-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
@@ -225,15 +225,15 @@
   color:var(--blue-600);
   background:var(--surface);
   cursor:pointer;
-  font-size:10px;
+  font-size:8.5px;
   font-weight:750;
 }
 .record-payment-settlement-head button:disabled{opacity:.55;cursor:not-allowed}
 .record-payment-settlement-grid{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:9px;
-  margin-top:12px;
+  gap:7px;
+  margin-top:10px;
 }
 .record-payment-settlement-grid>div{padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 .record-payment-settlement-grid span,
@@ -242,31 +242,31 @@
 .record-payment-footer{
   display:flex;
   justify-content:flex-end;
-  gap:12px;
-  padding:16px 24px 20px;
+  gap:10px;
+  padding:12px 18px 14px;
   border-top:1px solid var(--line);
 }
 .record-payment-cancel,
 .record-payment-save{
-  min-height:48px;
+  min-height:44px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
-  padding:0 20px;
-  border-radius:12px;
+  gap:7px;
+  padding:0 16px;
+  border-radius:11px;
   cursor:pointer;
-  font-size:12px;
+  font-size:10px;
   font-weight:800;
 }
 .record-payment-cancel{
-  min-width:118px;
+  min-width:104px;
   border:1px solid var(--line);
   color:var(--ink-700);
   background:var(--surface);
 }
 .record-payment-save{
-  min-width:210px;
+  min-width:172px;
   border:1px solid transparent;
   color:#fff;
   background:linear-gradient(135deg,#228bff,#0a6be6);
@@ -293,7 +293,7 @@ html[data-theme='dark'] .record-payment-summary-card-outstanding{background:colo
   min-height:58px;
   display:flex;
   align-items:center;
-  gap:12px;
+  gap:10px;
   padding:13px 17px;
   border:1px solid color-mix(in srgb,var(--danger) 42%,var(--line));
   border-radius:15px;
@@ -301,7 +301,7 @@ html[data-theme='dark'] .record-payment-summary-card-outstanding{background:colo
   background:color-mix(in srgb,var(--danger-soft) 92%,var(--surface));
   box-shadow:0 16px 40px rgba(18,30,45,.22);
   transform:translateX(-50%);
-  font-size:12px;
+  font-size:10px;
   font-weight:750;
   line-height:1.4;
   pointer-events:none;
@@ -336,4 +336,8 @@ html[data-theme='dark'] .record-payment-error-toast{background:color-mix(in srgb
   .record-payment-summary{grid-template-columns:1fr}
   .record-payment-summary-card{min-height:74px}
   .record-payment-settlement-grid{grid-template-columns:1fr}
+}
+
+@media(min-width:701px){
+  .record-payment-modal{overflow:auto;}
 }
