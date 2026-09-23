@@ -28,27 +28,33 @@ export default function LoanSetupFields({ form, change }) {
           )}
         </small>
       </div>
-      <div className="form-field full create-loan-option-field"><div className="toggle-row"><div><strong>Interest taken upfront?</strong><small>{form.interestUpfront ? 'Yes — interest is deducted from the amount given.' : 'No — the full loan amount is given.'}</small></div><button type="button" className={`switch ${form.interestUpfront ? 'on':''}`} onClick={()=>change('interestUpfront',!form.interestUpfront)} aria-label="Toggle interest taken upfront"><span/></button></div></div>
+      <div className="form-field full create-loan-options-row">
+        <div className="create-loan-option-card">
+          <strong>Upfront</strong>
+          <button
+            type="button"
+            className={`switch ${form.interestUpfront ? 'on':''}`}
+            onClick={()=>change('interestUpfront',!form.interestUpfront)}
+            aria-label="Toggle interest taken upfront"
+          >
+            <span/>
+          </button>
+        </div>
 
-      <div className="form-field full create-loan-option-field">
-        <div className="toggle-row loan-fine-toggle-row">
-          <div>
-            <strong>Fine applicable?</strong>
-            <small>{form.fineEnabled ? 'Yes — this loan has a default fine for missed/overdue collection.' : 'No — no default fine is configured for this loan.'}</small>
-          </div>
-          <div className="loan-fine-toggle-controls">
+        <div className={`create-loan-option-card ${form.fineEnabled ? 'expanded' : ''}`}>
+          <strong>Fine</strong>
+          <div className="create-loan-option-control">
             {form.fineEnabled && (
-              <label className="loan-fine-amount-field">
-                <span>Fine Amount</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.fineAmount}
-                  onChange={(e)=>change('fineAmount',e.target.value)}
-                  placeholder="Enter fine"
-                />
-              </label>
+              <input
+                className="create-loan-option-amount"
+                type="number"
+                min="0"
+                step="1"
+                value={form.fineAmount}
+                onChange={(e)=>change('fineAmount',e.target.value)}
+                placeholder="Amount"
+                aria-label="Fine amount"
+              />
             )}
             <button
               type="button"
@@ -64,27 +70,21 @@ export default function LoanSetupFields({ form, change }) {
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="form-field full create-loan-option-field">
-        <div className="toggle-row loan-fine-toggle-row">
-          <div>
-            <strong>Document Charges applicable?</strong>
-            <small>{form.documentChargeEnabled ? 'Yes — this one-time charge is treated as extra income and does not affect repayment.' : 'No — no document charge is configured for this loan.'}</small>
-          </div>
-          <div className="loan-fine-toggle-controls">
+        <div className={`create-loan-option-card ${form.documentChargeEnabled ? 'expanded' : ''}`}>
+          <strong>Documents</strong>
+          <div className="create-loan-option-control">
             {form.documentChargeEnabled && (
-              <label className="loan-fine-amount-field">
-                <span>Document Charges Amount</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.documentChargeAmount}
-                  onChange={(e)=>change('documentChargeAmount',e.target.value)}
-                  placeholder="Enter document charge"
-                />
-              </label>
+              <input
+                className="create-loan-option-amount"
+                type="number"
+                min="0"
+                step="1"
+                value={form.documentChargeAmount}
+                onChange={(e)=>change('documentChargeAmount',e.target.value)}
+                placeholder="Amount"
+                aria-label="Document charges amount"
+              />
             )}
             <button
               type="button"
