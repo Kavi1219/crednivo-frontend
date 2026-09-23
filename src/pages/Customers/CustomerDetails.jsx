@@ -1239,6 +1239,7 @@ export default function CustomerDetails() {
             {loanPendingFine > 0 && <div className="loan-fine-pending-item"><span>Fine Pending</span><strong>{formatCurrency(loanPendingFine)}</strong></div>}
             <div><span>Document Charges</span><strong>{loan.documentChargeEnabled ? formatCurrency(loan.documentChargeAmount) : 'No'}</strong></div>
             <div><span>Disbursed</span><strong>{formatDate(loan.startDate)}</strong></div>
+            <div><span>Created By</span><strong>{loan.createdBy || 'Not recorded'}</strong></div>
             <div><span>Duration</span><strong>{loan.duration} {loan.cycle==='Daily'?'days':loan.cycle==='Weekly'?'weeks':'months'}{loan.extensionCycles > 0 ? ` · +${loan.extensionCycles} extended` : ''}</strong></div>
             <div><span>{loan.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(loan.totalRepayment)}</strong></div>
             {loan.loanType === 'IO' && !loanClosed && Number(loan.outstanding) < Number(loan.principal) && <div className="loan-current-projection-item"><span>Current Projected Remaining</span><strong>{formatCurrency(currentIoProjectedRemaining(loan))}</strong></div>}
