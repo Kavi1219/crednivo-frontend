@@ -1,34 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getLastInternalRoute, rememberCurrentRouteNow } from './NavigationMemory';
 import './GlobalBackButton.css';
-
-const MAIN_PAGES = new Set([
-  '/',
-  '/overview',
-  '/dashboard',
-  '/customers',
-  '/loans',
-  '/collection',
-  '/payments',
-  '/capital',
-  '/savings',
-  '/expenses',
-  '/reports',
-  '/agents',
-  '/settings',
-]);
-
-function isAuthPage(pathname) {
-  return ['/login', '/register', '/auth', '/forgot-password', '/reset-password', '/owner-setup']
-    .some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
-function hasOwnCustomerBack(pathname) {
-  // CustomerDetails V40 already contains Back beside New Loan.
-  return /^\/customers\/[^/]+$/.test(pathname)
-    || /^\/customers\/profile\/[^/]+$/.test(pathname);
-}
 
 function parentFallback(pathname) {
   if (pathname.startsWith('/customers/')) return '/customers';
@@ -70,11 +44,9 @@ export function goActualBack(navigate, location) {
 export default function GlobalBackButton() {
   const navigate = useNavigate();
   const location = useLocation();
-  const pathname = String(location.pathname || '/');
-
-  if (MAIN_PAGES.has(pathname) || isAuthPage(pathname) || hasOwnCustomerBack(pathname)) {
-    return null;
-  }
+  // Web-only control. Android/iOS native app uses the device/app navigation
+  // and should never show this browser-style Back button.
+  if (Capacitor.isNativePlatform()) return null;
 
   return (
     <div className="crednivo-global-back-row">
