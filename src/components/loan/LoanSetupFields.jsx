@@ -1,6 +1,10 @@
-import { CYCLE_DEFAULTS } from '../../utils/finance';
+import { CYCLE_DEFAULTS, formatDate, getFirstDueDate } from '../../utils/finance';
 
 export default function LoanSetupFields({ form, change }) {
+  const regularFirstDueDate = getFirstDueDate(form.startDate, form.cycle);
+  const effectiveFirstDueDate = form.firstDueDate || regularFirstDueDate;
+  const isCustomFirstDueDate = Boolean(form.firstDueDate && regularFirstDueDate && form.firstDueDate !== regularFirstDueDate);
+
   return (
     <div className="form-grid">
       <div className="form-field"><label>Loan Amount *</label><input type="number" min="1" value={form.amount} onChange={(e)=>change('amount',e.target.value)} /></div>
@@ -9,6 +13,21 @@ export default function LoanSetupFields({ form, change }) {
       <div className="form-field"><label>Interest Rate (%) *</label><input type="number" min="0" step="0.1" value={form.interestRate} onChange={(e)=>change('interestRate',e.target.value)} /></div>
       <div className="form-field"><label>Duration ({CYCLE_DEFAULTS[form.cycle]?.label}) *</label><input type="number" min="1" value={form.duration} onChange={(e)=>change('duration',e.target.value)} /><small className="field-help">Manual duration — you can enter any number of {CYCLE_DEFAULTS[form.cycle]?.label}.</small></div>
       <div className="form-field"><label>Disbursed Date *</label><input type="date" value={form.startDate} onChange={(e)=>change('startDate',e.target.value)} /></div>
+      <div className="form-field loan-first-collection-field">
+        <label>First Collection Date *</label>
+        <input
+          type="date"
+          min={form.startDate || undefined}
+          value={effectiveFirstDueDate}
+          onChange={(e)=>change('firstDueDate',e.target.value)}
+        />
+        <small className="field-help">
+          Regular cycle: {regularFirstDueDate ? formatDate(regularFirstDueDate) : 'Select disbursed date'}
+          {isCustomFirstDueDate && (
+            <button type="button" className="loan-date-reset" onClick={()=>change('firstDueDate','')}>Use regular date</button>
+          )}
+        </small>
+      </div>
       <div className="form-field full"><div className="toggle-row"><div><strong>Interest taken upfront?</strong><small>{form.interestUpfront ? 'Yes — interest is deducted from the amount given.' : 'No — the full loan amount is given.'}</small></div><button type="button" className={`switch ${form.interestUpfront ? 'on':''}`} onClick={()=>change('interestUpfront',!form.interestUpfront)} aria-label="Toggle interest taken upfront"><span/></button></div></div>
 
       <div className="form-field full">

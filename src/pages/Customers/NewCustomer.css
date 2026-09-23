@@ -13,3 +13,16 @@
 /* V47 — keep profile photo and KYC document uploads separate. */
 .onboarding-media-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:14px}
 @media(max-width:720px){.onboarding-media-grid{grid-template-columns:1fr;gap:10px}}
+
+/* Shared loan date override helper */
+.loan-date-reset {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  color: var(--blue-600);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 750;
+}

@@ -736,6 +736,17 @@ export function CrednivoProvider({ children }) {
     return customerId;
   };
 
+  const updateCustomerId = async (currentCustomerId, nextCustomerId) => {
+    const cleaned = String(nextCustomerId || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!currentCustomerId || !cleaned) return null;
+    const saved = await apiRequest(`/customers/${encodeURIComponent(currentCustomerId)}/customer-id`, {
+      method: 'PUT',
+      body: JSON.stringify({ customerId: cleaned }),
+    });
+    await syncCoreData();
+    return saved?.id || cleaned;
+  };
+
   const saveJaminProfile = async (customerId, form) => {
     if (!customerId) return false;
     const payload = {
@@ -828,6 +839,7 @@ export function CrednivoProvider({ children }) {
       documentChargeEnabled: Boolean(form.documentChargeEnabled),
       documentChargeAmount: form.documentChargeEnabled ? Math.max(0, asNumber(form.documentChargeAmount)) : 0,
       startDate: form.startDate || toInputDate(),
+      firstDueDate: form.firstDueDate || getFirstDueDate(form.startDate || toInputDate(), form.cycle),
     };
     const saved = await apiRequest('/loans', { method: 'POST', body: JSON.stringify(payload) });
     await syncCoreData();
@@ -848,6 +860,7 @@ export function CrednivoProvider({ children }) {
       documentChargeEnabled: Boolean(form.documentChargeEnabled),
       documentChargeAmount: form.documentChargeEnabled ? Math.max(0, asNumber(form.documentChargeAmount)) : 0,
       startDate: form.startDate || toInputDate(),
+      firstDueDate: form.firstDueDate || null,
     };
     const saved = await apiRequest(`/loans/${loanId}`, {
       method: 'PUT',
@@ -1239,6 +1252,7 @@ export function CrednivoProvider({ children }) {
       addCustomer,
       deleteCustomer,
       saveCustomerProfile,
+      updateCustomerId,
       saveJaminProfile,
       saveCustomerMedia,
       addLoan,

@@ -1,4 +1,4 @@
-import { CheckCircle2, Search, UserPlus, UserRound, WalletCards } from 'lucide-react';
+import { Check, CheckCircle2, Pencil, Search, UserPlus, UserRound, WalletCards, X } from 'lucide-react';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -13,8 +13,8 @@ import { calculateLoan, formatCurrency, formatDate, formatIndianMobile, getFirst
 import '../Customers/NewCustomer.css';
 import './CreateLoan.css';
 
-function cycleSummary(startDate, cycle) {
-  const dueDate = getFirstDueDate(startDate, cycle);
+function cycleSummary(firstDueDate, cycle) {
+  const dueDate = firstDueDate;
   if (!dueDate) return 'Select a valid disbursed date';
 
   const due = new Date(`${dueDate}T12:00:00`);
@@ -28,7 +28,7 @@ function cycleSummary(startDate, cycle) {
 export default function CreateLoan() {
   const actionLocksRef = useRef(new Set());
 
-  const { customers, loans, addLoan } = useCrednivo();
+  const { customers, loans, addLoan, updateCustomerId } = useCrednivo();
   const { hasPermission } = useAuth();
   const canAddCustomer = hasPermission('customers.add');
   const navigate = useNavigate();
@@ -42,7 +42,12 @@ export default function CreateLoan() {
   const terms=useMemo(()=>calculateLoan(form),[form]);
   const selectedCustomer=customers.find((item)=>item.id===form.customerId);
   const [loanId,setLoanId]=useState('Generating...');
+  const [editingCustomerId,setEditingCustomerId]=useState(false);
+  const [customerIdDraft,setCustomerIdDraft]=useState('');
+  const [customerIdSaving,setCustomerIdSaving]=useState(false);
   const change=(key,value)=>setForm(v=>({...v,[key]:value}));
+  const regularFirstDueDate = getFirstDueDate(form.startDate, form.cycle);
+  const effectiveFirstDueDate = form.firstDueDate || regularFirstDueDate;
 
   useEffect(()=>{
     let active=true;
@@ -82,6 +87,39 @@ export default function CreateLoan() {
     change('customerId', customer.id);
     setCustomerSearch('');
     setError('');
+  };
+
+  const beginCustomerIdEdit = () => {
+    if (!selectedCustomer) return;
+    setCustomerIdDraft(selectedCustomer.id || form.customerId || '');
+    setEditingCustomerId(true);
+    setError('');
+  };
+
+  const cancelCustomerIdEdit = () => {
+    setEditingCustomerId(false);
+    setCustomerIdDraft('');
+  };
+
+  const saveCustomerIdEdit = async () => {
+    if (!selectedCustomer || customerIdSaving) return;
+    const nextId = String(customerIdDraft || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (nextId.length < 6) {
+      setError('Customer ID must contain at least 6 letters/numbers.');
+      return;
+    }
+    setCustomerIdSaving(true);
+    setError('');
+    try {
+      const savedId = await updateCustomerId(selectedCustomer.id, nextId);
+      if (savedId) change('customerId', savedId);
+      setEditingCustomerId(false);
+      setCustomerIdDraft('');
+    } catch (apiError) {
+      setError(apiError?.message || 'Could not update the Customer ID.');
+    } finally {
+      setCustomerIdSaving(false);
+    }
   };
 
   const requestCreate=async()=>{
@@ -146,11 +184,28 @@ export default function CreateLoan() {
         </div>
 
         {customerFromProfile ? (
-          <div className="profile-loan-customer">
+          <div className="profile-loan-customer create-loan-selected-customer">
             <span className="selected-customer-avatar">{String(selectedCustomer?.name || '?').charAt(0).toUpperCase()}</span>
-            <div>
+            <div className="create-loan-selected-copy">
               <small>Customer</small>
               <strong>{selectedCustomer?.name || 'Loading customer...'}</strong>
+              {selectedCustomer && (
+                <div className="create-loan-customer-id-row">
+                  <span className="create-loan-customer-id-label">Customer ID</span>
+                  {editingCustomerId ? (
+                    <div className="create-loan-customer-id-editor">
+                      <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
+                      <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
+                      <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
+                    </div>
+                  ) : (
+                    <div className="create-loan-customer-id-display">
+                      <b>{selectedCustomer.id}</b>
+                      <button type="button" onClick={beginCustomerIdEdit} title="Edit Customer ID"><Pencil size={13}/> Edit</button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -207,10 +262,25 @@ export default function CreateLoan() {
             {selectedCustomer && (
               <div className="selected-customer-preview selected-customer-preview-confirmed">
                 <span className="selected-customer-avatar">{String(selectedCustomer.name || '?').charAt(0).toUpperCase()}</span>
-                <div>
+                <div className="create-loan-selected-copy">
                   <small>Selected Customer</small>
                   <strong>{selectedCustomer.name}</strong>
-                  <span>{selectedCustomer.id}{selectedCustomer.mobile ? ` · ${formatIndianMobile(selectedCustomer.mobile)}` : ''}</span>
+                  <span>{selectedCustomer.mobile ? formatIndianMobile(selectedCustomer.mobile) : '—'}</span>
+                  <div className="create-loan-customer-id-row">
+                    <span className="create-loan-customer-id-label">Customer ID</span>
+                    {editingCustomerId ? (
+                      <div className="create-loan-customer-id-editor">
+                        <input value={customerIdDraft} maxLength={30} onChange={(event)=>setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))} autoFocus />
+                        <button type="button" onClick={saveCustomerIdEdit} disabled={customerIdSaving} title="Save Customer ID"><Check size={14}/></button>
+                        <button type="button" onClick={cancelCustomerIdEdit} disabled={customerIdSaving} title="Cancel"><X size={14}/></button>
+                      </div>
+                    ) : (
+                      <div className="create-loan-customer-id-display">
+                        <b>{selectedCustomer.id}</b>
+                        <button type="button" onClick={beginCustomerIdEdit} title="Edit Customer ID"><Pencil size={13}/> Edit</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <button type="button" className="change-selected-customer" onClick={()=>{
                   change('customerId','');
@@ -240,7 +310,9 @@ export default function CreateLoan() {
         <div className="review-summary-item accent"><span>Loan ID</span><strong>{loanId}</strong></div>
         <div className="review-summary-item accent"><span>Loan Amount</span><strong>{formatCurrency(terms.principal)}</strong></div>
         <div className="review-summary-item full"><span>Customer</span><strong>{selectedCustomer?.name || '—'}</strong></div>
-        <div className="review-summary-item full"><span>Cycle / Pay Schedule</span><strong>{cycleSummary(form.startDate,form.cycle)}</strong></div>
+        <div className="review-summary-item"><span>Customer ID</span><strong>{form.customerId || '—'}</strong></div>
+        <div className="review-summary-item"><span>First Collection Date</span><strong>{formatDate(effectiveFirstDueDate)}</strong></div>
+        <div className="review-summary-item full"><span>Cycle / Pay Schedule</span><strong>{cycleSummary(effectiveFirstDueDate,form.cycle)}</strong></div>
         <div className="review-summary-item"><span>Loan Type</span><strong>{form.loanType}</strong></div>
         <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{form.interestRate}% · {formatCurrency(terms.interestAmount)}</strong></div>
         <div className="review-summary-item"><span>Interest Taken</span><strong>{form.interestUpfront?'Yes':'No'}</strong></div>

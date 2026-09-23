@@ -27,8 +27,32 @@ function nextPreviewId(prefix, list, pad) {
   return `${prefix}${String(highest + 1).padStart(pad, '0')}`;
 }
 
-function cycleSummary(startDate, cycle) {
-  const dueDate = getFirstDueDate(startDate, cycle);
+
+function companyInitials(name) {
+  const parts = String(name || 'CREDNIVO').trim().split(/\s+/).filter(Boolean);
+  const value = parts.map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 4);
+  return value.length >= 2 ? value : 'CRD';
+}
+
+function financialYearCode(dateValue = toInputDate()) {
+  const date = new Date(`${dateValue}T12:00:00`);
+  const year = date.getFullYear();
+  const start = date.getMonth() + 1 >= 4 ? year : year - 1;
+  const end = start + 1;
+  return `${String(start).slice(-2)}${String(end).slice(-2)}`;
+}
+
+function nextCustomerPreviewId(companyName, list, customerDate) {
+  const prefix = `${companyInitials(companyName)}${financialYearCode(customerDate)}`;
+  const used = list
+    .map((item) => String(item.id || '').toUpperCase())
+    .filter((id) => id.startsWith(prefix) && /^\d{4}$/.test(id.slice(prefix.length)))
+    .map((id) => Number(id.slice(prefix.length)));
+  const next = used.length ? Math.max(...used) + 1 : 1;
+  return `${prefix}${String(next).padStart(4, '0')}`;
+}
+function cycleSummary(firstDueDate, cycle) {
+  const dueDate = firstDueDate;
   if (!dueDate) return 'Select a valid disbursed date';
 
   const due = new Date(`${dueDate}T12:00:00`);
@@ -45,7 +69,7 @@ export default function NewCustomer() {
   const actionLocksRef = useRef(new Set());
 
   const { saveCustomerProfile, saveJaminProfile, addLoan, customers, loans } = useCrednivo();
-  const { hasPermission } = useAuth();
+  const { hasPermission, status } = useAuth();
   const canCreateLoan = hasPermission('loans.create');
   const navigate = useNavigate();
   const [form, setForm] = useState(initial);
@@ -56,7 +80,8 @@ export default function NewCustomer() {
   const [saving, setSaving] = useState(false);
 
   const terms = useMemo(() => calculateLoan(form), [form]);
-  const previewCustomerId = useMemo(() => nextPreviewId('SFC-', customers, 4), [customers]);
+  const effectiveFirstDueDate = form.firstDueDate || getFirstDueDate(form.startDate, form.cycle);
+  const previewCustomerId = useMemo(() => nextCustomerPreviewId(status?.companyName, customers, form.date), [status?.companyName, customers, form.date]);
   const customerId = savedCustomerId || previewCustomerId;
   const loanId = useMemo(() => nextPreviewId('SFCLN-', loans, 5), [loans]);
   const change = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -295,7 +320,7 @@ export default function NewCustomer() {
         <div className="review-summary-grid">
           <div className="review-summary-item accent"><span>Loan ID</span><strong>{loanId}</strong></div>
           <div className="review-summary-item accent"><span>Loan Amount</span><strong>{formatCurrency(terms.principal)}</strong></div>
-          <div className="review-summary-item full"><span>Cycle / Pay Schedule</span><strong>{cycleSummary(form.startDate, form.cycle)}</strong></div>
+          <div className="review-summary-item full"><span>Cycle / Pay Schedule</span><strong>{cycleSummary(effectiveFirstDueDate, form.cycle)}</strong></div>
           <div className="review-summary-item"><span>Loan Type</span><strong>{form.loanType}</strong></div>
           <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{form.interestRate}% · {formatCurrency(terms.interestAmount)}</strong></div>
           <div className="review-summary-item"><span>Interest Taken</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
@@ -306,7 +331,8 @@ export default function NewCustomer() {
           {form.loanType === 'IO' && <div className="review-summary-item"><span>Principal Outstanding</span><strong>{formatCurrency(terms.initialOutstanding)}</strong></div>}
           <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(terms.totalRepayment)}</strong></div>
           <div className="review-summary-item"><span>Duration</span><strong>{terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</strong></div>
-          <div className="review-summary-item full"><span>Disbursed Date</span><strong>{formatDate(form.startDate)}</strong></div>
+          <div className="review-summary-item"><span>Disbursed Date</span><strong>{formatDate(form.startDate)}</strong></div>
+          <div className="review-summary-item"><span>First Collection Date</span><strong>{formatDate(effectiveFirstDueDate)}</strong></div>
         </div>
       </ReviewModal>
     </div>

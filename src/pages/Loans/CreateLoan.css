@@ -434,3 +434,89 @@
     display: none;
   }
 }
+
+/* Customer ID editor on Create Loan */
+.create-loan-selected-customer { align-items: flex-start; }
+.create-loan-selected-copy { min-width: 0; flex: 1; }
+.create-loan-customer-id-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.create-loan-customer-id-label {
+  color: var(--ink-500);
+  font-size: 8px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.create-loan-customer-id-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.create-loan-customer-id-display b {
+  color: var(--ink-900);
+  font-size: 10.5px;
+  letter-spacing: .02em;
+}
+.create-loan-customer-id-display button,
+.create-loan-customer-id-editor button {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--blue-600);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 750;
+}
+.create-loan-customer-id-editor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 260px;
+}
+.create-loan-customer-id-editor input {
+  width: min(320px, 100%);
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--blue-300, #a9caff);
+  border-radius: 8px;
+  outline: none;
+  color: var(--ink-900);
+  background: var(--surface);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.create-loan-customer-id-editor input:focus {
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 3px rgba(8,104,236,.08);
+}
+
+.loan-date-reset {
+  margin-left: 8px;
+  padding: 0;
+  border: 0;
+  color: var(--blue-600);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 750;
+}
+
+@media (max-width: 600px) {
+  .create-loan-customer-id-editor { min-width: 100%; }
+  .create-loan-customer-id-editor input { flex: 1; width: auto; }
+}
