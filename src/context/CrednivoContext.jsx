@@ -497,14 +497,19 @@ export function CrednivoProvider({ children }) {
 
   const syncCoreData = async () => {
     try {
-      // Load loans first. The backend uses the loans read to repair legacy/current
-      // IO schedule pricing when principal has changed. Collections are requested
-      // only after that repair completes so the UI never mixes fresh loans with
-      // stale schedule rows.
+      // Load customers before loans. Customer listing can normalize/edit the public
+      // Customer ID (for example SFC-0050 -> SFC26270050). Loans are linked by the
+      // internal database customer relationship, but their API response exposes the
+      // current public Customer ID. Loading customers first guarantees customers and
+      // loans use the same ID in this sync and prevents false 0 active/0 outstanding
+      // values in customer screens after an ID-format change.
+      const customerRows = hasPermission('customers.view') ? await apiRequest('/customers') : [];
+
+      // Load loans after customer IDs are finalized. The backend also uses the loans
+      // read to repair legacy/current IO schedule pricing when principal has changed.
       const loanRows = hasPermission('loans.view') ? await apiRequest('/loans') : [];
 
-      const [customerRows, paymentRows, documentRows, expenseRows, capitalRows, dashboardRow, capitalMetricRow, savingImpactRow, savingSummaryRow, agentRows, companyRow] = await Promise.all([
-        hasPermission('customers.view') ? apiRequest('/customers') : Promise.resolve([]),
+      const [paymentRows, documentRows, expenseRows, capitalRows, dashboardRow, capitalMetricRow, savingImpactRow, savingSummaryRow, agentRows, companyRow] = await Promise.all([
         hasPermission('payments.view') ? apiRequest('/payments') : Promise.resolve([]),
         hasPermission('documents.view') ? apiRequest('/documents') : Promise.resolve([]),
         hasPermission('expenses.view') ? apiRequest('/expenses') : Promise.resolve([]),
