@@ -1,23 +1,42 @@
-import { useMemo, useState, useRef } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, UserRound, WalletCards } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Pencil, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
-import MediaUploader from '../../components/common/MediaUploader';
-import ModuleHeader from '../../components/common/ModuleHeader';
 import ReviewModal from '../../components/common/ReviewModal';
-import LoanPreview from '../../components/loan/LoanPreview';
 import LoanSetupFields from '../../components/loan/LoanSetupFields';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { calculateLoan, formatCurrency, formatDate, formatIndianMobile, formatIndianMobileLocal, getFirstDueDate, isValidIndianMobile, normalizeIndianMobile, toInputDate } from '../../utils/finance';
+import '../Loans/CreateLoan.css';
 import './NewCustomer.css';
 
 const initial = {
-  name: '', mobile: '', fatherName: '', date: toInputDate(), work: '', address: '', photo: '', customerDocument: null, customerDocuments: [],
-  jaminName: '', jaminMobile: '', jaminFatherName: '', jaminWork: '', jaminAddress: '', jaminPhoto: '', jaminDocument: null, jaminDocuments: [],
+  name: '', mobile: '', fatherName: '', date: toInputDate(), work: '', workAddress: '', area: '', address: '',
+  photo: '', customerDocument: null, customerDocuments: [],
+  jaminName: '', jaminMobile: '', jaminFatherName: '', jaminWork: '', jaminWorkAddress: '', jaminAddress: '',
+  jaminPhoto: '', jaminDocument: null, jaminDocuments: [],
   amount: 10000, cycle: 'Daily', loanType: 'EMI', interestRate: 15,
-  duration: 100, interestUpfront: false, fineEnabled: false, fineAmount: 0, documentChargeEnabled: false, documentChargeAmount: 0, startDate: toInputDate(),
+  duration: 100, interestUpfront: false, fineEnabled: false, fineAmount: 0,
+  documentChargeEnabled: false, documentChargeAmount: 0, startDate: toInputDate(),
 };
+
+function financialYearCode(dateValue = toInputDate()) {
+  const date = new Date(`${dateValue}T12:00:00`);
+  const year = date.getFullYear();
+  const start = date.getMonth() + 1 >= 4 ? year : year - 1;
+  return `${String(start).slice(-2)}${String(start + 1).slice(-2)}`;
+}
+
+function nextCustomerPreviewId(list, customerDate) {
+  const prefix = `SFC-${financialYearCode(customerDate)}-`;
+  const used = list
+    .map((item) => String(item.id || '').toUpperCase())
+    .filter((id) => id.startsWith(prefix) && /^\d{4}$/.test(id.slice(prefix.length)))
+    .map((id) => Number(id.slice(prefix.length)));
+  let next = 0;
+  while (used.includes(next)) next += 1;
+  return `${prefix}${String(next).padStart(4, '0')}`;
+}
 
 function nextPreviewId(prefix, list, pad) {
   const highest = list.reduce((max, item) => {
@@ -27,78 +46,73 @@ function nextPreviewId(prefix, list, pad) {
   return `${prefix}${String(highest + 1).padStart(pad, '0')}`;
 }
 
-
-function companyInitials(name) {
-  const parts = String(name || 'CREDNIVO').trim().split(/\s+/).filter(Boolean);
-  const value = parts.map((part) => part.charAt(0).toUpperCase()).join('').slice(0, 4);
-  return value.length >= 2 ? value : 'CRD';
-}
-
-function financialYearCode(dateValue = toInputDate()) {
-  const date = new Date(`${dateValue}T12:00:00`);
-  const year = date.getFullYear();
-  const start = date.getMonth() + 1 >= 4 ? year : year - 1;
-  const end = start + 1;
-  return `${String(start).slice(-2)}${String(end).slice(-2)}`;
-}
-
-function nextCustomerPreviewId(companyName, list, customerDate) {
-  const prefix = `${companyInitials(companyName)}-${financialYearCode(customerDate)}-`;
-  const used = list
-    .map((item) => String(item.id || '').toUpperCase())
-    .filter((id) => id.startsWith(prefix) && /^\d{4}$/.test(id.slice(prefix.length)))
-    .map((id) => Number(id.slice(prefix.length)));
-  let next = 0;
-  while (used.includes(next)) next += 1;
-  return `${prefix}${String(next).padStart(4, '0')}`;
-}
 function cycleSummary(firstDueDate, cycle) {
-  const dueDate = firstDueDate;
-  if (!dueDate) return 'Select a valid disbursed date';
-
-  const due = new Date(`${dueDate}T12:00:00`);
+  if (!firstDueDate) return 'Select a valid disbursed date';
+  const due = new Date(`${firstDueDate}T12:00:00`);
   if (Number.isNaN(due.getTime())) return 'Select a valid disbursed date';
+  if (cycle === 'Weekly') return `Every ${new Intl.DateTimeFormat('en-IN', { weekday: 'long' }).format(due)}`;
+  if (cycle === 'Monthly') return `Pay date ${due.getDate()}`;
+  return `First pay ${formatDate(firstDueDate)}`;
+}
 
-  if (cycle === 'Weekly') {
-    return `Weekly · Every ${new Intl.DateTimeFormat('en-IN', { weekday: 'long' }).format(due)}`;
-  }
-  if (cycle === 'Monthly') return `Monthly · Pay date ${due.getDate()}`;
-  return `Daily · First pay ${formatDate(dueDate)}`;
+function OptionalPhone({ value, onChange, id }) {
+  return (
+    <div className="registration-phone-input">
+      <select aria-label="Country code" defaultValue="+91">
+        <option value="+91">🇮🇳 +91</option>
+      </select>
+      <input
+        id={id}
+        value={formatIndianMobileLocal(value)}
+        onChange={(event) => onChange(normalizeIndianMobile(event.target.value))}
+        inputMode="numeric"
+        autoComplete="tel"
+        placeholder="Phone number"
+      />
+    </div>
+  );
 }
 
 export default function NewCustomer() {
   const actionLocksRef = useRef(new Set());
-
-  const { saveCustomerProfile, saveJaminProfile, addLoan, customers, loans } = useCrednivo();
-  const { hasPermission, status } = useAuth();
+  const { saveCustomerProfile, saveJaminProfile, addLoan, updateCustomerId, customers, loans } = useCrednivo();
+  const { hasPermission } = useAuth();
   const canCreateLoan = hasPermission('loans.create');
   const navigate = useNavigate();
+
   const [form, setForm] = useState(initial);
   const [step, setStep] = useState(0);
   const [review, setReview] = useState(null);
   const [savedCustomerId, setSavedCustomerId] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [customerIdEditing, setCustomerIdEditing] = useState(false);
+  const [customerIdDraft, setCustomerIdDraft] = useState('');
+  const [customerIdTouched, setCustomerIdTouched] = useState(false);
 
   const terms = useMemo(() => calculateLoan(form), [form]);
   const effectiveFirstDueDate = form.firstDueDate || getFirstDueDate(form.startDate, form.cycle);
-  const previewCustomerId = useMemo(() => nextCustomerPreviewId(status?.companyName, customers, form.date), [status?.companyName, customers, form.date]);
-  const customerId = savedCustomerId || previewCustomerId;
+  const previewCustomerId = useMemo(() => nextCustomerPreviewId(customers, form.date), [customers, form.date]);
+  const customerId = savedCustomerId || customerIdDraft || previewCustomerId;
   const loanId = useMemo(() => nextPreviewId('SFCLN-', loans, 5), [loans]);
   const change = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
+  useEffect(() => {
+    if (!customerIdTouched && !savedCustomerId) setCustomerIdDraft(previewCustomerId);
+  }, [previewCustomerId, customerIdTouched, savedCustomerId]);
+
   const validateCustomer = () => {
-    if (!form.name.trim() || !isValidIndianMobile(form.mobile) || !form.fatherName.trim() || !form.date || !form.work.trim() || !form.address.trim()) {
-      setError('Complete all Customer Details and enter a valid 10-digit Indian mobile number.');
+    if (form.mobile && !isValidIndianMobile(form.mobile)) {
+      setError('Customer phone number must contain 10 digits when provided.');
       return false;
     }
     setError('');
     return true;
   };
 
-  const validateJamin = () => {
-    if (!form.jaminName.trim() || !isValidIndianMobile(form.jaminMobile) || !form.jaminFatherName.trim() || !form.jaminWork.trim() || !form.jaminAddress.trim()) {
-      setError('Complete all Jamin Details and enter a valid 10-digit Indian mobile number.');
+  const validateWitness = () => {
+    if (form.jaminMobile && !isValidIndianMobile(form.jaminMobile)) {
+      setError('Witness phone number must contain 10 digits when provided.');
       return false;
     }
     setError('');
@@ -107,7 +121,7 @@ export default function NewCustomer() {
 
   const validateLoan = () => {
     if (Number(form.amount) <= 0 || Number(form.duration) <= 0 || Number(form.interestRate) < 0 || !form.startDate) {
-      setError('Enter a valid Loan Amount, Interest Rate, manual Duration and Disbursed Date.');
+      setError('Enter a valid Loan Amount, Interest Rate, Duration and Disbursed Date.');
       return false;
     }
     if (form.fineEnabled && Number(form.fineAmount) <= 0) {
@@ -126,9 +140,9 @@ export default function NewCustomer() {
     if (!validateCustomer()) return;
     setReview('customer');
   };
-  const saveJaminStep = () => {
-    if (!validateJamin()) return;
-    setReview('jamin');
+  const saveWitnessStep = () => {
+    if (!validateWitness()) return;
+    setReview('witness');
   };
   const addLoanStep = () => {
     if (!validateLoan()) return;
@@ -136,21 +150,25 @@ export default function NewCustomer() {
   };
 
   const confirmReview = async () => {
-    if (actionLocksRef.current.has('confirmReview')) return;
+    if (actionLocksRef.current.has('confirmReview') || saving) return;
     actionLocksRef.current.add('confirmReview');
-    try {
-    if (saving) return;
     setSaving(true);
     setError('');
     try {
       if (review === 'customer') {
-        const id = await saveCustomerProfile(form, savedCustomerId);
-        setSavedCustomerId(id);
+        const createdId = await saveCustomerProfile(form, savedCustomerId);
+        let finalId = createdId;
+        const requestedId = String(customerIdDraft || '').trim().toUpperCase();
+        if (requestedId && requestedId !== createdId) {
+          finalId = await updateCustomerId(createdId, requestedId);
+        }
+        setSavedCustomerId(finalId || createdId);
+        setCustomerIdDraft(finalId || createdId);
         setReview(null);
         setStep(1);
         return;
       }
-      if (review === 'jamin') {
+      if (review === 'witness') {
         await saveJaminProfile(savedCustomerId, form);
         setReview(null);
         if (canCreateLoan) setStep(2);
@@ -163,147 +181,305 @@ export default function NewCustomer() {
         if (id) navigate(`/customers/${savedCustomerId}`);
       }
     } catch (apiError) {
-      setError(apiError?.message || 'Could not save to the CREDNIVO database. Check that the backend is running.');
+      setError(apiError?.message || 'Could not save to the CREDNIVO database.');
       setReview(null);
     } finally {
       setSaving(false);
-    }
-  
-    } finally {
       actionLocksRef.current.delete('confirmReview');
     }
   };
 
   const steps = [
-    { label: 'Customer', icon: UserRound },
-    { label: 'Jamin', icon: ShieldCheck },
-    ...(canCreateLoan ? [{ label: 'Loan', icon: WalletCards }] : []),
+    { label: 'Customer', subtitle: 'Personal Details', icon: UserRound },
+    { label: 'Witness', subtitle: 'Account Details', icon: ShieldCheck },
+    ...(canCreateLoan ? [{ label: 'Loan', subtitle: 'Loan Details', icon: WalletCards }] : []),
   ];
 
+  const renderCustomerId = () => (
+    <div className="registration-id-field">
+      <label>Customer ID</label>
+      <div className={`registration-id-control ${customerIdEditing ? 'editing' : ''}`}>
+        <input
+          value={customerIdDraft || previewCustomerId}
+          readOnly={!customerIdEditing}
+          onChange={(event) => {
+            setCustomerIdTouched(true);
+            setCustomerIdDraft(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 30));
+          }}
+        />
+        {customerIdEditing ? (
+          <button type="button" onClick={() => setCustomerIdEditing(false)} title="Done"><Check size={16}/></button>
+        ) : (
+          <button type="button" onClick={() => setCustomerIdEditing(true)} title="Edit Customer ID"><Pencil size={15}/></button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="module-page new-customer-page">
-      <ModuleHeader eyebrow="New Customer" title="Customer Onboarding" description={canCreateLoan ? "Save Customer Details, verify Jamin, then add the first loan. Each step has a review before it is confirmed." : "Save Customer Details and verify Jamin. Loan creation is not enabled for this account."} />
-
-      <section className="onboarding-stepper module-card">
-        {steps.map((item, index) => {
-          const Icon = item.icon;
-          const state = index < step ? 'done' : index === step ? 'active' : '';
-          return <button key={item.label} type="button" className={`onboarding-step ${state}`} onClick={() => index <= step && setStep(index)} disabled={index > step}>
-            <span className="onboarding-step-icon">{index < step ? <CheckCircle2 size={18}/> : <Icon size={18}/>}</span>
-            <span><small>Step {index + 1}</small><strong>{item.label}</strong></span>
-          </button>;
-        })}
-      </section>
-
-      {error && <div className="form-error">{error}</div>}
-
-      {step === 0 && <section className="form-card module-card onboarding-panel">
-        <div className="form-section">
-          <div className="form-section-head"><span className="form-section-icon"><UserRound size={19}/></span><div><h2>Customer Details</h2><p>Customer identity, profile photo and supporting document</p></div></div>
-          <div className="onboarding-media-grid">
-            <MediaUploader
-              mode="photo"
-              title="Customer"
-              photo={form.photo}
-              onPhotoChange={(value) => change('photo', value)}
-            />
-            <MediaUploader
-              mode="document"
-              title="Customer"
-              documents={form.customerDocuments}
-              onDocumentsChange={(value) => setForm((current) => ({ ...current, customerDocuments: value, customerDocument: value[0] || null }))}
-            />
+    <div className="module-page new-customer-page registration-page-v2">
+      <div className="registration-shell module-card">
+        <aside className="registration-sidebar">
+          <div className="registration-brand-block">
+            <span className="registration-brand-mark">SFC</span>
+            <div>
+              <strong>Customer Registration</strong>
+              <small>Sangam Fin Capital</small>
+            </div>
           </div>
-          <div className="form-grid">
-            <div className="form-field"><label>Name *</label><input value={form.name} onChange={(e)=>change('name',e.target.value)} placeholder="Customer full name"/></div>
-            <div className="form-field"><label>Mobile *</label><div className="indian-mobile-input"><span>+91 -</span><input value={formatIndianMobileLocal(form.mobile)} onChange={(e)=>change('mobile',normalizeIndianMobile(e.target.value))} inputMode="numeric" autoComplete="tel" placeholder="98765 43210"/></div></div>
-            <div className="form-field"><label>Father’s Name *</label><input value={form.fatherName} onChange={(e)=>change('fatherName',e.target.value)} placeholder="Father's name"/></div>
-            <div className="form-field"><label>Date *</label><input type="date" value={form.date} onChange={(e)=>change('date',e.target.value)}/></div>
-            <div className="form-field span-2"><label>Work *</label><input value={form.work} onChange={(e)=>change('work',e.target.value)} placeholder="Occupation / work"/></div>
-            <div className="form-field full"><label>Address *</label><textarea value={form.address} onChange={(e)=>change('address',e.target.value)} placeholder="Full address"/></div>
-          </div>
-          <div className="onboarding-actions"><ActionButton type="button" icon={ArrowRight} onClick={saveCustomerStep}>Save Customer Details</ActionButton></div>
-        </div>
-      </section>}
 
-      {step === 1 && <section className="form-card module-card onboarding-panel">
-        <div className="form-section">
-          <div className="form-section-head"><span className="form-section-icon"><ShieldCheck size={19}/></span><div><h2>Jamin Details</h2><p>Guarantor profile linked to {customerId}</p></div></div>
-          <div className="onboarding-media-grid">
-            <MediaUploader
-              mode="photo"
-              title="Jamin"
-              photo={form.jaminPhoto}
-              onPhotoChange={(value) => change('jaminPhoto', value)}
-            />
-            <MediaUploader
-              mode="document"
-              title="Jamin"
-              documents={form.jaminDocuments}
-              onDocumentsChange={(value) => setForm((current) => ({ ...current, jaminDocuments: value, jaminDocument: value[0] || null }))}
-            />
-          </div>
-          <div className="form-grid">
-            <div className="form-field"><label>Name *</label><input value={form.jaminName} onChange={(e)=>change('jaminName',e.target.value)} placeholder="Jamin full name"/></div>
-            <div className="form-field"><label>Mobile *</label><div className="indian-mobile-input"><span>+91 -</span><input value={formatIndianMobileLocal(form.jaminMobile)} onChange={(e)=>change('jaminMobile',normalizeIndianMobile(e.target.value))} inputMode="numeric" autoComplete="tel" placeholder="98765 43210"/></div></div>
-            <div className="form-field"><label>Father’s Name *</label><input value={form.jaminFatherName} onChange={(e)=>change('jaminFatherName',e.target.value)} placeholder="Father's name"/></div>
-            <div className="form-field span-2"><label>Work *</label><input value={form.jaminWork} onChange={(e)=>change('jaminWork',e.target.value)} placeholder="Occupation / work"/></div>
-            <div className="form-field full"><label>Address *</label><textarea value={form.jaminAddress} onChange={(e)=>change('jaminAddress',e.target.value)} placeholder="Full address"/></div>
-          </div>
-          <div className="onboarding-actions split"><ActionButton type="button" tone="secondary" icon={ArrowLeft} onClick={()=>setStep(0)}>Customer</ActionButton><ActionButton type="button" icon={ArrowRight} onClick={saveJaminStep}>Save Jamin Details</ActionButton></div>
-        </div>
-      </section>}
+          <nav className="registration-steps" aria-label="Customer registration progress">
+            {steps.map((item, index) => {
+              const Icon = item.icon;
+              const state = index < step ? 'done' : index === step ? 'active' : '';
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  className={`registration-step ${state}`}
+                  onClick={() => index <= step && setStep(index)}
+                  disabled={index > step}
+                >
+                  <span className="registration-step-icon">{index < step ? <Check size={17}/> : <Icon size={17}/>}</span>
+                  <span className="registration-step-copy">
+                    <small>{item.subtitle}</small>
+                    <strong>{item.label}</strong>
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
-      {step === 2 && <>
-        <section className="form-card module-card onboarding-panel">
-          <div className="form-section">
-            <div className="form-section-head"><span className="form-section-icon"><WalletCards size={19}/></span><div><h2>Loan Details</h2><p>Manual duration with automatic loan calculations</p></div></div>
-            <LoanSetupFields form={form} change={change} />
-            <div className="onboarding-actions split"><ActionButton type="button" tone="secondary" icon={ArrowLeft} onClick={()=>setStep(1)}>Jamin</ActionButton></div>
-          </div>
-        </section>
-        <LoanPreview form={form} terms={terms}>
-          <ActionButton icon={CheckCircle2} type="button" className="loan-add-button" onClick={addLoanStep}>Add Loan</ActionButton>
-        </LoanPreview>
-      </>}
+        <main className="registration-content">
+          {error && <div className="form-error">{error}</div>}
+
+          {step === 0 && (
+            <section className="registration-panel onboarding-panel">
+              <div className="registration-panel-head">
+                <span>YOUR CUSTOMER DETAILS</span>
+                <h1>Customer</h1>
+                <p>Enter the available customer information. All fields on this step are optional.</p>
+              </div>
+
+              {renderCustomerId()}
+
+              <div className="registration-section-title">PERSONAL DETAILS</div>
+              <div className="registration-grid two-col">
+                <div className="registration-field">
+                  <label>Name</label>
+                  <input value={form.name} onChange={(e) => change('name', e.target.value)} placeholder="Customer name"/>
+                </div>
+                <div className="registration-field">
+                  <label>Father’s Name</label>
+                  <input value={form.fatherName} onChange={(e) => change('fatherName', e.target.value)} placeholder="Father's name"/>
+                </div>
+              </div>
+
+              <div className="registration-section-title">CONTACT DETAILS</div>
+              <div className="registration-grid one-col compact-width">
+                <div className="registration-field">
+                  <label>Phone Number</label>
+                  <OptionalPhone id="customer-phone" value={form.mobile} onChange={(value) => change('mobile', value)}/>
+                </div>
+              </div>
+
+              <div className="registration-section-title">RESIDENTIAL ADDRESS</div>
+              <div className="registration-grid one-col">
+                <div className="registration-field">
+                  <label>Residential Address</label>
+                  <textarea value={form.address} onChange={(e) => change('address', e.target.value)} placeholder="Residential address"/>
+                </div>
+              </div>
+
+              <div className="registration-section-title">WORK DETAILS</div>
+              <div className="registration-grid two-col">
+                <div className="registration-field">
+                  <label>Work</label>
+                  <input value={form.work} onChange={(e) => change('work', e.target.value)} placeholder="Occupation / work"/>
+                </div>
+                <div className="registration-field">
+                  <label>Work Address</label>
+                  <input value={form.workAddress} onChange={(e) => change('workAddress', e.target.value)} placeholder="Work address"/>
+                </div>
+              </div>
+
+              <div className="registration-actions">
+                <ActionButton tone="secondary" type="button" onClick={() => navigate('/customers')}>Cancel</ActionButton>
+                <ActionButton icon={ArrowRight} type="button" onClick={saveCustomerStep}>Next</ActionButton>
+              </div>
+            </section>
+          )}
+
+          {step === 1 && (
+            <section className="registration-panel onboarding-panel">
+              <div className="registration-panel-head">
+                <span>WITNESS DETAILS</span>
+                <h1>Witness</h1>
+                <p>Enter the available witness information. All fields on this step are optional.</p>
+              </div>
+
+              <div className="registration-section-title">PERSONAL DETAILS</div>
+              <div className="registration-grid two-col">
+                <div className="registration-field">
+                  <label>Name</label>
+                  <input value={form.jaminName} onChange={(e) => change('jaminName', e.target.value)} placeholder="Witness name"/>
+                </div>
+                <div className="registration-field">
+                  <label>Father’s Name</label>
+                  <input value={form.jaminFatherName} onChange={(e) => change('jaminFatherName', e.target.value)} placeholder="Father's name"/>
+                </div>
+              </div>
+
+              <div className="registration-section-title">CONTACT DETAILS</div>
+              <div className="registration-grid one-col compact-width">
+                <div className="registration-field">
+                  <label>Phone Number</label>
+                  <OptionalPhone id="witness-phone" value={form.jaminMobile} onChange={(value) => change('jaminMobile', value)}/>
+                </div>
+              </div>
+
+              <div className="registration-section-title">RESIDENTIAL ADDRESS</div>
+              <div className="registration-grid one-col">
+                <div className="registration-field">
+                  <label>Residential Address</label>
+                  <textarea value={form.jaminAddress} onChange={(e) => change('jaminAddress', e.target.value)} placeholder="Residential address"/>
+                </div>
+              </div>
+
+              <div className="registration-section-title">WORK DETAILS</div>
+              <div className="registration-grid two-col">
+                <div className="registration-field">
+                  <label>Work</label>
+                  <input value={form.jaminWork} onChange={(e) => change('jaminWork', e.target.value)} placeholder="Occupation / work"/>
+                </div>
+                <div className="registration-field">
+                  <label>Work Address</label>
+                  <input value={form.jaminWorkAddress} onChange={(e) => change('jaminWorkAddress', e.target.value)} placeholder="Work address"/>
+                </div>
+              </div>
+
+              <div className="registration-actions split">
+                <ActionButton type="button" tone="secondary" icon={ArrowLeft} onClick={() => setStep(0)}>Customer</ActionButton>
+                <ActionButton type="button" icon={ArrowRight} onClick={saveWitnessStep}>{canCreateLoan ? 'Next' : 'Save'}</ActionButton>
+              </div>
+            </section>
+          )}
+
+          {step === 2 && canCreateLoan && (
+            <section className="registration-panel onboarding-panel registration-loan-step">
+              <div className="registration-panel-head">
+                <span>LOAN DETAILS</span>
+                <h1>Loan</h1>
+                <p>Use the same loan setup and preview format as the Create Loan page.</p>
+              </div>
+
+              <div className="create-loan-layout registration-loan-layout">
+                <section className="module-card create-loan-main-card">
+                  <div className="create-loan-main-header">
+                    <span className="create-loan-main-icon"><WalletCards size={20}/></span>
+                    <div><h2>Loan Details</h2><p>Set up the loan terms and schedule.</p></div>
+                  </div>
+                  <div className="create-loan-main-body">
+                    <div className="registration-selected-customer-row">
+                      <span>Customer</span>
+                      <strong>{form.name || 'Unnamed Customer'}</strong>
+                      <small>{savedCustomerId}</small>
+                    </div>
+                    <div className="create-loan-section-divider"/>
+                    <div className="form-section create-loan-details-block">
+                      <LoanSetupFields form={form} change={change}/>
+                    </div>
+                  </div>
+                  <div className="create-loan-form-actions">
+                    <ActionButton type="button" tone="secondary" icon={ArrowLeft} onClick={() => setStep(1)}>Witness</ActionButton>
+                    <ActionButton type="button" icon={CheckCircle2} onClick={addLoanStep}>Create Loan</ActionButton>
+                  </div>
+                </section>
+
+                <aside className="module-card create-loan-summary-card create-loan-preview-card">
+                  <div className="create-loan-preview-top">
+                    <div className="create-loan-summary-head">
+                      <span className="create-loan-summary-icon"><WalletCards size={20}/></span>
+                      <div><h3>Loan Preview</h3><p>Review the details before creating</p></div>
+                    </div>
+                    <span className="create-loan-ready-badge"><span className="dot"/>Ready to create</span>
+                  </div>
+
+                  <div className="create-loan-hero-card">
+                    <div>
+                      <span className="create-loan-hero-label">Loan Amount</span>
+                      <strong>{formatCurrency(terms.principal)}</strong>
+                      <small>{form.loanType} • {form.cycle} • {terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</small>
+                    </div>
+                    <span className="create-loan-hero-icon"><WalletCards size={22}/></span>
+                  </div>
+
+                  <div className="create-loan-summary-rows create-loan-preview-rows">
+                    <div><span>Loan Type</span><strong>{form.loanType}</strong></div>
+                    <div><span>Cycle</span><strong>{form.cycle}</strong></div>
+                    <div><span>Interest Rate</span><strong>{form.interestRate}%</strong></div>
+                    <div><span>Duration</span><strong>{terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</strong></div>
+                    <div><span>Disbursed Date</span><strong>{formatDate(form.startDate)}</strong></div>
+                    <div><span>First Collection Date</span><strong>{formatDate(effectiveFirstDueDate)}</strong></div>
+                    <div><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
+                  </div>
+
+                  <div className="create-loan-preview-section">
+                    <h4>Additional Options</h4>
+                    <div className="create-loan-preview-options">
+                      <div><span>Interest taken ?</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
+                      <div><span>Fine applicable ?</span><strong>{form.fineEnabled ? 'Yes' : 'No'}</strong></div>
+                      <div><span>Document Charges ?</span><strong>{form.documentChargeEnabled ? 'Yes' : 'No'}</strong></div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
 
       <ReviewModal
         open={review === 'customer'}
         title="Review Customer Details"
-        subtitle="Check every detail before saving and moving to Jamin."
+        subtitle="Check the available details before moving to Witness."
         badge={customerId}
         icon={UserRound}
-        onClose={()=>setReview(null)}
+        onClose={() => setReview(null)}
         onConfirm={confirmReview}
         busy={saving}
-        confirmLabel={saving ? "Saving..." : "Confirm & Continue to Jamin"}
+        confirmLabel={saving ? 'Saving...' : 'Confirm & Continue to Witness'}
       >
-        <div className="review-person"><span className="review-person-photo">{form.photo ? <img src={form.photo} alt="Customer"/> : form.name.charAt(0)?.toUpperCase()}</span><div><strong>{form.name}</strong><small>{formatIndianMobile(form.mobile)} · {form.work}</small></div></div>
         <div className="review-summary-grid">
           <div className="review-summary-item accent"><span>Customer ID</span><strong>{customerId}</strong></div>
-          <div className="review-summary-item"><span>Father’s Name</span><strong>{form.fatherName}</strong></div>
-          <div className="review-summary-item"><span>Date</span><strong>{formatDate(form.date)}</strong></div>
-          <div className="review-summary-item"><span>Documents</span><strong>{form.customerDocuments?.length ? `${form.customerDocuments.length} added` : 'Not added'}</strong></div>
-          <div className="review-summary-item full"><span>Address</span><strong>{form.address}</strong></div>
+          <div className="review-summary-item"><span>Name</span><strong>{form.name || '—'}</strong></div>
+          <div className="review-summary-item"><span>Father’s Name</span><strong>{form.fatherName || '—'}</strong></div>
+          <div className="review-summary-item"><span>Phone</span><strong>{form.mobile ? formatIndianMobile(form.mobile) : '—'}</strong></div>
+          <div className="review-summary-item full"><span>Residential Address</span><strong>{form.address || '—'}</strong></div>
+          <div className="review-summary-item"><span>Work</span><strong>{form.work || '—'}</strong></div>
+          <div className="review-summary-item"><span>Work Address</span><strong>{form.workAddress || '—'}</strong></div>
         </div>
       </ReviewModal>
 
       <ReviewModal
-        open={review === 'jamin'}
-        title="Review Jamin Details"
-        subtitle={`Confirm guarantor details linked to ${customerId}.`}
-        badge={customerId}
+        open={review === 'witness'}
+        title="Review Witness Details"
+        subtitle="Check the available witness details before moving to Loan."
+        badge={savedCustomerId}
         icon={ShieldCheck}
-        onClose={()=>setReview(null)}
+        onClose={() => setReview(null)}
         onConfirm={confirmReview}
         busy={saving}
-        confirmLabel={saving ? "Saving..." : "Confirm & Continue to Loan"}
+        confirmLabel={saving ? 'Saving...' : canCreateLoan ? 'Confirm & Continue to Loan' : 'Confirm & Save'}
       >
-        <div className="review-person"><span className="review-person-photo">{form.jaminPhoto ? <img src={form.jaminPhoto} alt="Jamin"/> : form.jaminName.charAt(0)?.toUpperCase()}</span><div><strong>{form.jaminName}</strong><small>{formatIndianMobile(form.jaminMobile)} · {form.jaminWork}</small></div></div>
         <div className="review-summary-grid">
-          <div className="review-summary-item"><span>Father’s Name</span><strong>{form.jaminFatherName}</strong></div>
-          <div className="review-summary-item"><span>Documents</span><strong>{form.jaminDocuments?.length ? `${form.jaminDocuments.length} added` : 'Not added'}</strong></div>
-          <div className="review-summary-item full"><span>Address</span><strong>{form.jaminAddress}</strong></div>
+          <div className="review-summary-item"><span>Name</span><strong>{form.jaminName || '—'}</strong></div>
+          <div className="review-summary-item"><span>Father’s Name</span><strong>{form.jaminFatherName || '—'}</strong></div>
+          <div className="review-summary-item"><span>Phone</span><strong>{form.jaminMobile ? formatIndianMobile(form.jaminMobile) : '—'}</strong></div>
+          <div className="review-summary-item full"><span>Residential Address</span><strong>{form.jaminAddress || '—'}</strong></div>
+          <div className="review-summary-item"><span>Work</span><strong>{form.jaminWork || '—'}</strong></div>
+          <div className="review-summary-item"><span>Work Address</span><strong>{form.jaminWorkAddress || '—'}</strong></div>
         </div>
       </ReviewModal>
 
@@ -313,24 +489,23 @@ export default function NewCustomer() {
         subtitle="Confirm the repayment setup before adding the first loan."
         badge={loanId}
         icon={WalletCards}
-        onClose={()=>setReview(null)}
+        onClose={() => setReview(null)}
         onConfirm={confirmReview}
         busy={saving}
-        confirmLabel={saving ? "Saving..." : "Confirm & Add Loan"}
+        confirmLabel={saving ? 'Saving...' : 'Confirm & Add Loan'}
       >
         <div className="review-summary-grid">
           <div className="review-summary-item accent"><span>Loan ID</span><strong>{loanId}</strong></div>
           <div className="review-summary-item accent"><span>Loan Amount</span><strong>{formatCurrency(terms.principal)}</strong></div>
           <div className="review-summary-item full"><span>Cycle / Pay Schedule</span><strong>{cycleSummary(effectiveFirstDueDate, form.cycle)}</strong></div>
           <div className="review-summary-item"><span>Loan Type</span><strong>{form.loanType}</strong></div>
-          <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Interest / Cycle' : 'Interest'}</span><strong>{form.interestRate}% · {formatCurrency(terms.interestAmount)}</strong></div>
-          <div className="review-summary-item"><span>Interest Taken</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
-          <div className="review-summary-item"><span>Fine</span><strong>{form.fineEnabled ? `Yes · ${formatCurrency(form.fineAmount)}` : 'No'}</strong></div>
-          <div className="review-summary-item"><span>Document Charges</span><strong>{form.documentChargeEnabled ? `Yes · ${formatCurrency(form.documentChargeAmount)}` : 'No'}</strong></div>
+          <div className="review-summary-item"><span>Interest</span><strong>{form.interestRate}% · {formatCurrency(terms.interestAmount)}</strong></div>
+          <div className="review-summary-item"><span>Interest taken ?</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
+          <div className="review-summary-item"><span>Fine applicable ?</span><strong>{form.fineEnabled ? `Yes · ${formatCurrency(form.fineAmount)}` : 'No'}</strong></div>
+          <div className="review-summary-item"><span>Document Charges ?</span><strong>{form.documentChargeEnabled ? `Yes · ${formatCurrency(form.documentChargeAmount)}` : 'No'}</strong></div>
           <div className="review-summary-item"><span>Given Amount</span><strong>{formatCurrency(terms.disbursedAmount)}</strong></div>
           <div className="review-summary-item"><span>Collection / Cycle</span><strong>{formatCurrency(terms.collectionAmount)}</strong></div>
-          {form.loanType === 'IO' && <div className="review-summary-item"><span>Principal Outstanding</span><strong>{formatCurrency(terms.initialOutstanding)}</strong></div>}
-          <div className="review-summary-item"><span>{form.loanType === 'IO' ? 'Projected Repayment' : 'Total Repayment'}</span><strong>{formatCurrency(terms.totalRepayment)}</strong></div>
+          <div className="review-summary-item"><span>Total Repayment</span><strong>{formatCurrency(terms.totalRepayment)}</strong></div>
           <div className="review-summary-item"><span>Duration</span><strong>{terms.duration} {form.cycle === 'Daily' ? 'days' : form.cycle === 'Weekly' ? 'weeks' : 'months'}</strong></div>
           <div className="review-summary-item"><span>Disbursed Date</span><strong>{formatDate(form.startDate)}</strong></div>
           <div className="review-summary-item"><span>First Collection Date</span><strong>{formatDate(effectiveFirstDueDate)}</strong></div>

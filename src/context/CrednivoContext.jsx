@@ -711,6 +711,7 @@ export function CrednivoProvider({ children }) {
       fatherName: String(form.fatherName || '').trim(),
       date: form.date || toInputDate(),
       work: String(form.work || '').trim(),
+      workAddress: String(form.workAddress || '').trim(),
       area: String(form.area || form.address || '').trim(),
       address: String(form.address || '').trim(),
       photo: null,
@@ -759,6 +760,7 @@ export function CrednivoProvider({ children }) {
       jaminMobile: normalizeIndianMobile(form.jaminMobile),
       jaminFatherName: String(form.jaminFatherName || '').trim(),
       jaminWork: String(form.jaminWork || '').trim(),
+      jaminWorkAddress: String(form.jaminWorkAddress || '').trim(),
       jaminAddress: String(form.jaminAddress || '').trim(),
       jaminPhoto: null,
     };
