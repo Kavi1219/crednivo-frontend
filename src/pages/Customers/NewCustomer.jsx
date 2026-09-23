@@ -66,10 +66,40 @@ function readRegistrationFile(file, callback) {
 
 function RegistrationMediaButtons({ photo, document, onPhotoChange, onDocumentChange }) {
   const [openMenu, setOpenMenu] = useState(null);
-  const profileCameraRef = useRef(null);
+  const [cameraMode, setCameraMode] = useState(null);
+  const [cameraError, setCameraError] = useState('');
+  const [capturedImage, setCapturedImage] = useState('');
+  const [cameraStarting, setCameraStarting] = useState(false);
   const profileFilesRef = useRef(null);
-  const documentCameraRef = useRef(null);
   const documentFilesRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
+  const stopCamera = () => {
+    streamRef.current?.getTracks?.().forEach((track) => track.stop());
+    streamRef.current = null;
+    if (videoRef.current) {
+      try { videoRef.current.srcObject = null; } catch {}
+    }
+  };
+
+  const closeCamera = () => {
+    stopCamera();
+    setCameraMode(null);
+    setCapturedImage('');
+    setCameraError('');
+    setCameraStarting(false);
+  };
+
+  useEffect(() => () => stopCamera(), []);
+
+  useEffect(() => {
+    if (!cameraMode || capturedImage || !streamRef.current || !videoRef.current) return;
+    const video = videoRef.current;
+    video.srcObject = streamRef.current;
+    const play = video.play();
+    if (play?.catch) play.catch(() => {});
+  }, [cameraMode, capturedImage]);
 
   const handleProfileFile = (event) => {
     const file = event.target.files?.[0];
@@ -87,46 +117,165 @@ function RegistrationMediaButtons({ photo, document, onPhotoChange, onDocumentCh
     setOpenMenu(null);
   };
 
+  const openCamera = async (mode) => {
+    setOpenMenu(null);
+    setCameraError('');
+    setCapturedImage('');
+    setCameraStarting(true);
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('This browser does not support website camera access.');
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: { ideal: 'environment' },
+        },
+        audio: false,
+      });
+      stopCamera();
+      streamRef.current = stream;
+      setCameraMode(mode);
+      setCameraStarting(false);
+    } catch (error) {
+      setCameraStarting(false);
+      const denied = error?.name === 'NotAllowedError' || error?.name === 'SecurityError';
+      setCameraError(
+        denied
+          ? 'Camera permission was blocked. Allow Camera for crednivo.in in the browser, then try again.'
+          : (error?.message || 'Camera could not be opened. Check the camera and browser permission.'),
+      );
+      setCameraMode(mode);
+    }
+  };
+
+  const captureCamera = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) {
+      setCameraError('Camera is still starting. Try again in a moment.');
+      return;
+    }
+    const canvas = window.document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      setCameraError('Camera capture is not supported by this browser.');
+      return;
+    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const data = canvas.toDataURL('image/jpeg', 0.9);
+    setCapturedImage(data);
+    stopCamera();
+  };
+
+  const retakeCamera = () => {
+    const mode = cameraMode;
+    closeCamera();
+    window.setTimeout(() => openCamera(mode), 0);
+  };
+
+  const useCapturedPhoto = () => {
+    if (!capturedImage) return;
+    if (cameraMode === 'profile') {
+      onPhotoChange(capturedImage);
+    } else {
+      onDocumentChange({
+        name: `document-${Date.now()}.jpg`,
+        type: 'image/jpeg',
+        size: Math.round((capturedImage.length * 3) / 4),
+        data: capturedImage,
+      });
+    }
+    closeCamera();
+  };
+
   return (
-    <div className="registration-media-row registration-media-row-top">
-      <div className="registration-media-picker">
-        <button
-          type="button"
-          className={`registration-media-button ${photo ? 'has-file' : ''}`}
-          onClick={() => setOpenMenu((current) => current === 'profile' ? null : 'profile')}
-        >
-          <Camera size={17}/>
-          <span>{photo ? 'Profile Photo Added' : 'Profile Photo'}</span>
-        </button>
-        {openMenu === 'profile' && (
-          <div className="registration-media-menu">
-            <button type="button" onClick={() => profileCameraRef.current?.click()}><Camera size={16}/><span>Camera</span></button>
-            <button type="button" onClick={() => profileFilesRef.current?.click()}><FolderOpen size={16}/><span>Files</span></button>
-          </div>
-        )}
-        <input ref={profileCameraRef} className="registration-media-hidden-input" type="file" accept="image/*" capture="environment" onChange={handleProfileFile}/>
-        <input ref={profileFilesRef} className="registration-media-hidden-input" type="file" accept="image/*" onChange={handleProfileFile}/>
+    <>
+      <div className="registration-media-row registration-media-row-top">
+        <div className="registration-media-picker">
+          <button
+            type="button"
+            className={`registration-media-button ${photo ? 'has-file' : ''}`}
+            onClick={() => setOpenMenu((current) => current === 'profile' ? null : 'profile')}
+          >
+            <Camera size={17}/>
+            <span>{photo ? 'Profile Photo Added' : 'Profile Photo'}</span>
+          </button>
+          {openMenu === 'profile' && (
+            <div className="registration-media-menu">
+              <button type="button" onClick={() => openCamera('profile')}><Camera size={16}/><span>Camera</span></button>
+              <button type="button" onClick={() => profileFilesRef.current?.click()}><FolderOpen size={16}/><span>Files</span></button>
+            </div>
+          )}
+          <input ref={profileFilesRef} className="registration-media-hidden-input" type="file" accept="image/*" onChange={handleProfileFile}/>
+        </div>
+
+        <div className="registration-media-picker">
+          <button
+            type="button"
+            className={`registration-media-button ${document ? 'has-file' : ''}`}
+            onClick={() => setOpenMenu((current) => current === 'document' ? null : 'document')}
+          >
+            <FileText size={17}/>
+            <span>{document ? 'Document Photo Added' : 'Document Photo'}</span>
+          </button>
+          {openMenu === 'document' && (
+            <div className="registration-media-menu">
+              <button type="button" onClick={() => openCamera('document')}><Camera size={16}/><span>Camera</span></button>
+              <button type="button" onClick={() => documentFilesRef.current?.click()}><FolderOpen size={16}/><span>Files</span></button>
+            </div>
+          )}
+          <input ref={documentFilesRef} className="registration-media-hidden-input" type="file" accept="image/*,application/pdf,.pdf" onChange={handleDocumentFile}/>
+        </div>
       </div>
 
-      <div className="registration-media-picker">
-        <button
-          type="button"
-          className={`registration-media-button ${document ? 'has-file' : ''}`}
-          onClick={() => setOpenMenu((current) => current === 'document' ? null : 'document')}
-        >
-          <FileText size={17}/>
-          <span>{document ? 'Document Photo Added' : 'Document Photo'}</span>
-        </button>
-        {openMenu === 'document' && (
-          <div className="registration-media-menu">
-            <button type="button" onClick={() => documentCameraRef.current?.click()}><Camera size={16}/><span>Camera</span></button>
-            <button type="button" onClick={() => documentFilesRef.current?.click()}><FolderOpen size={16}/><span>Files</span></button>
+      {cameraMode && (
+        <div className="registration-camera-backdrop" role="dialog" aria-modal="true" aria-label="Camera capture">
+          <div className="registration-camera-modal">
+            <div className="registration-camera-head">
+              <div>
+                <strong>{cameraMode === 'profile' ? 'Profile Photo' : 'Document Photo'}</strong>
+                <span>Camera</span>
+              </div>
+              <button type="button" onClick={closeCamera} aria-label="Close camera"><X size={19}/></button>
+            </div>
+
+            <div className="registration-camera-stage">
+              {capturedImage ? (
+                <img src={capturedImage} alt="Captured preview"/>
+              ) : cameraError ? (
+                <div className="registration-camera-message">{cameraError}</div>
+              ) : cameraStarting ? (
+                <div className="registration-camera-message">Opening camera...</div>
+              ) : (
+                <video ref={videoRef} autoPlay playsInline muted/>
+              )}
+            </div>
+
+            <div className="registration-camera-actions">
+              {capturedImage ? (
+                <>
+                  <button type="button" className="registration-camera-secondary" onClick={retakeCamera}>Retake</button>
+                  <button type="button" className="registration-camera-primary" onClick={useCapturedPhoto}><Check size={16}/> Use Photo</button>
+                </>
+              ) : cameraError ? (
+                <>
+                  <button type="button" className="registration-camera-secondary" onClick={closeCamera}>Cancel</button>
+                  <button type="button" className="registration-camera-primary" onClick={() => openCamera(cameraMode)}><Camera size={16}/> Try Again</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="registration-camera-secondary" onClick={closeCamera}>Cancel</button>
+                  <button type="button" className="registration-camera-primary" onClick={captureCamera} disabled={cameraStarting}><Camera size={16}/> Capture</button>
+                </>
+              )}
+            </div>
           </div>
-        )}
-        <input ref={documentCameraRef} className="registration-media-hidden-input" type="file" accept="image/*" capture="environment" onChange={handleDocumentFile}/>
-        <input ref={documentFilesRef} className="registration-media-hidden-input" type="file" accept="image/*,application/pdf,.pdf" onChange={handleDocumentFile}/>
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
