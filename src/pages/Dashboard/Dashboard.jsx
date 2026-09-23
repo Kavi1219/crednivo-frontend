@@ -1,4 +1,4 @@
-import { CalendarDays, CircleDollarSign, Landmark, ReceiptText, TriangleAlert, UserRoundCheck, WalletCards, WalletMinimal } from 'lucide-react';
+import { CalendarDays, CircleDollarSign, Landmark, ReceiptText, UserRoundCheck, WalletCards, WalletMinimal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CollectionTable from '../../components/dashboard/CollectionTable';
 import QuickActions from '../../components/dashboard/QuickActions';
@@ -10,7 +10,7 @@ import { calculateCycleTargets } from '../../utils/collectionTargets';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { metrics, capitalMetrics, collections, loans } = useCrednivo();
+  const { metrics, capitalMetrics, collections, loans, expenses } = useCrednivo();
   const { hasPermission } = useAuth();
   const navigate = useNavigate();
   const today = toInputDate();
@@ -31,23 +31,10 @@ export default function Dashboard() {
   );
   const todayRemainingCustomers = new Set(todayRemainingRows.map((item) => item.customerId)).size;
 
-  const recoveryBase = Math.max(0, Number(metrics.expected) + Number(metrics.overdue));
-  const pendingProgress = recoveryBase > 0
-    ? Math.min(100, Math.max(0, (Number(metrics.pendingOverdue) / recoveryBase) * 100))
-    : 0;
 
   const canViewCapital = hasPermission('capital.view');
+  const totalExpenses = (expenses || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
-  const partialRows = (collections || []).filter((item) => {
-    const due = Number(item.dueAmount || 0);
-    const paid = Number(item.paidAmount || 0);
-    return item.date > today && paid > 0 && paid < due;
-  });
-  const partialAmount = partialRows.reduce(
-    (sum, item) => sum + Math.max(0, Number(item.dueAmount || 0) - Number(item.paidAmount || 0)),
-    0,
-  );
-  const partialCustomers = new Set(partialRows.map((item) => item.customerId)).size;
 
   // Standing per-cycle collection capacity — every active loan of that
   // cycle contributes its own periodic amount, regardless of which day
@@ -85,15 +72,6 @@ export default function Dashboard() {
       tone: 'pink',
       progress: 0,
       onDetails: () => navigate('/expenses'),
-    },
-    {
-      title: 'Pending / Overdue',
-      value: formatCurrency(metrics.pendingOverdue),
-      note: `${formatCurrency(metrics.pending)} due today · ${formatCurrency(metrics.overdue)} overdue`,
-      icon: TriangleAlert,
-      tone: 'danger',
-      progress: pendingProgress,
-      onDetails: () => navigate('/collection?view=overdue'),
     },
   ];
 
@@ -147,22 +125,22 @@ export default function Dashboard() {
       onDetails: () => navigate('/loans?status=Active'),
     },
     {
-      title: 'Partial',
-      value: formatCurrency(partialAmount),
-      note: `From ${partialCustomers} Customer${partialCustomers === 1 ? '' : 's'}`,
+      title: 'Pending Amount',
+      value: formatCurrency(metrics.pendingOverdue),
+      note: `${formatCurrency(metrics.pending)} due today · ${formatCurrency(metrics.overdue)} overdue`,
       icon: CircleDollarSign,
       tone: 'orange',
       showProgress: false,
-      onDetails: () => navigate('/collection?view=upcoming&status=Partial'),
+      onDetails: () => navigate('/collection?view=overdue'),
     },
     {
-      title: 'Upcoming 7 Days',
-      value: formatCurrency(metrics.upcoming7Days),
-      note: `From ${metrics.upcomingCustomers || 0} Customers`,
-      icon: CalendarDays,
-      tone: 'purple',
+      title: 'Total Expenses',
+      value: formatCurrency(totalExpenses),
+      note: 'All recorded business expenses',
+      icon: ReceiptText,
+      tone: 'pink',
       showProgress: false,
-      onDetails: () => navigate('/collection?view=upcoming'),
+      onDetails: () => navigate('/expenses'),
     },
   ];
 
