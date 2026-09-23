@@ -234,12 +234,6 @@ export default function CreateLoan() {
                   />
                 </div>
 
-                {!customerSearch.trim() && !selectedCustomer && (
-                  <div className="customer-picker-hint">
-                    Start typing to find the customer for this loan. No customer is selected by default.
-                  </div>
-                )}
-
                 {customerSearch.trim() && (
                   <div className="customer-search-results" role="listbox" aria-label="Matching customers">
                     <div className="customer-search-results-head">

@@ -11,7 +11,7 @@ export default function LoanSetupFields({ form, change }) {
       <div className="form-field"><label>Cycle *</label><select value={form.cycle} onChange={(e)=>change('cycle',e.target.value)}><option>Daily</option><option>Weekly</option><option>Monthly</option></select></div>
       <div className="form-field"><label>Loan Type *</label><select value={form.loanType} onChange={(e)=>change('loanType',e.target.value)}><option value="EMI">EMI</option><option value="IO">Interest Only (IO)</option></select></div>
       <div className="form-field"><label>Interest Rate (%) *</label><input type="number" min="0" step="0.1" value={form.interestRate} onChange={(e)=>change('interestRate',e.target.value)} /></div>
-      <div className="form-field"><label>Duration ({CYCLE_DEFAULTS[form.cycle]?.label}) *</label><input type="number" min="1" value={form.duration} onChange={(e)=>change('duration',e.target.value)} /><small className="field-help">Manual duration — you can enter any number of {CYCLE_DEFAULTS[form.cycle]?.label}.</small></div>
+      <div className="form-field"><label>Duration ({CYCLE_DEFAULTS[form.cycle]?.label}) *</label><input type="number" min="1" value={form.duration} onChange={(e)=>change('duration',e.target.value)} /></div>
       <div className="form-field"><label>Disbursed Date *</label><input type="date" value={form.startDate} onChange={(e)=>change('startDate',e.target.value)} /></div>
       <div className="form-field loan-first-collection-field">
         <label>First Collection Date *</label>
@@ -28,9 +28,9 @@ export default function LoanSetupFields({ form, change }) {
           )}
         </small>
       </div>
-      <div className="form-field full"><div className="toggle-row"><div><strong>Interest taken upfront?</strong><small>{form.interestUpfront ? 'Yes — interest is deducted from the amount given.' : 'No — the full loan amount is given.'}</small></div><button type="button" className={`switch ${form.interestUpfront ? 'on':''}`} onClick={()=>change('interestUpfront',!form.interestUpfront)} aria-label="Toggle interest taken upfront"><span/></button></div></div>
+      <div className="form-field full create-loan-option-field"><div className="toggle-row"><div><strong>Interest taken upfront?</strong><small>{form.interestUpfront ? 'Yes — interest is deducted from the amount given.' : 'No — the full loan amount is given.'}</small></div><button type="button" className={`switch ${form.interestUpfront ? 'on':''}`} onClick={()=>change('interestUpfront',!form.interestUpfront)} aria-label="Toggle interest taken upfront"><span/></button></div></div>
 
-      <div className="form-field full">
+      <div className="form-field full create-loan-option-field">
         <div className="toggle-row loan-fine-toggle-row">
           <div>
             <strong>Fine applicable?</strong>
@@ -66,7 +66,7 @@ export default function LoanSetupFields({ form, change }) {
         </div>
       </div>
 
-      <div className="form-field full">
+      <div className="form-field full create-loan-option-field">
         <div className="toggle-row loan-fine-toggle-row">
           <div>
             <strong>Document Charges applicable?</strong>

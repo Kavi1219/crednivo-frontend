@@ -780,3 +780,47 @@
     font-size: 20px;
   }
 }
+
+
+/* Create Loan option cards: keep all three on one row on desktop */
+.create-loan-details-block .form-grid .create-loan-option-field {
+  grid-column: auto;
+}
+.create-loan-details-block .create-loan-option-field .toggle-row {
+  min-height: 86px;
+  height: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.create-loan-details-block .create-loan-option-field .toggle-row > div:first-child {
+  min-width: 0;
+}
+.create-loan-details-block .create-loan-option-field .toggle-row strong {
+  font-size: 11px;
+}
+.create-loan-details-block .create-loan-option-field .toggle-row small {
+  margin-top: 4px;
+  font-size: 9px;
+  line-height: 1.35;
+}
+.create-loan-details-block .create-loan-option-field .loan-fine-toggle-controls {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+@media (max-width: 1000px) {
+  .create-loan-details-block .form-grid .create-loan-option-field {
+    grid-column: auto;
+  }
+}
+@media (max-width: 767px) {
+  .create-loan-details-block .form-grid .create-loan-option-field {
+    grid-column: auto;
+  }
+  .create-loan-details-block .create-loan-option-field .toggle-row {
+    min-height: 74px;
+  }
+}
