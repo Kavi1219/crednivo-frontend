@@ -329,9 +329,9 @@ export default function CreateLoan() {
         <div className="create-loan-preview-section">
           <h4>Additional Options</h4>
           <div className="create-loan-preview-options">
-            <div><span>Interest taken upfront</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
-            <div><span>Fine applicable</span><strong>{form.fineEnabled ? 'Yes' : 'No'}</strong></div>
-            <div><span>Document Charges applicable</span><strong>{form.documentChargeEnabled ? 'Yes' : 'No'}</strong></div>
+            <div><span>Interest taken ?</span><strong>{form.interestUpfront ? 'Yes' : 'No'}</strong></div>
+            <div><span>Fine applicable ?</span><strong>{form.fineEnabled ? 'Yes' : 'No'}</strong></div>
+            <div><span>Document Charges ?</span><strong>{form.documentChargeEnabled ? 'Yes' : 'No'}</strong></div>
           </div>
         </div>
 

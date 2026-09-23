@@ -30,7 +30,7 @@ export default function LoanSetupFields({ form, change }) {
       </div>
       <div className="form-field full create-loan-options-row">
         <div className="create-loan-option-card">
-          <strong>Upfront</strong>
+          <strong>Interest taken ?</strong>
           <button
             type="button"
             className={`switch ${form.interestUpfront ? 'on':''}`}
@@ -42,7 +42,7 @@ export default function LoanSetupFields({ form, change }) {
         </div>
 
         <div className={`create-loan-option-card ${form.fineEnabled ? 'expanded' : ''}`}>
-          <strong>Fine</strong>
+          <strong>Fine applicable ?</strong>
           <div className="create-loan-option-control">
             {form.fineEnabled && (
               <input
@@ -72,7 +72,7 @@ export default function LoanSetupFields({ form, change }) {
         </div>
 
         <div className={`create-loan-option-card ${form.documentChargeEnabled ? 'expanded' : ''}`}>
-          <strong>Documents</strong>
+          <strong>Document Charges ?</strong>
           <div className="create-loan-option-control">
             {form.documentChargeEnabled && (
               <input
