@@ -204,3 +204,105 @@
   .sidebar-profile-avatar { width: 42px; height: 42px; }
   .side-link { border-radius: 14px; }
 }
+
+/* Connected-page sidebar treatment — dark Crednivo palette */
+.sidebar {
+  background:
+    radial-gradient(circle at 18% 14%, rgba(20, 112, 206, .20), transparent 34%),
+    linear-gradient(180deg, #073963 0%, #052f56 48%, #042846 100%);
+  box-shadow: 10px 0 30px rgba(4, 35, 66, .14);
+  overflow: visible;
+}
+
+.sidebar-profile-card {
+  border-color: rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.sidebar-profile-card:hover {
+  background: rgba(255,255,255,.12);
+}
+
+.sidebar-profile-avatar {
+  background: rgba(255,255,255,.96);
+  color: #07598f;
+}
+
+.side-nav {
+  position: relative;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.side-link {
+  position: relative;
+  z-index: 1;
+  color: rgba(255,255,255,.92);
+  border-radius: 999px;
+  transition: background .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
+}
+
+.side-link:hover {
+  background: rgba(255,255,255,.08);
+}
+
+.side-link.active {
+  z-index: 4;
+  width: calc(100% + 24px);
+  margin-right: -24px;
+  padding-right: 30px;
+  color: #06375f;
+  background: var(--canvas);
+  border-radius: 999px 0 0 999px;
+  box-shadow: none;
+}
+
+.side-link.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -22px;
+  width: 24px;
+  height: 100%;
+  background: var(--canvas);
+  pointer-events: none;
+}
+
+.side-link.active svg {
+  color: #d2a323;
+}
+
+.side-link.active > span:last-child {
+  color: #183f60;
+  font-weight: 800;
+}
+
+/* Small curved joins make the selected item feel cut out of the sidebar
+   and continuously attached to the content surface. */
+.side-link.active::before {
+  content: '';
+  position: absolute;
+  right: -24px;
+  top: -12px;
+  width: 24px;
+  height: calc(100% + 24px);
+  border-radius: 18px 0 0 18px;
+  box-shadow:
+    0 -12px 0 0 #052f56,
+    0 12px 0 0 #052f56;
+  pointer-events: none;
+  opacity: .98;
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .side-nav { overflow: visible; }
+  .side-link.active {
+    width: calc(100% + 16px);
+    margin-right: -16px;
+    padding-right: 16px;
+    border-radius: 16px 0 0 16px;
+  }
+  .side-link.active::after { right: -14px; width: 16px; }
+  .side-link.active::before { display: none; }
+}
