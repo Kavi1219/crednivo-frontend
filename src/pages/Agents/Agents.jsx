@@ -2,6 +2,7 @@ import {
   Camera, CheckCircle2, ClipboardList, Clock3, Edit3, Search, ShieldCheck, SlidersHorizontal, Trash2,
   UserCheck, UserPlus, UserX, UsersRound, WalletCards, X
 } from 'lucide-react';
+import ProtectedImage from '../../components/common/ProtectedImage';
 import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import StatCard from '../../components/dashboard/StatCard';
@@ -215,7 +216,7 @@ export default function Agents() {
         {filtered.length ? <div className="agent-grid">{filtered.map((agent) => (
           <article className="agent-card" key={agent.id}>
             <div className="agent-card-top">
-              <span className="agent-avatar">{agent.photo ? <img src={agent.photo} alt={`${agent.name} profile`} /> : agent.name.charAt(0)}</span>
+              <span className="agent-avatar">{agent.photo ? <ProtectedImage src={agent.photo} alt={`${agent.name} profile`} fallback={agent.name.charAt(0)} /> : agent.name.charAt(0)}</span>
               <div><strong>{agent.name}</strong><small>{String(agent.id || '').startsWith('PENDING-') ? 'Employee ID after approval' : agent.id} · {formatIndianMobile(agent.mobile)}</small></div>
               <div className="agent-status-stack"><span className={`soft-chip ${agent.status === 'Active' ? 'green' : agent.status === 'Pending Approval' ? 'orange' : 'blue'}`}>{agent.status}</span><span className={`agent-login-chip ${agent.loginEnabled ? 'enabled' : ''}`}>{agent.status === 'Pending Approval' && agent.loginEnabled ? 'Password Saved' : agent.loginEnabled ? 'Login Ready' : 'No Login'}</span></div>
             </div>
