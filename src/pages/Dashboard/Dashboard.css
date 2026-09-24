@@ -1284,3 +1284,163 @@
     min-height: 150px;
   }
 }
+
+
+/* Today section compact cards */
+.home-metric-card.is-compact {
+  min-height: 138px;
+  padding: 14px 16px 12px;
+  border-radius: 18px;
+}
+
+.home-metric-card.is-compact .home-metric-arrow {
+  top: 18px;
+  right: 16px;
+  color: rgba(95, 122, 163, .55);
+}
+
+.home-metric-compact-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+
+.home-metric-card.is-compact .home-metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.home-metric-compact-copy {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.home-metric-compact-copy strong {
+  display: block;
+  margin: 0;
+  color: #18244f;
+  font-size: 20px;
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+
+.home-metric-compact-copy p {
+  margin: 1px 0 0;
+  color: #49597c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.home-metric-trend-row.compact {
+  margin-top: 8px;
+  gap: 6px;
+  align-items: center;
+}
+
+.home-metric-trend-row.compact small {
+  color: #8da0c3;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.home-metric-card.is-compact .home-metric-graphic.compact {
+  right: 14px;
+  bottom: 18px;
+  width: 52px;
+  height: 44px;
+  opacity: .95;
+}
+
+.home-metric-card.is-compact .home-metric-graphic.compact span {
+  width: 8px;
+  border-radius: 999px;
+}
+
+.home-metric-card.is-compact .home-metric-graphic.compact span:nth-child(1) {
+  left: 0;
+  height: 18px;
+}
+
+.home-metric-card.is-compact .home-metric-graphic.compact span:nth-child(2) {
+  left: 14px;
+  height: 28px;
+}
+
+.home-metric-card.is-compact .home-metric-graphic.compact span:nth-child(3) {
+  left: 28px;
+  height: 38px;
+}
+
+.home-metric-orb {
+  position: absolute;
+  right: -10px;
+  bottom: -14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .24);
+  filter: blur(.2px);
+}
+
+.home-metric-card.is-compact.tone-green {
+  background: linear-gradient(180deg, #f5fffb 0%, #effff8 100%);
+}
+.home-metric-card.is-compact.tone-green .home-metric-icon {
+  background: linear-gradient(180deg, #e1fbf1, #d6fff0);
+  color: #29c28a;
+}
+.home-metric-card.is-compact.tone-green .home-metric-graphic span {
+  background: linear-gradient(180deg, rgba(44, 210, 145, .9), rgba(44, 210, 145, .2));
+}
+.home-metric-card.is-compact.tone-green .home-metric-orb {
+  background: rgba(79, 222, 165, .16);
+}
+
+.home-metric-card.is-compact.tone-blue {
+  background: linear-gradient(180deg, #fbfdff 0%, #f5f8ff 100%);
+}
+.home-metric-card.is-compact.tone-blue .home-metric-icon {
+  background: linear-gradient(180deg, #edf4ff, #e3eeff);
+  color: #3f8cff;
+}
+.home-metric-card.is-compact.tone-blue .home-metric-graphic span {
+  background: linear-gradient(180deg, rgba(117, 136, 201, .62), rgba(117, 136, 201, .18));
+}
+.home-metric-card.is-compact.tone-blue .home-metric-orb {
+  background: rgba(118, 159, 255, .12);
+}
+
+.home-metric-card.is-compact.tone-pink,
+.home-metric-card.is-compact.tone-red {
+  background: linear-gradient(180deg, #fffaf5 0%, #fffaf2 100%);
+}
+.home-metric-card.is-compact.tone-pink .home-metric-icon,
+.home-metric-card.is-compact.tone-red .home-metric-icon {
+  background: linear-gradient(180deg, #fff0dd, #ffebd0);
+  color: #e5a338;
+}
+.home-metric-card.is-compact.tone-pink .home-metric-graphic span,
+.home-metric-card.is-compact.tone-red .home-metric-graphic span {
+  background: linear-gradient(180deg, rgba(238, 183, 87, .82), rgba(238, 183, 87, .18));
+}
+.home-metric-card.is-compact.tone-pink .home-metric-orb,
+.home-metric-card.is-compact.tone-red .home-metric-orb {
+  background: rgba(248, 202, 112, .14);
+}
+
+@media (max-width: 767px) {
+  .home-metric-card.is-compact {
+    min-height: 128px;
+  }
+
+  .home-metric-compact-copy strong {
+    font-size: 18px;
+  }
+}

@@ -63,33 +63,59 @@ function calculateCollectionRate(rows, startDate, endDate) {
   return Math.min(100, Math.max(0, Math.round((paid / due) * 100)));
 }
 
-function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, tone = 'blue', onClick }) {
+function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, tone = 'blue', onClick, variant = 'default' }) {
   return (
     <button
       type="button"
-      className={`home-metric-card tone-${tone}`}
+      className={`home-metric-card tone-${tone} ${variant === 'compact' ? 'is-compact' : ''}`}
       onClick={onClick}
       aria-label={`${title}: ${value}. ${note}.`}
     >
       <span className="home-metric-arrow" aria-hidden="true"><ArrowRight size={15} /></span>
-      <div className="home-metric-body">
-        <span className="home-metric-icon"><Icon size={18} strokeWidth={2.1} /></span>
-        <div className="home-metric-copy">
-          <p>{title}</p>
-          <strong>{value}</strong>
-          <div className="home-metric-trend-row">
-            <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
-              {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend || 0))}%
-            </span>
-            <small>{trendLabel || note}</small>
+      {variant === 'compact' ? (
+        <>
+          <div className="home-metric-compact-head">
+            <span className="home-metric-icon"><Icon size={18} strokeWidth={2.1} /></span>
           </div>
-        </div>
-      </div>
-      <span className="home-metric-graphic" aria-hidden="true">
-        <span></span>
-        <span></span>
-        <span></span>
-      </span>
+          <div className="home-metric-compact-copy">
+            <strong>{value}</strong>
+            <p>{title}</p>
+            <div className="home-metric-trend-row compact">
+              <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
+                {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend || 0))}%
+              </span>
+              <small>{trendLabel || note}</small>
+            </div>
+          </div>
+          <span className="home-metric-graphic compact" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+          <span className="home-metric-orb" aria-hidden="true"></span>
+        </>
+      ) : (
+        <>
+          <div className="home-metric-body">
+            <span className="home-metric-icon"><Icon size={18} strokeWidth={2.1} /></span>
+            <div className="home-metric-copy">
+              <p>{title}</p>
+              <strong>{value}</strong>
+              <div className="home-metric-trend-row">
+                <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
+                  {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend || 0))}%
+                </span>
+                <small>{trendLabel || note}</small>
+              </div>
+            </div>
+          </div>
+          <span className="home-metric-graphic" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </>
+      )}
     </button>
   );
 }
@@ -329,7 +355,7 @@ export default function Dashboard() {
           <button type="button" className="section-chip-button">Today</button>
         </div>
         <div className="home-metric-grid metric-grid-three">
-          {dashboardStatsToday.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          {dashboardStatsToday.map((stat) => <HomeMetricCard key={stat.title} {...stat} variant="compact" />)}
         </div>
       </section>
 
