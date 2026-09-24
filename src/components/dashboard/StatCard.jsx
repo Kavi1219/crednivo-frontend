@@ -15,15 +15,23 @@ export default function StatCard({ title, value, note, icon: Icon, tone, progres
       disabled={!onDetails}
       aria-label={`${title}: ${value}. ${note}.`}
     >
-      <span className="stat-chevron" aria-hidden="true"><ChevronRight size={15} /></span>
+      <span className="stat-chevron" aria-hidden="true"><ChevronRight size={16} /></span>
+
       <div className="stat-main">
-        <span className="stat-icon"><Icon size={28} strokeWidth={1.9} /></span>
+        <span className="stat-icon"><Icon size={22} strokeWidth={2} /></span>
         <div className="stat-copy">
           <p>{title}</p>
           <strong>{value}</strong>
           <small>{note}</small>
         </div>
       </div>
+
+      <span className="stat-card-decoration" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+      <span className="stat-card-orb" aria-hidden="true" />
 
       {showProgress && (
         <div
