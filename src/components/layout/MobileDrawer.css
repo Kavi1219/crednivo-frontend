@@ -33,7 +33,7 @@
   .drawer-head small { margin-top: 3px; font-size: 9px; opacity: .8; }
   .drawer-head button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; color: #fff; background: rgba(255,255,255,.08); }
   .mobile-drawer nav { margin-top: 14px; display: grid; gap: 4px; }
-  .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 10px; }
+  .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 999px; }
   .mobile-drawer nav a.active { background: rgba(255,255,255,.18); font-weight: 800; }
 }
 
