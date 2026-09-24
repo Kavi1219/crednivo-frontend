@@ -8,34 +8,31 @@
   justify-content: space-between;
   gap: 20px;
   padding: 18px 30px 12px 28px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(228,234,242,.7);
+  background: var(--canvas);
+  border-bottom: 0;
 }
 .header-title-wrap { display: flex; align-items: center; gap: 16px; min-width: 260px; }
-.header-title-wrap h1 { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 26px; line-height: 1.15; letter-spacing: -.035em; }
-.header-title-icon { flex: 0 0 auto; color: var(--blue-500); }
+.header-title-wrap h1 { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 26px; line-height: 1.15; letter-spacing: -.035em; font-weight: 900; }
+.header-title-icon { flex: 0 0 auto; color: #6C5DD3; }
 .header-title-wrap p { margin: 7px 0 0; font-size: 13px; color: var(--ink-600); }
 .mobile-menu-button { display: none; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 .search-box-wrap { position: relative; }
 .search-box {
   width: min(305px, 28vw);
-  height: 44px;
+  height: 46px;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 0 13px;
+  padding: 0 18px;
   color: #a6b3c7;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-soft);
 }
-.search-box input { min-width: 0; flex: 1; border: 0; outline: 0; color: var(--ink-800); font-size: 12px; background: transparent; }
+.search-box input { min-width: 0; flex: 1; border: 0; outline: 0; color: var(--ink-800); font-size: 12.5px; background: transparent; }
 .search-box input::placeholder { color: #8c9bb0; }
-.search-end { color: #3d7ee8; }
+.search-end { display: none; }
 
 .search-results-dropdown {
   position: absolute;
@@ -70,6 +67,13 @@
 .search-result-identity span { font-size: 10.5px; color: var(--ink-500); }
 .search-results-empty { padding: 14px; text-align: center; color: var(--ink-500); font-size: 12px; }
 .notification-wrap { position: relative; }
+.header-icon-btn {
+  border-radius: 999px !important;
+  background: #EFEBFD !important;
+  border-color: transparent !important;
+  color: #6C5DD3 !important;
+}
+.header-icon-btn:hover { background: #E3DDFC !important; }
 .notification-count {
   position: absolute;
   top: -5px;
