@@ -16,7 +16,6 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import StatCard from '../../components/dashboard/StatCard';
-import ModuleHeader from '../../components/common/ModuleHeader';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
@@ -129,14 +128,8 @@ export default function Payments() {
 
   return (
     <div className="module-page payments-page">
-      <ModuleHeader
-        eyebrow="Cash Flow"
-        title="History"
-        description="A single transaction history for collections, loans, expenses, capital and savings."
-      />
-
-      <section className="stats-section">
-        <div className="stats-grid">
+      <section className="stats-section history-summary-section">
+        <div className="stats-grid history-summary-grid">
           <StatCard title="Total Incoming" value={formatCurrency(incoming)} note="Collections received" icon={ArrowDownLeft} tone="green" showProgress={false} />
           <StatCard title="Total Outgoing" value={formatCurrency(outgoing)} note="Loans & expenses paid" icon={ArrowUpRight} tone="danger" showProgress={false} />
           <StatCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="Incoming minus outgoing" icon={WalletCards} tone="blue" showProgress={false} />
