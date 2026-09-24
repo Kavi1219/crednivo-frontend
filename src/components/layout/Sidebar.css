@@ -205,112 +205,14 @@
   .side-link { border-radius: 14px; }
 }
 
-/* Connected-page sidebar treatment — dark Crednivo palette */
+/* Final sidebar design — reference-style active tab */
 .sidebar {
+  padding: 18px 0 16px 14px;
   background:
     radial-gradient(circle at 18% 14%, rgba(20, 112, 206, .20), transparent 34%),
     linear-gradient(180deg, #073963 0%, #052f56 48%, #042846 100%);
   box-shadow: 10px 0 30px rgba(4, 35, 66, .14);
-  overflow: visible;
-}
-
-.sidebar-profile-card {
-  border-color: rgba(255,255,255,.14);
-  background: rgba(255,255,255,.08);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-}
-
-.sidebar-profile-card:hover {
-  background: rgba(255,255,255,.12);
-}
-
-.sidebar-profile-avatar {
-  background: rgba(255,255,255,.96);
-  color: #07598f;
-}
-
-.side-nav {
-  position: relative;
-  overflow: visible;
-  padding-right: 0;
-}
-
-.side-link {
-  position: relative;
-  z-index: 1;
-  color: rgba(255,255,255,.92);
-  border-radius: 999px;
-  transition: background .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease;
-}
-
-.side-link:hover {
-  background: rgba(255,255,255,.08);
-}
-
-.side-link.active {
-  z-index: 4;
-  width: calc(100% + 24px);
-  margin-right: -24px;
-  padding-right: 30px;
-  color: #06375f;
-  background: var(--canvas);
-  border-radius: 999px 0 0 999px;
-  box-shadow: none;
-}
-
-.side-link.active::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: -22px;
-  width: 24px;
-  height: 100%;
-  background: var(--canvas);
-  pointer-events: none;
-}
-
-.side-link.active svg {
-  color: #d2a323;
-}
-
-.side-link.active > span:last-child {
-  color: #183f60;
-  font-weight: 800;
-}
-
-/* Small curved joins make the selected item feel cut out of the sidebar
-   and continuously attached to the content surface. */
-.side-link.active::before {
-  content: '';
-  position: absolute;
-  right: -24px;
-  top: -12px;
-  width: 24px;
-  height: calc(100% + 24px);
-  border-radius: 18px 0 0 18px;
-  box-shadow:
-    0 -12px 0 0 #052f56,
-    0 12px 0 0 #052f56;
-  pointer-events: none;
-  opacity: .98;
-}
-
-@media (max-width: 1199px) and (min-width: 768px) {
-  .side-nav { overflow: visible; }
-  .side-link.active {
-    width: calc(100% + 16px);
-    margin-right: -16px;
-    padding-right: 16px;
-    border-radius: 16px 0 0 16px;
-  }
-  .side-link.active::after { right: -14px; width: 16px; }
-  .side-link.active::before { display: none; }
-}
-
-
-/* Sidebar cleanup — focused CREDNIVO branding, no profile block, no extra curved path */
-.sidebar {
-  padding-top: 18px;
+  overflow: hidden;
 }
 
 .brand {
@@ -318,7 +220,7 @@
   justify-content: flex-start;
   align-items: center;
   gap: 13px;
-  padding: 4px 12px 22px;
+  padding: 4px 18px 22px 12px;
   margin: 0;
 }
 
@@ -336,7 +238,7 @@
 }
 
 .brand-copy strong {
-  color: #ffffff;
+  color: #fff;
   font-size: 22px;
   line-height: 1;
   font-weight: 900;
@@ -353,297 +255,132 @@
   white-space: nowrap;
 }
 
-.sidebar-profile-card {
-  display: none !important;
-}
-
-/* Keep the selected item attached to the page, but remove the dark C-shaped
-   decorative connector that was protruding into the content area. */
-.side-link.active::before {
-  content: none !important;
-  display: none !important;
-  box-shadow: none !important;
-}
-
-.side-link.active::after {
-  right: -18px;
-  width: 20px;
-}
-
-.side-link.active {
-  width: calc(100% + 20px);
-  margin-right: -20px;
-  padding-right: 26px;
-}
+.sidebar-profile-card { display: none !important; }
 
 .side-nav {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
   margin-top: 2px;
+  padding: 0;
+  padding-right: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  scrollbar-width: none;
+}
+.side-nav::-webkit-scrollbar { display: none; }
+
+.side-link {
+  position: relative;
+  z-index: 1;
+  min-height: 46px;
+  width: calc(100% - 14px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: rgba(255,255,255,.94);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+
+.side-link:hover { background: rgba(255,255,255,.08); }
+
+/* The light tab itself stays flat/open on the right and reaches the exact
+   sidebar boundary. The concave corners are carved into the NAVY sidebar
+   above and below, matching the supplied reference. */
+.side-link.active {
+  z-index: 3;
+  width: 100%;
+  margin-right: 0;
+  padding-right: 20px;
+  color: #163f61;
+  background: var(--canvas);
+  border-radius: 999px 0 0 999px;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.side-link.active svg { color: #d5a11d; }
+.side-link.active > span:last-child {
+  color: #163f61;
+  font-weight: 800;
+}
+
+/* top-right concave join — clipped by .sidebar, so nothing protrudes */
+.side-link.active::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 0 0 18px 0;
+  background: transparent;
+  box-shadow: 7px 7px 0 7px var(--canvas);
+  pointer-events: none;
+}
+
+/* bottom-right concave join */
+.side-link.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 0 18px 0 0;
+  background: transparent;
+  box-shadow: 7px -7px 0 7px var(--canvas);
+  pointer-events: none;
 }
 
 @media (max-width: 1199px) and (min-width: 768px) {
+  .sidebar {
+    padding: 18px 0 16px 10px;
+    align-items: center;
+  }
   .brand {
     justify-content: center;
     min-height: 66px;
-    padding: 2px 0 18px;
+    padding: 2px 10px 18px 0;
   }
-
   .brand-mark,
   .brand-mark .crednivo-final-mark {
     width: 50px;
     height: 50px;
     flex-basis: 50px;
   }
-
-  .side-link.active {
-    width: calc(100% + 14px);
-    margin-right: -14px;
-    padding-right: 14px;
+  .brand-copy, .side-link > span:not(.tooltip-wrap) { display: none; }
+  .side-nav { width: 100%; }
+  .side-link {
+    width: calc(100% - 10px);
+    justify-content: center;
+    padding: 0;
   }
-
-  .side-link.active::after {
-    right: -12px;
+  .side-link.active {
+    width: 100%;
+    border-radius: 16px 0 0 16px;
+  }
+  .side-link.active::before {
+    top: -14px;
     width: 14px;
+    height: 14px;
+    border-radius: 0 0 14px 0;
+    box-shadow: 6px 6px 0 6px var(--canvas);
   }
-}
-
-
-/* Final active-tab fit: keep selected item fully inside sidebar with curved corners */
-.side-link.active {
-  width: 100% !important;
-  margin-right: 0 !important;
-  padding-right: 18px !important;
-  border-radius: 20px !important;
-  overflow: hidden;
-}
-
-.side-link.active::after,
-.side-link.active::before {
-  content: none !important;
-  display: none !important;
-}
-
-@media (max-width: 1199px) and (min-width: 768px) {
-  .side-link.active {
-    width: 100% !important;
-    margin-right: 0 !important;
-    padding-right: 12px !important;
-    border-radius: 16px !important;
-  }
-}
-
-
-/* Reference-style selected tab:
-   active surface ends at sidebar edge, with concave top-right / bottom-right joins. */
-.side-link.active {
-  width: 100% !important;
-  margin-right: 0 !important;
-  padding-right: 18px !important;
-  border-radius: 999px 0 0 999px !important;
-  overflow: visible !important;
-  background: var(--canvas) !important;
-}
-
-/* Top concave join */
-.side-link.active::before {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: -1 !important;
-  top: -22px !important;
-  right: 0 !important;
-  width: 22px !important;
-  height: 22px !important;
-  border-radius: 0 0 22px 0 !important;
-  background: transparent !important;
-  box-shadow: 9px 9px 0 9px var(--canvas) !important;
-  pointer-events: none !important;
-}
-
-/* Bottom concave join */
-.side-link.active::after {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: -1 !important;
-  bottom: -22px !important;
-  top: auto !important;
-  right: 0 !important;
-  width: 22px !important;
-  height: 22px !important;
-  border-radius: 0 22px 0 0 !important;
-  background: transparent !important;
-  box-shadow: 9px -9px 0 9px var(--canvas) !important;
-  pointer-events: none !important;
-}
-
-.side-link.active svg,
-.side-link.active > span:last-child {
-  position: relative;
-  z-index: 2;
-}
-
-@media (max-width: 1199px) and (min-width: 768px) {
-  .side-link.active {
-    width: 100% !important;
-    margin-right: 0 !important;
-    border-radius: 16px 0 0 16px !important;
-  }
-
-  .side-link.active::before,
   .side-link.active::after {
-    width: 16px !important;
-    height: 16px !important;
-  }
-
-  .side-link.active::before {
-    top: -16px !important;
-    border-radius: 0 0 16px 0 !important;
-    box-shadow: 7px 7px 0 7px var(--canvas) !important;
-  }
-
-  .side-link.active::after {
-    bottom: -16px !important;
-    border-radius: 0 16px 0 0 !important;
-    box-shadow: 7px -7px 0 7px var(--canvas) !important;
+    bottom: -14px;
+    width: 14px;
+    height: 14px;
+    border-radius: 0 14px 0 0;
+    box-shadow: 6px -6px 0 6px var(--canvas);
   }
 }
 
-
-/* Tight concave join correction */
-.side-link.active {
-  width: 100% !important;
-  margin-right: 0 !important;
-  border-radius: 999px 0 0 999px !important;
-  overflow: visible !important;
-}
-
-/* Much smaller top-right notch */
-.side-link.active::before {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: 0 !important;
-  top: -10px !important;
-  right: 0 !important;
-  width: 10px !important;
-  height: 10px !important;
-  background: transparent !important;
-  border-radius: 0 0 10px 0 !important;
-  box-shadow: 4px 4px 0 4px var(--canvas) !important;
-  pointer-events: none !important;
-}
-
-/* Much smaller bottom-right notch */
-.side-link.active::after {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: 0 !important;
-  top: auto !important;
-  bottom: -10px !important;
-  right: 0 !important;
-  width: 10px !important;
-  height: 10px !important;
-  background: transparent !important;
-  border-radius: 0 10px 0 0 !important;
-  box-shadow: 4px -4px 0 4px var(--canvas) !important;
-  pointer-events: none !important;
-}
-
-.side-link.active svg,
-.side-link.active > span:last-child {
-  position: relative;
-  z-index: 2;
-}
-
-@media (max-width: 1199px) and (min-width: 768px) {
-  .side-link.active::before,
-  .side-link.active::after {
-    width: 8px !important;
-    height: 8px !important;
-  }
-
-  .side-link.active::before {
-    top: -8px !important;
-    border-radius: 0 0 8px 0 !important;
-    box-shadow: 3px 3px 0 3px var(--canvas) !important;
-  }
-
-  .side-link.active::after {
-    bottom: -8px !important;
-    border-radius: 0 8px 0 0 !important;
-    box-shadow: 3px -3px 0 3px var(--canvas) !important;
-  }
-}
-
-/* FINAL SIDEBAR ACTIVE TAB — internal concave cut, no external hooks */
-.sidebar {
-  background: #073963 !important;
-  overflow-x: hidden !important;
-}
-
-.side-nav {
-  overflow: visible !important;
-}
-
-.side-link.active {
-  position: relative !important;
-  isolation: isolate !important;
-  width: 100% !important;
-  margin: 0 !important;
-  padding-right: 18px !important;
-  color: #06375f !important;
-  background: var(--canvas) !important;
-  border-radius: 999px 0 0 999px !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-
-/* These circles sit INSIDE the light tab and reveal the sidebar colour.
-   They create the reference-style concave join without extending outside. */
-.side-link.active::before,
-.side-link.active::after {
-  content: '' !important;
-  display: block !important;
-  position: absolute !important;
-  z-index: 1 !important;
-  right: -9px !important;
-  width: 18px !important;
-  height: 18px !important;
-  border-radius: 50% !important;
-  background: #073963 !important;
-  box-shadow: none !important;
-  pointer-events: none !important;
-}
-
-.side-link.active::before {
-  top: -9px !important;
-  bottom: auto !important;
-}
-
-.side-link.active::after {
-  top: auto !important;
-  bottom: -9px !important;
-}
-
-.side-link.active svg,
-.side-link.active > span:last-child {
-  position: relative !important;
-  z-index: 3 !important;
-}
-
-@media (max-width: 1199px) and (min-width: 768px) {
-  .side-link.active {
-    border-radius: 16px 0 0 16px !important;
-  }
-
-  .side-link.active::before,
-  .side-link.active::after {
-    right: -7px !important;
-    width: 14px !important;
-    height: 14px !important;
-  }
-
-  .side-link.active::before { top: -7px !important; }
-  .side-link.active::after { bottom: -7px !important; }
-}
+@media (max-width: 767px) { .desktop-sidebar { display: none; } }
