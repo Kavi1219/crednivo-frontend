@@ -5,7 +5,6 @@ import ActionButton from '../../components/common/ActionButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
-import StatCard from '../../components/dashboard/StatCard';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -760,96 +759,79 @@ export default function Collection() {
 
       {actionError && <div className="form-error">{actionError}</div>}
 
-      <section className="stats-section" aria-labelledby="collection-target-heading">
-        <h2 id="collection-target-heading" className="stats-section-title">Cycle Target</h2>
-        <div className="stats-grid">
-          <StatCard
-            title="Daily Target"
-            value={formatCurrency(cycleTargets.daily.amount)}
-            note={`${cycleTargets.daily.customerCount} ${cycleTargets.daily.customerCount === 1 ? 'daily customer' : 'daily customers'}`}
-            icon={IndianRupee}
-            tone="blue"
-            showProgress={false}
-          />
-          <StatCard
-            title="Weekly Target"
-            value={formatCurrency(cycleTargets.weekly.amount)}
-            note={`${cycleTargets.weekly.customerCount} ${cycleTargets.weekly.customerCount === 1 ? 'weekly customer' : 'weekly customers'}`}
-            icon={IndianRupee}
-            tone="blue"
-            showProgress={false}
-          />
-          <StatCard
-            title="Monthly Target"
-            value={formatCurrency(cycleTargets.monthly.amount)}
-            note={`${cycleTargets.monthly.customerCount} ${cycleTargets.monthly.customerCount === 1 ? 'monthly customer' : 'monthly customers'}`}
-            icon={IndianRupee}
-            tone="blue"
-            showProgress={false}
-          />
+      <section className="collection-summary-board" aria-label="Collection summary">
+        <div className="collection-summary-column">
+          <div className="collection-summary-heading">
+            <span>Cycle Target</span>
+            <small>Standing collection target</small>
+          </div>
+          <div className="collection-summary-list">
+            <div className="collection-summary-row tone-blue">
+              <span className="collection-summary-icon"><IndianRupee size={17} /></span>
+              <span className="collection-summary-copy"><b>Daily Target</b><small>{cycleTargets.daily.customerCount} {cycleTargets.daily.customerCount === 1 ? 'customer' : 'customers'}</small></span>
+              <strong>{formatCurrency(cycleTargets.daily.amount)}</strong>
+            </div>
+            <div className="collection-summary-row tone-green">
+              <span className="collection-summary-icon"><IndianRupee size={17} /></span>
+              <span className="collection-summary-copy"><b>Weekly Target</b><small>{cycleTargets.weekly.customerCount} {cycleTargets.weekly.customerCount === 1 ? 'customer' : 'customers'}</small></span>
+              <strong>{formatCurrency(cycleTargets.weekly.amount)}</strong>
+            </div>
+            <div className="collection-summary-row tone-purple">
+              <span className="collection-summary-icon"><IndianRupee size={17} /></span>
+              <span className="collection-summary-copy"><b>Monthly Target</b><small>{cycleTargets.monthly.customerCount} {cycleTargets.monthly.customerCount === 1 ? 'customer' : 'customers'}</small></span>
+              <strong>{formatCurrency(cycleTargets.monthly.amount)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="collection-summary-column">
+          <div className="collection-summary-heading">
+            <span>Current Week</span>
+            <small>Weekly collection progress</small>
+          </div>
+          <div className="collection-summary-list">
+            <div className="collection-summary-row tone-blue">
+              <span className="collection-summary-icon"><CalendarDays size={17} /></span>
+              <span className="collection-summary-copy"><b>Target</b><small>Expected this week</small></span>
+              <strong>{formatCurrency(weekTarget)}</strong>
+            </div>
+            <div className="collection-summary-row tone-green">
+              <span className="collection-summary-icon"><HandCoins size={17} /></span>
+              <span className="collection-summary-copy"><b>Achieved</b><small>Collected so far</small></span>
+              <strong>{formatCurrency(weekAchieved)}</strong>
+            </div>
+            <div className="collection-summary-row tone-orange">
+              <span className="collection-summary-icon"><TriangleAlert size={17} /></span>
+              <span className="collection-summary-copy"><b>Pending</b><small>Remaining collection</small></span>
+              <strong>{formatCurrency(weekPending)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="collection-summary-column">
+          <div className="collection-summary-heading">
+            <span>Today’s Status</span>
+            <small>Today’s collection position</small>
+          </div>
+          <div className="collection-summary-list">
+            <div className="collection-summary-row tone-blue">
+              <span className="collection-summary-icon"><IndianRupee size={17} /></span>
+              <span className="collection-summary-copy"><b>Target</b><small>{todayTargetCustomers} {todayTargetCustomers === 1 ? 'customer' : 'customers'} due</small></span>
+              <strong>{formatCurrency(todayExpected)}</strong>
+            </div>
+            <div className="collection-summary-row tone-green">
+              <span className="collection-summary-icon"><HandCoins size={17} /></span>
+              <span className="collection-summary-copy"><b>Achieved</b><small>{todayAchievedCustomers} {todayAchievedCustomers === 1 ? 'customer' : 'customers'} paid</small></span>
+              <strong>{formatCurrency(todayAchievedAmount)}</strong>
+            </div>
+            <div className="collection-summary-row tone-orange">
+              <span className="collection-summary-icon"><TriangleAlert size={17} /></span>
+              <span className="collection-summary-copy"><b>Pending</b><small>{todayPendingCustomers} {todayPendingCustomers === 1 ? 'customer' : 'customers'} pending</small></span>
+              <strong>{formatCurrency(todayPending)}</strong>
+            </div>
+          </div>
         </div>
       </section>
-
-      <section className="stats-section" aria-labelledby="week-target-heading">
-        <h2 id="week-target-heading" className="stats-section-title">Current Week</h2>
-        <div className="stats-grid">
-          <StatCard
-            title="Current Week"
-            value={formatCurrency(weekTarget)}
-            note="Expected"
-            icon={CalendarDays}
-            tone="blue"
-            showProgress={false}
-          />
-          <StatCard
-            title="Achievement"
-            value={formatCurrency(weekAchieved)}
-            note="collected so far"
-            icon={HandCoins}
-            tone="green"
-            progress={weekTarget > 0 ? (weekAchieved / weekTarget) * 100 : 0}
-          />
-          <StatCard
-            title="Pending"
-            value={formatCurrency(weekPending)}
-            note="Remaining collection"
-            icon={TriangleAlert}
-            tone="orange"
-            showProgress={false}
-          />
-        </div>
-      </section>
-
-      <section className="stats-section" aria-labelledby="today-status-heading">
-        <h2 id="today-status-heading" className="stats-section-title">Today’s Status</h2>
-        <div className="stats-grid">
-          <StatCard
-            title="Today's Target"
-            value={formatCurrency(todayExpected)}
-            note={`${todayTargetCustomers} ${todayTargetCustomers === 1 ? 'customer' : 'customers'} due today`}
-            icon={IndianRupee}
-            tone="blue"
-            showProgress={false}
-          />
-          <StatCard
-            title="Achieved"
-            value={formatCurrency(todayAchievedAmount)}
-            note={`${todayAchievedCustomers} ${todayAchievedCustomers === 1 ? 'customer' : 'customers'} paid`}
-            icon={HandCoins}
-            tone="green"
-            progress={todayExpected > 0 ? (todayAchievedAmount / todayExpected) * 100 : 0}
-          />
-          <StatCard
-            title="Pending"
-            value={formatCurrency(todayPending)}
-            note={`${todayPendingCustomers} ${todayPendingCustomers === 1 ? 'customer' : 'customers'} pending`}
-            icon={TriangleAlert}
-            tone="orange"
-            showProgress={false}
-          />
-        </div>
-      </section>
-
 
       <section className="module-card">
         <div className="collection-view-tabs" role="tablist" aria-label="Collection view">
