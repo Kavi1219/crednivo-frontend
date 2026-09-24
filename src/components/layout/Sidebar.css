@@ -384,3 +384,23 @@
 }
 
 @media (max-width: 767px) { .desktop-sidebar { display: none; } }
+
+
+/* Keep sidebar active-tab join exactly the same colour as the page canvas */
+.side-link.active,
+.side-link.active::before,
+.side-link.active::after {
+  --sidebar-page-match: var(--canvas);
+}
+
+.side-link.active {
+  background: var(--sidebar-page-match) !important;
+}
+
+.side-link.active::before {
+  box-shadow: 7px 7px 0 7px var(--sidebar-page-match) !important;
+}
+
+.side-link.active::after {
+  box-shadow: 7px -7px 0 7px var(--sidebar-page-match) !important;
+}
