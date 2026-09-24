@@ -33,6 +33,16 @@ function formatDayShort(dateString) {
   return new Date(year, month - 1, day).toLocaleDateString('en-IN', { weekday: 'short' });
 }
 
+function formatHeroDate(dateString) {
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, tone = 'blue', onClick }) {
   return (
     <button
@@ -242,14 +252,11 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page dashboard-premium-page dashboard-exact-page">
-      <div className="dashboard-toolbar">
-        <button className="date-button" title="Dashboard date"><CalendarDays size={15} /> {formatDate(today)}</button>
-      </div>
-
       <section className="dashboard-hero dashboard-hero-exact app-card">
         <div className="dashboard-hero-copy">
           <h2>Welcome Back!</h2>
           <p>Here&apos;s today&apos;s finance overview</p>
+          <div className="dashboard-hero-date"><CalendarDays size={15} /><span>{formatHeroDate(today)}</span></div>
           <button type="button" className="dashboard-hero-chip" onClick={() => navigate('/collection')}>
             <TrendingUp size={18} />
             <span>
