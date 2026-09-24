@@ -5,3 +5,10 @@
   .main-shell { margin-left: 0; }
   .page-content { padding: 14px 12px calc(var(--mobile-nav-height) + 38px); }
 }
+
+/* Keep every workspace surface exactly on the same page canvas colour. */
+.app-shell,
+.main-shell,
+.page-content {
+  background: var(--canvas) !important;
+}

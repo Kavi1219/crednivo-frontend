@@ -404,3 +404,8 @@
 .side-link.active::after {
   box-shadow: 7px -7px 0 7px var(--sidebar-page-match) !important;
 }
+
+/* Seamless sidebar/page edge: no tinted strip beside the sidebar. */
+.sidebar {
+  box-shadow: none !important;
+}
