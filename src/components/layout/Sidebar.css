@@ -575,3 +575,75 @@
     box-shadow: 3px -3px 0 3px var(--canvas) !important;
   }
 }
+
+/* FINAL SIDEBAR ACTIVE TAB — internal concave cut, no external hooks */
+.sidebar {
+  background: #073963 !important;
+  overflow-x: hidden !important;
+}
+
+.side-nav {
+  overflow: visible !important;
+}
+
+.side-link.active {
+  position: relative !important;
+  isolation: isolate !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-right: 18px !important;
+  color: #06375f !important;
+  background: var(--canvas) !important;
+  border-radius: 999px 0 0 999px !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* These circles sit INSIDE the light tab and reveal the sidebar colour.
+   They create the reference-style concave join without extending outside. */
+.side-link.active::before,
+.side-link.active::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  z-index: 1 !important;
+  right: -9px !important;
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: #073963 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+.side-link.active::before {
+  top: -9px !important;
+  bottom: auto !important;
+}
+
+.side-link.active::after {
+  top: auto !important;
+  bottom: -9px !important;
+}
+
+.side-link.active svg,
+.side-link.active > span:last-child {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .side-link.active {
+    border-radius: 16px 0 0 16px !important;
+  }
+
+  .side-link.active::before,
+  .side-link.active::after {
+    right: -7px !important;
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  .side-link.active::before { top: -7px !important; }
+  .side-link.active::after { bottom: -7px !important; }
+}
