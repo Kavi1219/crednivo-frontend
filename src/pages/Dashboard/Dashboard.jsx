@@ -387,6 +387,9 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <section className="dashboard-middle"><CollectionTable /></section>
+
+
       <section className="dashboard-insights-grid">
         <article className="dashboard-insight-card app-card">
           <div className="dashboard-insight-head">
@@ -463,7 +466,6 @@ export default function Dashboard() {
         </article>
       </section>
 
-      <section className="dashboard-middle"><CollectionTable /></section>
     </div>
   );
 }
