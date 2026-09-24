@@ -15,7 +15,7 @@ button, input, select, textarea { font: inherit; }
 button { border: 0; }
 a { color: inherit; text-decoration: none; }
 
-::selection { background: #cfe2ff; }
+::selection { background: #8cbaff; }
 
 .app-card {
   background: var(--surface);
