@@ -405,3 +405,28 @@
     width: 14px;
   }
 }
+
+
+/* Final active-tab fit: keep selected item fully inside sidebar with curved corners */
+.side-link.active {
+  width: 100% !important;
+  margin-right: 0 !important;
+  padding-right: 18px !important;
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+.side-link.active::after,
+.side-link.active::before {
+  content: none !important;
+  display: none !important;
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .side-link.active {
+    width: 100% !important;
+    margin-right: 0 !important;
+    padding-right: 12px !important;
+    border-radius: 16px !important;
+  }
+}
