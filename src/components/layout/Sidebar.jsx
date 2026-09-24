@@ -4,10 +4,8 @@ import {
   HandCoins, Landmark, PiggyBank, ReceiptText, Settings, Users, UserRound, WalletCards
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useCrednivo } from '../../context/CrednivoContext';
 import Tooltip from '../common/Tooltip';
 import CrednivoMark from '../brand/CrednivoMark';
-import ProtectedImage from '../common/ProtectedImage';
 import './Sidebar.css';
 
 const simpleItems = [
@@ -28,10 +26,7 @@ function NavIcon({ label, children }) {
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const { isOwner, hasPermission, user } = useAuth();
-  const { company } = useCrednivo();
-  const avatar = user?.profilePhoto || company?.logo;
-  const initial = String(user?.displayName || company?.name || 'C').charAt(0).toUpperCase();
+  const { isOwner, hasPermission } = useAuth();
   const visibleItems = simpleItems.filter((item) => item.always || (item.ownerOnly ? isOwner : hasPermission(item.permission)));
 
   return (
@@ -39,14 +34,6 @@ export default function Sidebar() {
       <button className="brand" onClick={() => navigate('/overview')} aria-label="CREDNIVO Overview">
         <span className="brand-mark"><CrednivoMark size={42} /></span>
         <span className="brand-copy"><strong>CREDNIVO</strong><small>Finance Management</small></span>
-      </button>
-
-      <button type="button" className="sidebar-profile-card" onClick={() => navigate('/settings')} aria-label="Open account settings">
-        <span className="sidebar-profile-avatar">{avatar ? <ProtectedImage src={avatar} alt="" fallback={initial} /> : initial}</span>
-        <span className="sidebar-profile-copy">
-          <strong>{user?.displayName || company?.owner || 'Account'}</strong>
-          <small>{isOwner ? 'Owner' : 'Agent'} · {company?.name || 'CREDNIVO'}</small>
-        </span>
       </button>
 
       <nav className="side-nav" aria-label="Main navigation">

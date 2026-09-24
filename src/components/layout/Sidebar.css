@@ -306,3 +306,102 @@
   .side-link.active::after { right: -14px; width: 16px; }
   .side-link.active::before { display: none; }
 }
+
+
+/* Sidebar cleanup — focused CREDNIVO branding, no profile block, no extra curved path */
+.sidebar {
+  padding-top: 18px;
+}
+
+.brand {
+  min-height: 78px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 13px;
+  padding: 4px 12px 22px;
+  margin: 0;
+}
+
+.brand-mark,
+.brand-mark .crednivo-final-mark {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+}
+
+.brand-copy {
+  display: grid;
+  gap: 2px;
+  overflow: visible;
+}
+
+.brand-copy strong {
+  color: #ffffff;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+}
+
+.brand-copy small {
+  margin-top: 4px;
+  color: rgba(255,255,255,.78);
+  font-size: 9.5px;
+  line-height: 1.15;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.sidebar-profile-card {
+  display: none !important;
+}
+
+/* Keep the selected item attached to the page, but remove the dark C-shaped
+   decorative connector that was protruding into the content area. */
+.side-link.active::before {
+  content: none !important;
+  display: none !important;
+  box-shadow: none !important;
+}
+
+.side-link.active::after {
+  right: -18px;
+  width: 20px;
+}
+
+.side-link.active {
+  width: calc(100% + 20px);
+  margin-right: -20px;
+  padding-right: 26px;
+}
+
+.side-nav {
+  margin-top: 2px;
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .brand {
+    justify-content: center;
+    min-height: 66px;
+    padding: 2px 0 18px;
+  }
+
+  .brand-mark,
+  .brand-mark .crednivo-final-mark {
+    width: 50px;
+    height: 50px;
+    flex-basis: 50px;
+  }
+
+  .side-link.active {
+    width: calc(100% + 14px);
+    margin-right: -14px;
+    padding-right: 14px;
+  }
+
+  .side-link.active::after {
+    right: -12px;
+    width: 14px;
+  }
+}
