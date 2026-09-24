@@ -430,3 +430,80 @@
     border-radius: 16px !important;
   }
 }
+
+
+/* Reference-style selected tab:
+   active surface ends at sidebar edge, with concave top-right / bottom-right joins. */
+.side-link.active {
+  width: 100% !important;
+  margin-right: 0 !important;
+  padding-right: 18px !important;
+  border-radius: 999px 0 0 999px !important;
+  overflow: visible !important;
+  background: var(--canvas) !important;
+}
+
+/* Top concave join */
+.side-link.active::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  top: -22px !important;
+  right: 0 !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 0 0 22px 0 !important;
+  background: transparent !important;
+  box-shadow: 9px 9px 0 9px var(--canvas) !important;
+  pointer-events: none !important;
+}
+
+/* Bottom concave join */
+.side-link.active::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  bottom: -22px !important;
+  top: auto !important;
+  right: 0 !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 0 22px 0 0 !important;
+  background: transparent !important;
+  box-shadow: 9px -9px 0 9px var(--canvas) !important;
+  pointer-events: none !important;
+}
+
+.side-link.active svg,
+.side-link.active > span:last-child {
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .side-link.active {
+    width: 100% !important;
+    margin-right: 0 !important;
+    border-radius: 16px 0 0 16px !important;
+  }
+
+  .side-link.active::before,
+  .side-link.active::after {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .side-link.active::before {
+    top: -16px !important;
+    border-radius: 0 0 16px 0 !important;
+    box-shadow: 7px 7px 0 7px var(--canvas) !important;
+  }
+
+  .side-link.active::after {
+    bottom: -16px !important;
+    border-radius: 0 16px 0 0 !important;
+    box-shadow: 7px -7px 0 7px var(--canvas) !important;
+  }
+}
