@@ -43,6 +43,26 @@ function formatHeroDate(dateString) {
   });
 }
 
+function monthBounds(dateString, offset = 0) {
+  const [year, month] = String(dateString).split('-').map(Number);
+  const start = new Date(year, month - 1 + offset, 1);
+  const end = new Date(year, month + offset, 0);
+  const toKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return { start: toKey(start), end: toKey(end) };
+}
+
+function calculateCollectionRate(rows, startDate, endDate) {
+  const scoped = (rows || []).filter((item) => {
+    if (!item?.date || item.date < startDate || item.date > endDate) return false;
+    const status = String(item.status || '').trim().toLowerCase();
+    return status !== 'cancelled' && status !== 'canceled';
+  });
+  const due = scoped.reduce((sum, item) => sum + Math.max(0, Number(item.dueAmount || 0)), 0);
+  const paid = scoped.reduce((sum, item) => sum + Math.max(0, Number(item.paidAmount || 0)), 0);
+  if (due <= 0) return 0;
+  return Math.min(100, Math.max(0, Math.round((paid / due) * 100)));
+}
+
 function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, tone = 'blue', onClick }) {
   return (
     <button
@@ -249,6 +269,10 @@ export default function Dashboard() {
   }, [expenses]);
 
   const welcomeName = user?.displayName || user?.name || company?.owner || 'Owner';
+  const currentMonth = monthBounds(today, 0);
+  const previousMonth = monthBounds(today, -1);
+  const currentMonthCollectionRate = calculateCollectionRate(collections, currentMonth.start, today);
+  const previousMonthCollectionRate = calculateCollectionRate(collections, previousMonth.start, previousMonth.end);
 
   return (
     <div className="dashboard-page dashboard-premium-page dashboard-exact-page">
@@ -257,13 +281,24 @@ export default function Dashboard() {
           <h2>Welcome Back!</h2>
           <p>Here&apos;s today&apos;s finance overview</p>
           <div className="dashboard-hero-date"><CalendarDays size={15} /><span>{formatHeroDate(today)}</span></div>
-          <button type="button" className="dashboard-hero-chip" onClick={() => navigate('/collection')}>
-            <TrendingUp size={18} />
-            <span>
+          <button type="button" className="dashboard-hero-chip dashboard-month-compare" onClick={() => navigate('/reports')}>
+            <TrendingUp size={18} className="month-compare-icon" />
+            <span className="month-compare-copy">
               <strong>Keep growing</strong>
-              <small>Your collections are up today, {welcomeName.split(' ')[0]}.</small>
+              <small>Monthly collection performance</small>
             </span>
-            <ArrowRight size={16} />
+            <span className="month-compare-stats">
+              <span className="month-compare-item">
+                <small>Previous Month</small>
+                <strong>{previousMonthCollectionRate}%</strong>
+              </span>
+              <span className="month-compare-divider" aria-hidden="true" />
+              <span className="month-compare-item current">
+                <small>Current Month</small>
+                <strong>{currentMonthCollectionRate}%</strong>
+              </span>
+            </span>
+            <ArrowRight size={16} className="month-compare-arrow" />
           </button>
         </div>
 
