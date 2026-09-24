@@ -20,21 +20,21 @@
     z-index: 90;
     flex-direction: column;
     padding: max(18px, env(safe-area-inset-top)) 18px 18px;
-    color: #fff;
-    background: linear-gradient(180deg, #7B6EF6, #5B4FC7);
+    background: var(--surface);
+    color: var(--ink-800);
     transform: translateX(-105%);
     transition: transform .24s ease;
     box-shadow: 20px 0 50px rgba(0,0,0,.18);
   }
   .mobile-drawer.open { transform: translateX(0); }
-  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
   .drawer-head div { display: flex; flex-direction: column; }
-  .drawer-head strong { font-size: 22px; }
-  .drawer-head small { margin-top: 3px; font-size: 9px; opacity: .8; }
-  .drawer-head button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; color: #fff; background: rgba(255,255,255,.08); }
+  .drawer-head strong { font-size: 22px; color: var(--ink-950); }
+  .drawer-head small { margin-top: 3px; font-size: 9px; color: var(--ink-500); }
+  .drawer-head button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; color: var(--ink-700); background: var(--surface-soft); }
   .mobile-drawer nav { margin-top: 14px; display: grid; gap: 4px; }
-  .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 999px; }
-  .mobile-drawer nav a.active { background: rgba(255,255,255,.18); font-weight: 800; }
+  .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 999px; color: var(--ink-600); }
+  .mobile-drawer nav a.active { background: var(--blue-600); color: #fff; font-weight: 800; }
 }
 
 /* Phase 2.25 - Drawer branding */

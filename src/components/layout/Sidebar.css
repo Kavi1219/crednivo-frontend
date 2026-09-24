@@ -3,15 +3,13 @@
   inset: 0 auto 0 0;
   width: var(--sidebar-width);
   padding: 22px 16px 20px;
-  color: #fff;
-  background:
-    radial-gradient(circle at 18% 12%, rgba(255,255,255,.10), transparent 38%),
-    linear-gradient(180deg, #7B6EF6 0%, #6C5DD3 55%, #5B4FC7 100%);
+  color: var(--ink-800);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
   z-index: 60;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 8px 0 30px rgba(76, 61, 176, .18);
 }
 
 .brand {
@@ -19,21 +17,21 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
+  color: var(--ink-950);
   background: transparent;
   padding: 2px 4px 26px;
   cursor: pointer;
   text-align: left;
 }
-.brand-mark { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; }
-.brand-mark .crednivo-final-mark { width: 40px; height: 37px; flex-basis: 40px; }
+.brand-mark { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; }
+.brand-mark .crednivo-final-mark { width: 38px; height: 35px; flex-basis: 38px; }
 .brand-copy { display: flex; flex-direction: column; min-width: 0; }
-.brand-copy strong { font-size: 20px; font-weight: 900; letter-spacing: -.02em; color: #fff; }
+.brand-copy strong { font-size: 19px; font-weight: 900; letter-spacing: -.02em; color: var(--ink-950); }
 
 .side-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   overflow-y: auto;
   padding-right: 1px;
   scrollbar-width: none;
@@ -42,46 +40,47 @@
 
 .side-link {
   position: relative;
-  min-height: 44px;
+  min-height: 42px;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 0 13px;
-  border-radius: 999px;
-  color: rgba(255,255,255,.82);
+  border-radius: 11px;
+  color: var(--ink-600);
   background: transparent;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 650;
   cursor: pointer;
   transition: background .16s ease, color .16s ease;
 }
 .side-link svg { flex: 0 0 auto; }
 .side-link span:last-of-type:not(.side-badge) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.side-link:hover { background: rgba(255,255,255,.08); color: #fff; }
+.side-link:hover { background: var(--surface-soft); color: var(--ink-950); }
 
 .side-link.active {
-  background: rgba(255,255,255,.16);
+  background: var(--blue-600);
   color: #fff;
   font-weight: 800;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+  box-shadow: 0 8px 18px rgba(20,119,242,.24);
 }
 
 .side-badge {
   flex: 0 0 auto;
-  min-width: 20px;
-  height: 20px;
+  min-width: 19px;
+  height: 19px;
   padding: 0 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  background: #fff;
-  color: #5B4FC7;
-  font-size: 10.5px;
+  background: var(--blue-600);
+  color: #fff;
+  font-size: 10px;
   font-weight: 800;
 }
+.side-link.active .side-badge { background: rgba(255,255,255,.28); color: #fff; }
 
 .sidebar-foot {
   margin-top: auto;
@@ -98,15 +97,15 @@
   justify-content: center;
   gap: 7px;
   border-radius: 999px;
-  background: #fff;
-  color: #5B4FC7;
+  background: var(--blue-600);
+  color: #fff;
   font-size: 13px;
   font-weight: 800;
   text-decoration: none;
-  box-shadow: 0 10px 24px rgba(30, 20, 90, .22);
+  box-shadow: 0 10px 22px rgba(20,119,242,.22);
   transition: transform .15s ease, box-shadow .15s ease;
 }
-.sidebar-visit-site:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(30, 20, 90, .28); }
+.sidebar-visit-site:hover { transform: translateY(-1px); box-shadow: 0 14px 26px rgba(20,119,242,.28); }
 
 @media (max-width: 1199px) and (min-width: 768px) {
   .sidebar { padding: 20px 10px; align-items: center; }
