@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, CheckCircle2, Pencil, Search, UserPlus, UserRound, WalletCards, X } from 'lucide-react';
+import { Check, CheckCircle2, Pencil, Search, UserPlus, UserRound, WalletCards, X } from 'lucide-react';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -161,10 +161,6 @@ export default function CreateLoan() {
 
   return <div className="module-page create-loan-page create-loan-redesign">
     <div className="create-loan-page-header">
-      <button type="button" className="create-loan-back-link" onClick={goToLoans}>
-        <ArrowLeft size={16}/>
-        <span>Back to Loans</span>
-      </button>
       <div className="create-loan-page-title">
         <h1>Create Loan</h1>
         <p>Enter the loan details below to create a new loan for your customer.</p>
