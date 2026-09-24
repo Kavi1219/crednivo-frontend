@@ -2203,3 +2203,19 @@
   .customer-document-preview{padding:7px}
   .customer-document-preview iframe{min-height:100%}
 }
+
+/* Customer profile: header summary removed; keep New Loan action inside the profile hero. */
+.customer-hero-new-loan.action-button {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 9px;
+  font-size: 10px;
+  box-shadow: none;
+}
+
+@media (max-width: 767px) {
+  .customer-hero-new-loan.action-button {
+    min-height: 30px;
+    padding: 0 9px;
+  }
+}

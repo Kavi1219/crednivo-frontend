@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { AlertTriangle, ArrowLeft, CalendarDays, Check, Download, FileText, Files, HandCoins, Image as ImageIcon, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AlertTriangle, CalendarDays, Check, Download, FileText, Files, HandCoins, Image as ImageIcon, Pencil, Phone, Save, ShieldCheck, Star, TrendingUp, Trash2, UserRound, WalletCards, X } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import MediaUploader from '../../components/common/MediaUploader';
-import ModuleHeader from '../../components/common/ModuleHeader';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { getAuthToken } from '../../services/api';
@@ -236,21 +235,10 @@ export default function CustomerDetails() {
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const { customers, loans, collections, payments, updateLoan, deleteLoan, getIoSettlementPreview, extendIoLoan, recordLoanPayment, updatePayment, deletePayment, deleteCustomer, saveCustomerMedia, saveCustomerProfile, saveJaminProfile } = useCrednivo();
   const { hasPermission, isOwner } = useAuth();
 
-  const handleBack = () => {
-    // Behave like a real browser back action. This returns the user to the
-    // exact page they opened the customer from (Collections, Reports, Loans,
-    // Customers, etc.). If the profile was opened directly in a new tab,
-    // fall back to the Customers page instead of leaving CREDNIVO.
-    if (location.key && location.key !== 'default') {
-      navigate(-1);
-      return;
-    }
-    navigate('/customers');
-  };
+
   const [photoViewer, setPhotoViewer] = useState(null);
   const [documentViewer, setDocumentViewer] = useState(null);
   const [payingLoan, setPayingLoan] = useState(null);
@@ -1024,16 +1012,6 @@ export default function CustomerDetails() {
   };
 
   return <div className="module-page customer-details-page">
-    <ModuleHeader
-      eyebrow={customer.id}
-      title={customer.name}
-      description={`${formatIndianMobile(customer.mobile)} · ${customer.work || customer.area || 'Customer'}`}
-      actions={<>
-        <ActionButton tone="secondary" icon={ArrowLeft} onClick={handleBack}>Back</ActionButton>
-        {hasPermission('loans.create') && <ActionButton icon={WalletCards} onClick={()=>navigate('/loans/create',{state:{customerId:id}})}>New Loan</ActionButton>}
-      </>}
-    />
-
     {actionError && <div className="form-error">{actionError}</div>}
 
     <section className="customer-hero module-card">
@@ -1047,7 +1025,7 @@ export default function CustomerDetails() {
           {customer.photo ? <ProtectedImage src={customer.photo} alt={customer.name} fallback={customer.name.charAt(0)} /> : customer.name.charAt(0)}
         </button>
         <div className="customer-hero-copy">
-          <div className="customer-name-line"><h2>{customer.name}</h2><span className="soft-chip green">{customer.status}</span></div>
+          <div className="customer-name-line"><h2>{customer.name}</h2><span className="soft-chip green">{customer.status}</span>{hasPermission('loans.create') && <ActionButton className="customer-hero-new-loan" icon={WalletCards} onClick={()=>navigate('/loans/create',{state:{customerId:id}})}>New Loan</ActionButton>}</div>
           <p><Phone size={15}/>{formatIndianMobile(customer.mobile)}</p>
           <p><CalendarDays size={15}/>Next collection {formatDate(nextCollectionDate)}</p>
         </div>
