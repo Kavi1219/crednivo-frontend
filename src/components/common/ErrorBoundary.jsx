@@ -1,6 +1,5 @@
 import React from 'react';
 import './ErrorBoundary.css';
-import { recoverFromStaleChunk } from '../../utils/runtimeRecovery';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -13,7 +12,6 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    if (recoverFromStaleChunk(error)) return;
     console.error('CREDNIVO render error:', error, info);
   }
 
@@ -22,8 +20,11 @@ export default class ErrorBoundary extends React.Component {
   };
 
   handleReset = () => {
-    // Never clear cached business data from a generic render-error screen.
-    // Returning home is enough; server data remains the source of truth.
+    try {
+      localStorage.removeItem('crednivo-phase2-data');
+    } catch {
+      // Ignore storage access failures.
+    }
     window.location.href = '/';
   };
 
@@ -40,7 +41,7 @@ export default class ErrorBoundary extends React.Component {
           <pre>{this.state.error?.message || 'Unknown rendering error'}</pre>
           <div className="crednivo-error-actions">
             <button type="button" onClick={this.handleReload}>Reload Page</button>
-            <button type="button" className="secondary" onClick={this.handleReset}>Go to Home</button>
+            <button type="button" className="secondary" onClick={this.handleReset}>Reset Demo Data</button>
           </div>
         </section>
       </main>

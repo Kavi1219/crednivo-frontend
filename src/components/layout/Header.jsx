@@ -7,7 +7,6 @@ import { useAuth } from '../../context/AuthContext';
 import { formatIndianMobile } from '../../utils/finance';
 import IconButton from '../common/IconButton';
 import CustomerAvatar from '../common/CustomerAvatar';
-import ProtectedImage from '../common/ProtectedImage';
 import CrednivoMark from '../brand/CrednivoMark';
 import CompanyProfileModal from './CompanyProfileModal';
 import ChangePasswordModal from './ChangePasswordModal';
@@ -34,7 +33,7 @@ function ProfileDetails({ company, user, isOwner, accounts, activeAccountId, onE
   return (
     <div className="profile-dropdown app-card" role="dialog" aria-label="Signed-in profile details">
       <div className="profile-dropdown-heading">
-        <span className="profile-dropdown-avatar">{avatar ? <ProtectedImage src={avatar} alt="" fallback={initial} /> : initial}</span>
+        <span className="profile-dropdown-avatar">{avatar ? <img src={avatar} alt="" /> : initial}</span>
         <div>
           <strong>{user?.displayName || company.owner}</strong>
           <span>{isOwner ? 'Owner' : 'Agent'} · {company.name}</span>
@@ -54,7 +53,7 @@ function ProfileDetails({ company, user, isOwner, accounts, activeAccountId, onE
           <small className="profile-menu-label">Switch account</small>
           {otherAccounts.map((account) => (
             <button key={account.id} type="button" className="profile-menu-item profile-account-item" onClick={() => onSwitchAccount(account.id)}>
-              <span className="profile-account-avatar">{account.profilePhoto ? <ProtectedImage src={account.profilePhoto} alt="" fallback={String(account.displayName || account.companyName || 'C').charAt(0)} /> : String(account.displayName || account.companyName || 'C').charAt(0)}</span>
+              <span className="profile-account-avatar">{account.profilePhoto ? <img src={account.profilePhoto} alt="" /> : String(account.displayName || account.companyName || 'C').charAt(0)}</span>
               <span className="profile-account-copy"><strong>{account.displayName || account.username}</strong><small>{account.companyName}</small></span>
             </button>
           ))}
@@ -277,7 +276,7 @@ export default function Header({ onOpenMenu }) {
         </div>
         <NotificationBell />
         <div className="profile-menu-wrap" ref={desktopProfileRef}>
-          <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <ProtectedImage src={avatar} alt="" fallback={profileInitial} /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
+          <button className="profile-button" onClick={() => setProfileOpen(v => !v)} aria-expanded={profileOpen} aria-label="Open signed-in profile"><span className="company-copy"><strong>{company.name}</strong><small>{user?.displayName || company.owner} · {isOwner ? 'Owner' : 'Agent'}</small></span><span className="profile-avatar">{avatar ? <img src={avatar} alt="" /> : profileInitial}</span><ChevronDown size={15} className={profileOpen ? 'profile-chevron open' : 'profile-chevron'} /></button>
           {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} accounts={accounts} activeAccountId={activeAccountId} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} onSwitchAccount={handleSwitchAccount} onAddAccount={addAccount} onSessions={openSessions} />}
         </div>
       </div>
@@ -286,7 +285,7 @@ export default function Header({ onOpenMenu }) {
         <IconButton label="Search" onClick={()=>navigate('/customers')}><Search size={19} /></IconButton>
         <NotificationBell />
         <div className="mobile-profile-menu-wrap" ref={mobileProfileRef}>
-          <button className="mobile-avatar" aria-label="Signed-in profile" aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{avatar ? <ProtectedImage src={avatar} alt="" fallback={profileInitial} /> : profileInitial}</button>
+          <button className="mobile-avatar" aria-label="Signed-in profile" aria-expanded={profileOpen} onClick={()=>setProfileOpen(v=>!v)}>{avatar ? <img src={avatar} alt="" /> : profileInitial}</button>
           {profileOpen && <ProfileDetails company={company} user={user} isOwner={isOwner} accounts={accounts} activeAccountId={activeAccountId} onEdit={editCompany} onSecurity={editSecurity} onChangePassword={editPassword} onLogout={signOut} onSwitchAccount={handleSwitchAccount} onAddAccount={addAccount} onSessions={openSessions} />}
         </div>
       </div>

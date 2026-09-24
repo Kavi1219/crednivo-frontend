@@ -5,7 +5,6 @@ import ActionButton from '../common/ActionButton';
 import IconButton from '../common/IconButton';
 import { useCrednivo } from '../../context/CrednivoContext';
 import './CompanyProfileModal.css';
-import ProtectedImage from '../common/ProtectedImage';
 
 export default function CompanyProfileModal({ open, onClose }) {
   const actionLocksRef = useRef(new Set());
@@ -89,7 +88,7 @@ export default function CompanyProfileModal({ open, onClose }) {
         <form className="company-profile-form" onSubmit={submit}>
           <div className="company-logo-editor">
             <div className="company-logo-preview">
-              {preview ? <ProtectedImage src={preview} alt="Company logo" fallback={<span>{form.name?.charAt(0) || 'C'}</span>} /> : <span>{form.name?.charAt(0) || 'C'}</span>}
+              {preview ? <img src={preview} alt="Company logo" /> : <span>{form.name?.charAt(0) || 'C'}</span>}
             </div>
             <label className="company-logo-button">
               <Camera size={16} /> <span>Change Logo / Photo</span>
