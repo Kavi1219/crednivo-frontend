@@ -641,3 +641,20 @@ html[data-theme='dark'] .profile-dropdown {
     box-shadow: 0 8px 22px rgba(28, 74, 132, .07);
   }
 }
+
+/* Global workspace header: page titles live in navigation, not the top bar. */
+@media (min-width: 768px) {
+  .app-header {
+    min-height: 72px;
+    padding: 10px 28px;
+    justify-content: flex-end;
+  }
+
+  .header-title-wrap {
+    display: none;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+}

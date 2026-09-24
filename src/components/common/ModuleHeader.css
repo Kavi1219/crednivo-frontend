@@ -4,3 +4,10 @@
 .module-eyebrow { color:var(--blue-600); font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
 .module-header-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
 @media (max-width:767px){ .module-header{align-items:flex-start}.module-header-actions{align-self:flex-start}.module-header p{font-size:11px}.module-header h1{font-size:21px} }
+
+/* Global page title cleanup */
+.module-header.module-header-actions-only {
+  min-height: 0;
+  justify-content: flex-end;
+  margin: 0;
+}

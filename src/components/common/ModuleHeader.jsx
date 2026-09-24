@@ -1,14 +1,10 @@
 import './ModuleHeader.css';
 
-export default function ModuleHeader({ eyebrow, title, description, actions }) {
+export default function ModuleHeader({ actions }) {
+  if (!actions) return null;
   return (
-    <div className="module-header">
-      <div>
-        {eyebrow && <span className="module-eyebrow">{eyebrow}</span>}
-        <h1>{title}</h1>
-        {description && <p>{description}</p>}
-      </div>
-      {actions && <div className="module-header-actions">{actions}</div>}
+    <div className="module-header module-header-actions-only">
+      <div className="module-header-actions">{actions}</div>
     </div>
   );
 }

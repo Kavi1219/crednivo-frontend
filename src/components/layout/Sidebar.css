@@ -76,3 +76,131 @@
   overflow: visible;
 }
 .brand-mark .crednivo-final-mark { width: 49px; height: 45px; flex-basis: 49px; }
+
+/* Compact profile-first sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  padding: 16px 14px 16px;
+  background: linear-gradient(180deg, #0b7fe8 0%, #0873d7 48%, #0668c6 100%);
+  box-shadow: 10px 0 28px rgba(14, 76, 139, .12);
+}
+
+.brand {
+  padding: 0 8px 14px;
+  gap: 9px;
+}
+
+.brand-mark,
+.brand-mark .crednivo-final-mark {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+}
+
+.brand-copy strong {
+  font-size: 18px;
+  letter-spacing: -.025em;
+}
+
+.brand-copy small {
+  font-size: 8px;
+  opacity: .88;
+}
+
+.sidebar-profile-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 11px 10px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 16px;
+  color: #fff;
+  background: rgba(255,255,255,.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-profile-card:hover {
+  background: rgba(255,255,255,.17);
+}
+
+.sidebar-profile-avatar {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: rgba(255,255,255,.94);
+  color: #0872d7;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.sidebar-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-profile-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.sidebar-profile-copy strong,
+.sidebar-profile-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-profile-copy strong {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sidebar-profile-copy small {
+  font-size: 8.5px;
+  opacity: .82;
+}
+
+.side-nav {
+  gap: 5px;
+}
+
+.side-link {
+  min-height: 42px;
+  gap: 11px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(255,255,255,.9);
+}
+
+.side-link:hover {
+  background: rgba(255,255,255,.10);
+}
+
+.side-link.active {
+  background: rgba(7, 61, 117, .92);
+  color: #fff;
+  box-shadow: 0 9px 20px rgba(3, 47, 92, .22);
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .sidebar-profile-card {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 8px;
+  }
+  .sidebar-profile-copy { display: none; }
+  .sidebar-profile-avatar { width: 42px; height: 42px; }
+  .side-link { border-radius: 14px; }
+}
