@@ -344,20 +344,24 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <QuickActions />
-
-      <section className="stats-section dashboard-section-shell exact-shell" aria-labelledby="stats-today-heading">
-        <div className="section-shell-head exact-head">
-          <div>
-            <h2 id="stats-today-heading" className="stats-section-title">Today&apos;s Collection</h2>
-            <p>Your collection activity for today</p>
+      <div className="dashboard-today-layout">
+        <section className="stats-section dashboard-section-shell exact-shell dashboard-today-section" aria-labelledby="stats-today-heading">
+          <div className="section-shell-head exact-head">
+            <div>
+              <h2 id="stats-today-heading" className="stats-section-title">Today&apos;s Collection</h2>
+              <p>Your collection activity for today</p>
+            </div>
+            <button type="button" className="section-chip-button">Today</button>
           </div>
-          <button type="button" className="section-chip-button">Today</button>
+          <div className="home-metric-grid metric-grid-three">
+            {dashboardStatsToday.map((stat) => <HomeMetricCard key={stat.title} {...stat} variant="compact" />)}
+          </div>
+        </section>
+
+        <div className="dashboard-quick-side">
+          <QuickActions />
         </div>
-        <div className="home-metric-grid metric-grid-three">
-          {dashboardStatsToday.map((stat) => <HomeMetricCard key={stat.title} {...stat} variant="compact" />)}
-        </div>
-      </section>
+      </div>
 
       <section className="stats-section dashboard-section-shell exact-shell" aria-labelledby="stats-business-heading">
         <div className="section-shell-head exact-head">
