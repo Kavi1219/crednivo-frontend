@@ -1,15 +1,18 @@
 .app-header {
   position: sticky;
-  top: 0;
+  top: 14px;
   z-index: 45;
   min-height: var(--header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 18px 30px 12px 28px;
-  background: var(--canvas);
-  border-bottom: 0;
+  margin: 14px 30px 0 20px;
+  padding: 18px 26px 12px 24px;
+  background: var(--surface);
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 26px rgba(20,119,242,.07);
 }
 .header-title-wrap { display: flex; align-items: center; gap: 16px; min-width: 260px; }
 .header-title-wrap h1 { margin: 0; display: flex; align-items: center; gap: 9px; font-size: 26px; line-height: 1.15; letter-spacing: -.035em; font-weight: 900; }
@@ -175,7 +178,7 @@
 }
 
 @media (max-width: 767px) {
-  .app-header { min-height: 72px; padding: 10px 14px; }
+  .app-header { min-height: 72px; margin: 10px 12px 0; padding: 10px 14px; border-radius: 16px; }
   .header-title-wrap { min-width: 0; gap: 10px; }
   .mobile-menu-button { display: inline-flex; }
   .header-title-wrap h1 { font-size: 20px; }
@@ -595,7 +598,7 @@ html[data-theme='dark'] .profile-dropdown {
     justify-content: space-between;
     gap: 14px;
     padding: 14px 24px;
-    background: var(--canvas);
+    background: var(--surface);
   }
 
   .overview-header .header-title-wrap {
