@@ -1942,3 +1942,146 @@ html[data-theme='dark'] .dashboard-reference-date {
     max-height: 330px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   2026-09-25 Home alignment correction (FE17)
+   - The dashboard uses explicit grid areas so the right rail cannot change
+     the vertical spacing of Overview / Collection Target.
+   - Quick Actions stays beside Today's Collection cards.
+   - Risky Overdue starts directly below Quick Actions and ends exactly on the
+     same grid line as the bottom of the Today's Collection list area.
+   - The risky customer rows scroll inside the card instead of growing it.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1181px) {
+  .dashboard-reference-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+    grid-template-areas:
+      "today quick"
+      "overview risky"
+      "target risky"
+      "lower risky";
+    grid-template-rows: auto auto auto auto;
+    column-gap: 16px;
+    row-gap: 14px;
+    align-items: start;
+  }
+
+  .dashboard-reference-today {
+    grid-area: today;
+  }
+
+  .dashboard-reference-overview {
+    grid-area: overview;
+  }
+
+  .dashboard-reference-target {
+    grid-area: target;
+  }
+
+  .dashboard-reference-quick {
+    grid-area: quick;
+    align-self: stretch;
+    min-width: 0;
+    padding-top: 4px;
+  }
+
+  .dashboard-reference-quick .quick-card {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .dashboard-reference-lower-grid {
+    grid-area: lower;
+    margin-top: 2px;
+  }
+
+  .dashboard-reference-risky-slot {
+    grid-area: risky;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    align-self: stretch;
+  }
+
+  .dashboard-reference-risky-slot > .risky-overdue-card {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .dashboard-reference-risky-slot .risky-overdue-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+    scrollbar-gutter: stable;
+  }
+
+  .dashboard-reference-risky-slot .risky-overdue-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .dashboard-reference-risky-slot .risky-overdue-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .dashboard-reference-risky-slot .risky-overdue-list::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink-500) 30%, transparent);
+  }
+}
+
+@media (max-width: 1180px) {
+  .dashboard-reference-board {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "today"
+      "quick"
+      "risky"
+      "overview"
+      "target"
+      "lower";
+    gap: 14px;
+    align-items: start;
+  }
+
+  .dashboard-reference-today { grid-area: today; }
+  .dashboard-reference-quick { grid-area: quick; }
+  .dashboard-reference-overview { grid-area: overview; }
+  .dashboard-reference-target { grid-area: target; }
+  .dashboard-reference-lower-grid { grid-area: lower; }
+
+  .dashboard-reference-risky-slot {
+    grid-area: risky;
+    min-width: 0;
+    height: 360px;
+    min-height: 0;
+    max-height: 360px;
+    overflow: hidden;
+  }
+
+  .dashboard-reference-risky-slot > .risky-overdue-card {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-reference-board {
+    gap: 12px;
+  }
+
+  .dashboard-reference-risky-slot {
+    height: 330px;
+    max-height: 330px;
+  }
+}

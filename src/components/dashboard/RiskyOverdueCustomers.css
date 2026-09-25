@@ -5,6 +5,7 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border-radius: 20px;
   border: 1px solid color-mix(in srgb, var(--danger) 12%, var(--line));
   box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
@@ -59,6 +60,7 @@
   overflow-x: hidden;
   overscroll-behavior: contain;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
   scrollbar-color: color-mix(in srgb, var(--ink-500) 45%, transparent) transparent;
 }
 

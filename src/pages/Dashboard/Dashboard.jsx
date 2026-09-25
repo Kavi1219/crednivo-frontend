@@ -73,9 +73,9 @@ function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, ton
   );
 }
 
-function DashboardSection({ id, title, subtitle, columns, children }) {
+function DashboardSection({ id, title, subtitle, columns, children, className = '' }) {
   return (
-    <section className="stats-section dashboard-section-shell exact-shell dashboard-reference-section" aria-labelledby={id}>
+    <section className={`stats-section dashboard-section-shell exact-shell dashboard-reference-section ${className}`.trim()} aria-labelledby={id}>
       <div className="section-shell-head exact-head">
         <div>
           <h2 id={id} className="stats-section-title">{title}</h2>
@@ -274,46 +274,48 @@ export default function Dashboard() {
       </section>
 
       <div className="dashboard-reference-board">
-        <div className="dashboard-reference-main">
-          <DashboardSection
-            id="stats-today-heading"
-            title="Today's Collection"
-            subtitle="Your collection activity for today"
-            columns="metric-grid-three"
-          >
-            {todayStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-          </DashboardSection>
+        <DashboardSection
+          id="stats-today-heading"
+          title="Today's Collection"
+          subtitle="Your collection activity for today"
+          columns="metric-grid-three"
+          className="dashboard-reference-today"
+        >
+          {todayStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+        </DashboardSection>
 
-          <DashboardSection
-            id="stats-overview-heading"
-            title="Overview"
-            subtitle="Key metrics for your lending business"
-            columns="metric-grid-four"
-          >
-            {overviewStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-          </DashboardSection>
+        <aside className="dashboard-reference-quick" aria-label="Quick actions">
+          <QuickActions />
+        </aside>
 
-          <DashboardSection
-            id="stats-collection-target-heading"
-            title="Collection Target"
-            subtitle="Cycle-wise standing collection target"
-            columns="metric-grid-three"
-          >
-            {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-          </DashboardSection>
+        <DashboardSection
+          id="stats-overview-heading"
+          title="Overview"
+          subtitle="Key metrics for your lending business"
+          columns="metric-grid-four"
+          className="dashboard-reference-overview"
+        >
+          {overviewStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+        </DashboardSection>
 
-          <div className="dashboard-reference-lower-grid">
-            <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
-              <CollectionTable />
-            </section>
-            <CollectionSummary />
-          </div>
+        <DashboardSection
+          id="stats-collection-target-heading"
+          title="Collection Target"
+          subtitle="Cycle-wise standing collection target"
+          columns="metric-grid-three"
+          className="dashboard-reference-target"
+        >
+          {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+        </DashboardSection>
+
+        <div className="dashboard-reference-lower-grid">
+          <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
+            <CollectionTable />
+          </section>
+          <CollectionSummary />
         </div>
 
-        <aside className="dashboard-reference-side" aria-label="Dashboard shortcuts and risky customers">
-          <div className="dashboard-reference-quick" aria-label="Quick actions">
-            <QuickActions />
-          </div>
+        <aside className="dashboard-reference-risky-slot" aria-label="Risky overdue customers">
           <RiskyOverdueCustomers />
         </aside>
       </div>
