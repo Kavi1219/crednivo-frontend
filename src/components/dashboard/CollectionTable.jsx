@@ -315,12 +315,11 @@ export default function CollectionTable() {
                     <table className="collection-table">
                       <thead>
                         <tr>
-                          <th>Customer ID</th>
                           <th>Customer Name</th>
                           <th>Phone Number</th>
                           <th>Amount to Pay</th>
                           <th>Status</th>
-                          <th>Action</th>
+                          <th className="collection-action-heading">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -330,18 +329,25 @@ export default function CollectionTable() {
                           const loanClosed = !loan || String(loan.status || '').trim().toUpperCase() === 'CLOSED' || isPrecloseMarker(loan.status) || Number(loan.outstanding) <= 0;
                           return (
                             <tr key={row.id}>
-                              <td>{row.customerId}</td>
-                              <td><div className="dashboard-customer-cell"><CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} /><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></div></td>
+                              <td>
+                                <div className="dashboard-customer-cell dashboard-customer-cell-with-id">
+                                  <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
+                                  <div className="dashboard-customer-identity">
+                                    <CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink>
+                                    <small>{row.customerId}</small>
+                                  </div>
+                                </div>
+                              </td>
                               <td>{customerPhoneById[String(row.customerId)] || '—'}</td>
                               <td><strong>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</strong></td>
                               <td><StatusBadge status={row.status} /></td>
-                              <td>
-                                <div className="dashboard-collection-actions">
-                                  <button type="button" className="dashboard-reschedule-button" onClick={() => openReschedule(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}>
-                                    <CalendarDays size={15} /><span>Reschedule</span>
+                              <td className="collection-action-cell">
+                                <div className="dashboard-collection-actions icon-actions">
+                                  <button type="button" className="dashboard-reschedule-button icon-only" onClick={() => openReschedule(row)} disabled={loanClosed} aria-label={`Reschedule ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}>
+                                    <CalendarDays size={16} />
                                   </button>
-                                  <button className={`dashboard-pay-button ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} title={loanClosed ? 'Loan closed — no additional payment allowed' : `Collect from ${row.customerName}`}>
-                                    <HandCoins size={15} /><span>{loanClosed ? 'Closed' : 'Collect'}</span>
+                                  <button className={`dashboard-pay-button icon-only ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} aria-label={loanClosed ? `${row.customerName} loan closed` : `Collect from ${row.customerName}`} title={loanClosed ? 'Loan closed — no additional payment allowed' : `Collect from ${row.customerName}`}>
+                                    <HandCoins size={16} />
                                   </button>
                                 </div>
                               </td>

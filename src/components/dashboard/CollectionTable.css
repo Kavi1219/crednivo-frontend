@@ -598,3 +598,69 @@ html[data-theme='dark'] .dashboard-pay-modal { background: var(--surface); borde
     width: min(238px, calc(100vw - 28px));
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   2026-09-25 Home today's collection compact identity/action update
+   - Customer ID is shown under the customer name instead of its own column.
+   - Desktop actions use only Reschedule and Collect icons.
+   -------------------------------------------------------------------------- */
+.dashboard-customer-cell-with-id {
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-customer-identity {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.dashboard-customer-identity > a,
+.dashboard-customer-identity > strong {
+  min-width: 0;
+}
+
+.dashboard-customer-identity small {
+  color: var(--ink-500);
+  font-size: 9.5px;
+  font-weight: 650;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.collection-action-heading,
+.collection-action-cell {
+  width: 96px;
+  text-align: center !important;
+}
+
+.dashboard-collection-actions.icon-actions {
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dashboard-reschedule-button.icon-only,
+.dashboard-pay-button.icon-only {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.dashboard-reschedule-button.icon-only svg,
+.dashboard-pay-button.icon-only svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 767px) {
+  .dashboard-customer-identity small {
+    font-size: 9px;
+  }
+}
