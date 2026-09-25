@@ -2,23 +2,7 @@
   display: grid;
   gap: 20px;
 }
-
-.dashboard-growth-banner {
-  width: 100%;
-  border-radius: 20px;
-  overflow: hidden;
-  line-height: 0;
-}
-.dashboard-growth-banner img {
-  width: 100%;
-  height: auto;
-  display: block;
-  max-height: 220px;
-  object-fit: cover;
-}
 @media (max-width: 767px) {
-  .dashboard-growth-banner { border-radius: 16px; }
-  .dashboard-growth-banner img { max-height: 130px; }
 }
 
 .dashboard-premium-page {
@@ -147,6 +131,14 @@
   min-height: 260px;
   display: grid;
   place-items: center;
+}
+
+.dashboard-hero-visual-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
+  object-position: right center;
 }
 
 .hero-card {
@@ -645,203 +637,6 @@
   min-height: 230px;
 }
 
-.exact-hero-floor {
-  position: absolute;
-  left: 4%;
-  right: 0;
-  bottom: 6px;
-  height: 86px;
-  border-radius: 120px;
-  background: radial-gradient(ellipse at center, rgba(132, 183, 255, .24) 0%, rgba(132, 183, 255, .06) 58%, rgba(132, 183, 255, 0) 72%);
-}
-
-.exact-hero-rupee {
-  position: absolute;
-  top: 8px;
-  left: 56px;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f0fffb, #dffef5);
-  color: #5dcaa4;
-  font-size: 24px;
-  font-weight: 900;
-  box-shadow: 0 12px 28px rgba(67, 158, 255, .16);
-}
-
-.exact-hero-plant {
-  position: absolute;
-  left: 128px;
-  bottom: 40px;
-  width: 78px;
-  height: 96px;
-}
-
-.exact-hero-plant::before {
-  content: '';
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 0;
-  height: 22px;
-  border-radius: 12px 12px 16px 16px;
-  background: linear-gradient(180deg, #ffffff, #ebf3ff);
-  box-shadow: 0 12px 24px rgba(67, 108, 173, .18);
-}
-
-.exact-hero-plant span {
-  position: absolute;
-  bottom: 18px;
-  width: 26px;
-  height: 40px;
-  border-radius: 100% 0 100% 0;
-  background: linear-gradient(180deg, #76e7b8, #31c98a);
-}
-
-.exact-hero-plant span:nth-child(1) { left: 12px; transform: rotate(-35deg); }
-.exact-hero-plant span:nth-child(2) { left: 29px; height: 48px; transform: rotate(6deg); }
-.exact-hero-plant span:nth-child(3) { right: 10px; transform: rotate(35deg); border-radius: 0 100% 0 100%; }
-
-.exact-hero-graph-panel {
-  position: absolute;
-  right: 70px;
-  bottom: 28px;
-  width: 220px;
-  height: 150px;
-  border-radius: 26px;
-  background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(244,248,255,.86));
-  box-shadow: 0 26px 50px rgba(74, 121, 189, .18);
-  overflow: hidden;
-}
-
-.exact-hero-graph-panel::before {
-  content: '';
-  position: absolute;
-  inset: 16px 18px auto;
-  height: 86px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(198,229,255,.5), rgba(233,245,255,.24));
-}
-
-.exact-bars {
-  position: absolute;
-  left: 96px;
-  right: 18px;
-  bottom: 18px;
-  height: 92px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  align-items: end;
-  gap: 8px;
-}
-
-.exact-bars span {
-  display: block;
-  border-radius: 10px 10px 6px 6px;
-  background: linear-gradient(180deg, rgba(109, 182, 255, .95), rgba(109, 182, 255, .24));
-}
-
-.exact-bars span:nth-child(1) { height: 44%; }
-.exact-bars span:nth-child(2) { height: 72%; }
-.exact-bars span:nth-child(3) { height: 86%; }
-.exact-bars span:nth-child(4) { height: 54%; }
-
-.exact-arrow {
-  position: absolute;
-  left: 78px;
-  right: 34px;
-  top: 44px;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #43b4ff 0%, #44d69d 80%);
-  transform: rotate(-15deg);
-}
-
-.exact-arrow::after {
-  content: '';
-  position: absolute;
-  right: -3px;
-  top: -4px;
-  width: 14px;
-  height: 14px;
-  border-top: 3px solid #44d69d;
-  border-right: 3px solid #44d69d;
-  transform: rotate(45deg);
-}
-
-.exact-hero-mini-card {
-  position: absolute;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(242,247,255,.94));
-  box-shadow: 0 18px 36px rgba(81, 124, 190, .16);
-}
-
-.exact-mini-bars {
-  right: 26px;
-  bottom: 32px;
-  width: 72px;
-  height: 64px;
-}
-
-.exact-mini-bars::before,
-.exact-mini-bars::after {
-  content: '';
-  position: absolute;
-  bottom: 14px;
-  width: 8px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(102, 173, 255, .95), rgba(102, 173, 255, .25));
-}
-
-.exact-mini-bars::before { left: 20px; height: 22px; }
-.exact-mini-bars::after { left: 34px; height: 32px; }
-.exact-mini-bars span,
-.exact-mini-coins span {
-  display: block;
-}
-
-.exact-mini-bars span {
-  position: absolute;
-  left: 48px;
-  bottom: 14px;
-  width: 8px;
-  height: 16px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(102, 173, 255, .95), rgba(102, 173, 255, .25));
-}
-
-.exact-mini-coins {
-  right: 110px;
-  bottom: 14px;
-  width: 68px;
-  height: 58px;
-  display: grid;
-  place-items: center;
-}
-
-.exact-mini-coins span {
-  width: 28px;
-  height: 8px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #78d9be, #5db7ff);
-}
-
-.exact-mini-coins span + span { margin-top: 4px; }
-
-.exact-hero-note {
-  position: absolute;
-  top: 26px;
-  right: 12px;
-  color: #6b7bb3;
-  font-size: 13px;
-  font-style: italic;
-  line-height: 1.35;
-  transform: rotate(-10deg);
-  text-align: right;
-}
-
 .exact-shell {
   padding: 16px 18px 18px;
   background: transparent;
@@ -1026,19 +821,6 @@
   .exact-hero-visual {
     min-height: 190px;
   }
-
-  .exact-hero-graph-panel {
-    right: 16px;
-    width: 175px;
-    height: 120px;
-  }
-
-  .exact-hero-note {
-    display: none;
-  }
-
-  .exact-hero-plant { left: 16px; bottom: 26px; transform: scale(.88); }
-  .exact-hero-rupee { left: 16px; top: 8px; }
 
   .metric-grid-three,
   .metric-grid-four {
@@ -1269,18 +1051,6 @@
   min-height: 158px;
 }
 
-.exact-hero-graph-panel {
-  transform: scale(.88);
-  transform-origin: center right;
-}
-
-.exact-hero-plant,
-.exact-hero-rupee,
-.exact-hero-mini-card,
-.exact-hero-note {
-  transform: scale(.88);
-}
-
 @media (max-width: 1300px) and (min-width: 768px) {
   .dashboard-exact-page .dashboard-hero-exact {
     width: 100%;
@@ -1300,7 +1070,6 @@
     min-height: 150px;
   }
 }
-
 
 /* Today section compact cards */
 .home-metric-card.is-compact {

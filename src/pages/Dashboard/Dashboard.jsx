@@ -379,18 +379,7 @@ export default function Dashboard() {
         </div>
 
         <div className="dashboard-hero-visual exact-hero-visual" aria-hidden="true">
-          <div className="exact-hero-floor"></div>
-          <div className="exact-hero-rupee">₹</div>
-          <div className="exact-hero-plant">
-            <span></span><span></span><span></span>
-          </div>
-          <div className="exact-hero-graph-panel">
-            <div className="exact-bars"><span></span><span></span><span></span><span></span></div>
-            <div className="exact-arrow"></div>
-          </div>
-          <div className="exact-hero-mini-card exact-mini-bars"></div>
-          <div className="exact-hero-mini-card exact-mini-coins"><span></span><span></span><span></span></div>
-          <div className="exact-hero-note">Stronger<br />Businesses<br />Brighter Tomorrows</div>
+          <img src={growthBanner} alt="" className="dashboard-hero-visual-img" />
         </div>
       </section>
 
@@ -515,10 +504,6 @@ export default function Dashboard() {
           </div>
         </article>
       </section>
-
-      <div className="dashboard-growth-banner">
-        <img src={growthBanner} alt="Grow your lending business with Crednivo" loading="lazy" />
-      </div>
     </div>
   );
 }
