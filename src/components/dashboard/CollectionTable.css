@@ -1,4 +1,4 @@
-.collection-card { min-width: 0; overflow: hidden; padding: 20px 20px 18px; }
+.collection-card { min-width: 0; overflow: hidden; padding: 20px 20px 18px; background: transparent; border: 0; box-shadow: none; }
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .section-head h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
 .section-head > button { display: flex; align-items: center; gap: 5px; color: var(--blue-500); background: transparent; font-size: 12px; cursor: pointer; }
