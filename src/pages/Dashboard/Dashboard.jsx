@@ -292,30 +292,31 @@ export default function Dashboard() {
           >
             {overviewStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
           </DashboardSection>
+
+          <DashboardSection
+            id="stats-collection-target-heading"
+            title="Collection Target"
+            subtitle="Cycle-wise standing collection target"
+            columns="metric-grid-three"
+          >
+            {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          </DashboardSection>
         </div>
 
-        <aside className="dashboard-reference-quick" aria-label="Quick actions">
-          <QuickActions />
+        <aside className="dashboard-reference-side" aria-label="Dashboard shortcuts and risky customers">
+          <div className="dashboard-reference-quick" aria-label="Quick actions">
+            <QuickActions />
+          </div>
+          <RiskyOverdueCustomers />
         </aside>
       </div>
 
-      <DashboardSection
-        id="stats-collection-target-heading"
-        title="Collection Target"
-        subtitle="Cycle-wise standing collection target"
-        columns="metric-grid-three"
-      >
-        {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-      </DashboardSection>
-
-      <div className="dashboard-reference-summary-grid">
+      <div className="dashboard-reference-lower-grid">
+        <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
+          <CollectionTable />
+        </section>
         <CollectionSummary />
-        <RiskyOverdueCustomers />
       </div>
-
-      <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
-        <CollectionTable />
-      </section>
     </div>
   );
 }

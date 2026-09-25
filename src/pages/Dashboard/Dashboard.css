@@ -1746,3 +1746,87 @@ html[data-theme='dark'] .dashboard-reference-date {
     border-radius: 18px;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   2026-09-25 Home alignment update
+   - Collection Target stays inside the same left column as Overview.
+   - Risky Overdue sits directly below Quick Actions in the right rail.
+   - The earlier Collection Summary donut is restored beside Today's list.
+   -------------------------------------------------------------------------- */
+.dashboard-reference-side {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.dashboard-reference-side .dashboard-reference-quick {
+  padding-top: 0;
+  display: block;
+}
+
+.dashboard-reference-side .dashboard-reference-quick .quick-card {
+  height: auto;
+  min-height: 0;
+}
+
+.dashboard-reference-side > .risky-overdue-card {
+  width: 100%;
+  min-height: 420px;
+}
+
+.dashboard-reference-lower-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  gap: 16px;
+  align-items: start;
+}
+
+.dashboard-reference-lower-grid > .summary-card {
+  min-width: 0;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
+  box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
+}
+
+.dashboard-reference-lower-grid .dashboard-reference-collection-list {
+  min-width: 0;
+}
+
+/* The old summary-grid wrapper is no longer rendered. */
+.dashboard-reference-summary-grid {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-reference-side {
+    padding-top: 0;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card {
+    min-height: 0;
+  }
+
+  .dashboard-reference-lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-reference-lower-grid > .summary-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-reference-side,
+  .dashboard-reference-lower-grid {
+    gap: 12px;
+  }
+
+  .dashboard-reference-lower-grid > .summary-card {
+    border-radius: 18px;
+  }
+}
