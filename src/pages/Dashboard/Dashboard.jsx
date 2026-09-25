@@ -3,7 +3,6 @@ import {
   CircleDollarSign,
   Landmark,
   ReceiptText,
-  TrendingUp,
   UserRoundCheck,
   WalletCards,
   WalletMinimal,
@@ -269,13 +268,6 @@ export default function Dashboard() {
           <strong>{formatHeroDate(today)}</strong>
         </div>
 
-        <button type="button" className="dashboard-reference-growth" onClick={() => navigate('/reports')} aria-label="Open reports">
-          <span className="dashboard-reference-bars" aria-hidden="true">
-            <i></i><i></i><i></i><i></i>
-          </span>
-          <TrendingUp size={56} strokeWidth={1.8} aria-hidden="true" />
-          <small>View reports</small>
-        </button>
       </section>
 
       <div className="dashboard-reference-board">

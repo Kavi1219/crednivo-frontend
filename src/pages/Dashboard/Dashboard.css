@@ -1301,7 +1301,7 @@
   }
 
   .dashboard-quick-side .quick-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .dashboard-quick-side .quick-action:last-child:nth-child(odd) {
@@ -1372,8 +1372,7 @@
 }
 
 .dashboard-reference-welcome,
-.dashboard-reference-date,
-.dashboard-reference-growth {
+.dashboard-reference-date {
   position: relative;
   z-index: 1;
 }
@@ -1410,76 +1409,39 @@
 
 .dashboard-reference-date {
   justify-self: center;
-  min-width: 170px;
+  min-width: 210px;
   display: grid;
-  gap: 5px;
-  padding: 13px 18px;
-  border: 1px solid rgba(255, 255, 255, .34);
-  border-radius: 17px;
-  background: rgba(255, 255, 255, .90);
-  box-shadow: 0 10px 24px rgba(4, 42, 60, .18);
-  backdrop-filter: blur(8px);
+  gap: 7px;
+  padding: 15px 22px;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 22px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .08));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .34),
+    inset 0 -1px 0 rgba(255, 255, 255, .08),
+    0 14px 34px rgba(1, 34, 51, .24);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
   text-align: center;
 }
 
 .dashboard-reference-date span {
-  color: var(--ink-500);
-  font-size: 11px;
-  font-weight: 700;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0, 30, 45, .28);
 }
 
 .dashboard-reference-date strong {
-  color: var(--ink-900);
-  font-size: 14px;
-  font-weight: 850;
-}
-
-.dashboard-reference-growth {
-  justify-self: end;
-  width: 178px;
-  height: 112px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 20px;
   color: #ffffff;
-  background: transparent;
-  cursor: pointer;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 850;
+  letter-spacing: .015em;
+  text-shadow: 0 2px 10px rgba(0, 30, 45, .32);
 }
-
-.dashboard-reference-growth > svg {
-  display: none;
-}
-
-.dashboard-reference-growth small {
-  position: absolute;
-  right: 11px;
-  bottom: 5px;
-  color: rgba(255, 255, 255, .92);
-  font-size: 9px;
-  font-weight: 750;
-}
-
-.dashboard-reference-bars {
-  display: none;
-  position: absolute;
-  left: 17px;
-  bottom: 22px;
-  height: 62px;
-  align-items: end;
-  gap: 7px;
-  opacity: .72;
-}
-
-.dashboard-reference-bars i {
-  width: 10px;
-  border-radius: 999px 999px 4px 4px;
-  background: linear-gradient(180deg, #6bcba5, #4a91ff);
-}
-.dashboard-reference-bars i:nth-child(1) { height: 20px; }
-.dashboard-reference-bars i:nth-child(2) { height: 31px; }
-.dashboard-reference-bars i:nth-child(3) { height: 43px; }
-.dashboard-reference-bars i:nth-child(4) { height: 56px; }
 
 .dashboard-reference-board {
   display: grid;
@@ -1619,13 +1581,8 @@ html[data-theme='dark'] .dashboard-reference-hero {
 }
 
 html[data-theme='dark'] .dashboard-reference-date {
-  background: rgba(10, 28, 40, .78);
-  border-color: rgba(255, 255, 255, .18);
-}
-
-html[data-theme='dark'] .dashboard-reference-date span,
-html[data-theme='dark'] .dashboard-reference-date strong {
-  color: #ffffff;
+  background: linear-gradient(145deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .06));
+  border-color: rgba(255, 255, 255, .30);
 }
 
 @media (max-width: 1180px) {
@@ -1638,7 +1595,7 @@ html[data-theme='dark'] .dashboard-reference-date strong {
   }
 
   .dashboard-reference-quick .quick-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .dashboard-reference-quick .quick-action {
@@ -1653,10 +1610,6 @@ html[data-theme='dark'] .dashboard-reference-date strong {
 
   .dashboard-reference-date {
     justify-self: end;
-  }
-
-  .dashboard-reference-growth {
-    display: none;
   }
 
   .dashboard-reference-section .metric-grid-four {
@@ -1692,9 +1645,12 @@ html[data-theme='dark'] .dashboard-reference-date strong {
     text-align: left;
   }
 
-  .dashboard-reference-date span,
+  .dashboard-reference-date span {
+    font-size: 10px;
+  }
+
   .dashboard-reference-date strong {
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .dashboard-reference-section {

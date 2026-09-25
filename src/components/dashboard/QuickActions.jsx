@@ -1,4 +1,4 @@
-import { HandCoins, History, ReceiptText, UserPlus, WalletCards } from 'lucide-react';
+import { BarChart3, HandCoins, History, ReceiptText, UserPlus, WalletCards } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +11,7 @@ const actions = [
   ['Add Collection', '/collection?focus=search', HandCoins, 'green', 'collections.collect'],
   ['Add Expense', null, ReceiptText, 'pink', 'expenses.add'],
   ['Payment History', '/payments', History, 'orange', 'payments.view'],
+  ['View Reports', '/reports', BarChart3, 'purple', 'reports.full'],
 ];
 
 export default function QuickActions() {
