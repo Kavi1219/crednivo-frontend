@@ -1830,3 +1830,65 @@ html[data-theme='dark'] .dashboard-reference-date {
     border-radius: 18px;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   2026-09-25 Home rail alignment fix
+   - Keep the lower collection content in the left/main column so the right
+     rail can never create a large blank gap below Collection Target.
+   - Risky Overdue has a bounded height; its rows scroll inside the card.
+   -------------------------------------------------------------------------- */
+.dashboard-reference-main > .dashboard-reference-lower-grid {
+  margin-top: 2px;
+}
+
+.dashboard-reference-side {
+  align-self: start;
+}
+
+.dashboard-reference-side > .risky-overdue-card {
+  height: 360px;
+  min-height: 0;
+  max-height: 360px;
+  overflow: hidden;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-500) 30%, transparent);
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink-500) 48%, transparent);
+}
+
+@media (max-width: 1180px) {
+  .dashboard-reference-side > .risky-overdue-card {
+    height: 360px;
+    max-height: 360px;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-reference-side > .risky-overdue-card {
+    height: 330px;
+    max-height: 330px;
+  }
+}

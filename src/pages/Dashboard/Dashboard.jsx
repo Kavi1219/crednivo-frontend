@@ -301,6 +301,13 @@ export default function Dashboard() {
           >
             {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
           </DashboardSection>
+
+          <div className="dashboard-reference-lower-grid">
+            <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
+              <CollectionTable />
+            </section>
+            <CollectionSummary />
+          </div>
         </div>
 
         <aside className="dashboard-reference-side" aria-label="Dashboard shortcuts and risky customers">
@@ -309,13 +316,6 @@ export default function Dashboard() {
           </div>
           <RiskyOverdueCustomers />
         </aside>
-      </div>
-
-      <div className="dashboard-reference-lower-grid">
-        <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
-          <CollectionTable />
-        </section>
-        <CollectionSummary />
       </div>
     </div>
   );
