@@ -1350,9 +1350,12 @@
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--blue-500) 14%, var(--line));
   border-radius: 24px;
-  background:
-    radial-gradient(circle at 88% 20%, rgba(51, 145, 255, .13), transparent 28%),
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 98%, #fff), color-mix(in srgb, var(--blue-100) 32%, var(--surface)));
+  background-image:
+    linear-gradient(90deg, rgba(4, 46, 67, .82) 0%, rgba(4, 46, 67, .64) 34%, rgba(4, 46, 67, .20) 62%, rgba(4, 46, 67, .04) 100%),
+    url('../../assets/crednivo-growth-banner.jpg');
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
   box-shadow: 0 16px 42px rgba(20, 61, 112, .08);
 }
 
@@ -1384,7 +1387,7 @@
 
 .dashboard-reference-kicker {
   width: fit-content;
-  color: var(--blue-600);
+  color: rgba(255, 255, 255, .86);
   font-size: 9px;
   font-weight: 850;
   letter-spacing: .18em;
@@ -1392,7 +1395,7 @@
 
 .dashboard-reference-welcome h2 {
   margin: 0;
-  color: var(--ink-950);
+  color: #ffffff;
   font-size: clamp(25px, 2.6vw, 36px);
   line-height: 1.08;
   letter-spacing: -.025em;
@@ -1400,7 +1403,7 @@
 
 .dashboard-reference-welcome p {
   margin: 2px 0 0;
-  color: var(--ink-500);
+  color: rgba(255, 255, 255, .82);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1411,10 +1414,11 @@
   display: grid;
   gap: 5px;
   padding: 13px 18px;
-  border: 1px solid color-mix(in srgb, var(--blue-500) 11%, var(--line));
+  border: 1px solid rgba(255, 255, 255, .34);
   border-radius: 17px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  box-shadow: 0 10px 24px rgba(38, 82, 139, .06);
+  background: rgba(255, 255, 255, .90);
+  box-shadow: 0 10px 24px rgba(4, 42, 60, .18);
+  backdrop-filter: blur(8px);
   text-align: center;
 }
 
@@ -1438,33 +1442,30 @@
   place-items: center;
   border: 0;
   border-radius: 20px;
-  color: var(--blue-600);
+  color: #ffffff;
   background: transparent;
   cursor: pointer;
 }
 
 .dashboard-reference-growth > svg {
-  position: relative;
-  z-index: 2;
-  transform: translate(13px, -3px);
-  filter: drop-shadow(0 8px 12px rgba(38, 126, 236, .17));
+  display: none;
 }
 
 .dashboard-reference-growth small {
   position: absolute;
   right: 11px;
   bottom: 5px;
-  color: var(--ink-500);
+  color: rgba(255, 255, 255, .92);
   font-size: 9px;
   font-weight: 750;
 }
 
 .dashboard-reference-bars {
+  display: none;
   position: absolute;
   left: 17px;
   bottom: 22px;
   height: 62px;
-  display: flex;
   align-items: end;
   gap: 7px;
   opacity: .72;
@@ -1609,13 +1610,22 @@
 }
 
 html[data-theme='dark'] .dashboard-reference-hero {
-  background:
-    radial-gradient(circle at 88% 20%, rgba(55, 137, 240, .12), transparent 28%),
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 95%, #101a28), color-mix(in srgb, var(--blue-100) 18%, var(--surface)));
+  background-image:
+    linear-gradient(90deg, rgba(2, 24, 36, .88) 0%, rgba(2, 24, 36, .68) 36%, rgba(2, 24, 36, .24) 64%, rgba(2, 24, 36, .08) 100%),
+    url('../../assets/crednivo-growth-banner.jpg');
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
 }
 
 html[data-theme='dark'] .dashboard-reference-date {
-  background: color-mix(in srgb, var(--surface) 95%, #101a28);
+  background: rgba(10, 28, 40, .78);
+  border-color: rgba(255, 255, 255, .18);
+}
+
+html[data-theme='dark'] .dashboard-reference-date span,
+html[data-theme='dark'] .dashboard-reference-date strong {
+  color: #ffffff;
 }
 
 @media (max-width: 1180px) {
@@ -1665,6 +1675,7 @@ html[data-theme='dark'] .dashboard-reference-date {
     gap: 13px;
     padding: 17px;
     border-radius: 19px;
+    background-position: 72% center;
   }
 
   .dashboard-reference-welcome h2 {
