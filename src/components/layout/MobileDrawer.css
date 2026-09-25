@@ -34,7 +34,7 @@
   .drawer-head button { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; color: var(--ink-700); background: var(--surface-soft); }
   .mobile-drawer nav { margin-top: 14px; display: grid; gap: 4px; }
   .mobile-drawer nav a { min-height: 48px; display: flex; align-items: center; gap: 13px; padding: 0 13px; border-radius: 999px; color: var(--ink-600); }
-  .mobile-drawer nav a.active { background: var(--blue-600); color: #fff; font-weight: 800; }
+  .mobile-drawer nav a.active { background: linear-gradient(90deg, #027a99, #24a8bb); color: #fff; font-weight: 800; }
 }
 
 /* Phase 2.25 - Drawer branding */
