@@ -274,48 +274,49 @@ export default function Dashboard() {
       </section>
 
       <div className="dashboard-reference-board">
-        <DashboardSection
-          id="stats-today-heading"
-          title="Today's Collection"
-          subtitle="Your collection activity for today"
-          columns="metric-grid-three"
-          className="dashboard-reference-today"
-        >
-          {todayStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-        </DashboardSection>
+        <main className="dashboard-reference-main">
+          <DashboardSection
+            id="stats-today-heading"
+            title="Today's Collection"
+            subtitle="Your collection activity for today"
+            columns="metric-grid-three"
+            className="dashboard-reference-today"
+          >
+            {todayStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          </DashboardSection>
 
-        <aside className="dashboard-reference-quick" aria-label="Quick actions">
-          <QuickActions />
-        </aside>
+          <DashboardSection
+            id="stats-overview-heading"
+            title="Overview"
+            subtitle="Key metrics for your lending business"
+            columns="metric-grid-four"
+            className="dashboard-reference-overview"
+          >
+            {overviewStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          </DashboardSection>
 
-        <DashboardSection
-          id="stats-overview-heading"
-          title="Overview"
-          subtitle="Key metrics for your lending business"
-          columns="metric-grid-four"
-          className="dashboard-reference-overview"
-        >
-          {overviewStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-        </DashboardSection>
+          <DashboardSection
+            id="stats-collection-target-heading"
+            title="Collection Target"
+            subtitle="Cycle-wise standing collection target"
+            columns="metric-grid-three"
+            className="dashboard-reference-target"
+          >
+            {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          </DashboardSection>
 
-        <DashboardSection
-          id="stats-collection-target-heading"
-          title="Collection Target"
-          subtitle="Cycle-wise standing collection target"
-          columns="metric-grid-three"
-          className="dashboard-reference-target"
-        >
-          {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
-        </DashboardSection>
+          <div className="dashboard-reference-lower-grid">
+            <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
+              <CollectionTable />
+            </section>
+            <CollectionSummary />
+          </div>
+        </main>
 
-        <div className="dashboard-reference-lower-grid">
-          <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
-            <CollectionTable />
-          </section>
-          <CollectionSummary />
-        </div>
-
-        <aside className="dashboard-reference-risky-slot" aria-label="Risky overdue customers">
+        <aside className="dashboard-reference-side" aria-label="Home quick access and risky overdue customers">
+          <div className="dashboard-reference-quick" aria-label="Quick actions">
+            <QuickActions />
+          </div>
           <RiskyOverdueCustomers />
         </aside>
       </div>
