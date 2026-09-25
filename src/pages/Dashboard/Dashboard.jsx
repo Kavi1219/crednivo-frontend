@@ -8,7 +8,10 @@ import {
   WalletMinimal,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CollectionSummary from '../../components/dashboard/CollectionSummary';
+import CollectionTable from '../../components/dashboard/CollectionTable';
 import QuickActions from '../../components/dashboard/QuickActions';
+import RiskyOverdueCustomers from '../../components/dashboard/RiskyOverdueCustomers';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, toInputDate } from '../../utils/finance';
@@ -304,6 +307,15 @@ export default function Dashboard() {
       >
         {targetStats.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
       </DashboardSection>
+
+      <div className="dashboard-reference-summary-grid">
+        <CollectionSummary />
+        <RiskyOverdueCustomers />
+      </div>
+
+      <section className="dashboard-reference-collection-list" aria-label="Today's collection list">
+        <CollectionTable />
+      </section>
     </div>
   );
 }
