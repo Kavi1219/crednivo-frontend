@@ -2182,3 +2182,60 @@ html[data-theme='dark'] .dashboard-reference-date {
   }
 }
 
+
+/* --------------------------------------------------------------------------
+   FE20 — Risky Overdue viewport
+   Keep Quick Actions above the risky list, but do not stretch the risky card
+   to the entire dashboard height. The card is sized by its header + 8 rows;
+   additional customers scroll inside the list.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1181px) {
+  .dashboard-reference-side {
+    height: auto;
+    align-self: start;
+    grid-template-rows: auto auto;
+    align-content: start;
+    overflow: visible;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    align-self: start;
+    overflow: hidden;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+    flex: 0 0 auto;
+    height: calc((62px * 8) + (8px * 7));
+    max-height: calc((62px * 8) + (8px * 7));
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 1180px) {
+  .dashboard-reference-side > .risky-overdue-card {
+    height: auto;
+    max-height: none;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+    height: calc((62px * 8) + (8px * 7));
+    max-height: calc((62px * 8) + (8px * 7));
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-reference-side > .risky-overdue-card {
+    height: auto;
+    max-height: none;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+    height: calc((60px * 8) + (8px * 7));
+    max-height: calc((60px * 8) + (8px * 7));
+  }
+}

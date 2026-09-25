@@ -185,3 +185,32 @@
   border-radius: 999px;
 }
 
+
+/* FE20: show exactly eight risky-customer rows in the visible viewport.
+   Any remaining customers stay inside this card and are reached by scrolling. */
+.risky-overdue-list {
+  --risky-visible-row-height: 62px;
+  --risky-visible-row-gap: 8px;
+  flex: 0 0 auto;
+  height: calc((var(--risky-visible-row-height) * 8) + (var(--risky-visible-row-gap) * 7));
+  max-height: calc((var(--risky-visible-row-height) * 8) + (var(--risky-visible-row-gap) * 7));
+  gap: var(--risky-visible-row-gap);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+.risky-overdue-row {
+  height: var(--risky-visible-row-height);
+  min-height: var(--risky-visible-row-height);
+}
+
+@media (max-width: 767px) {
+  .risky-overdue-list {
+    --risky-visible-row-height: 60px;
+    height: calc((var(--risky-visible-row-height) * 8) + (var(--risky-visible-row-gap) * 7));
+    max-height: calc((var(--risky-visible-row-height) * 8) + (var(--risky-visible-row-gap) * 7));
+  }
+}
