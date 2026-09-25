@@ -81,9 +81,11 @@ function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, ton
             <strong>{value}</strong>
             <p>{title}</p>
             <div className="home-metric-trend-row compact">
-              <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
-                {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend || 0))}%
-              </span>
+              {trend !== null && trend !== undefined && (
+                <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
+                  {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend))}%
+                </span>
+              )}
               <small>{trendLabel || note}</small>
             </div>
           </div>
@@ -102,9 +104,11 @@ function HomeMetricCard({ title, value, note, trend, trendLabel, icon: Icon, ton
               <p>{title}</p>
               <strong>{value}</strong>
               <div className="home-metric-trend-row">
-                <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
-                  {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend || 0))}%
-                </span>
+                {trend !== null && trend !== undefined && (
+                  <span className={`home-metric-trend ${trend < 0 ? 'is-down' : 'is-up'}`}>
+                    {trend < 0 ? '↓' : '↑'} {Math.abs(Number(trend))}%
+                  </span>
+                )}
                 <small>{trendLabel || note}</small>
               </div>
             </div>
@@ -125,10 +129,10 @@ export default function Dashboard() {
   const { hasPermission, user } = useAuth();
   const navigate = useNavigate();
   const today = toInputDate();
-
-  const collectionProgress = metrics.expected > 0
-    ? Math.min(100, Math.max(0, (metrics.collected / metrics.expected) * 100))
-    : 0;
+  const currentWeekDay = (() => {
+    const [year, month, day] = today.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('en-IN', { weekday: 'long' });
+  })();
 
   const todayRemainingRows = (collections || []).filter((item) => {
     if (item.date !== today) return false;
@@ -139,9 +143,54 @@ export default function Dashboard() {
     0,
   );
   const todayRemainingCustomers = new Set(todayRemainingRows.map((item) => item.customerId)).size;
+  const totalExpenses = (expenses || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+  // Real day-over-day comparisons — computed the same way for both days so
+  // the comparison is apples-to-apples, not mixed with a backend aggregate.
+  const yesterday = subtractDays(today, 1);
+  const collectedOn = (dateKey) => (payments || [])
+    .filter((item) => item.date === dateKey && item.direction === 'in' && (item.type === 'Collection' || item.type === 'Document Charge'))
+    .reduce((sum, item) => sum + Number(item.collectionAmount ?? item.amount ?? 0), 0);
+  const expensesOn = (dateKey) => (expenses || [])
+    .filter((item) => item.date === dateKey)
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const dueOn = (dateKey) => (collections || [])
+    .filter((item) => item.date === dateKey && String(item.status || '').toLowerCase() !== 'cancelled')
+    .reduce((sum, item) => sum + Number(item.dueAmount || 0), 0);
+
+  const dayTrend = (todayValue, yesterdayValue) => {
+    if (yesterdayValue <= 0) return null;
+    return Math.round(((todayValue - yesterdayValue) / yesterdayValue) * 100);
+  };
+
+  const collectedTodayAmount = collectedOn(today);
+  const collectedTrend = dayTrend(collectedTodayAmount, collectedOn(yesterday));
+  const expensesTrend = dayTrend(expensesOn(today), expensesOn(yesterday));
+  const dueTodayTrend = dayTrend(dueOn(today), dueOn(yesterday));
+
+  // Real month-over-month comparisons — same "as of end of last month"
+  // cutoff pattern already used on the Loans page.
+  const lastMonthCutoffDate = new Date();
+  lastMonthCutoffDate.setDate(1);
+  lastMonthCutoffDate.setDate(0);
+  const lastMonthCutoff = toInputDate(lastMonthCutoffDate);
+  const monthTrend = (currentValue, list, predicate) => {
+    const asOfLastMonth = predicate(list.filter((item) => String(item.date || item.startDate || '').slice(0, 10) <= lastMonthCutoff));
+    if (asOfLastMonth <= 0) return null;
+    return Math.round(((currentValue - asOfLastMonth) / asOfLastMonth) * 100);
+  };
+  const activeLoansTrend = monthTrend(
+    metrics.activeLoans || 0,
+    loans || [],
+    (list) => list.filter((l) => l.status !== 'Closed').length,
+  );
+  const totalExpensesTrend = monthTrend(
+    totalExpenses,
+    expenses || [],
+    (list) => list.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+  );
 
   const canViewCapital = hasPermission('capital.view');
-  const totalExpenses = (expenses || []).reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
   const cycleTargets = calculateCycleTargets(loans);
   const dailyTarget = cycleTargets.daily;
@@ -153,7 +202,7 @@ export default function Dashboard() {
       title: "Today's Collection",
       value: formatCurrency(todayRemainingAmount),
       note: `${todayRemainingCustomers} customers pending today`,
-      trend: 18,
+      trend: dueTodayTrend,
       trendLabel: 'vs yesterday',
       icon: WalletCards,
       tone: 'green',
@@ -161,9 +210,9 @@ export default function Dashboard() {
     },
     {
       title: 'Collected Today',
-      value: formatCurrency(metrics.collected),
+      value: formatCurrency(collectedTodayAmount),
       note: 'Actual collections received',
-      trend: collectionProgress > 0 ? Math.round(collectionProgress) : 12,
+      trend: collectedTrend,
       trendLabel: 'vs yesterday',
       icon: WalletMinimal,
       tone: 'blue',
@@ -173,7 +222,7 @@ export default function Dashboard() {
       title: "Today's Expenses",
       value: formatCurrency(metrics.todayExpenses),
       note: 'Business expenses',
-      trend: -6,
+      trend: expensesTrend,
       trendLabel: 'vs yesterday',
       icon: ReceiptText,
       tone: 'pink',
@@ -186,8 +235,8 @@ export default function Dashboard() {
       title: 'Available Capital',
       value: formatCurrency(metrics.availableCapital ?? capitalMetrics.availableCapital),
       note: capitalMetrics.entries ? 'Cash available for lending' : 'Add opening investment',
-      trend: 8,
-      trendLabel: 'vs last month',
+      trend: null,
+      trendLabel: 'Current business cash',
       icon: Landmark,
       tone: 'purple',
       onClick: () => navigate('/capital'),
@@ -196,7 +245,7 @@ export default function Dashboard() {
       title: 'Active Loans',
       value: String(metrics.activeLoans || 0),
       note: 'Currently active loans',
-      trend: 12,
+      trend: activeLoansTrend,
       trendLabel: 'vs last month',
       icon: UserRoundCheck,
       tone: 'blue',
@@ -206,8 +255,8 @@ export default function Dashboard() {
       title: 'Pending Amount',
       value: formatCurrency(metrics.pendingOverdue),
       note: `${formatCurrency(metrics.pending)} due today · ${formatCurrency(metrics.overdue)} overdue`,
-      trend: 15,
-      trendLabel: 'vs last month',
+      trend: null,
+      trendLabel: `${formatCurrency(metrics.pending)} due today`,
       icon: CircleDollarSign,
       tone: 'orange',
       onClick: () => navigate('/collection?view=overdue'),
@@ -216,7 +265,7 @@ export default function Dashboard() {
       title: 'Total Expenses',
       value: formatCurrency(totalExpenses),
       note: 'All recorded expenses',
-      trend: -10,
+      trend: totalExpensesTrend,
       trendLabel: 'vs last month',
       icon: ReceiptText,
       tone: 'red',
@@ -229,8 +278,8 @@ export default function Dashboard() {
       title: 'Daily Target',
       value: `${formatCurrency(dailyTarget.amount)} / ${dailyTarget.customerCount}`,
       note: `${dailyTarget.customerCount} daily customers`,
-      trend: 10,
-      trendLabel: 'cycle target',
+      trend: null,
+      trendLabel: `${dailyTarget.customerCount} daily customers`,
       icon: WalletCards,
       tone: 'blue',
       onClick: () => navigate('/customers/daily'),
@@ -239,8 +288,8 @@ export default function Dashboard() {
       title: 'Weekly Target',
       value: `${formatCurrency(weeklyTarget.amount)} / ${weeklyTarget.customerCount}`,
       note: `${weeklyTarget.customerCount} weekly customers`,
-      trend: 10,
-      trendLabel: 'cycle target',
+      trend: null,
+      trendLabel: `${weeklyTarget.customerCount} weekly customers`,
       icon: WalletCards,
       tone: 'green',
       onClick: () => navigate('/customers/weekly'),
@@ -249,8 +298,8 @@ export default function Dashboard() {
       title: 'Monthly Target',
       value: `${formatCurrency(monthlyTarget.amount)} / ${monthlyTarget.customerCount}`,
       note: `${monthlyTarget.customerCount} monthly customers`,
-      trend: 10,
-      trendLabel: 'cycle target',
+      trend: null,
+      trendLabel: `${monthlyTarget.customerCount} monthly customers`,
       icon: WalletCards,
       tone: 'purple',
       onClick: () => navigate('/customers/monthly'),
@@ -351,7 +400,7 @@ export default function Dashboard() {
               <h2 id="stats-today-heading" className="stats-section-title">Today&apos;s Collection</h2>
               <p>Your collection activity for today</p>
             </div>
-            <button type="button" className="section-chip-button">Today</button>
+            <button type="button" className="section-chip-button">{currentWeekDay}</button>
           </div>
           <div className="home-metric-grid metric-grid-three">
             {dashboardStatsToday.map((stat) => <HomeMetricCard key={stat.title} {...stat} variant="compact" />)}
@@ -371,7 +420,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="home-metric-grid metric-grid-four">
-          {dashboardStatsBusiness.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          {dashboardStatsBusiness.map((stat) => <HomeMetricCard key={stat.title} {...stat} variant="compact" />)}
         </div>
       </section>
 
@@ -383,7 +432,7 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="home-metric-grid metric-grid-three">
-          {dashboardStatsTarget.map((stat) => <HomeMetricCard key={stat.title} {...stat} />)}
+          {dashboardStatsTarget.map((stat) => <HomeMetricCard key={stat.title} {...stat} variant="compact" />)}
         </div>
       </section>
 
