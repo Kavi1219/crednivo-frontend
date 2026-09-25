@@ -3,6 +3,24 @@
   gap: 20px;
 }
 
+.dashboard-growth-banner {
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  line-height: 0;
+}
+.dashboard-growth-banner img {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-height: 220px;
+  object-fit: cover;
+}
+@media (max-width: 767px) {
+  .dashboard-growth-banner { border-radius: 16px; }
+  .dashboard-growth-banner img { max-height: 130px; }
+}
+
 .dashboard-premium-page {
   padding-bottom: 8px;
 }

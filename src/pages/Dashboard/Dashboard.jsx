@@ -17,6 +17,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import { calculateCycleTargets } from '../../utils/collectionTargets';
+import growthBanner from '../../assets/crednivo-growth-banner.jpg';
 import './Dashboard.css';
 
 const TREND_DAYS = 7;
@@ -515,6 +516,9 @@ export default function Dashboard() {
         </article>
       </section>
 
+      <div className="dashboard-growth-banner">
+        <img src={growthBanner} alt="Grow your lending business with Crednivo" loading="lazy" />
+      </div>
     </div>
   );
 }
