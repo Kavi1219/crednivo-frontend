@@ -23,3 +23,10 @@
   outline: 1px solid color-mix(in srgb, currentColor 32%, transparent);
   outline-offset: 2px;
 }
+
+/* Global customer-profile interaction: the surrounding row/card is clickable
+   without adding any visible card, border, underline, or background. */
+.customer-profile-click-surface {
+  cursor: pointer;
+}
+

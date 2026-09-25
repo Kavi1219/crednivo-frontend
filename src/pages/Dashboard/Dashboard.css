@@ -2077,3 +2077,108 @@ html[data-theme='dark'] .dashboard-reference-date {
     max-height: 330px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   2026-09-25 Home refinement (FE19)
+   - Remove the small WELCOME kicker.
+   - Date/day are text-only, moved slightly upward, with an elegant serif face.
+   - Right rail remains bounded to the left dashboard content; risky rows scroll.
+   -------------------------------------------------------------------------- */
+.dashboard-reference-welcome {
+  gap: 7px;
+}
+
+.dashboard-reference-welcome p {
+  max-width: 620px;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.dashboard-reference-date {
+  min-width: 0;
+  padding: 0;
+  gap: 5px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: translateY(-13px);
+}
+
+.dashboard-reference-date span,
+.dashboard-reference-date strong {
+  font-family: Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  color: #ffffff;
+}
+
+.dashboard-reference-date span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+
+.dashboard-reference-date strong {
+  font-size: 20px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: .025em;
+}
+
+html[data-theme='dark'] .dashboard-reference-date {
+  background: transparent;
+  border-color: transparent;
+}
+
+@media (min-width: 1181px) {
+  .dashboard-reference-board {
+    align-items: stretch;
+  }
+
+  .dashboard-reference-side {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+    min-height: 0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-reference-date {
+    justify-self: end;
+    width: fit-content;
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+    padding: 0;
+    transform: translateY(-4px);
+    text-align: right;
+  }
+
+  .dashboard-reference-date span {
+    font-size: 9px;
+  }
+
+  .dashboard-reference-date strong {
+    font-size: 14px;
+  }
+
+  .dashboard-reference-welcome p {
+    font-size: 10.5px;
+  }
+}
+

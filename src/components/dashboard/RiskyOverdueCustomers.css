@@ -161,3 +161,27 @@
     font-size: 9.5px;
   }
 }
+
+/* FE19: keep this panel bounded by the Home right rail and always expose
+   a vertical scroll track for long risky-customer lists. */
+.risky-overdue-list {
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+.risky-overdue-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.risky-overdue-list::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--surface-soft) 80%, transparent);
+  border-radius: 999px;
+}
+
+.risky-overdue-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-500) 42%, transparent);
+  border-radius: 999px;
+}
+

@@ -187,6 +187,11 @@ export default function CollectionTable() {
     return new Date(year, month - 1, day).toLocaleDateString('en-IN', { weekday: 'long' });
   }, [today]);
 
+  const getHomeStatus = (row) => {
+    if (Number(row?.rescheduleCount || 0) > 0 && String(row?.date || '').slice(0, 10) === today) return 'Re-Scl';
+    return String(row?.status || '').trim().toLowerCase() === 'due today' ? 'Today' : row?.status || 'Today';
+  };
+
   const buildExportPayload = () => ({
     date: today,
     createdBy: user?.displayName || company?.owner || 'Admin',
@@ -270,7 +275,7 @@ export default function CollectionTable() {
       <div className="section-head collection-home-head">
         <h2>Today's Collection</h2>
         <div className="collection-home-head-actions">
-          <span className="collection-weekday"><CalendarDays size={15} />{currentWeekDay}</span>
+          <span className="collection-weekday">{currentWeekDay}</span>
           <div className="collection-download-menu">
             <button
               type="button"
@@ -315,9 +320,9 @@ export default function CollectionTable() {
                     <table className="collection-table">
                       <thead>
                         <tr>
-                          <th>Customer Name</th>
-                          <th>Phone Number</th>
-                          <th>Amount to Pay</th>
+                          <th>Customer</th>
+                          <th>Contact</th>
+                          <th>Due</th>
                           <th>Status</th>
                           <th className="collection-action-heading">Action</th>
                         </tr>
@@ -340,7 +345,7 @@ export default function CollectionTable() {
                               </td>
                               <td>{customerPhoneById[String(row.customerId)] || '—'}</td>
                               <td><strong>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</strong></td>
-                              <td><StatusBadge status={row.status} /></td>
+                              <td><StatusBadge status={getHomeStatus(row)} /></td>
                               <td className="collection-action-cell">
                                 <div className="dashboard-collection-actions icon-actions">
                                   <button type="button" className="dashboard-reschedule-button icon-only" onClick={() => openReschedule(row)} disabled={loanClosed} aria-label={`Reschedule ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Reschedule ${row.customerName}`}>
@@ -367,7 +372,7 @@ export default function CollectionTable() {
                         <article className="mobile-collection-row" key={row.id}>
                           <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
                           <div className="mobile-row-identity"><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId} · {customerPhoneById[String(row.customerId)] || '—'}</span></div>
-                          <div className="mobile-row-amount"><b>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b><StatusBadge status={row.status} /></div>
+                          <div className="mobile-row-amount"><b>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b><StatusBadge status={getHomeStatus(row)} /></div>
                           <div className="mobile-collection-actions">
                             <button type="button" className="dashboard-reschedule-button icon-only" onClick={() => openReschedule(row)} disabled={loanClosed} aria-label={`Reschedule ${row.customerName}`} title="Reschedule"><CalendarDays size={16} /></button>
                             <button className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} aria-label={loanClosed ? `${row.customerName} loan closed` : `Collect from ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Collect from ${row.customerName}`}><HandCoins size={15} /></button>

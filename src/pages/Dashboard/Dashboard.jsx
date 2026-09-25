@@ -7,6 +7,7 @@ import {
   WalletCards,
   WalletMinimal,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CollectionSummary from '../../components/dashboard/CollectionSummary';
 import CollectionTable from '../../components/dashboard/CollectionTable';
@@ -17,6 +18,47 @@ import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, toInputDate } from '../../utils/finance';
 import { calculateCycleTargets } from '../../utils/collectionTargets';
 import './Dashboard.css';
+
+
+const DAILY_MOTIVATIONS = [
+  'Small collections today build stronger growth tomorrow.',
+  'Consistency turns daily effort into lasting progress.',
+  'Every follow-up matters. Every collection moves you forward.',
+  'Strong habits create stronger business results.',
+  'Stay focused, stay consistent, and let progress compound.',
+  'A disciplined day today creates an easier tomorrow.',
+  'Keep the cash flow moving and the goals growing.',
+  'Progress is built one customer, one collection, one day at a time.',
+  'Clear goals and steady action create reliable growth.',
+  'Every well-managed day strengthens the business.',
+  'Good decisions today become stronger numbers tomorrow.',
+  'Keep moving forward — steady progress wins.',
+  'Plan clearly, collect consistently, grow confidently.',
+  'Small wins repeated daily create big results.',
+  'Stay consistent with the process and growth will follow.',
+  'Today is another opportunity to strengthen the business.',
+  'Focus on the next right action and keep building.',
+  'Reliable collections create reliable growth.',
+  'Discipline in the details creates strength in the numbers.',
+  'Make today productive, precise, and profitable.',
+  'Every completed collection is progress you can measure.',
+  'Strong businesses are built through consistent daily action.',
+  'Keep the momentum — every step counts.',
+  'A focused day is a step toward a stronger future.',
+  'Consistency is the bridge between targets and results.',
+  'Work the plan today and let the numbers follow.',
+  'Keep improving the process, one day at a time.',
+  'Steady collections create room for bigger opportunities.',
+  'Stay disciplined today and growth becomes repeatable.',
+  'Every day is a fresh chance to move the business forward.',
+  'Build trust, collect smart, and keep growing.',
+];
+
+function getDailyMotivation(dateString) {
+  const [year, month, day] = String(dateString).split('-').map(Number);
+  const serialDay = Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
+  return DAILY_MOTIVATIONS[Math.abs(serialDay) % DAILY_MOTIVATIONS.length];
+}
 
 function subtractDays(dateString, days) {
   const [year, month, day] = String(dateString).split('-').map(Number);
@@ -91,7 +133,26 @@ export default function Dashboard() {
   const { metrics, capitalMetrics, collections, loans, expenses, payments, company } = useCrednivo();
   const { hasPermission, user } = useAuth();
   const navigate = useNavigate();
-  const today = toInputDate();
+  const [today, setToday] = useState(() => toInputDate());
+
+  useEffect(() => {
+    let midnightTimer;
+
+    const scheduleNextMidnight = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 120);
+      midnightTimer = window.setTimeout(() => {
+        setToday(toInputDate());
+        scheduleNextMidnight();
+      }, Math.max(1000, nextMidnight.getTime() - now.getTime()));
+    };
+
+    scheduleNextMidnight();
+    return () => window.clearTimeout(midnightTimer);
+  }, []);
+
+  const dailyMotivation = useMemo(() => getDailyMotivation(today), [today]);
   const yesterday = subtractDays(today, 1);
 
   const todayRemainingRows = (collections || []).filter((item) => {
@@ -261,9 +322,8 @@ export default function Dashboard() {
     <div className="dashboard-page dashboard-reference-page">
       <section className="dashboard-reference-hero app-card">
         <div className="dashboard-reference-welcome">
-          <span className="dashboard-reference-kicker">WELCOME</span>
           <h2>Welcome, {welcomeName}</h2>
-          <p>Your finance overview at a glance.</p>
+          <p>{dailyMotivation}</p>
         </div>
 
         <div className="dashboard-reference-date" aria-label={`${formatHeroDay(today)}, ${formatHeroDate(today)}`}>

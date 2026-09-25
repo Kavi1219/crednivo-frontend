@@ -664,3 +664,41 @@ html[data-theme='dark'] .dashboard-pay-modal { background: var(--surface); borde
     font-size: 9px;
   }
 }
+
+/* --------------------------------------------------------------------------
+   2026-09-25 Today's Collection refinement (FE19)
+   - Weekday is plain text: no calendar icon, pill, border, or background.
+   - Compact column labels and status labels for the Home table.
+   -------------------------------------------------------------------------- */
+.collection-weekday {
+  min-height: auto;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-800);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.status-badge.status-today {
+  color: #11843a;
+  background: #e4f7e9;
+  border-color: #bfe8ca;
+}
+
+.status-badge.status-re-scl {
+  color: #1b63c9;
+  background: #e7f0ff;
+  border-color: #c5d9ff;
+}
+
+@media (max-width: 767px) {
+  .collection-weekday {
+    min-height: auto;
+    padding: 0;
+    font-size: 10px;
+  }
+}
+
