@@ -15,8 +15,12 @@ import './styles/responsive.css';
 // page-specific route on the error screen.
 if (typeof window !== 'undefined') {
   window.addEventListener('vite:preloadError', (event) => {
-    event.preventDefault();
-    recoverFromStaleChunk(event?.payload || event);
+    // Only swallow the error when we are actually reloading. Calling
+    // preventDefault() without reloading makes the page import resolve to
+    // "undefined", which surfaced as the confusing
+    // "Cannot read properties of undefined (reading 'default')" screen.
+    // Letting it through shows the real reason (e.g. which file failed).
+    if (recoverFromStaleChunk(event?.payload || event)) event.preventDefault();
   });
 }
 

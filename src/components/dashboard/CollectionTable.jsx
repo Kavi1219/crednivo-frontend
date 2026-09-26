@@ -370,9 +370,10 @@ export default function CollectionTable() {
                       const loanClosed = !loan || String(loan.status || '').trim().toUpperCase() === 'CLOSED' || isPrecloseMarker(loan.status) || Number(loan.outstanding) <= 0;
                       return (
                         <article className="mobile-collection-row" key={row.id}>
-                          <CustomerAvatar className="dashboard-customer-avatar" photo={customerPhotoById[String(row.customerId)]} name={row.customerName} />
-                          <div className="mobile-row-identity"><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{row.customerId} · {customerPhoneById[String(row.customerId)] || '—'}</span></div>
-                          <div className="mobile-row-amount"><b>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b><StatusBadge status={getHomeStatus(row)} /></div>
+                          {/* Phone card: name, phone, amount, reschedule, collect.
+                              No photo, customer ID or status chip here — desktop table keeps them. */}
+                          <div className="mobile-row-identity"><strong><CustomerProfileLink customerId={row.customerId}>{row.customerName}</CustomerProfileLink></strong><span>{customerPhoneById[String(row.customerId)] || '—'}</span></div>
+                          <div className="mobile-row-amount"><b>{formatCurrency(Math.max(0, Number(row.dueAmount || 0) - Number(row.paidAmount || 0)))}</b></div>
                           <div className="mobile-collection-actions">
                             <button type="button" className="dashboard-reschedule-button icon-only" onClick={() => openReschedule(row)} disabled={loanClosed} aria-label={`Reschedule ${row.customerName}`} title="Reschedule"><CalendarDays size={16} /></button>
                             <button className={`dashboard-pay-button compact icon-only ${loanClosed ? 'closed' : ''}`} onClick={() => !loanClosed && openPay(row)} disabled={loanClosed} aria-label={loanClosed ? `${row.customerName} loan closed` : `Collect from ${row.customerName}`} title={loanClosed ? 'Loan closed' : `Collect from ${row.customerName}`}><HandCoins size={15} /></button>
