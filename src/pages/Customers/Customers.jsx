@@ -21,7 +21,7 @@ import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { exportCustomersListPdf, exportCustomersListXlsx } from '../../utils/customersExport';
-import { formatCurrency, formatIndianMobile, normalizeIndianMobile } from '../../utils/finance';
+import { formatCurrency, formatIndianMobile, normalizeIndianMobile, toInputDate } from '../../utils/finance';
 import './Customers.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
 
@@ -57,7 +57,7 @@ function handleCardKeyDown(event, onOpen) {
 }
 
 export default function Customers() {
-  const { customers, loans, company } = useCrednivo();
+  const { customers, loans, collections, company } = useCrednivo();
   const { hasPermission, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -73,6 +73,26 @@ export default function Customers() {
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
   }, []);
+
+  // Pending = unpaid installments that are due today or earlier (same rule as
+  // "pending dues" in Collection/Reports: skip cancelled entries, count only
+  // the remaining balance). Keyed by customerId.
+  const pendingByCustomer = useMemo(() => {
+    const today = toInputDate();
+    const totals = new Map();
+    (collections || []).forEach((item) => {
+      if (String(item.status || '').toLowerCase() === 'cancelled') return;
+      const dueDate = String(item.date || '').slice(0, 10);
+      if (!dueDate || dueDate > today) return;
+      const balance = Math.max(0, (Number(item.dueAmount) || 0) - (Number(item.paidAmount) || 0));
+      if (balance <= 0) return;
+      const key = String(item.customerId || '');
+      if (!key) return;
+      const current = totals.get(key) || { amount: 0, count: 0 };
+      totals.set(key, { amount: current.amount + balance, count: current.count + 1 });
+    });
+    return totals;
+  }, [collections]);
 
   const customerSummaries = useMemo(() => Object.fromEntries(customers.map((customer) => {
     const allCustomerLoans = loans.filter((loan) => loan.customerId === customer.id);
@@ -228,9 +248,10 @@ export default function Customers() {
 
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table customers-table">
-            <thead><tr><th>Customer</th><th>Phone</th><th>Witness</th><th>Cycle</th><th>Active Loan</th><th>Closed Loan</th><th>Outstanding</th></tr></thead>
+            <thead><tr><th>Customer</th><th>ID</th><th>Phone</th><th>Witness</th><th>Phone</th><th>Cycle</th><th>Active Loan</th><th>Closed Loan</th><th>Outstanding</th><th>Pending</th></tr></thead>
             <tbody>{filtered.map((customer) => {
               const summary = customerSummaries[customer.id] || {};
+              const pending = pendingByCustomer.get(String(customer.id)) || { amount: 0, count: 0 };
               return (
                 <tr
                   key={customer.id}
@@ -245,21 +266,25 @@ export default function Customers() {
                       <CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} />
                       <div>
                         <strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong>
-                        <small>{customer.id}</small>
                       </div>
                     </div>
                   </td>
+                  <td><span className="customer-id-cell">{customer.id}</span></td>
                   <td><strong>{formatIndianMobile(customer.mobile)}</strong></td>
-                  <td>
-                    <div className="customer-witness-cell">
-                      <strong>{customer.jaminName || '—'}</strong>
-                      <small>{customer.jaminMobile ? formatIndianMobile(customer.jaminMobile) : '—'}</small>
-                    </div>
-                  </td>
+                  <td><strong>{customer.jaminName || '—'}</strong></td>
+                  <td className="customer-witness-phone">{customer.jaminMobile ? formatIndianMobile(customer.jaminMobile) : '—'}</td>
                   <td><span className="soft-chip blue">{summary.cycles?.join(' + ') || customer.cycle || '—'}</span></td>
                   <td>{summary.activeLoans?.length || 0}</td>
                   <td>{summary.closedLoans?.length || 0}</td>
                   <td><strong>{formatCurrency(summary.totalOutstanding || 0)}</strong></td>
+                  <td>
+                    {pending.count > 0 ? (
+                      <div className="customer-pending-cell">
+                        <strong>{formatCurrency(pending.amount)}</strong>
+                        <small>{pending.count} {pending.count === 1 ? 'due' : 'dues'}</small>
+                      </div>
+                    ) : <span className="customer-pending-none">{formatCurrency(0)}</span>}
+                  </td>
                 </tr>
               );
             })}</tbody>

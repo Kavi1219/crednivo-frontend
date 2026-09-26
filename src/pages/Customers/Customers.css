@@ -245,9 +245,21 @@ html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
 }
 .collection-download-popdown button:hover { background: var(--surface-hover); }
 
-.customers-table th:nth-child(2) { min-width: 120px; }
-.customers-table th:nth-child(3) { min-width: 180px; }
-.customers-table th:nth-child(7) { min-width: 120px; }
+.customers-table th:nth-child(1) { min-width: 170px; }
+.customers-table th:nth-child(2) { min-width: 130px; }
+.customers-table th:nth-child(3) { min-width: 130px; }
+.customers-table th:nth-child(4) { min-width: 130px; }
+.customers-table th:nth-child(5) { min-width: 130px; }
+.customers-table th:nth-child(9),
+.customers-table th:nth-child(10) { min-width: 110px; }
+.customers-table td, .customers-table th { white-space: nowrap; }
+
+.customer-id-cell { color: var(--ink-600); font-size: 11px; font-weight: 600; }
+.customer-witness-phone { color: var(--ink-600); }
+.customer-pending-cell { display: grid; gap: 2px; }
+.customer-pending-cell strong { color: var(--danger, #d64545); }
+.customer-pending-cell small { color: var(--ink-500); font-size: 9.5px; }
+.customer-pending-none { color: var(--ink-500); }
 
 .customer-table-row { cursor: pointer; }
 .customer-table-row:focus-visible {
