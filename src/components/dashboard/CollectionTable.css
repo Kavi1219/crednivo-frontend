@@ -702,3 +702,30 @@ html[data-theme='dark'] .dashboard-pay-modal { background: var(--surface); borde
   }
 }
 
+
+
+/* Phone card in one line: name · number · amount · reschedule · Collect. */
+@media (max-width: 767px) {
+  .mobile-collection-row { gap: 10px; padding: 10px 12px; }
+  .mobile-row-identity.mobile-row-inline {
+    display: flex;
+    flex-wrap: wrap;           /* on very narrow phones the number drops under the name */
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 2px;
+  }
+  .mobile-row-inline strong { min-width: 0; max-width: 100%; }
+  .mobile-row-inline span { font-size: 11px; white-space: nowrap; }
+  .mobile-collection-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+  .mobile-collection-actions .dashboard-reschedule-button.icon-only { width: 40px; height: 40px; min-height: 40px; padding: 0; border-radius: 11px; }
+  .dashboard-pay-button.mobile-collect-text {
+    width: auto;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 11px;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+}
