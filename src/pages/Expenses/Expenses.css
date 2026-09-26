@@ -238,3 +238,41 @@
   background:var(--surface);
   border-color:var(--line);
 }
+
+
+/* Summary cards (shared SummaryCard) — two side by side. */
+.expense-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 767px) { .expense-summary-grid { grid-template-columns: 1fr; gap: 9px; } }
+
+/* Toolbar — same style as Loans / Collection: wide search + dropdowns. */
+.expense-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.expense-filter-row .module-search { flex: 1 1 220px; min-width: 180px; width: auto; }
+.expense-quick-select { position: relative; flex: 0 0 auto; }
+.expense-quick-select select {
+  height: 40px;
+  padding: 0 30px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-800);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.expense-quick-select select.has-lead { padding-left: 34px; }
+.expense-quick-select > svg { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: none; color: var(--ink-500); }
+.expense-quick-select > svg.expense-quick-select-lead { left: 12px; right: auto; color: var(--blue-600); }
+@media (max-width: 767px) {
+  .expense-filter-row { padding: 12px; }
+  .expense-filter-row .module-search { flex-basis: 100%; }
+}

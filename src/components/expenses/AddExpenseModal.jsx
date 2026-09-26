@@ -57,7 +57,7 @@ export default function AddExpenseModal({ open, onClose }) {
           <label>
             <span>Category</span>
             <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-              <option>General</option><option>Travel</option><option>Office</option><option>Food</option><option>Other</option>
+              <option>General</option><option>Salary</option><option>Travel</option><option>Office</option><option>Food</option><option>Other</option>
             </select>
           </label>
           <label>

@@ -844,10 +844,10 @@ export default function Collection() {
 
           <div className="collection-quick-select">
             <select value={collectionView} onChange={(event) => changeCollectionView(event.target.value)} aria-label="Collection view">
-              <option value="All">All ({activeCollections.length})</option>
-              <option value="Today">Today ({todayCollections.length})</option>
-              <option value="Overdue">Overdue ({overdueCollections.length})</option>
-              {collectionView === 'Upcoming' && <option value="Upcoming">Upcoming ({upcomingCollections.length})</option>}
+              <option value="All">All</option>
+              <option value="Today">Today</option>
+              <option value="Overdue">Overdue</option>
+              {collectionView === 'Upcoming' && <option value="Upcoming">Upcoming</option>}
             </select>
             <ChevronDown size={14} />
           </div>
@@ -881,7 +881,6 @@ export default function Collection() {
               title="Filters"
             >
               <SlidersHorizontal size={16} />
-              {activeFilterCount > 0 && <span className="collection-filter-count">{activeFilterCount}</span>}
             </button>
 
             {filtersOpen && (

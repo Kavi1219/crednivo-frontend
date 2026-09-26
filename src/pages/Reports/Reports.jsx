@@ -3536,7 +3536,6 @@ export default function Reports() {
                   onClick={() => setPendingRiskFilter('normal')}
                 >
                   Normal
-                  <b>{cyclePerformanceReport.normalCustomers.length}</b>
                 </button>
                 <button
                   type="button"
@@ -3544,7 +3543,6 @@ export default function Reports() {
                   onClick={() => setPendingRiskFilter('fine-paid')}
                 >
                   Fine Paid
-                  <b>{cyclePerformanceReport.finePaidCustomers.length}</b>
                 </button>
                 <button
                   type="button"
@@ -3552,7 +3550,6 @@ export default function Reports() {
                   onClick={() => setPendingRiskFilter('pending')}
                 >
                   Pending
-                  <b>{cyclePerformanceReport.pendingTierCustomers.length}</b>
                 </button>
                 <button
                   type="button"
@@ -3560,7 +3557,6 @@ export default function Reports() {
                   onClick={() => setPendingRiskFilter('risky')}
                 >
                   Risky
-                  <b>{cyclePerformanceReport.riskyCustomers.length}</b>
                 </button>
               </div>
             </div>

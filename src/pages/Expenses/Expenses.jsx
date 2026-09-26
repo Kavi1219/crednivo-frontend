@@ -1,7 +1,8 @@
-import { Check, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
+import { CalendarClock, Check, ChevronDown, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
 import ActionButton from '../../components/common/ActionButton';
-import StatCard from '../../components/dashboard/StatCard';
+import SummaryCard from '../../components/common/SummaryCard';
+import { PageBackButton } from '../../components/GlobalBackButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -9,7 +10,8 @@ import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Expenses.css';
 
-const EXPENSE_CATEGORY_FILTERS = ['All', 'General', 'Travel', 'Office', 'Food', 'Other'];
+const EXPENSE_CATEGORIES = ['General', 'Salary', 'Travel', 'Office', 'Food', 'Other'];
+const EXPENSE_CATEGORY_FILTERS = ['All', ...EXPENSE_CATEGORIES];
 
 export default function Expenses() {
   const actionLocksRef = useRef(new Set());
@@ -22,6 +24,7 @@ export default function Expenses() {
   const [saving, setSaving] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const [periodFilter, setPeriodFilter] = useState('All');
   const [form, setForm] = useState({ purpose: '', amount: '', category: 'General', date: toInputDate(), createdBy: '' });
 
   const today = toInputDate();
@@ -29,19 +32,6 @@ export default function Expenses() {
   const total = todays.reduce((sum, item) => sum + item.amount, 0);
   const overall = expenses.reduce((sum, item) => sum + item.amount, 0);
 
-  const categoryCounts = useMemo(() => {
-    const counts = { All: expenses.length, General: 0, Travel: 0, Office: 0, Food: 0, Other: 0 };
-
-    expenses.forEach((item) => {
-      const category = String(item?.category || 'General').trim();
-      const matched = EXPENSE_CATEGORY_FILTERS.find(
-        (value) => value !== 'All' && value.toLowerCase() === category.toLowerCase()
-      );
-      if (matched) counts[matched] += 1;
-    });
-
-    return counts;
-  }, [expenses]);
 
   const filteredExpenses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -52,6 +42,8 @@ export default function Expenses() {
         String(item?.category || 'General').trim().toLowerCase() === categoryFilter.toLowerCase();
 
       if (!matchesCategory) return false;
+      if (periodFilter === 'Today' && item.date !== today) return false;
+      if (periodFilter === 'This Month' && String(item.date || '').slice(0, 7) !== today.slice(0, 7)) return false;
       if (!query) return true;
 
       const searchable = [
@@ -68,7 +60,7 @@ export default function Expenses() {
 
       return searchable.includes(query);
     });
-  }, [expenses, categoryFilter, search]);
+  }, [expenses, categoryFilter, search, periodFilter, today]);
 
   const filteredExpenseTotal = useMemo(
     () => filteredExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0),
@@ -135,13 +127,18 @@ export default function Expenses() {
         eyebrow="Daily Spending"
         title="Expenses"
         description="Record day-to-day business expenses. Entries can be edited or deleted, and today's total is calculated automatically."
-        actions={hasPermission('expenses.add') ? <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton> : null}
+        actions={
+          <div className="page-actions-row">
+            <PageBackButton />
+            {hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton>}
+          </div>
+        }
       />
 
       <section className="stats-section">
-        <div className="stats-grid">
-          <StatCard title="Today's Expenses" value={formatCurrency(total)} note="Recorded today" icon={ReceiptText} tone="pink" showProgress={false} />
-          <StatCard title="Overall Expenses" value={formatCurrency(overall)} note="All-time total" icon={ReceiptText} tone="orange" showProgress={false} />
+        <div className="expense-summary-grid">
+          <SummaryCard title="Today's Expenses" value={formatCurrency(total)} note="Recorded today" icon={ReceiptText} tone="red" />
+          <SummaryCard title="Overall Expenses" value={formatCurrency(overall)} note="All-time total" icon={ReceiptText} tone="orange" />
         </div>
       </section>
 
@@ -157,39 +154,35 @@ export default function Expenses() {
           </div>
         </div>
 
-        <div className="expense-history-tools">
-          <div className="expense-search-box">
+        <div className="module-toolbar expense-filter-row">
+          <label className="module-search">
             <Search size={16} aria-hidden="true" />
             <input
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search purpose, category, creator, amount or date"
+              placeholder="Search purpose, category, creator or amount..."
               aria-label="Search expense history"
             />
-            {search && (
-              <button type="button" onClick={() => setSearch('')} aria-label="Clear expense search">
-                <X size={15} />
-              </button>
-            )}
+          </label>
+          <div className="expense-quick-select">
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category">
+              {EXPENSE_CATEGORY_FILTERS.map((category) => (
+                <option key={category} value={category}>
+                  {category === 'All' ? 'All Category' : category}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} />
           </div>
-        </div>
-
-        <div className="expense-category-filter-wrap">
-          <div className="expense-category-filter" role="tablist" aria-label="Filter expenses by category">
-            {EXPENSE_CATEGORY_FILTERS.map((category) => (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={categoryFilter === category}
-                className={categoryFilter === category ? 'active' : ''}
-                onClick={() => setCategoryFilter(category)}
-                key={category}
-              >
-                <span>{category}</span>
-                <b>{categoryCounts[category] || 0}</b>
-              </button>
-            ))}
+          <div className="expense-quick-select">
+            <CalendarClock size={15} className="expense-quick-select-lead" />
+            <select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value)} aria-label="Date" className="has-lead">
+              <option value="All">All Time</option>
+              <option value="Today">Today</option>
+              <option value="This Month">This Month</option>
+            </select>
+            <ChevronDown size={14} />
           </div>
         </div>
 
@@ -200,7 +193,7 @@ export default function Expenses() {
               {filteredExpenses.map((item) => (
                 <tr key={item.id}>
                   <td>{formatDate(item.date)}</td>
-                  <td><strong>{item.purpose}</strong><small className="table-sub">{item.id}</small></td>
+                  <td><strong>{item.purpose}</strong></td>
                   <td><span className="soft-chip orange">{item.category}</span></td>
                   <td>
                     <div className="expense-created-by">
@@ -276,7 +269,7 @@ export default function Expenses() {
               <div className="form-field">
                 <label>Category</label>
                 <select value={form.category} onChange={(event) => setForm((value) => ({ ...value, category: event.target.value }))}>
-                  <option>General</option><option>Travel</option><option>Office</option><option>Food</option><option>Other</option>
+                  {EXPENSE_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
                 </select>
               </div>
               <div className="form-field">
