@@ -50,7 +50,8 @@ export default function Payments() {
   // sort, filter and export alongside every other transaction.
   const capitalTransactions = useMemo(() => (capital || []).map((item) => ({
     id: `capital-${item.id}`,
-    date: item.date,
+    date: String(item.date || '').slice(0, 10),
+    createdAt: item.createdAt,
     type: 'Capital',
     customerName: item.investorName || 'Capital',
     customerId: '—',
@@ -63,7 +64,8 @@ export default function Payments() {
 
   const savingsTransactions = useMemo(() => (savings || []).map((item) => ({
     id: `saving-${item.id}`,
-    date: item.date,
+    date: String(item.date || '').slice(0, 10),
+    createdAt: item.createdAt,
     type: 'Savings',
     customerName: 'Savings',
     customerId: '—',
@@ -74,8 +76,15 @@ export default function Payments() {
     amount: Number(item.amount) || 0,
   })), [savings]);
 
+  // Newest first across every source. Capital and Savings used to be
+  // appended after all payments, so they sat at the very bottom of the list
+  // and looked missing.
   const allTransactions = useMemo(
-    () => [...payments, ...capitalTransactions, ...savingsTransactions],
+    () => [...payments, ...capitalTransactions, ...savingsTransactions].sort((a, b) => {
+      const byDate = String(b.date || '').localeCompare(String(a.date || ''));
+      if (byDate !== 0) return byDate;
+      return String(b.createdAt || '').localeCompare(String(a.createdAt || ''));
+    }),
     [payments, capitalTransactions, savingsTransactions],
   );
 
@@ -126,7 +135,7 @@ export default function Payments() {
   return (
     <div className="module-page payments-page">
       <section className="stats-section history-summary-section">
-        <div className="stats-grid history-summary-grid">
+        <div className="history-summary-grid">
           <SummaryCard title="Total Incoming" value={formatCurrency(incoming)} note="Collections received" icon={ArrowDownLeft} tone="green" />
           <SummaryCard title="Total Outgoing" value={formatCurrency(outgoing)} note="Loans & expenses paid" icon={ArrowUpRight} tone="red" />
           <SummaryCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="Incoming minus outgoing" icon={WalletCards} tone="blue" />
