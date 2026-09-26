@@ -939,27 +939,33 @@ html[data-theme='dark'] .profile-dropdown {
 
 /* ============================================================
    MOBILE HEADER (phones)
-   - Solid background card (it was transparent).
-   - Respects the iPhone notch / status bar (safe-area inset).
+   - Edge-to-edge at the very top so it also covers the status bar / notch
+     area: nothing scrolls visibly behind the clock and battery.
+   - Solid background card with rounded bottom corners.
    - The brand shrinks first, so the bell and avatar are always visible
      on narrow phones (iPhone, Samsung, ...).
+   Two classes (.app-header.framed-header) so these beat the older
+   single-class !important rules in NativeAppController.css.
    ============================================================ */
 @media (max-width: 767px) {
-  .app-header {
-    top: env(safe-area-inset-top, 0px) !important;
-    margin: calc(8px + env(safe-area-inset-top, 0px)) 10px 0 !important;
-    padding: 8px 10px !important;
+  .app-header.framed-header {
+    position: sticky !important;
+    top: 0 !important;
+    margin: 0 !important;
+    min-height: calc(60px + var(--crednivo-safe-top, env(safe-area-inset-top, 0px))) !important;
+    padding: calc(8px + var(--crednivo-safe-top, env(safe-area-inset-top, 0px))) 12px 8px !important;
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
-    border: 1px solid var(--line) !important;
-    border-radius: 18px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    border-radius: 0 0 20px 20px !important;
     background: var(--surface) !important;
-    box-shadow: 0 8px 22px rgba(6, 32, 65, .10) !important;
+    box-shadow: 0 8px 22px rgba(6, 32, 65, .12) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
-  .app-header .header-title-wrap {
+  .app-header.framed-header .header-title-wrap {
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
@@ -974,6 +980,8 @@ html[data-theme='dark'] .profile-dropdown {
   /* The bell must always show on phones. */
   .app-header .mobile-header-actions .notification-wrap,
   .app-header .mobile-header-actions .notification-wrap .tooltip-wrap { display: inline-flex !important; flex: 0 0 auto; }
+  /* Breathing room between the header and the first card on the page. */
+  .main-shell .page-content { padding-top: 12px !important; }
 }
 
 /* Narrow phones (most iPhones and Samsung Galaxy S series). */

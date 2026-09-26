@@ -1475,7 +1475,23 @@ html[data-theme='dark'] .dashboard-reference-hero {
   .dashboard-reference-page .dashboard-reference-board {
     display: flex !important;
     flex-direction: column !important;
+    align-items: stretch !important; /* the grid rule used 'start', which shrank every section */
     gap: 14px !important;
+  }
+  .dashboard-reference-page .dashboard-reference-board .dashboard-reference-section,
+  .dashboard-reference-page .dashboard-reference-board .dashboard-reference-lower-grid,
+  .dashboard-reference-page .dashboard-reference-board .risky-overdue-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  .dashboard-reference-page .dashboard-reference-lower-grid { grid-template-columns: minmax(0, 1fr) !important; }
+
+  /* Risky list: no inner scroll box on phones — it grows with its rows and
+     the page scrolls normally through it and on to the next section. */
+  .dashboard-reference-page .risky-overdue-card .risky-overdue-list {
+    max-height: none !important;
+    overflow: visible !important;
   }
   /* Let the sections inside main / aside take part in the ordering. */
   .dashboard-reference-page .dashboard-reference-main,
