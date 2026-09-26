@@ -245,14 +245,22 @@ html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
 }
 .collection-download-popdown button:hover { background: var(--surface-hover); }
 
-.customers-table th:nth-child(1) { min-width: 170px; }
-.customers-table th:nth-child(2) { min-width: 130px; }
-.customers-table th:nth-child(3) { min-width: 130px; }
-.customers-table th:nth-child(4) { min-width: 130px; }
-.customers-table th:nth-child(5) { min-width: 130px; }
-.customers-table th:nth-child(9),
-.customers-table th:nth-child(10) { min-width: 110px; }
-.customers-table td, .customers-table th { white-space: nowrap; }
+.customers-table { width: 100%; }
+.customers-table th,
+.customers-table td {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  text-align: center !important;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.customers-table th {
+  color: var(--ink-950) !important;
+  font-weight: 750 !important;
+}
+.customers-table .row-title { justify-content: center; text-align: left; }
+.customers-table .soft-chip { margin: 0 auto; }
+.customers-table .customer-pending-cell { justify-items: center; }
 
 .customer-id-cell { color: var(--ink-600); font-size: 11px; font-weight: 600; }
 .customer-witness-phone { color: var(--ink-600); }
