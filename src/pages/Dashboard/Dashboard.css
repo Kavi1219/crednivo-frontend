@@ -600,53 +600,9 @@
   }
 }
 
-/* exact home redesign */
-.dashboard-exact-page {
-  gap: 18px;
-}
-
-.dashboard-hero-exact {
-  position: relative;
-  min-height: 285px;
-  padding: 22px 26px;
-  border-radius: 24px;
-  overflow: hidden;
-  background: #0d3b4f;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy {
-  position: relative;
-  z-index: 2;
-  gap: 8px;
-  align-content: center;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy h2 {
-  font-size: clamp(36px, 4vw, 48px);
-  font-weight: 850;
-  color: #fff;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy p {
-  font-size: 16px;
-  font-weight: 600;
-  color: rgba(255,255,255,.85);
-}
-
-.dashboard-hero-exact .dashboard-hero-chip {
-  margin-top: 12px;
-  min-width: 0;
-  max-width: 280px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255,255,255,.84), rgba(255,255,255,.92));
-  box-shadow: 0 16px 38px rgba(75, 126, 203, .12);
-}
-
-.exact-hero-visual {
-  min-height: 230px;
-}
-
+/* --------------------------------------------------------------------------
+   HOME METRIC CARDS — ACTIVE RULES ONLY
+   -------------------------------------------------------------------------- */
 .exact-shell {
   padding: 16px 18px 18px;
   background: transparent;
@@ -656,23 +612,13 @@
   margin-bottom: 10px;
 }
 
-.section-chip-button {
-  min-height: 28px;
-  padding: 0 12px;
-  border: 1px solid rgba(179, 198, 230, .75);
-  border-radius: 10px;
-  background: #fff;
-  color: #6476a7;
-  font-size: 10px;
-  font-weight: 700;
-}
-
 .home-metric-grid {
   display: grid;
   gap: 14px;
 }
 
 .metric-grid-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
 .metric-grid-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .home-metric-card {
@@ -748,6 +694,7 @@
 }
 
 .home-metric-trend.is-up { color: #1ea969; }
+
 .home-metric-trend.is-down { color: #e15e78; }
 
 .home-metric-trend-row small {
@@ -774,65 +721,60 @@
 }
 
 .home-metric-graphic span:nth-child(1) { left: 0; height: 16px; }
+
 .home-metric-graphic span:nth-child(2) { left: 28px; height: 26px; }
+
 .home-metric-graphic span:nth-child(3) { left: 56px; height: 36px; }
 
 .home-metric-card.tone-green {
   background: linear-gradient(180deg, #e8fff2, #f6fffa);
 }
+
 .home-metric-card.tone-green .home-metric-icon { background: linear-gradient(180deg, #2ec989, #1da66e); color: #fff; }
+
 .home-metric-card.tone-green .home-metric-graphic span { background: linear-gradient(180deg, rgba(55, 214, 133, .86), rgba(55, 214, 133, 0)); }
 
 .home-metric-card.tone-blue {
   background: linear-gradient(180deg, #eef5ff, #fafcff);
 }
+
 .home-metric-card.tone-blue .home-metric-icon { background: linear-gradient(180deg, #4d91ff, #2d76ff); color: #fff; }
+
 .home-metric-card.tone-blue .home-metric-graphic span { background: linear-gradient(180deg, rgba(77, 145, 255, .88), rgba(77, 145, 255, 0)); }
 
 .home-metric-card.tone-pink,
 .home-metric-card.tone-red {
   background: linear-gradient(180deg, #fff0f4, #fff8fa);
 }
+
 .home-metric-card.tone-pink .home-metric-icon,
 .home-metric-card.tone-red .home-metric-icon { background: linear-gradient(180deg, #ff7894, #ff5779); color: #fff; }
+
 .home-metric-card.tone-pink .home-metric-graphic span,
 .home-metric-card.tone-red .home-metric-graphic span { background: linear-gradient(180deg, rgba(255, 110, 146, .84), rgba(255, 110, 146, 0)); }
 
 .home-metric-card.tone-purple {
   background: linear-gradient(180deg, #f2efff, #faf9ff);
 }
+
 .home-metric-card.tone-purple .home-metric-icon { background: linear-gradient(180deg, #9d7aff, #7b5cff); color: #fff; }
+
 .home-metric-card.tone-purple .home-metric-graphic span { background: linear-gradient(180deg, rgba(157, 122, 255, .88), rgba(157, 122, 255, 0)); }
 
 .home-metric-card.tone-orange {
   background: linear-gradient(180deg, #fff5ea, #fffaf4);
 }
+
 .home-metric-card.tone-orange .home-metric-icon { background: linear-gradient(180deg, #ffb156, #ff9436); color: #fff; }
+
 .home-metric-card.tone-orange .home-metric-graphic span { background: linear-gradient(180deg, rgba(255, 177, 86, .88), rgba(255, 177, 86, 0)); }
 
 @media (max-width: 1199px) {
-  .metric-grid-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.metric-grid-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 767px) {
-  .dashboard-hero-exact {
-    padding: 18px;
-    min-height: auto;
-  }
-
-  .dashboard-hero-exact .dashboard-hero-copy h2 {
-    font-size: 34px;
-  }
-
-  .dashboard-hero-exact .dashboard-hero-chip {
-    max-width: 100%;
-  }
-
-  .exact-hero-visual {
-    min-height: 190px;
-  }
-
-  .metric-grid-three,
+.metric-grid-three,
   .metric-grid-four {
     grid-template-columns: 1fr;
   }
@@ -846,242 +788,6 @@
   }
 }
 
-/* Home spacing + date inside the welcome hero */
-.dashboard-exact-page {
-  margin-top: -2px;
-}
-
-.dashboard-exact-page .dashboard-hero-exact {
-  width: min(100%, 1240px);
-  min-height: 245px;
-  margin: 2px auto 0;
-  padding: 20px 24px;
-}
-
-.dashboard-hero-date {
-  width: fit-content;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 2px;
-  padding: 8px 11px;
-  border: 1px solid rgba(137, 172, 225, .34);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, .72);
-  color: #546a9a;
-  font-size: 10.5px;
-  font-weight: 750;
-  box-shadow: 0 8px 20px rgba(68, 111, 177, .08);
-}
-
-.dashboard-hero-exact .dashboard-hero-copy {
-  gap: 7px;
-}
-
-.dashboard-hero-exact .dashboard-hero-chip {
-  margin-top: 8px;
-}
-
-.dashboard-hero-exact .exact-hero-visual {
-  min-height: 200px;
-}
-
-@media (max-width: 1300px) and (min-width: 768px) {
-  .dashboard-exact-page .dashboard-hero-exact {
-    width: calc(100% - 8px);
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-exact-page .dashboard-hero-exact {
-    width: 100%;
-    margin-top: 0;
-  }
-
-  .dashboard-hero-date {
-    font-size: 10px;
-  }
-}
-
-/* Keep Growing month comparison + tighter welcome hero */
-.dashboard-exact-page .dashboard-hero-exact {
-  width: min(100%, 1120px);
-  min-height: 225px;
-  padding: 18px 22px;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy h2 {
-  font-size: clamp(30px, 3.1vw, 40px);
-}
-
-.dashboard-month-compare {
-  max-width: 560px !important;
-  width: min(100%, 560px) !important;
-  display: grid !important;
-  grid-template-columns: auto minmax(120px, 1fr) auto auto !important;
-  align-items: center !important;
-  gap: 12px !important;
-  padding: 12px 14px !important;
-}
-
-.dashboard-month-compare .month-compare-copy {
-  min-width: 0;
-}
-
-.dashboard-month-compare .month-compare-copy strong {
-  font-size: 12px;
-}
-
-.dashboard-month-compare .month-compare-copy small {
-  white-space: nowrap;
-}
-
-.month-compare-stats {
-  display: inline-grid !important;
-  grid-template-columns: auto 1px auto;
-  align-items: center;
-  gap: 12px !important;
-  text-align: center !important;
-}
-
-.month-compare-item {
-  display: grid !important;
-  gap: 2px !important;
-  min-width: 78px;
-  text-align: center !important;
-}
-
-.month-compare-item small {
-  color: #7d8dab !important;
-  font-size: 8.5px !important;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.month-compare-item strong {
-  color: #355184;
-  font-size: 17px !important;
-  line-height: 1;
-  font-weight: 850;
-}
-
-.month-compare-item.current strong {
-  color: #168f63;
-}
-
-.month-compare-divider {
-  width: 1px;
-  height: 30px;
-  background: rgba(120, 145, 184, .22);
-}
-
-.month-compare-icon,
-.month-compare-arrow {
-  flex: 0 0 auto;
-}
-
-@media (max-width: 1300px) and (min-width: 768px) {
-  .dashboard-exact-page .dashboard-hero-exact {
-    width: min(calc(100% - 20px), 1120px);
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-exact-page .dashboard-hero-exact {
-    width: 100%;
-    min-height: auto;
-    padding: 16px;
-  }
-
-  .dashboard-hero-exact .dashboard-hero-copy h2 {
-    font-size: 29px;
-  }
-
-  .dashboard-month-compare {
-    grid-template-columns: auto 1fr auto !important;
-    max-width: 100% !important;
-  }
-
-  .dashboard-month-compare .month-compare-copy {
-    grid-column: 2 / 3;
-  }
-
-  .month-compare-stats {
-    grid-column: 1 / -1;
-    width: 100%;
-    justify-content: center;
-    padding-top: 8px;
-    border-top: 1px solid rgba(120, 145, 184, .14);
-  }
-
-  .month-compare-arrow {
-    grid-column: 3;
-    grid-row: 1;
-  }
-}
-
-/* Correction: keep hero width, reduce HEIGHT only */
-.dashboard-exact-page .dashboard-hero-exact {
-  width: 100%;
-  max-width: none;
-  min-height: 185px;
-  margin-left: 0;
-  margin-right: 0;
-  padding: 13px 22px;
-  gap: 18px;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy {
-  gap: 5px;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy h2 {
-  font-size: clamp(30px, 2.8vw, 37px);
-  line-height: 1.02;
-}
-
-.dashboard-hero-exact .dashboard-hero-copy p {
-  line-height: 1.35;
-}
-
-.dashboard-hero-date {
-  margin-top: 0;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
-
-.dashboard-hero-exact .dashboard-hero-chip,
-.dashboard-month-compare {
-  margin-top: 5px !important;
-  padding-top: 9px !important;
-  padding-bottom: 9px !important;
-}
-
-.dashboard-hero-exact .exact-hero-visual {
-  min-height: 158px;
-}
-
-@media (max-width: 1300px) and (min-width: 768px) {
-  .dashboard-exact-page .dashboard-hero-exact {
-    width: 100%;
-    max-width: none;
-    min-height: 185px;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-exact-page .dashboard-hero-exact {
-    width: 100%;
-    min-height: auto;
-    padding: 13px 15px;
-  }
-
-  .dashboard-hero-exact .exact-hero-visual {
-    min-height: 150px;
-  }
-}
-
-/* Today section compact cards */
 .home-metric-card.is-compact {
   min-height: 138px;
   padding: 14px 16px 12px;
@@ -1187,13 +893,16 @@
 .home-metric-card.is-compact.tone-green {
   background: linear-gradient(180deg, #f5fffb 0%, #effff8 100%);
 }
+
 .home-metric-card.is-compact.tone-green .home-metric-icon {
   background: linear-gradient(180deg, #e1fbf1, #d6fff0);
   color: #29c28a;
 }
+
 .home-metric-card.is-compact.tone-green .home-metric-graphic span {
   background: linear-gradient(180deg, rgba(44, 210, 145, .9), rgba(44, 210, 145, .2));
 }
+
 .home-metric-card.is-compact.tone-green .home-metric-orb {
   background: rgba(79, 222, 165, .16);
 }
@@ -1201,13 +910,16 @@
 .home-metric-card.is-compact.tone-blue {
   background: linear-gradient(180deg, #fbfdff 0%, #f5f8ff 100%);
 }
+
 .home-metric-card.is-compact.tone-blue .home-metric-icon {
   background: linear-gradient(180deg, #edf4ff, #e3eeff);
   color: #3f8cff;
 }
+
 .home-metric-card.is-compact.tone-blue .home-metric-graphic span {
   background: linear-gradient(180deg, rgba(117, 136, 201, .62), rgba(117, 136, 201, .18));
 }
+
 .home-metric-card.is-compact.tone-blue .home-metric-orb {
   background: rgba(118, 159, 255, .12);
 }
@@ -1216,22 +928,25 @@
 .home-metric-card.is-compact.tone-red {
   background: linear-gradient(180deg, #fffaf5 0%, #fffaf2 100%);
 }
+
 .home-metric-card.is-compact.tone-pink .home-metric-icon,
 .home-metric-card.is-compact.tone-red .home-metric-icon {
   background: linear-gradient(180deg, #fff0dd, #ffebd0);
   color: #e5a338;
 }
+
 .home-metric-card.is-compact.tone-pink .home-metric-graphic span,
 .home-metric-card.is-compact.tone-red .home-metric-graphic span {
   background: linear-gradient(180deg, rgba(238, 183, 87, .82), rgba(238, 183, 87, .18));
 }
+
 .home-metric-card.is-compact.tone-pink .home-metric-orb,
 .home-metric-card.is-compact.tone-red .home-metric-orb {
   background: rgba(248, 202, 112, .14);
 }
 
 @media (max-width: 767px) {
-  .home-metric-card.is-compact {
+.home-metric-card.is-compact {
     min-height: 128px;
   }
 
@@ -1240,99 +955,10 @@
   }
 }
 
-/* Today + Quick Actions side-by-side layout */
-.dashboard-today-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2.15fr) minmax(330px, 1fr);
-  gap: 16px;
-  align-items: stretch;
-}
-
-.dashboard-today-section {
-  min-width: 0;
-}
-
-.dashboard-quick-side {
-  min-width: 0;
-  display: flex;
-}
-
-.dashboard-quick-side .quick-card {
-  width: 100%;
-  height: 100%;
-  padding: 16px;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.dashboard-quick-side .quick-card h2 {
-  margin: 0 0 12px;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.dashboard-quick-side .quick-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 9px;
-  align-content: start;
-}
-
-.dashboard-quick-side .quick-action {
-  min-height: 68px;
-  padding: 0 11px;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #ffffff, #fbfdff);
-}
-
-.dashboard-quick-side .quick-action:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 1220px) {
-  .dashboard-today-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-quick-side .quick-card {
-    height: auto;
-  }
-
-  .dashboard-quick-side .quick-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .dashboard-quick-side .quick-action:last-child:nth-child(odd) {
-    grid-column: auto;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-today-layout {
-    gap: 12px;
-  }
-
-  .dashboard-quick-side .quick-card {
-    padding: 15px 13px;
-  }
-
-  .dashboard-quick-side .quick-grid {
-    display: flex;
-    overflow-x: auto;
-    gap: 9px;
-  }
-
-  .dashboard-quick-side .quick-action {
-    min-width: 142px;
-    min-height: 58px;
-  }
-}
-
 /* --------------------------------------------------------------------------
-   2026-09-25 Home layout — rebuilt from the user's paper reference.
-   Structure: Welcome banner -> Today + Quick Actions -> Overview -> Targets.
+   CREDNIVO HOME — CLEAN REFERENCE LAYOUT
+   One base rule per selector. Responsive overrides are kept only inside their
+   matching media query so desktop/tablet/mobile behavior stays intentional.
    -------------------------------------------------------------------------- */
 .dashboard-reference-page {
   gap: 16px;
@@ -1381,87 +1007,79 @@
   min-width: 0;
   display: grid;
   align-content: center;
-  gap: 5px;
-}
-
-.dashboard-reference-kicker {
-  width: fit-content;
-  color: rgba(255, 255, 255, .86);
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .18em;
+  gap: 7px;
 }
 
 .dashboard-reference-welcome h2 {
   margin: 0;
   color: #ffffff;
-
-  font-family: Georgia, "Times New Roman", serif;
-
+  font-family: Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
   font-size: clamp(25px, 2.6vw, 36px);
   font-weight: 700;
   line-height: 1.08;
-  letter-spacing: -0.015em;
+  letter-spacing: -.015em;
 }
 
 .dashboard-reference-welcome p {
-  margin: 6px 0 0;
-
-  font-family: Inter, ui-sans-serif, system-ui,
-    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
+  max-width: 620px;
+  margin: 4px 0 0;
   color: rgba(255, 255, 255, .82);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
+  line-height: 1.45;
 }
 
 .dashboard-reference-date {
   justify-self: center;
-  min-width: 210px;
+  min-width: 0;
   display: grid;
-  gap: 7px;
-  padding: 15px 22px;
-  border: 1px solid rgba(255, 255, 255, .42);
-  border-radius: 22px;
-  background: linear-gradient(145deg, rgba(255, 255, 255, .20), rgba(255, 255, 255, .08));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .34),
-    inset 0 -1px 0 rgba(255, 255, 255, .08),
-    0 14px 34px rgba(1, 34, 51, .24);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   text-align: center;
+  transform: translate(80px, -20px);
+}
+
+.dashboard-reference-date span,
+.dashboard-reference-date strong {
+  color: #ffffff;
+  font-family: Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  text-shadow: 0 2px 10px rgba(0, 30, 45, .32);
 }
 
 .dashboard-reference-date span {
-  color: #ffffff;
   font-size: 12px;
-  font-weight: 850;
-  letter-spacing: .12em;
+  font-weight: 800;
+  letter-spacing: .16em;
   text-transform: uppercase;
-  text-shadow: 0 1px 8px rgba(0, 30, 45, .28);
 }
 
 .dashboard-reference-date strong {
-  color: #ffffff;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 18px;
-  font-weight: 850;
-  letter-spacing: .015em;
-  text-shadow: 0 2px 10px rgba(0, 30, 45, .32);
+  font-size: 20px;
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: .025em;
 }
 
 .dashboard-reference-board {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
   gap: 16px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .dashboard-reference-main {
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
+  align-content: start;
 }
 
 .dashboard-reference-section {
@@ -1530,21 +1148,59 @@
   transform-origin: right bottom;
 }
 
+.dashboard-reference-lower-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
+  gap: 16px;
+  align-items: start;
+  margin-top: 2px;
+}
+
+.dashboard-reference-lower-grid > .summary-card {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
+}
+
+.dashboard-reference-collection-list {
+  min-width: 0;
+}
+
+.dashboard-reference-collection-list > .collection-card {
+  border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
+}
+
+.dashboard-reference-side {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-self: start;
+  align-content: start;
+  gap: 16px;
+  padding-top: 4px;
+  overflow: visible;
+}
+
 .dashboard-reference-quick {
   min-width: 0;
-  display: flex;
-  padding-top: 4px;
+  display: block;
+  padding-top: 0;
 }
 
 .dashboard-reference-quick .quick-card {
   width: 100%;
-  height: 100%;
-  min-height: 100%;
+  height: auto;
+  min-height: 0;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  border-radius: 20px;
   border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
+  border-radius: 20px;
   box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
 }
 
@@ -1579,6 +1235,44 @@
   border-radius: 10px;
 }
 
+.dashboard-reference-side > .risky-overdue-card {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  align-self: start;
+  overflow: hidden;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: calc((62px * 8) + (8px * 7));
+  max-height: calc((62px * 8) + (8px * 7));
+  padding-right: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-500) 34%, transparent);
+}
+
+.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink-500) 50%, transparent);
+}
+
 html[data-theme='dark'] .dashboard-reference-hero {
   background-image:
     linear-gradient(90deg, rgba(2, 24, 36, .88) 0%, rgba(2, 24, 36, .68) 36%, rgba(2, 24, 36, .24) 64%, rgba(2, 24, 36, .08) 100%),
@@ -1588,14 +1282,27 @@ html[data-theme='dark'] .dashboard-reference-hero {
   background-repeat: no-repeat;
 }
 
-html[data-theme='dark'] .dashboard-reference-date {
-  background: linear-gradient(145deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .06));
-  border-color: rgba(255, 255, 255, .30);
-}
-
 @media (max-width: 1180px) {
   .dashboard-reference-board {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .dashboard-reference-main {
+    gap: 14px;
+  }
+
+  .dashboard-reference-lower-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-reference-lower-grid > .summary-card {
+    min-height: 0;
+  }
+
+  .dashboard-reference-side {
+    gap: 14px;
+    padding-top: 0;
   }
 
   .dashboard-reference-quick .quick-card {
@@ -1609,6 +1316,11 @@ html[data-theme='dark'] .dashboard-reference-date {
   .dashboard-reference-quick .quick-action {
     min-height: 62px;
   }
+
+  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
+    height: calc((62px * 8) + (8px * 7));
+    max-height: calc((62px * 8) + (8px * 7));
+  }
 }
 
 @media (max-width: 900px) {
@@ -1618,6 +1330,7 @@ html[data-theme='dark'] .dashboard-reference-date {
 
   .dashboard-reference-date {
     justify-self: end;
+    transform: translate(0, -14px);
   }
 
   .dashboard-reference-section .metric-grid-four {
@@ -1643,529 +1356,10 @@ html[data-theme='dark'] .dashboard-reference-date {
     font-size: 25px;
   }
 
-  .dashboard-reference-date {
-    justify-self: stretch;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    text-align: left;
+  .dashboard-reference-welcome p {
+    font-size: 10.5px;
   }
 
-  .dashboard-reference-date span {
-    font-size: 10px;
-  }
-
-  .dashboard-reference-date strong {
-    font-size: 13px;
-  }
-
-  .dashboard-reference-section {
-    padding-top: 2px;
-  }
-
-  .dashboard-reference-section .metric-grid-three,
-  .dashboard-reference-section .metric-grid-four {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-reference-section .home-metric-card.is-compact {
-    min-height: 112px;
-  }
-
-  .dashboard-reference-quick {
-    padding-top: 0;
-  }
-
-  .dashboard-reference-quick .quick-card {
-    padding: 14px 12px;
-  }
-
-  .dashboard-reference-quick .quick-grid {
-    display: flex;
-    overflow-x: auto;
-    gap: 9px;
-    padding-bottom: 3px;
-    scrollbar-width: none;
-  }
-
-  .dashboard-reference-quick .quick-grid::-webkit-scrollbar {
-    display: none;
-  }
-
-  .dashboard-reference-quick .quick-action {
-    min-width: 140px;
-    min-height: 58px;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   2026-09-25 Home restore — collection summary, risky overdue list, and the
-   full Today's Collection list. The risky panel uses the same right-column
-   width and visual proportions as Quick Actions.
-   -------------------------------------------------------------------------- */
-.dashboard-reference-summary-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
-  gap: 16px;
-  align-items: stretch;
-}
-
-.dashboard-reference-summary-grid > .summary-card {
-  min-width: 0;
-  min-height: 420px;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
-  box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
-}
-
-.dashboard-reference-summary-grid > .summary-card .summary-body {
-  flex: 1;
-}
-
-.dashboard-reference-collection-list {
-  min-width: 0;
-}
-
-.dashboard-reference-collection-list > .collection-card {
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
-  box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
-}
-
-@media (max-width: 1180px) {
-  .dashboard-reference-summary-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-reference-summary-grid > .summary-card {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-reference-summary-grid {
-    gap: 12px;
-  }
-
-  .dashboard-reference-summary-grid > .summary-card,
-  .dashboard-reference-collection-list > .collection-card {
-    border-radius: 18px;
-  }
-}
-
-
-/* --------------------------------------------------------------------------
-   2026-09-25 Home alignment update
-   - Collection Target stays inside the same left column as Overview.
-   - Risky Overdue sits directly below Quick Actions in the right rail.
-   - The earlier Collection Summary donut is restored beside Today's list.
-   -------------------------------------------------------------------------- */
-.dashboard-reference-side {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-content: start;
-  gap: 16px;
-  padding-top: 4px;
-}
-
-.dashboard-reference-side .dashboard-reference-quick {
-  padding-top: 0;
-  display: block;
-}
-
-.dashboard-reference-side .dashboard-reference-quick .quick-card {
-  height: auto;
-  min-height: 0;
-}
-
-.dashboard-reference-side > .risky-overdue-card {
-  width: 100%;
-  min-height: 420px;
-}
-
-.dashboard-reference-lower-grid {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
-  gap: 16px;
-  align-items: start;
-}
-
-.dashboard-reference-lower-grid > .summary-card {
-  min-width: 0;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--blue-500) 10%, var(--line));
-  box-shadow: 0 16px 40px rgba(20, 61, 112, .07);
-}
-
-.dashboard-reference-lower-grid .dashboard-reference-collection-list {
-  min-width: 0;
-}
-
-/* The old summary-grid wrapper is no longer rendered. */
-.dashboard-reference-summary-grid {
-  display: none;
-}
-
-@media (max-width: 1180px) {
-  .dashboard-reference-side {
-    padding-top: 0;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    min-height: 0;
-  }
-
-  .dashboard-reference-lower-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dashboard-reference-lower-grid > .summary-card {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-reference-side,
-  .dashboard-reference-lower-grid {
-    gap: 12px;
-  }
-
-  .dashboard-reference-lower-grid > .summary-card {
-    border-radius: 18px;
-  }
-}
-
-
-/* --------------------------------------------------------------------------
-   2026-09-25 Home rail alignment fix
-   - Keep the lower collection content in the left/main column so the right
-     rail can never create a large blank gap below Collection Target.
-   - Risky Overdue has a bounded height; its rows scroll inside the card.
-   -------------------------------------------------------------------------- */
-.dashboard-reference-main > .dashboard-reference-lower-grid {
-  margin-top: 2px;
-}
-
-.dashboard-reference-side {
-  align-self: start;
-}
-
-.dashboard-reference-side > .risky-overdue-card {
-  height: 360px;
-  min-height: 0;
-  max-height: 360px;
-  overflow: hidden;
-}
-
-.dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  padding-right: 4px;
-  scrollbar-gutter: stable;
-}
-
-.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink-500) 30%, transparent);
-}
-
-.dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--ink-500) 48%, transparent);
-}
-
-@media (max-width: 1180px) {
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 360px;
-    max-height: 360px;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 330px;
-    max-height: 330px;
-  }
-}
-
-
-/* --------------------------------------------------------------------------
-   2026-09-25 Risky rail full-height alignment
-   - On desktop, the right rail stretches to the same bottom line as the main
-     dashboard content. Quick Actions stays on top and Risky Overdue fills the
-     remaining height; only its customer rows scroll.
-   - Collection Summary remains beside Today's Collection in the main column.
-   -------------------------------------------------------------------------- */
-@media (min-width: 1181px) {
-  .dashboard-reference-side {
-    align-self: stretch;
-    height: 100%;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 100%;
-    min-height: 0;
-    max-height: none;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    min-height: 0;
-    flex: 1 1 auto;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-}
-
-@media (max-width: 1180px) {
-  .dashboard-reference-side {
-    align-self: start;
-    height: auto;
-    grid-template-rows: auto auto;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 360px;
-    max-height: 360px;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 330px;
-    max-height: 330px;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   2026-09-25 Home alignment correction (FE18)
-   - The left dashboard content and the right rail are independent columns,
-     so Quick Actions can no longer create a large empty gap before Overview.
-   - Risky Overdue begins below Quick Actions and ends with the left dashboard
-     content (the Today's Collection list area). Its rows scroll internally.
-   -------------------------------------------------------------------------- */
-@media (min-width: 1181px) {
-  .dashboard-reference-board {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(250px, 300px);
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .dashboard-reference-main {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    align-content: start;
-  }
-
-  .dashboard-reference-side {
-    min-width: 0;
-    min-height: 0;
-    height: auto;
-    align-self: stretch;
-    display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
-    align-content: stretch;
-    gap: 16px;
-    padding-top: 4px;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side .dashboard-reference-quick {
-    min-width: 0;
-    padding-top: 0;
-    display: block;
-  }
-
-  .dashboard-reference-side .dashboard-reference-quick .quick-card {
-    height: auto;
-    min-height: 0;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    max-height: none;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: none;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-    padding-right: 4px;
-    scrollbar-gutter: stable;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--ink-500) 34%, transparent);
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list::-webkit-scrollbar-thumb:hover {
-    background: color-mix(in srgb, var(--ink-500) 50%, transparent);
-  }
-}
-
-@media (max-width: 1180px) {
-  .dashboard-reference-board {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-    align-items: start;
-  }
-
-  .dashboard-reference-main {
-    min-width: 0;
-    display: grid;
-    gap: 14px;
-  }
-
-  .dashboard-reference-side {
-    min-width: 0;
-    display: grid;
-    gap: 14px;
-    padding-top: 0;
-    align-self: start;
-    height: auto;
-    overflow: visible;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 360px;
-    min-height: 0;
-    max-height: 360px;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-reference-board,
-  .dashboard-reference-main,
-  .dashboard-reference-side {
-    gap: 12px;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    height: 330px;
-    max-height: 330px;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   2026-09-25 Home refinement (FE19)
-   - Remove the small WELCOME kicker.
-   - Date/day are text-only, moved slightly upward, with an elegant serif face.
-   - Right rail remains bounded to the left dashboard content; risky rows scroll.
-   -------------------------------------------------------------------------- */
-.dashboard-reference-welcome {
-  gap: 7px;
-}
-
-.dashboard-reference-welcome p {
-  max-width: 620px;
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.45;
-  font-weight: 650;
-}
-
-.dashboard-reference-date {
-  min-width: 0;
-  padding: 0;
-  gap: 5px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  transform: translateY(-13px);
-}
-
-.dashboard-reference-date span,
-.dashboard-reference-date strong {
-  font-family: Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
-  color: #ffffff;
-}
-
-.dashboard-reference-date span {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: .16em;
-}
-
-.dashboard-reference-date strong {
-  font-size: 20px;
-  font-weight: 700;
-  font-style: italic;
-  letter-spacing: .025em;
-}
-
-html[data-theme='dark'] .dashboard-reference-date {
-  background: transparent;
-  border-color: transparent;
-}
-
-@media (min-width: 1181px) {
-  .dashboard-reference-board {
-    align-items: stretch;
-  }
-
-  .dashboard-reference-side {
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    min-height: 0;
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    min-height: 0;
-    overflow-y: scroll;
-    overflow-x: hidden;
-  }
-}
-
-@media (max-width: 767px) {
   .dashboard-reference-date {
     justify-self: end;
     width: fit-content;
@@ -2173,8 +1367,8 @@ html[data-theme='dark'] .dashboard-reference-date {
     justify-items: end;
     gap: 2px;
     padding: 0;
-    transform: translateY(-4px);
     text-align: right;
+    transform: translate(0, -4px);
   }
 
   .dashboard-reference-date span {
@@ -2185,65 +1379,4 @@ html[data-theme='dark'] .dashboard-reference-date {
     font-size: 14px;
   }
 
-  .dashboard-reference-welcome p {
-    font-size: 10.5px;
-  }
-}
-
-
-/* --------------------------------------------------------------------------
-   FE20 — Risky Overdue viewport
-   Keep Quick Actions above the risky list, but do not stretch the risky card
-   to the entire dashboard height. The card is sized by its header + 8 rows;
-   additional customers scroll inside the list.
-   -------------------------------------------------------------------------- */
-@media (min-width: 1181px) {
-  .dashboard-reference-side {
-    height: auto;
-    align-self: start;
-    grid-template-rows: auto auto;
-    align-content: start;
-    overflow: visible;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card {
-    height: auto;
-    min-height: 0;
-    max-height: none;
-    align-self: start;
-    overflow: hidden;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    flex: 0 0 auto;
-    height: calc((62px * 8) + (8px * 7));
-    max-height: calc((62px * 8) + (8px * 7));
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-}
-
-@media (max-width: 1180px) {
-  .dashboard-reference-side > .risky-overdue-card {
-    height: auto;
-    max-height: none;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    height: calc((62px * 8) + (8px * 7));
-    max-height: calc((62px * 8) + (8px * 7));
-    overflow-y: auto;
-  }
-}
-
-@media (max-width: 767px) {
-  .dashboard-reference-side > .risky-overdue-card {
-    height: auto;
-    max-height: none;
-  }
-
-  .dashboard-reference-side > .risky-overdue-card .risky-overdue-list {
-    height: calc((60px * 8) + (8px * 7));
-    max-height: calc((60px * 8) + (8px * 7));
-  }
 }
