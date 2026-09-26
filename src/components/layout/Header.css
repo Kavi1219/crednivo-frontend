@@ -204,7 +204,7 @@
 @media (max-width: 480px) {
   .header-title-wrap p { display: none; }
   .header-title-wrap h1 { font-size: 19px; }
-  .mobile-header-actions .tooltip-wrap:first-child { display: none; }
+  .mobile-header-actions > .tooltip-wrap:first-child { display: none; } /* search only — not the bell */
 }
 
 /* Overview identity */
@@ -934,4 +934,58 @@ html[data-theme='dark'] .profile-dropdown {
   .framed-header .framed-inline-title-icon {
     display: inline-block;
   }
+}
+
+
+/* ============================================================
+   MOBILE HEADER (phones)
+   - Solid background card (it was transparent).
+   - Respects the iPhone notch / status bar (safe-area inset).
+   - The brand shrinks first, so the bell and avatar are always visible
+     on narrow phones (iPhone, Samsung, ...).
+   ============================================================ */
+@media (max-width: 767px) {
+  .app-header {
+    top: env(safe-area-inset-top, 0px) !important;
+    margin: calc(8px + env(safe-area-inset-top, 0px)) 10px 0 !important;
+    padding: 8px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 18px !important;
+    background: var(--surface) !important;
+    box-shadow: 0 8px 22px rgba(6, 32, 65, .10) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .app-header .header-title-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    gap: 8px !important;
+  }
+  .app-header .mobile-menu-button { flex: 0 0 auto; }
+  .app-header .mobile-header-brand { min-width: 0 !important; flex: 1 1 auto; overflow: hidden; }
+  .app-header .mobile-header-brand-copy { min-width: 0 !important; overflow: hidden; }
+  .app-header .mobile-header-brand-copy small { overflow: hidden; text-overflow: ellipsis; }
+  .app-header .mobile-header-actions { flex: 0 0 auto !important; gap: 6px !important; }
+  .app-header .mobile-header-actions .icon-btn { width: 38px; height: 38px; min-width: 38px; }
+  /* The bell must always show on phones. */
+  .app-header .mobile-header-actions .notification-wrap,
+  .app-header .mobile-header-actions .notification-wrap .tooltip-wrap { display: inline-flex !important; flex: 0 0 auto; }
+}
+
+/* Narrow phones (most iPhones and Samsung Galaxy S series). */
+@media (max-width: 400px) {
+  .app-header .mobile-header-brand-copy small { display: none !important; }
+  .app-header .mobile-header-brand-copy strong { font-size: 15px !important; }
+  .app-header .mobile-header-brand-mark { width: 30px !important; height: 30px !important; flex-basis: 30px !important; }
+  .app-header .mobile-header-actions .icon-btn,
+  .app-header .mobile-avatar { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+}
+
+/* Very narrow phones: drop the brand text, keep only the logo. */
+@media (max-width: 340px) {
+  .app-header .mobile-header-brand-copy { display: none !important; }
 }
