@@ -260,8 +260,14 @@ html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
 }
 .customers-table th:first-child,
 .customers-table td:first-child {
+  width: 1%; /* shrink to the longest name so the gap before ID stays small */
   padding-left: 22px !important;
+  padding-right: 28px !important;
   text-align: left !important;
+}
+.customers-table th:last-child,
+.customers-table td:last-child {
+  padding-right: 22px !important;
 }
 .customers-table .row-title { justify-content: flex-start; text-align: left; }
 .customers-table .soft-chip { margin: 0 auto; }
