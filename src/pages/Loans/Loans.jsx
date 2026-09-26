@@ -1,4 +1,4 @@
-import { CalendarClock, ChevronDown, MoreHorizontal, Plus, Search, SlidersHorizontal, WalletCards, Users, CheckCircle2, IndianRupee } from 'lucide-react';
+import { CalendarDays, ChevronDown, HandCoins, MoreHorizontal, Plus, Search, SlidersHorizontal, WalletCards, Users, CheckCircle2, IndianRupee } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -139,7 +139,6 @@ export default function Loans() {
           <ChevronDown size={14} />
         </div>
         <button type="button" className="loan-filter-icon-btn" title="More filters"><SlidersHorizontal size={16} /></button>
-        {hasPermission('loans.create') && <ActionButton icon={Plus} onClick={()=>navigate('/loans/create')}>Create Loan</ActionButton>}
       </div>
 
       <div className="module-table-wrap desktop-data-table">
@@ -161,10 +160,26 @@ export default function Loans() {
                 <td><strong>{formatCurrency(loan.outstanding)}</strong></td>
                 <td><span className="loan-status-cell"><span className={`loan-status-dot ${RISK_META[tier].dot}`} />{tier}</span></td>
                 <td>
-                  <div className="loan-row-actions">
-                    <button type="button" className="loan-collect-btn" onClick={() => navigate(`/collection?q=${encodeURIComponent(loan.customerId)}&focus=search`)}>Collect</button>
-                    <IconButton size="sm" label="View schedule" onClick={() => navigate(`/collection?q=${encodeURIComponent(loan.customerId)}&focus=search`)}><CalendarClock size={16}/></IconButton>
-                    <IconButton size="sm" label={`View ${loan.customerName}`} onClick={()=>navigate(`/customers/${loan.customerId}`)}><MoreHorizontal size={16}/></IconButton>
+                  <div className="loan-row-actions loan-icon-actions">
+                    <button
+                      type="button"
+                      className="loan-icon-action schedule"
+                      onClick={() => navigate(`/collection?view=all&q=${encodeURIComponent(loan.customerId)}&focus=search`)}
+                      aria-label={`View schedule for ${loan.customerName}`}
+                      title="View schedule"
+                    >
+                      <CalendarDays size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="loan-icon-action collect"
+                      onClick={() => loan.status !== 'Closed' && navigate(`/collection?q=${encodeURIComponent(loan.customerId)}&focus=search`)}
+                      disabled={loan.status === 'Closed'}
+                      aria-label={loan.status === 'Closed' ? `${loan.customerName} loan closed` : `Collect from ${loan.customerName}`}
+                      title={loan.status === 'Closed' ? 'Loan closed' : `Collect from ${loan.customerName}`}
+                    >
+                      <HandCoins size={16} />
+                    </button>
                   </div>
                 </td>
               </tr>

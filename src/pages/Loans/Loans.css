@@ -104,3 +104,37 @@
 .loan-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 @media (max-width: 1100px) { .loan-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 767px) { .loan-summary-stats { margin-bottom: 12px; } .loan-summary-grid { grid-template-columns: 1fr; gap: 9px; } }
+
+
+/* Loan row actions — same icons and colours as Today's Collection on Home:
+   blue calendar (schedule) and green hand-coins (collect). */
+.loan-icon-actions { justify-content: center; gap: 8px; }
+.loan-icon-action {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.loan-icon-action svg { display: block; width: 16px; height: 16px; }
+.loan-icon-action.schedule {
+  border: 1px solid color-mix(in srgb, var(--blue-500) 30%, var(--line));
+  background: color-mix(in srgb, var(--blue-100) 78%, var(--surface));
+  color: var(--blue-500);
+}
+.loan-icon-action.schedule:hover { background: var(--blue-100); border-color: color-mix(in srgb, var(--blue-500) 50%, var(--line)); }
+.loan-icon-action.collect {
+  border: 1px solid color-mix(in srgb, var(--success) 35%, var(--line));
+  background: var(--success-soft);
+  color: var(--success);
+}
+.loan-icon-action.collect:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--success-soft) 82%, var(--success) 18%);
+  border-color: color-mix(in srgb, var(--success) 55%, var(--line));
+  box-shadow: 0 5px 14px rgba(11, 135, 62, .10);
+}
+.loan-icon-action:disabled { cursor: not-allowed; opacity: .58; filter: saturate(.3); }

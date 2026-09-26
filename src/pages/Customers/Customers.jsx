@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   ChevronDown,
   Download,
   FileSpreadsheet,
@@ -15,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
-import { goActualBack } from '../../components/GlobalBackButton';
+import { PageBackButton } from '../../components/GlobalBackButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -157,13 +156,7 @@ export default function Customers() {
 
   const headerActions = (
     <div className="customers-page-actions">
-      <button
-        type="button"
-        className="customers-back-button"
-        onClick={() => goActualBack(navigate, location)}
-      >
-        <ArrowLeft size={16} /> Back
-      </button>
+      <PageBackButton />
       {hasPermission('customers.add') && (
         <ActionButton icon={UserPlus} onClick={() => navigate('/customers/new')}>New Customer</ActionButton>
       )}

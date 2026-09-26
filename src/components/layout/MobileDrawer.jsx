@@ -7,13 +7,13 @@ import './MobileDrawer.css';
 const items = [
   ['Customers', '/customers', Users, 'customers.view'],
   ['Loans', '/loans', CircleDollarSign, 'loans.view'],
-  ['Work', '/work', ClipboardList, null, false, true],
   ['History', '/payments', WalletCards, 'payments.view'],
   ['Expenses', '/expenses', ReceiptText, 'expenses.view'],
   ['Capital', '/capital', Landmark, 'capital.view'],
   ['Savings', '/savings', PiggyBank, null, true],
   ['Reports', '/reports', BarChart3, 'reports.full'],
   ['Agents', '/agents', Users, null, true],
+  ['Work', '/work', ClipboardList, null, false, true],
   ['Settings', '/settings', Settings, null, false, true],
 ];
 

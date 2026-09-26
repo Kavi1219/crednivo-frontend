@@ -2,11 +2,10 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   CalendarDays,
-  Download,
+  ChevronDown,
   HandCoins,
   Landmark,
   PiggyBank,
-  Printer,
   ReceiptText,
   RotateCcw,
   Search,
@@ -14,16 +13,19 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import ActionButton from '../../components/common/ActionButton';
-import StatCard from '../../components/dashboard/StatCard';
+import DownloadMenu from '../../components/common/DownloadMenu';
+import { useAuth } from '../../context/AuthContext';
+import { exportHistoryPdf, exportHistoryXlsx } from '../../utils/historyExport';
+import SummaryCard from '../../components/common/SummaryCard';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
-import { downloadCsv, formatCurrency, formatDate, toInputDate } from '../../utils/finance';
+import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Payments.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
 
 export default function Payments() {
-  const { customers, payments, savings, capital } = useCrednivo();
+  const { customers, payments, savings, capital, company } = useCrednivo();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const requestedFilter = searchParams.get('filter');
   const todayRequested = searchParams.get('today') === '1';
@@ -36,6 +38,7 @@ export default function Payments() {
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState(initialDate);
   const [toDate, setToDate] = useState(initialDate);
+  const datesActive = Boolean(fromDate || toDate);
 
   const customerPhotoById = useMemo(
     () => Object.fromEntries((customers || []).map((customer) => [String(customer.id), customer.photo || ''])),
@@ -105,35 +108,29 @@ export default function Payments() {
     setToDate(today);
   };
 
-  const download = () => downloadCsv(
-    `crednivo-history-${fromDate || 'start'}-to-${toDate || 'latest'}.csv`,
-    [
-      ['Date', 'Transaction', 'Customer / Purpose', 'Reference', 'Loan', 'Mode', 'Interest', 'Principal', 'Fine', 'Note', 'Direction', 'Amount'],
-      ...filtered.map((item) => [
-        item.date,
-        item.type,
-        item.customerName,
-        item.customerId,
-        item.loanId || '',
-        item.paymentMode || '',
-        item.interestPaid || 0,
-        item.principalPaid || 0,
-        item.fineAmount || 0,
-        item.note,
-        item.direction === 'in' ? 'Incoming' : 'Outgoing',
-        item.amount,
-      ]),
-    ],
-  );
+  const detailsOf = (item) => (item.loanType === 'IO' && item.type === 'Collection'
+    ? `Interest ${formatCurrency(item.interestPaid)} · Principal ${formatCurrency(item.principalPaid)}${Number(item.fineAmount) > 0 ? ` · Fine ${formatCurrency(item.fineAmount)}` : ''}`
+    : item.note);
+
+  const exportArgs = () => ({
+    company,
+    generatedBy: user?.displayName || company?.owner || 'Admin',
+    fromDate,
+    toDate,
+    filter,
+    rows: filtered,
+    totals: { incoming, outgoing },
+    details: detailsOf,
+  });
 
   return (
     <div className="module-page payments-page">
       <section className="stats-section history-summary-section">
         <div className="stats-grid history-summary-grid">
-          <StatCard title="Total Incoming" value={formatCurrency(incoming)} note="Collections received" icon={ArrowDownLeft} tone="green" showProgress={false} />
-          <StatCard title="Total Outgoing" value={formatCurrency(outgoing)} note="Loans & expenses paid" icon={ArrowUpRight} tone="danger" showProgress={false} />
-          <StatCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="Incoming minus outgoing" icon={WalletCards} tone="blue" showProgress={false} />
-          <StatCard title="Transactions" value={String(dateFiltered.length)} note="In current date range" icon={HandCoins} tone="purple" showProgress={false} />
+          <SummaryCard title="Total Incoming" value={formatCurrency(incoming)} note="Collections received" icon={ArrowDownLeft} tone="green" />
+          <SummaryCard title="Total Outgoing" value={formatCurrency(outgoing)} note="Loans & expenses paid" icon={ArrowUpRight} tone="red" />
+          <SummaryCard title="Net Cash Flow" value={formatCurrency(incoming - outgoing)} note="Incoming minus outgoing" icon={WalletCards} tone="blue" />
+          <SummaryCard title="Transactions" value={String(dateFiltered.length)} note="In current date range" icon={HandCoins} tone="purple" />
         </div>
       </section>
 
@@ -142,47 +139,45 @@ export default function Payments() {
           <div className="payment-history-brand">
             <div>
               <h2>History</h2>
-              <span>Choose a date range, then print or download the matching history.</span>
             </div>
           </div>
           <div className="payment-export-actions">
-            <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print / PDF</ActionButton>
-            <ActionButton icon={Download} onClick={download}>Download CSV</ActionButton>
+            <div className={`history-date-range ${datesActive ? 'active' : ''}`} role="group" aria-label="Date range">
+              <CalendarDays size={15} />
+              <input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} aria-label="From date" />
+              <span className="history-date-sep">to</span>
+              <input type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} aria-label="To date" />
+            </div>
+            <button type="button" className="history-date-chip" onClick={showToday}>Today</button>
+            {datesActive && (
+              <button type="button" className="history-date-clear" onClick={resetDates} aria-label="Clear dates" title="Clear dates">
+                <RotateCcw size={15} />
+              </button>
+            )}
+            <DownloadMenu
+              onPdf={() => exportHistoryPdf(exportArgs())}
+              onXlsx={() => exportHistoryXlsx(exportArgs())}
+              xlsxNote="Excel history report"
+            />
           </div>
         </div>
 
-        <div className="payment-date-toolbar">
-          <div className="payment-date-field">
-            <CalendarDays size={16} />
-            <label>
-              <span>From Date</span>
-              <input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} />
-            </label>
-          </div>
-          <div className="payment-date-field">
-            <CalendarDays size={16} />
-            <label>
-              <span>To Date</span>
-              <input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} />
-            </label>
-          </div>
-          <div className="payment-date-quick-actions">
-            <ActionButton tone="secondary" icon={CalendarDays} onClick={showToday}>Today</ActionButton>
-            <ActionButton tone="secondary" icon={RotateCcw} onClick={resetDates}>Clear Dates</ActionButton>
-          </div>
-        </div>
-
-        <div className="module-toolbar payment-list-toolbar">
+        <div className="module-toolbar history-filter-row">
           <label className="module-search">
             <Search size={16} />
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search history..." />
           </label>
-          <div className="module-toolbar-group">
-            {['All', 'Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital', 'Savings'].map((item) => (
-              <button key={item} className={`filter-chip ${filter === item ? 'active' : ''}`} onClick={() => setFilter(item)}>{item}</button>
-            ))}
+          <div className="history-quick-select">
+            <select value={filter} onChange={(event) => setFilter(event.target.value)} aria-label="Transaction type">
+              <option value="All">All Transactions</option>
+              {['Collection', 'Document Charge', 'New Loan', 'Expense', 'Capital', 'Savings'].map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} />
           </div>
         </div>
+
 
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table">
@@ -202,7 +197,7 @@ export default function Payments() {
                   <td><div className="payment-customer-identity"><CustomerAvatar className="payment-customer-avatar" photo={customerPhotoById[String(item.customerId)]} name={item.customerName}/><CustomerProfileLink customerId={item.customerId}>{item.customerName}</CustomerProfileLink></div></td>
                   <td>{item.loanId || item.customerId}</td>
                   <td>{item.paymentMode || '—'}</td>
-                  <td>{item.loanType === 'IO' && item.type === 'Collection' ? `Interest ${formatCurrency(item.interestPaid)} · Principal ${formatCurrency(item.principalPaid)}${Number(item.fineAmount) > 0 ? ` · Fine ${formatCurrency(item.fineAmount)}` : ''}` : item.note}</td>
+                  <td>{detailsOf(item)}</td>
                   <td className={item.direction === 'in' ? 'money-in' : 'money-out'}>{item.direction === 'in' ? '+' : '−'} {formatCurrency(item.amount)}</td>
                 </tr>
               ))}

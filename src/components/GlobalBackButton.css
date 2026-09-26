@@ -68,3 +68,17 @@
   .page-actions-row { width: 100%; justify-content: flex-start; gap: 7px; }
   .page-back-button { min-height: 36px; padding: 0 11px; border-radius: 10px; }
 }
+
+
+/* Universal Back button: every page uses the .page-back-button look. The
+   old .crednivo-global-back pill styling above is overridden here. */
+.page-back-button.crednivo-global-back {
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  box-shadow: var(--shadow-sm);
+}
+@media (max-width: 767px) {
+  .page-back-button.crednivo-global-back { min-height: 36px; padding: 0 11px; border-radius: 10px; box-shadow: none; }
+}

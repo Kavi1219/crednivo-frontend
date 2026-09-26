@@ -14,8 +14,10 @@ import {
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
+import { PageBackButton } from '../../components/GlobalBackButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import SummaryCard from '../../components/common/SummaryCard';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
@@ -31,7 +33,11 @@ const EMPTY_FORM = {
   createdBy: '',
 };
 
-function CapitalModal({ open, onClose, onSave, company, editing, saving = false }) {
+// mode: 'add' (Investment / Additional Investment) or 'withdrawal' (Capital
+// Withdrawal only). Withdrawals have their own button, so the Add Capital
+// form no longer offers the withdrawal type.
+function CapitalModal({ open, onClose, onSave, company, editing, mode = 'add', saving = false }) {
+  const isWithdrawal = mode === 'withdrawal';
   const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
@@ -41,11 +47,11 @@ function CapitalModal({ open, onClose, onSave, company, editing, saving = false 
       amount: editing.amount || '',
       date: editing.date || toInputDate(),
       paymentMode: editing.paymentMode || 'Bank',
-      type: editing.type || 'Investment',
+      type: editing.type || (isWithdrawal ? 'Capital Withdrawal' : 'Investment'),
       note: editing.note || '',
       createdBy: editing.createdBy || company?.owner || '',
-    } : { ...EMPTY_FORM, createdBy: company?.owner || '' });
-  }, [open, editing, company?.owner]);
+    } : { ...EMPTY_FORM, type: isWithdrawal ? 'Capital Withdrawal' : 'Investment', createdBy: company?.owner || '' });
+  }, [open, editing, company?.owner, isWithdrawal]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -65,14 +71,14 @@ function CapitalModal({ open, onClose, onSave, company, editing, saving = false 
 
   return (
     <div className="capital-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="capital-modal app-card" role="dialog" aria-modal="true" aria-label={editing ? 'Edit capital entry' : 'Add capital'}>
+      <section className="capital-modal app-card" role="dialog" aria-modal="true" aria-label={isWithdrawal ? (editing ? 'Edit withdrawal' : 'Capital withdrawal') : (editing ? 'Edit capital entry' : 'Add capital')}>
         <div className="capital-modal-head">
           <div className="capital-modal-title">
-            <span><Landmark size={20} /></span>
+            <span>{isWithdrawal ? <ArrowUpFromLine size={20} /> : <Landmark size={20} />}</span>
             <div>
               <small>CAPITAL MANAGEMENT</small>
-              <h2>{editing ? 'Edit Capital Entry' : 'Add Capital'}</h2>
-              <p>Record investment, additional capital or a capital withdrawal.</p>
+              <h2>{isWithdrawal ? (editing ? 'Edit Withdrawal' : 'Capital Withdrawal') : (editing ? 'Edit Capital Entry' : 'Add Capital')}</h2>
+              <p>{isWithdrawal ? 'Record money taken out by a partner or investor.' : 'Record an investment or additional capital.'}</p>
             </div>
           </div>
           <IconButton label="Close" onClick={onClose}><X size={19} /></IconButton>
@@ -92,14 +98,15 @@ function CapitalModal({ open, onClose, onSave, company, editing, saving = false 
               <span>Date *</span>
               <input type="date" value={form.date} onChange={update('date')} />
             </label>
-            <label className="capital-field">
-              <span>Type *</span>
-              <select value={form.type} onChange={update('type')}>
-                <option>Investment</option>
-                <option>Additional Investment</option>
-                <option>Capital Withdrawal</option>
-              </select>
-            </label>
+            {!isWithdrawal && (
+              <label className="capital-field">
+                <span>Type *</span>
+                <select value={form.type} onChange={update('type')}>
+                  <option>Investment</option>
+                  <option>Additional Investment</option>
+                </select>
+              </label>
+            )}
             <label className="capital-field">
               <span>Payment Mode</span>
               <select value={form.paymentMode} onChange={update('paymentMode')}>
@@ -122,7 +129,7 @@ function CapitalModal({ open, onClose, onSave, company, editing, saving = false 
 
           <div className="capital-modal-actions">
             <ActionButton tone="secondary" type="button" onClick={onClose} disabled={saving}>Cancel</ActionButton>
-            <ActionButton type="submit" icon={editing ? Pencil : Plus} disabled={saving}>{saving ? 'Saving...' : editing ? 'Save Changes' : 'Save Capital'}</ActionButton>
+            <ActionButton type="submit" icon={editing ? Pencil : isWithdrawal ? ArrowUpFromLine : Plus} disabled={saving}>{saving ? 'Saving...' : editing ? 'Save Changes' : isWithdrawal ? 'Save Withdrawal' : 'Save Capital'}</ActionButton>
           </div>
         </form>
       </section>
@@ -146,6 +153,7 @@ export default function Capital() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [modalMode, setModalMode] = useState('add');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [saving, setSaving] = useState(false);
@@ -171,11 +179,19 @@ export default function Capital() {
 
   const openAdd = () => {
     setEditing(null);
+    setModalMode('add');
+    setModalOpen(true);
+  };
+
+  const openWithdrawal = () => {
+    setEditing(null);
+    setModalMode('withdrawal');
     setModalOpen(true);
   };
 
   const openEdit = (item) => {
     setEditing(item);
+    setModalMode(item.type === 'Capital Withdrawal' ? 'withdrawal' : 'add');
     setModalOpen(true);
   };
 
@@ -317,43 +333,23 @@ export default function Capital() {
         eyebrow="Capital Management"
         title="Capital"
         description="Track opening investment, partner contributions, withdrawals and the capital currently available for lending."
-        actions={hasPermission('capital.manage') ? <ActionButton icon={Plus} onClick={openAdd}>Add Capital</ActionButton> : null}
+        actions={
+          <div className="page-actions-row">
+            <PageBackButton />
+            {hasPermission('capital.manage') && (
+              <>
+                <ActionButton tone="secondary" icon={ArrowUpFromLine} onClick={openWithdrawal}>Withdrawal</ActionButton>
+                <ActionButton icon={Plus} onClick={openAdd}>Add Capital</ActionButton>
+              </>
+            )}
+          </div>
+        }
       />
 
       <section className="capital-metrics" aria-label="Capital summary">
-        {metrics.map(({ label, value, note, icon: Icon, tone, className = '' }) => (
-          <article key={label} className={`capital-metric app-card capital-tone-${tone} ${className}`.trim()}>
-            <span className="capital-metric-icon"><Icon size={22} /></span>
-            <div>
-              <span>{label}</span>
-              <strong>{value}</strong>
-              <small>{note}</small>
-            </div>
-          </article>
+        {metrics.map(({ label, value, icon, tone }) => (
+          <SummaryCard key={label} title={label} value={value} icon={icon} tone={tone} />
         ))}
-      </section>
-
-      <section className="capital-position app-card">
-        <div className="capital-position-head">
-          <div>
-            <span className="module-eyebrow">BUSINESS CASH POSITION</span>
-            <h2>How Available Capital Is Calculated</h2>
-          </div>
-          {capital.length === 0 && hasPermission('capital.manage') && <button onClick={openAdd}>Add your opening investment <ArrowDownToLine size={15} /></button>}
-        </div>
-        <div className="capital-position-grid">
-          <div><span>Net Capital</span><strong>{formatCurrency(capitalMetrics.netCapital)}</strong><small>Investment − withdrawals</small></div>
-          <b>+</b>
-          <div><span>Collections + Charges</span><strong>{formatCurrency(capitalMetrics.collectionsReceived)}</strong><small>Customer collections + fines + document charges</small></div>
-          <b>−</b>
-          <div><span>Loans Disbursed</span><strong>{formatCurrency(capitalMetrics.loanDisbursed)}</strong><small>Actual amounts given to customers</small></div>
-          <b>−</b>
-          <div><span>Expenses</span><strong>{formatCurrency(capitalMetrics.expensesPaid)}</strong><small>Recorded business expenses</small></div>
-          <b>−</b>
-          <div><span>Savings</span><strong>{formatCurrency(capitalMetrics.savingsTotal || 0)}</strong><small>Owner reserve · not an expense</small></div>
-          <b>=</b>
-          <div className="capital-position-result"><span>Available Capital</span><strong>{formatCurrency(capitalMetrics.availableCapital)}</strong><small>Current calculated business cash after Savings</small></div>
-        </div>
       </section>
 
       <section className="capital-history app-card">
@@ -425,7 +421,7 @@ export default function Capital() {
         )}
       </section>
 
-      <CapitalModal open={hasPermission('capital.manage') && modalOpen} onClose={() => { if (!saving) { setModalOpen(false); setEditing(null); } }} onSave={save} company={company} editing={editing} saving={saving} />
+      <CapitalModal open={hasPermission('capital.manage') && modalOpen} onClose={() => { if (!saving) { setModalOpen(false); setEditing(null); } }} onSave={save} company={company} editing={editing} mode={modalMode} saving={saving} />
     </div>
   );
 }

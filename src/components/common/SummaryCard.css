@@ -155,6 +155,19 @@ html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
 }
 .customer-home-card.tone-purple .customer-home-orb { background: rgba(160, 128, 255, .14); }
 
+.customer-home-card.tone-red {
+  background: linear-gradient(180deg, #fff8f8 0%, #fff2f2 100%);
+  border-color: rgba(240, 84, 97, .28);
+}
+.customer-home-card.tone-red .customer-home-icon {
+  background: linear-gradient(180deg, #ffecee, #ffe2e5);
+  color: #e0454f;
+}
+.customer-home-card.tone-red .customer-home-graphic span {
+  background: linear-gradient(180deg, rgba(240, 84, 97, .78), rgba(240, 84, 97, .18));
+}
+.customer-home-card.tone-red .customer-home-orb { background: rgba(255, 128, 138, .14); }
+
 .customer-home-trend { font-style: normal; font-weight: 800; }
 .customer-home-trend.up { color: var(--success); }
 .customer-home-trend.down { color: var(--danger); }

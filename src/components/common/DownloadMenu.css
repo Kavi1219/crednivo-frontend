@@ -1,0 +1,71 @@
+/* Same look as the Download menu on Today's Collection (Home). */
+.download-menu { position: relative; flex: 0 0 auto; }
+.download-menu-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--blue-500) 24%, var(--line));
+  border-radius: 10px;
+  color: var(--blue-600);
+  background: color-mix(in srgb, var(--blue-100) 70%, var(--surface));
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.download-menu-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--blue-500) 45%, var(--line));
+  background: color-mix(in srgb, var(--blue-100) 88%, var(--surface));
+}
+.download-menu-button:disabled { opacity: .7; cursor: progress; }
+.download-menu-button svg:last-child { transition: transform .16s ease; }
+.download-menu-button svg:last-child.open { transform: rotate(180deg); }
+.download-menu-popdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: 238px;
+  padding: 7px;
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: 0 16px 38px rgba(6, 32, 65, .16);
+}
+.download-menu-popdown button {
+  width: 100%;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-800);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.download-menu-popdown button:hover { background: var(--surface-soft); }
+.download-menu-popdown button > svg {
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  flex: 0 0 34px;
+  border-radius: 9px;
+  color: var(--blue-600);
+  background: var(--blue-100);
+}
+.download-menu-popdown button span { min-width: 0; display: grid; gap: 3px; }
+.download-menu-popdown button strong { color: var(--ink-950); font-size: 11px; }
+.download-menu-popdown button small { color: var(--ink-500); font-size: 8.8px; white-space: nowrap; }
+@media (max-width: 480px) {
+  .download-menu-popdown { width: min(238px, calc(100vw - 28px)); }
+}
