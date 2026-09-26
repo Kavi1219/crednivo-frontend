@@ -258,7 +258,12 @@ html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
   color: var(--ink-950) !important;
   font-weight: 750 !important;
 }
-.customers-table .row-title { justify-content: center; text-align: left; }
+.customers-table th:first-child,
+.customers-table td:first-child {
+  padding-left: 22px !important;
+  text-align: left !important;
+}
+.customers-table .row-title { justify-content: flex-start; text-align: left; }
 .customers-table .soft-chip { margin: 0 auto; }
 .customers-table .customer-pending-cell { justify-items: center; }
 
