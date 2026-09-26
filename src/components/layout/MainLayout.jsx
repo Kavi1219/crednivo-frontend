@@ -22,7 +22,7 @@ export default function MainLayout() {
   return (
     <div className="app-shell">
       <Sidebar />
-      <div className="main-shell">
+      <div className="main-shell is-framed">
         <Header onOpenMenu={() => setDrawerOpen(true)} />
         <main className="page-content"><NavigationMemory /><GlobalBackButton /><Outlet /></main>
       </div>

@@ -12,3 +12,34 @@
 .page-content {
   background: var(--canvas) !important;
 }
+
+/* Framed layout (every page): only two surfaces — the white frame fills the
+   whole area next to the sidebar (no outer gap), and the page is the light
+   panel the header tab flows into. The frame never moves while scrolling:
+   the header sticks to the very top and the frame's sides run full height. */
+@media (min-width: 768px) {
+  .app-shell {
+    background: var(--frame) !important;
+  }
+
+  .app-shell .main-shell.is-framed {
+    --customers-rail: var(--frame);
+    min-height: 100vh;
+    margin: 0 0 0 var(--sidebar-width);
+    padding: 0 12px 12px;
+    border-radius: 0;
+    background: var(--customers-rail) !important;
+    box-shadow: none;
+  }
+
+  .app-shell .main-shell.is-framed .page-content {
+    min-height: calc(100vh - 82px - 12px);
+    border-radius: 0 0 28px 28px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app-shell .main-shell.is-framed {
+    margin-left: 0 !important;
+  }
+}

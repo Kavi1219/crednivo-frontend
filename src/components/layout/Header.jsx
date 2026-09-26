@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ChevronDown, House, Menu, Search, Sparkles } from 'lucide-react';
+import {
+  BarChart3, Bell, ChevronDown, CircleDollarSign, ClipboardList, FileText, HandCoins, House, Landmark,
+  LayoutGrid, Menu, PiggyBank, ReceiptText, Search, Settings, Sparkles, UserPlus, UserRound, Users, WalletCards,
+} from 'lucide-react';
 import { listNotifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } from '../../services/work';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -22,10 +25,35 @@ function getGreeting() {
   return 'Good evening';
 }
 
+// Title + icon shown in the framed header tab for every page. Order matters:
+// more specific paths come before their parents.
+const HEADER_PAGES = [
+  { prefix: '/overview', title: 'Home', icon: House },
+  { prefix: '/today-report', title: "Today's Report", icon: FileText },
+  { prefix: '/customers/new', title: 'New Customer', icon: UserPlus },
+  { prefix: '/customers', title: 'Customers', icon: UserRound },
+  { prefix: '/loans/create', title: 'Create Loan', icon: CircleDollarSign },
+  { prefix: '/loans', title: 'Loans', icon: CircleDollarSign },
+  { prefix: '/collection', title: 'Collection', icon: HandCoins },
+  { prefix: '/work', title: 'Work', icon: ClipboardList },
+  { prefix: '/payments', title: 'History', icon: WalletCards },
+  { prefix: '/capital', title: 'Capital', icon: Landmark },
+  { prefix: '/savings', title: 'Savings', icon: PiggyBank },
+  { prefix: '/expenses', title: 'Expenses', icon: ReceiptText },
+  { prefix: '/reports', title: 'Reports', icon: BarChart3 },
+  { prefix: '/agents', title: 'Agents', icon: Users },
+  { prefix: '/settings', title: 'Settings', icon: Settings },
+];
+
 function getHeaderIdentity(pathname) {
-  if (pathname.startsWith('/overview')) return { title: 'Home', isOverview: true };
-  return { title: 'Business Workspace', isOverview: false };
+  const page = HEADER_PAGES.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return {
+    title: page?.title || 'Business Workspace',
+    Icon: page?.icon || LayoutGrid,
+    isOverview: page?.prefix === '/overview',
+  };
 }
+
 
 function ProfileDetails({ company, user, isOwner, accounts, activeAccountId, onEdit, onSecurity, onChangePassword, onLogout, onSwitchAccount, onAddAccount, onSessions }) {
   const avatar = user?.profilePhoto || company.logo;
@@ -174,7 +202,7 @@ export default function Header({ onOpenMenu }) {
   const navigate = useNavigate();
   const greeting = getGreeting();
   const headerIdentity = useMemo(() => getHeaderIdentity(location.pathname), [location.pathname]);
-  const { title, isOverview } = headerIdentity;
+  const { title, Icon: PageIcon, isOverview } = headerIdentity;
   const avatar = user?.profilePhoto || company.logo;
   const profileInitial = String(user?.displayName || company.name || 'C').charAt(0);
   const searchWrapRef = useRef(null);
@@ -234,12 +262,14 @@ export default function Header({ onOpenMenu }) {
   const handleSwitchAccount = async (id) => { setProfileOpen(false); await switchAccount(id); navigate('/', { replace: true }); };
 
   return (
-    <header className={`app-header ${isOverview ? 'overview-header' : ''}`}>
+    <header className={`app-header framed-header ${isOverview ? 'overview-header' : ''}`.trim()}>
       <div className="header-title-wrap">
+        <span className="framed-title-orb" aria-hidden="true"><PageIcon size={18} /></span>
+        <span className="framed-title-plate" aria-hidden="true" />
         <IconButton label="Open menu" onClick={onOpenMenu} className="mobile-menu-button"><Menu size={22} /></IconButton>
         <div className="mobile-header-brand" aria-label="CREDNIVO"><span className="mobile-header-brand-mark"><CrednivoMark size={37} /></span><span className="mobile-header-brand-copy"><strong>CREDNIVO</strong><small>Finance Management Platform</small></span></div>
         <div className="desktop-header-identity">
-          <h1>{isOverview && <House size={22} className="header-title-icon" aria-hidden="true" />}{title}</h1>
+          <h1><PageIcon size={22} className="header-title-icon framed-inline-title-icon" aria-hidden="true" />{title}</h1>
           {isOverview ? (
             <p className="overview-greeting"><span>{greeting}, {user?.displayName || company.owner}</span><Sparkles size={14} aria-hidden="true" /><span className="overview-greeting-divider">•</span><span className="overview-greeting-context">Your CREDNIVO snapshot for today</span></p>
           ) : <p className="overview-greeting"><span>{company.name}</span><span className="overview-greeting-divider">•</span><span className="overview-greeting-context">{user?.branch || company.branch}</span></p>}

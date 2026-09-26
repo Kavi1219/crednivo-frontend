@@ -47,7 +47,8 @@ export default function GlobalBackButton() {
   // Web-only control. Android/iOS native app uses the device/app navigation
   // and should never show this browser-style Back button. Home/Overview is the
   // root page, so it should not display a Back button either.
-  if (Capacitor.isNativePlatform() || location.pathname.startsWith('/overview')) return null;
+  const customerListRoute = /^\/customers(?:\/(?:daily|weekly|monthly))?\/?$/.test(location.pathname);
+  if (Capacitor.isNativePlatform() || location.pathname.startsWith('/overview') || customerListRoute) return null;
 
   return (
     <div className="crednivo-global-back-row">

@@ -13,7 +13,9 @@
   --surface: #ffffff;
   --surface-soft: #f8fafd;
   --surface-hover: #fbfdff;
-  --canvas: #dcf7fa;
+  --canvas: #effdee;
+  --frame: #a7dca5; /* sidebar + frame around every page */
+  --card-tint: #effdee; /* Home cards: collection list, summary, quick actions, overdue */
   --success: #26b355;
   --success-soft: #e5f8eb;
   --warning: #ff8a3d;
@@ -56,6 +58,8 @@ html[data-theme='dark'] {
   --surface-soft: #142335;
   --surface-hover: #182a3e;
   --canvas: #0a1420;
+  --frame: #101d2b;
+  --card-tint: var(--surface);
   --success-soft: #123522;
   --warning-soft: #38261b;
   --danger-soft: #3b1d24;

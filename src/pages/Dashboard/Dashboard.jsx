@@ -322,13 +322,12 @@ export default function Dashboard() {
     <div className="dashboard-page dashboard-reference-page">
       <section className="dashboard-reference-hero app-card">
         <div className="dashboard-reference-welcome">
+          <div className="dashboard-reference-date" aria-label={`${formatHeroDay(today)}, ${formatHeroDate(today)}`}>
+            <span>{formatHeroDay(today)}</span>
+            <strong>{formatHeroDate(today)}</strong>
+          </div>
           <h2>Welcome, {welcomeName}</h2>
           <p>{dailyMotivation}</p>
-        </div>
-
-        <div className="dashboard-reference-date" aria-label={`${formatHeroDay(today)}, ${formatHeroDate(today)}`}>
-          <span>{formatHeroDay(today)}</span>
-          <strong>{formatHeroDate(today)}</strong>
         </div>
 
       </section>

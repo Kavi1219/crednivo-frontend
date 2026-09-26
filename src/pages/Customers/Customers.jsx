@@ -1,14 +1,27 @@
-import { Eye, Search, UserPlus, UsersRound, WalletCards, CalendarDays, BadgeIndianRupee } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronDown,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Search,
+  UserPlus,
+  UsersRound,
+  X,
+  WalletCards,
+  BadgeIndianRupee,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
-import StatCard from '../../components/dashboard/StatCard';
-import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import { goActualBack } from '../../components/GlobalBackButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
-import { formatCurrency, formatDate, formatIndianMobile, normalizeIndianMobile } from '../../utils/finance';
+import { exportCustomersListPdf, exportCustomersListXlsx } from '../../utils/customersExport';
+import { formatCurrency, formatIndianMobile, normalizeIndianMobile } from '../../utils/finance';
 import './Customers.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
 
@@ -19,16 +32,52 @@ function routeCycle(pathname) {
   return 'All';
 }
 
+
+function CustomerSummaryCard({ title, value, note, icon: Icon, tone = 'blue' }) {
+  return (
+    <div className={`customer-home-card tone-${tone}`} aria-label={`${title}: ${value}. ${note}.`}>
+      <span className="customer-home-arrow" aria-hidden="true"><ArrowRight size={15} /></span>
+      <span className="customer-home-icon"><Icon size={18} strokeWidth={2.1} /></span>
+      <div className="customer-home-copy">
+        <strong>{value}</strong>
+        <p>{title}</p>
+        <small>{note}</small>
+      </div>
+      <span className="customer-home-graphic" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span className="customer-home-orb" aria-hidden="true"></span>
+    </div>
+  );
+}
+
+function handleCardKeyDown(event, onOpen) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    onOpen();
+  }
+}
+
 export default function Customers() {
-  const { customers, loans } = useCrednivo();
-  const { hasPermission } = useAuth();
+  const { customers, loans, company } = useCrednivo();
+  const { hasPermission, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
+  const [downloadOpen, setDownloadOpen] = useState(false);
   const cycle = routeCycle(location.pathname);
+  const downloadMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!downloadMenuRef.current?.contains(event.target)) setDownloadOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, []);
 
   const customerSummaries = useMemo(() => Object.fromEntries(customers.map((customer) => {
-    const activeLoans = loans.filter((loan) => loan.customerId === customer.id && loan.status !== 'Closed' && Number(loan.outstanding) > 0);
+    const allCustomerLoans = loans.filter((loan) => loan.customerId === customer.id);
+    const activeLoans = allCustomerLoans.filter((loan) => loan.status !== 'Closed' && Number(loan.outstanding) > 0);
+    const closedLoans = allCustomerLoans.filter((loan) => loan.status === 'Closed' || Number(loan.outstanding) <= 0);
     const totalOutstanding = activeLoans.reduce((sum, loan) => sum + (Number(loan.outstanding) || 0), 0);
     const collectionByCycle = activeLoans.reduce((summary, loan) => {
       const loanCycle = loan.cycle || 'Other';
@@ -38,7 +87,15 @@ export default function Customers() {
     const cycles = Object.keys(collectionByCycle);
     const nextDueDate = activeLoans.map((loan) => loan.nextDueDate).filter(Boolean).sort()[0] || customer.nextDueDate;
     const status = activeLoans.some((loan) => loan.status === 'Overdue') ? 'Overdue' : activeLoans.length ? 'Active' : customer.status;
-    return [customer.id, { activeLoans, totalOutstanding, collectionByCycle, cycles, nextDueDate, status }];
+    return [customer.id, {
+      activeLoans,
+      closedLoans,
+      totalOutstanding,
+      collectionByCycle,
+      cycles,
+      nextDueDate,
+      status,
+    }];
   })), [customers, loans]);
 
   const cycleCustomers = useMemo(() => customers.filter((customer) => {
@@ -49,48 +106,120 @@ export default function Customers() {
   const filtered = useMemo(() => cycleCustomers.filter((customer) => {
     const q = search.trim().toLowerCase();
     const phoneQuery = normalizeIndianMobile(search);
-    const textMatch = !q || `${customer.id} ${customer.name} ${customer.mobile} ${customer.area}`.toLowerCase().includes(q);
-    const phoneMatch = phoneQuery.length >= 3 && normalizeIndianMobile(customer.mobile).includes(phoneQuery);
+    const textMatch = !q || `${customer.id} ${customer.name} ${customer.mobile} ${customer.area} ${customer.jaminName || ''} ${customer.jaminMobile || ''}`.toLowerCase().includes(q);
+    const phoneMatch = phoneQuery.length >= 3 && (
+      normalizeIndianMobile(customer.mobile).includes(phoneQuery)
+      || normalizeIndianMobile(customer.jaminMobile).includes(phoneQuery)
+    );
     return textMatch || phoneMatch;
   }), [cycleCustomers, search]);
 
-  // Search only filters the customer list. The summary stays fixed for the
-  // selected cycle so searching one customer never changes the top cards.
   const outstanding = cycleCustomers.reduce((sum, item) => sum + (customerSummaries[item.id]?.totalOutstanding || 0), 0);
   const active = cycleCustomers.filter((item) => (customerSummaries[item.id]?.activeLoans.length || 0) > 0).length;
 
-  const cycleUnit = (loanCycle) => loanCycle === 'Daily' ? 'day' : loanCycle === 'Weekly' ? 'week' : loanCycle === 'Monthly' ? 'month' : loanCycle.toLowerCase();
+  const exportRows = useMemo(() => filtered.map((customer) => ({
+    id: customer.id,
+    name: customer.name,
+    phone: formatIndianMobile(customer.mobile),
+    witnessName: customer.jaminName || '—',
+    witnessPhone: customer.jaminMobile ? formatIndianMobile(customer.jaminMobile) : '—',
+    cycle: customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—',
+    activeLoans: customerSummaries[customer.id]?.activeLoans.length || 0,
+    closedLoans: customerSummaries[customer.id]?.closedLoans.length || 0,
+    outstanding: customerSummaries[customer.id]?.totalOutstanding || 0,
+  })), [filtered, customerSummaries]);
 
-  const collectionText = (customer) => {
-    const summary = customerSummaries[customer.id];
-    if (!summary) return '—';
-    const parts = Object.entries(summary.collectionByCycle);
-    if (!parts.length) return '—';
-    return parts.map(([loanCycle, amount]) => `${formatCurrency(amount)}/${cycleUnit(loanCycle)}`).join(' + ');
+  const downloadCustomers = async (format) => {
+    setDownloadOpen(false);
+    const payload = {
+      cycle,
+      generatedBy: user?.displayName || company?.owner || 'Admin',
+      company: {
+        name: company?.name || user?.companyName || 'Company',
+        branch: company?.branch || user?.branch || 'Main Branch',
+        logo: company?.logo || '',
+      },
+      rows: exportRows,
+    };
+
+    if (format === 'pdf') {
+      await exportCustomersListPdf(payload);
+      return;
+    }
+    await exportCustomersListXlsx(payload);
   };
+
+  const openCustomer = (customerId) => navigate(`/customers/${customerId}`);
+
+  const headerActions = (
+    <div className="customers-page-actions">
+      <button
+        type="button"
+        className="customers-back-button"
+        onClick={() => goActualBack(navigate, location)}
+      >
+        <ArrowLeft size={16} /> Back
+      </button>
+      {hasPermission('customers.add') && (
+        <ActionButton icon={UserPlus} onClick={() => navigate('/customers/new')}>New Customer</ActionButton>
+      )}
+      <div className="collection-download-menu customer-download-menu" ref={downloadMenuRef}>
+        <button
+          type="button"
+          className="collection-download-button"
+          onClick={() => setDownloadOpen((open) => !open)}
+          aria-expanded={downloadOpen}
+        >
+          <Download size={15} /> Download <ChevronDown size={13} className={downloadOpen ? 'open' : ''} />
+        </button>
+        {downloadOpen && (
+          <div className="collection-download-popdown">
+            <button type="button" onClick={() => downloadCustomers('excel')}>
+              <FileSpreadsheet size={14} /> Excel
+            </button>
+            <button type="button" onClick={() => downloadCustomers('pdf')}>
+              <FileText size={14} /> PDF
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="module-page customers-page">
-      <ModuleHeader
-        eyebrow="Customer Management"
-        title={cycle === 'All' ? 'Customers' : `${cycle} Customers`}
-        description="View customer profiles, active loan cycles, outstanding balances and upcoming collections."
-        actions={hasPermission('customers.add') ? <ActionButton icon={UserPlus} onClick={() => navigate('/customers/new')}>New Customer</ActionButton> : null}
-      />
+      <ModuleHeader actions={headerActions} />
 
-      <section className="stats-section">
-        <div className="stats-grid">
-          <StatCard title="Total Customers" value={String(cycleCustomers.length)} note="All registered customers" icon={UsersRound} tone="blue" showProgress={false} />
-          <StatCard title="Active Customers" value={String(active)} note="Currently active" icon={WalletCards} tone="green" showProgress={false} />
-          <StatCard title="Outstanding" value={formatCurrency(outstanding)} note="Total pending amount" icon={BadgeIndianRupee} tone="orange" showProgress={false} />
-          <StatCard title="Cycle" value={cycle} note="Selected filter" icon={CalendarDays} tone="purple" showProgress={false} />
+      <section className="stats-section customer-home-stats">
+        <div className="customer-home-grid">
+          <CustomerSummaryCard title="Total Customers" value={String(cycleCustomers.length)} note="All registered customers" icon={UsersRound} tone="blue" />
+          <CustomerSummaryCard title="Active Customers" value={String(active)} note="Currently active" icon={WalletCards} tone="green" />
+          <CustomerSummaryCard title="Outstanding" value={formatCurrency(outstanding)} note="Total pending amount" icon={BadgeIndianRupee} tone="orange" />
         </div>
       </section>
 
       <section className="module-card">
         <div className="module-toolbar">
-          <label className="module-search"><Search size={16}/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customer, ID, mobile or area..." /></label>
-          <div className="module-toolbar-group">
+          <label className="module-search customer-list-search">
+            <Search size={16}/>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customer, ID, mobile or witness..." />
+            {search && (
+              <button
+                type="button"
+                className="customer-search-clear"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setSearch('');
+                }}
+                aria-label="Clear customer search"
+                title="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
+          </label>
+          <div className="module-toolbar-group customers-toolbar-group">
             {['All', 'Daily', 'Weekly', 'Monthly'].map((item) => (
               <button key={item} className={`filter-chip ${cycle === item ? 'active' : ''}`} onClick={() => navigate(item === 'All' ? '/customers' : `/customers/${item.toLowerCase()}`)}>{item}</button>
             ))}
@@ -98,30 +227,77 @@ export default function Customers() {
         </div>
 
         <div className="module-table-wrap desktop-data-table">
-          <table className="module-table">
-            <thead><tr><th>Customer</th><th>Cycle</th><th>Active Loan</th><th>Collection</th><th>Outstanding</th><th>Next Due</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>{filtered.map((customer) => (
-              <tr key={customer.id}>
-                <td><div className="row-title"><CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} /><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div></td>
-                <td><span className="soft-chip blue">{customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—'}</span></td>
-                <td>{customerSummaries[customer.id]?.activeLoans.length || 0} active</td>
-                <td>{collectionText(customer)}</td>
-                <td><strong>{formatCurrency(customerSummaries[customer.id]?.totalOutstanding || 0)}</strong></td>
-                <td>{formatDate(customerSummaries[customer.id]?.nextDueDate)}</td>
-                <td><span className={`soft-chip ${customerSummaries[customer.id]?.status === 'Overdue' ? 'red' : customerSummaries[customer.id]?.status === 'Closed' ? 'gray' : customerSummaries[customer.id]?.status === 'Setup Pending' ? 'orange' : 'green'}`}>{customerSummaries[customer.id]?.status || customer.status}</span></td>
-                <td><IconButton size="sm" label={`View ${customer.name}`} onClick={() => navigate(`/customers/${customer.id}`)}><Eye size={16}/></IconButton></td>
-              </tr>
-            ))}</tbody>
+          <table className="module-table customers-table">
+            <thead><tr><th>Customer</th><th>Phone</th><th>Witness</th><th>Cycle</th><th>Active Loan</th><th>Closed Loan</th><th>Outstanding</th></tr></thead>
+            <tbody>{filtered.map((customer) => {
+              const summary = customerSummaries[customer.id] || {};
+              return (
+                <tr
+                  key={customer.id}
+                  className="customer-table-row"
+                  onClick={() => openCustomer(customer.id)}
+                  onKeyDown={(event) => handleCardKeyDown(event, () => openCustomer(customer.id))}
+                  tabIndex={0}
+                  role="button"
+                >
+                  <td>
+                    <div className="row-title">
+                      <CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} />
+                      <div>
+                        <strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong>
+                        <small>{customer.id}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td><strong>{formatIndianMobile(customer.mobile)}</strong></td>
+                  <td>
+                    <div className="customer-witness-cell">
+                      <strong>{customer.jaminName || '—'}</strong>
+                      <small>{customer.jaminMobile ? formatIndianMobile(customer.jaminMobile) : '—'}</small>
+                    </div>
+                  </td>
+                  <td><span className="soft-chip blue">{summary.cycles?.join(' + ') || customer.cycle || '—'}</span></td>
+                  <td>{summary.activeLoans?.length || 0}</td>
+                  <td>{summary.closedLoans?.length || 0}</td>
+                  <td><strong>{formatCurrency(summary.totalOutstanding || 0)}</strong></td>
+                </tr>
+              );
+            })}</tbody>
           </table>
         </div>
 
-        <div className="mobile-data-list">
-          {filtered.map((customer) => (
-            <article className="mobile-data-card" key={customer.id}>
-              <div className="mobile-data-top"><div className="row-title"><CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} /><div><strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong><small>{customer.id} · {formatIndianMobile(customer.mobile)}</small></div></div><IconButton size="sm" label={`View ${customer.name}`} onClick={() => navigate(`/customers/${customer.id}`)}><Eye size={16}/></IconButton></div>
-              <div className="mobile-data-meta"><div><span>Cycle</span><strong>{customerSummaries[customer.id]?.cycles.join(' + ') || customer.cycle || '—'}</strong></div><div><span>Collection</span><strong>{collectionText(customer)}</strong></div><div><span>Outstanding</span><strong>{formatCurrency(customerSummaries[customer.id]?.totalOutstanding || 0)}</strong></div><div><span>Status</span><strong>{customerSummaries[customer.id]?.status || customer.status}</strong></div></div>
-            </article>
-          ))}
+        <div className="mobile-data-list customers-mobile-list">
+          {filtered.map((customer) => {
+            const summary = customerSummaries[customer.id] || {};
+            return (
+              <article
+                className="mobile-data-card customer-mobile-card"
+                key={customer.id}
+                onClick={() => openCustomer(customer.id)}
+                onKeyDown={(event) => handleCardKeyDown(event, () => openCustomer(customer.id))}
+                tabIndex={0}
+                role="button"
+              >
+                <div className="mobile-data-top">
+                  <div className="row-title">
+                    <CustomerAvatar className="row-avatar" photo={customer.photo} name={customer.name} />
+                    <div>
+                      <strong><CustomerProfileLink customerId={customer.id}>{customer.name}</CustomerProfileLink></strong>
+                      <small>{customer.id}</small>
+                    </div>
+                  </div>
+                </div>
+                <div className="mobile-data-meta customer-mobile-meta">
+                  <div><span>Phone</span><strong>{formatIndianMobile(customer.mobile)}</strong></div>
+                  <div><span>Witness</span><strong>{customer.jaminName || '—'}</strong><small>{customer.jaminMobile ? formatIndianMobile(customer.jaminMobile) : '—'}</small></div>
+                  <div><span>Cycle</span><strong>{summary.cycles?.join(' + ') || customer.cycle || '—'}</strong></div>
+                  <div><span>Active Loan</span><strong>{summary.activeLoans?.length || 0}</strong></div>
+                  <div><span>Closed Loan</span><strong>{summary.closedLoans?.length || 0}</strong></div>
+                  <div><span>Outstanding</span><strong>{formatCurrency(summary.totalOutstanding || 0)}</strong></div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </div>

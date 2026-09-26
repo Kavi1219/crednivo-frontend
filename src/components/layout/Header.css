@@ -642,3 +642,294 @@ html[data-theme='dark'] .profile-dropdown {
     margin-left: 0;
   }
 }
+
+
+/* Framed header (every page) — reference style: a dark rail whose light title tab
+   flows down in one S-curve into the page panel below (see MainLayout.css,
+   .main-shell.is-framed). Colours are unchanged; only the shape changed. */
+@media (min-width: 768px) {
+  .app-header.framed-header {
+    --customers-rail: var(--frame);
+    --customers-panel-radius: 26px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    min-height: 82px;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0;
+    padding: 18px 0 0;
+    overflow: visible;
+    isolation: isolate;
+    border: 0;
+    border-radius: 0;
+    background: var(--customers-rail);
+    box-shadow: none;
+  }
+
+  /* Rounded top corners of the page panel, carried by the sticky header so
+     the frame keeps its shape while the page scrolls underneath. */
+  .app-header.framed-header::before,
+  .app-header.framed-header::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    width: var(--customers-panel-radius);
+    height: var(--customers-panel-radius);
+    pointer-events: none;
+  }
+
+  .app-header.framed-header::before {
+    left: 0;
+    background: radial-gradient(circle at 100% 100%, transparent calc(var(--customers-panel-radius) - .5px), var(--customers-rail) var(--customers-panel-radius));
+  }
+
+  .app-header.framed-header::after {
+    right: 0;
+    background: radial-gradient(circle at 0 100%, transparent calc(var(--customers-panel-radius) - .5px), var(--customers-rail) var(--customers-panel-radius));
+  }
+
+  .framed-header .header-title-wrap {
+    position: relative;
+    z-index: 1;
+    width: auto;
+    min-width: 420px;
+    height: 64px;
+    flex: 0 0 auto;
+    align-self: flex-end;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0 118px 0 92px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    isolation: isolate;
+  }
+
+  .framed-title-orb {
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    width: 46px;
+    height: 46px;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--ink-950);
+    background: #ffffff;
+    border: 1px solid var(--line);
+    transform: translateY(-50%);
+    box-shadow: none;
+  }
+
+  /* One continuous tab: rounded top-left, a soft fillet into the panel on the
+     left, and a long S-curve shoulder on the right that lands exactly on the
+     header's bottom edge, where the page panel begins. Painted with the page
+     canvas colour through a mask so tab and panel are the same surface. */
+  .framed-title-plate {
+    --plate-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 86 64'%3E%3Cpath d='M38 64 Q58 64 58 44 V28 Q58 0 86 0 V64 Z'/%3E%3C/svg%3E");
+    --plate-curve: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 124 64'%3E%3Cpath d='M0 0 C54 0 58 64 124 64 H0 Z'/%3E%3C/svg%3E");
+    --plate-fill: linear-gradient(#000, #000);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 64px;
+    z-index: 1;
+    display: block;
+    pointer-events: none;
+    background: var(--canvas);
+    -webkit-mask-image: var(--plate-left), var(--plate-fill), var(--plate-curve);
+    mask-image: var(--plate-left), var(--plate-fill), var(--plate-curve);
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: left top, 85px top, right top;
+    mask-position: left top, 85px top, right top;
+    -webkit-mask-size: 86px 64px, calc(100% - 208px) 64px, 124px 64px;
+    mask-size: 86px 64px, calc(100% - 208px) 64px, 124px 64px;
+  }
+
+  .framed-title-plate::after {
+    content: none;
+  }
+
+  .framed-header .desktop-header-identity {
+    position: relative;
+    z-index: 3;
+    display: block;
+    min-width: 0;
+  }
+
+  .framed-header .framed-inline-title-icon {
+    display: none;
+  }
+
+  .framed-header .header-title-wrap h1 {
+    margin: 0;
+    color: var(--ink-950);
+    font-size: 24px;
+    font-weight: 850;
+    line-height: 1;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .framed-header .overview-greeting {
+    display: none;
+  }
+
+  .framed-header .header-actions {
+    position: relative;
+    z-index: 5;
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    margin: 0;
+    padding: 0 10px 0 0;
+  }
+
+  .framed-header .search-box-wrap {
+    min-width: 250px;
+    flex: 0 1 540px;
+    max-width: 540px;
+  }
+
+  .framed-header .search-box {
+    width: 100%;
+    height: 44px;
+    padding: 0 17px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: #7f8fa6;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .framed-header .search-box input {
+    color: var(--ink-900);
+    font-size: 12px;
+    background: transparent;
+  }
+
+  .framed-header .search-box input::placeholder {
+    color: #8c9bb0;
+  }
+
+  .framed-header .header-icon-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 999px !important;
+    color: var(--blue-600) !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .framed-header .header-icon-btn:hover {
+    background: #f8fbff !important;
+  }
+
+  .framed-header .notification-count {
+    top: -4px;
+    right: -4px;
+    border-color: #ffffff;
+  }
+
+  .framed-header .profile-menu-wrap {
+    flex: 0 0 auto;
+  }
+
+  .framed-header .profile-button {
+    height: 44px;
+    min-width: 238px;
+    padding: 3px 8px 3px 16px;
+    gap: 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .framed-header .profile-button:hover {
+    background: #f8fbff;
+  }
+
+  .framed-header .company-copy strong {
+    color: var(--ink-950);
+    font-size: 11px;
+  }
+
+  .framed-header .company-copy small {
+    margin-top: 2px;
+    color: var(--ink-600);
+    font-size: 10px;
+  }
+
+  .framed-header .profile-avatar {
+    width: 34px;
+    height: 34px;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
+    flex: 0 0 34px;
+  }
+
+  .framed-header .search-results-dropdown {
+    top: calc(100% + 8px);
+  }
+}
+
+@media (max-width: 1180px) and (min-width: 768px) {
+  .framed-header .header-title-wrap {
+    min-width: 342px;
+    padding-left: 88px;
+  }
+
+  .framed-header .header-title-wrap h1 {
+    font-size: 21px;
+  }
+
+  .framed-header .search-box-wrap {
+    flex-basis: 400px;
+    max-width: 400px;
+  }
+
+  .framed-header .company-copy {
+    display: none;
+  }
+
+  .framed-header .profile-button {
+    min-width: 44px;
+    width: 44px;
+    padding: 3px;
+    justify-content: center;
+  }
+
+  .framed-header .profile-chevron {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .framed-title-orb,
+  .framed-title-plate {
+    display: none;
+  }
+
+  .framed-header .framed-inline-title-icon {
+    display: inline-block;
+  }
+}
