@@ -29,6 +29,10 @@ const baseCategories = [
 export default function Settings() {
   const { uiSettings, resolvedTheme, updateUiSettings } = useCrednivo();
   const { user, isOwner } = useAuth();
+  // Only the main admin (the company's first Owner) may create more Owner
+  // logins. The backend must send this flag on /auth/me and on login — see
+  // isPrimaryOwner in the backend AuthService. Secondary owners never see it.
+  const isMainAdmin = isOwner && (user?.isPrimaryOwner === true || user?.primaryOwner === true);
   const [activeTab, setActiveTab] = useState('appearance');
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
@@ -47,7 +51,7 @@ export default function Settings() {
         method: 'POST',
         body: JSON.stringify(coOwnerForm),
       });
-      setCoOwnerMessage(result?.message || 'Co-owner account created.');
+      setCoOwnerMessage(result?.message || 'Owner login created.');
       setCoOwnerForm({ ownerName: '', ownerMobile: '', email: '', username: '', password: '' });
     } catch (err) {
       setCoOwnerError(err?.message || 'Could not create the account.');
@@ -220,12 +224,12 @@ export default function Settings() {
                 </div>
               </div>
 
-              {isOwner && (
+              {isMainAdmin && (
                 <>
-                  <h2 className="settings-content-title" style={{ marginTop: 24 }}>Add Co-Owner / MD</h2>
+                  <h2 className="settings-content-title" style={{ marginTop: 24 }}>Add Owner Login</h2>
                   <p className="settings-subtext">
-                    Give another person full Owner-level access to this same company. They'll be able to do
-                    everything you can — there's no hierarchy between Owner accounts on the same company.
+                    As the main admin, you can create another Owner login for this company. The new Owner can
+                    manage the business, but only you can create further Owner logins.
                   </p>
                   <form className="settings-form-grid" onSubmit={submitCoOwner}>
                     <label>
@@ -270,7 +274,7 @@ export default function Settings() {
                       />
                     </label>
                     <button type="submit" className="settings-primary-btn" disabled={coOwnerBusy}>
-                      {coOwnerBusy ? 'Adding…' : 'Add Co-Owner'}
+                      {coOwnerBusy ? 'Adding…' : 'Create Owner Login'}
                     </button>
                   </form>
                   {coOwnerMessage && <div className="settings-note settings-note-success">{coOwnerMessage}</div>}
