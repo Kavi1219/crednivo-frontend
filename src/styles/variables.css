@@ -1,10 +1,10 @@
 :root {
-  --navy-950: #031d38;
-  --navy-900: #05294f;
-  --navy-850: #07335e;
-  --blue-600: #0868ec;
-  --blue-500: #2f80ff;
-  --blue-100: #e8f1ff;
+  --navy-950: #011546;
+  --navy-900: #002c8a;
+  --navy-850: #0238ad;
+  --blue-600: #0059ff;
+  --blue-500: #1770ff;
+  --blue-100: #cfefff;
   --ink-950: #09162d;
   --ink-800: #172846;
   --ink-600: #51617a;
@@ -13,9 +13,9 @@
   --surface: #ffffff;
   --surface-soft: #f8fafd;
   --surface-hover: #fbfdff;
-  --canvas: #effdee;
-  --frame: #a7dca5; /* sidebar + frame around every page */
-  --card-tint: #effdee; /* Home cards: collection list, summary, quick actions, overdue */
+  --canvas: #e5f6ff; /* was green #effdee */
+  --frame: #aadeff; /* sidebar + frame around every page (was green #a7dca5) */
+  --card-tint: #e5f6ff; /* Home cards: collection list, summary, quick actions, overdue (was green #effdee) */
   --success: #26b355;
   --success-soft: #e5f8eb;
   --warning: #ff8a3d;
