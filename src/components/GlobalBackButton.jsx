@@ -49,7 +49,7 @@ export default function GlobalBackButton() {
   // root page, so it should not display a Back button either.
   const customerListRoute = /^\/customers(?:\/(?:daily|weekly|monthly))?\/?$/.test(location.pathname);
   // Pages that place their own <PageBackButton /> in their action row.
-  const ownBackButtonRoute = /^\/(?:loans|collection|capital)\/?$/.test(location.pathname);
+  const ownBackButtonRoute = /^\/(?:loans|collection|capital|reports)\/?$/.test(location.pathname);
   if (Capacitor.isNativePlatform() || location.pathname.startsWith('/overview') || customerListRoute || ownBackButtonRoute) return null;
 
   return (

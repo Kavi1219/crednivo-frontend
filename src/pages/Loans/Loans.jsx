@@ -1,4 +1,4 @@
-import { CalendarDays, ChevronDown, HandCoins, MoreHorizontal, Plus, Search, SlidersHorizontal, WalletCards, Users, CheckCircle2, IndianRupee } from 'lucide-react';
+import { CalendarDays, ChevronDown, HandCoins, X, MoreHorizontal, Plus, Search, SlidersHorizontal, WalletCards, Users, CheckCircle2, IndianRupee } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
@@ -25,7 +25,9 @@ export default function Loans() {
   const { customers, loans, collections } = useCrednivo();
   const { hasPermission } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ?period=this-month (from Reports → New Loans) shows only loans started this month.
+  const thisMonthOnly = searchParams.get('period') === 'this-month';
   const requestedStatus = searchParams.get('status');
   const initialStatus = ['All', 'Active', 'Closed'].includes(requestedStatus) ? requestedStatus : 'All';
   const [search, setSearch] = useState('');
@@ -63,12 +65,13 @@ export default function Loans() {
   }, [collections, loans, today]);
 
   const statusLoans = useMemo(() => loans.filter((loan) => {
+    if (thisMonthOnly && String(loan.startDate || loan.loanDate || loan.disbursedDate || '').slice(0, 7) !== today.slice(0, 7)) return false;
     if (status === 'Active' && loan.status === 'Closed') return false;
     if (status === 'Closed' && loan.status !== 'Closed') return false;
     if (cycleFilter !== 'All' && loan.cycle !== cycleFilter) return false;
     if (riskFilter !== 'All' && loanRiskTier.get(loan.id) !== riskFilter) return false;
     return true;
-  }), [loans, status, cycleFilter, riskFilter, loanRiskTier]);
+  }), [loans, status, cycleFilter, riskFilter, loanRiskTier, thisMonthOnly, today]);
 
   const filtered = useMemo(() => statusLoans.filter((loan) => {
     const q = search.toLowerCase().trim();
@@ -139,6 +142,16 @@ export default function Loans() {
           <ChevronDown size={14} />
         </div>
         <button type="button" className="loan-filter-icon-btn" title="More filters"><SlidersHorizontal size={16} /></button>
+        {thisMonthOnly && (
+          <button
+            type="button"
+            className="list-period-chip"
+            onClick={() => { const next = new URLSearchParams(searchParams); next.delete('period'); setSearchParams(next, { replace: true }); }}
+            title="Show all loans"
+          >
+            This month only <X size={13} />
+          </button>
+        )}
       </div>
 
       <div className="module-table-wrap desktop-data-table">

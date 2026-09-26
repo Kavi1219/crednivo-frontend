@@ -1,11 +1,9 @@
 import {
   Activity,
-  ArrowLeft,
   BarChart3,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
-  Download,
   FileDown,
   FileSpreadsheet,
   FileText,
@@ -26,6 +24,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import { PageBackButton } from '../../components/GlobalBackButton';
+import ReportActivityBoard from './ReportActivityBoard';
+import DownloadMenu from '../../components/common/DownloadMenu';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -33,7 +34,6 @@ import { apiRequest } from '../../services/api';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Reports.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
-import CrednivoMark from '../../components/brand/CrednivoMark';
 import {
   exportReportDoc,
   exportReportExcel,
@@ -2810,14 +2810,14 @@ export default function Reports() {
           title={activityPage ? activityPageTitle : `${capacityCycle} Collection`}
           description={overviewRangeLabel}
           actions={(
-            <>
-              <ActionButton tone="secondary" icon={ArrowLeft} onClick={() => navigate(-1)}>
-                Back
-              </ActionButton>
-              <ActionButton tone="secondary" icon={Download} onClick={openDownloadDialog}>
-                Download
-              </ActionButton>
-            </>
+            <div className="page-actions-row">
+              <PageBackButton />
+              <DownloadMenu
+                onPdf={() => handleDownloadFormat('pdf')}
+                onXlsx={() => handleDownloadFormat('excel')}
+                xlsxNote="Excel report"
+              />
+            </div>
           )}
         />
 
@@ -3197,6 +3197,7 @@ export default function Reports() {
         )}
 
         {downloadDialog}
+        {!downloadOpen && downloadError && <div className="form-error" role="alert">{downloadError}</div>}
       </div>
     );
   }
@@ -3207,21 +3208,17 @@ export default function Reports() {
         eyebrow="Phase 5.1 · Reports"
         title="Reports & Analytics"
         actions={(
-          <>
+          <div className="page-actions-row">
+            <PageBackButton />
             <ActionButton tone="secondary" icon={Printer} onClick={() => window.print()}>Print</ActionButton>
-            <ActionButton tone="secondary" icon={Download} onClick={openDownloadDialog}>Download</ActionButton>
-          </>
+            <DownloadMenu
+              onPdf={() => handleDownloadFormat('pdf')}
+              onXlsx={() => handleDownloadFormat('excel')}
+              xlsxNote="Excel report"
+            />
+          </div>
         )}
       />
-
-      <div className="reports-brand-strip" aria-label="CREDNIVO report branding">
-        <CrednivoMark size={52} />
-        <div>
-          <strong>CREDNIVO</strong>
-          <span>Finance Management Platform</span>
-        </div>
-        <small>Professional Business Reports</small>
-      </div>
 
       <div className="reports-tabs-row">
         <div className="reports-view-tabs" role="tablist" aria-label="Report view">
@@ -3288,147 +3285,21 @@ export default function Reports() {
       </div>
 
       {view === 'overview' && (
+        <ReportActivityBoard
+          customers={customers}
+          loans={loans}
+          collections={collections}
+          payments={payments}
+          expenses={expenses}
+          savings={savings}
+          capitalMetrics={capitalMetrics}
+        />
+      )}
+
+      {view === 'overview' && (
         <section className="reports-overall-report" aria-label="Overall report summary">
-          <div className="reports-overall-report-head">
-            <div>
-              <span>OVERALL REPORT</span>
-              <strong>Business Collection Summary</strong>
-            </div>
-            <small>{overviewRangeLabel}</small>
-          </div>
-
-          <div className="reports-overall-kpi-grid">
-            <article className="reports-overall-kpi reports-overall-kpi-inhand">
-              <span className="reports-overall-kpi-icon"><Wallet size={21} /></span>
-              <div>
-                <span>In-Hand Amount</span>
-                <strong>{formatCurrency(currentInHandAmount)}</strong>
-              </div>
-            </article>
-
-            <article className="reports-overall-kpi reports-overall-kpi-collection">
-              <span className="reports-overall-kpi-icon"><WalletCards size={21} /></span>
-              <div>
-                <span>Collection Amount</span>
-                <strong>{formatCurrency(overviewCollectionAmount)}</strong>
-              </div>
-            </article>
-
-            <article className="reports-overall-kpi reports-overall-kpi-collected">
-              <span className="reports-overall-kpi-icon"><HandCoins size={21} /></span>
-              <div>
-                <span>Collected Amount</span>
-                <strong>{formatCurrency(overview.collected)}</strong>
-              </div>
-            </article>
-
-            <article className="reports-overall-kpi reports-overall-kpi-pending">
-              <span className="reports-overall-kpi-icon"><TriangleAlert size={21} /></span>
-              <div>
-                <span>Pending Amount</span>
-                <strong>{formatCurrency(overviewPendingAmount)}</strong>
-              </div>
-            </article>
-          </div>
-
-          <div className="reports-overall-secondary-grid" aria-label="Current portfolio status">
-            <article className="reports-overall-mini-card">
-              <span><Landmark size={18} /></span>
-              <div><small>Total Outstanding</small><strong>{formatCurrency(currentTotalOutstanding)}</strong></div>
-            </article>
-            <article className="reports-overall-mini-card">
-              <span><Activity size={18} /></span>
-              <div><small>Active Loans</small><strong>{overviewActiveLoanCount}</strong></div>
-            </article>
-            <article className="reports-overall-mini-card reports-overall-customers-card">
-              <span><UsersRound size={18} /></span>
-              <div>
-                <small>Total Customers</small>
-                <strong>{overviewCustomerCount}</strong>
-                <em>{overviewActiveCustomerCount} active customer{overviewActiveCustomerCount === 1 ? '' : 's'}</em>
-              </div>
-            </article>
-            <article className="reports-overall-mini-card reports-overall-mini-alert">
-              <span><TriangleAlert size={18} /></span>
-              <div><small>Overdue Amount</small><strong>{formatCurrency(overview.overdue)}</strong></div>
-            </article>
-          </div>
-
           <div className="reports-overall-section-heading">
             <div>
-              <span>BUSINESS ACTIVITY</span>
-              <strong>{overviewHasDateFilter ? 'Selected Period Activity' : 'Overall Activity'}</strong>
-            </div>
-            <small>{overviewRangeLabel}</small>
-          </div>
-
-          <div className={`reports-overall-activity-grid ${isOwner ? 'with-savings' : ''}`} aria-label="Business activity summary">
-            <button
-              type="button"
-              className="reports-overall-activity-card reports-overall-activity-button"
-              onClick={() => openActivityPage('loans')}
-            >
-              <span className="reports-overall-activity-icon"><UserPlus size={19} /></span>
-              <div>
-                <small>New Loans Given</small>
-                <strong>{formatCurrency(overview.loanGiven)}</strong>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="reports-overall-activity-card reports-overall-activity-button"
-              onClick={() => openActivityPage('expenses')}
-            >
-              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
-              <div>
-                <small>Expenses</small>
-                <strong>{formatCurrency(overview.expenseTotal)}</strong>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="reports-overall-activity-card reports-overall-activity-button"
-              onClick={() => openActivityPage('fine')}
-            >
-              <span className="reports-overall-activity-icon"><CircleDollarSign size={19} /></span>
-              <div>
-                <small>Fine Income</small>
-                <strong>{formatCurrency(overviewFineIncome)}</strong>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="reports-overall-activity-card reports-overall-activity-button"
-              onClick={() => openActivityPage('documents')}
-            >
-              <span className="reports-overall-activity-icon"><ReceiptText size={19} /></span>
-              <div>
-                <small>Document Charges Income</small>
-                <strong>{formatCurrency(overviewDocumentChargeIncome)}</strong>
-              </div>
-            </button>
-
-            {isOwner && (
-              <button
-                type="button"
-                className="reports-overall-activity-card reports-overall-activity-button reports-overall-activity-savings"
-                onClick={() => openActivityPage('savings')}
-              >
-                <span className="reports-overall-activity-icon"><PiggyBank size={19} /></span>
-                <div>
-                  <small>Savings</small>
-                  <strong>{formatCurrency(overviewSavingsAmount)}</strong>
-                  </div>
-              </button>
-            )}
-          </div>
-
-          <div className="reports-overall-section-heading">
-            <div>
-              <span>COLLECTION BY CYCLE</span>
               <strong>Current Collection Capacity</strong>
             </div>
             <small>{overviewRangeLabel}</small>
@@ -3473,249 +3344,6 @@ export default function Reports() {
             })}
           </div>
 
-          <div className="reports-overall-section-heading reports-cycle-status-heading">
-            <div>
-              <span>COLLECTION STATUS</span>
-              <strong>Daily / Weekly / Monthly Summary</strong>
-            </div>
-            <small>{overviewRangeLabel}</small>
-          </div>
-
-          <div className="reports-cycle-status-table-wrap">
-            <table className="reports-cycle-status-table">
-              <thead>
-                <tr>
-                  <th>Cycle</th>
-                  <th>Loan Amount</th>
-                  <th>Collected Amount</th>
-                  <th>Upcoming Amount</th>
-                  <th>Pending Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {overviewCycleStatusRows.map((row) => (
-                  <tr key={row.cycle}>
-                    <td>
-                      <span className={`reports-cycle-status-badge reports-cycle-status-${row.cycle.toLowerCase()}`}>
-                        {row.cycle}
-                      </span>
-                    </td>
-                    <td><strong>{formatCurrency(row.loanAmount)}</strong></td>
-                    <td className="reports-cycle-status-collected">{formatCurrency(row.collectedAmount)}</td>
-                    <td className="reports-cycle-status-upcoming">{formatCurrency(row.upcomingAmount)}</td>
-                    <td className="reports-cycle-status-pending">{formatCurrency(row.pendingAmount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="reports-portfolio-table-block">
-            <div className="reports-portfolio-table-title">
-              <div>
-                <span>LOAN PORTFOLIO</span>
-                <strong>Loan Portfolio Summary</strong>
-              </div>
-              <small>New openings: {overviewNewOpeningLabel}</small>
-            </div>
-
-            <div className="reports-portfolio-table-wrap">
-              <table className="reports-portfolio-table">
-                <thead>
-                  <tr>
-                    <th>Category</th>
-                    <th>Count</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Total Customers</strong></td>
-                    <td>{overviewCustomerCount}</td>
-                    <td><strong>{formatCurrency(overviewTotalPortfolioAmount)}</strong></td>
-                  </tr>
-                  <tr>
-                    <td><strong>Closed Loans</strong></td>
-                    <td>{overviewClosedLoans.length}</td>
-                    <td>{formatCurrency(overviewClosedLoanAmount)}</td>
-                  </tr>
-                  <tr>
-                    <td>
-                      <strong>New Loan Openings</strong>
-                      <small>{overviewNewOpeningLabel}</small>
-                    </td>
-                    <td>{overviewNewOpeningLoans.length}</td>
-                    <td>{formatCurrency(overviewNewOpeningAmount)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="reports-overall-section-heading reports-overview-performance-heading">
-            <div>
-              <span>LOAN PERFORMANCE</span>
-              <strong>Overall Loan Performance</strong>
-            </div>
-            <small>Active vs Closed loans</small>
-          </div>
-
-          <div className="reports-cycle-performance-chart-card reports-overview-performance-card">
-            <div className="reports-loan-pie-layout">
-              <div
-                className={`reports-loan-pie ${overviewPerformanceReport.activeLoans + overviewPerformanceReport.closedLoans === 0 ? 'empty' : ''}`}
-                style={{ '--active-share': `${overviewPerformanceReport.activePercent}%` }}
-                role="img"
-                aria-label={`${overviewPerformanceReport.activePercent.toFixed(1)} percent active loans and ${overviewPerformanceReport.closedPercent.toFixed(1)} percent closed loans`}
-              />
-
-              <div className="reports-loan-pie-legend">
-                <div>
-                  <span className="reports-pie-dot active" />
-                  <div>
-                    <small>Active Loans</small>
-                    <strong>{overviewPerformanceReport.activeLoans}</strong>
-                    <em>{overviewPerformanceReport.activePercent.toFixed(1)}%</em>
-                  </div>
-                </div>
-
-                <div>
-                  <span className="reports-pie-dot closed" />
-                  <div>
-                    <small>Closed Loans</small>
-                    <strong>{overviewPerformanceReport.closedLoans}</strong>
-                    <em>{overviewPerformanceReport.closedPercent.toFixed(1)}%</em>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="reports-cycle-pending-section reports-overview-pending-section">
-            <div className="reports-cycle-section-head reports-cycle-pending-head">
-              <div>
-                <span>PENDING CUSTOMERS</span>
-                <strong>Overall Pending Customer List</strong>
-                <small>
-                  Normal: 1–2 dues · Fine Paid: 1–2 dues with fine paid · Pending: 3+ dues with 2+ fines paid · Risky: 3+ dues, fines not kept up
-                </small>
-              </div>
-
-              <div className="reports-risk-filter" role="tablist" aria-label="Overview pending customer risk filter">
-                <button
-                  type="button"
-                  className={overviewPendingRiskFilter === 'normal' ? 'active normal' : 'normal'}
-                  onClick={() => setOverviewPendingRiskFilter('normal')}
-                >
-                  Normal
-                  <b>{overviewPerformanceReport.normalCustomers.length}</b>
-                </button>
-                <button
-                  type="button"
-                  className={overviewPendingRiskFilter === 'fine-paid' ? 'active fine-paid' : 'fine-paid'}
-                  onClick={() => setOverviewPendingRiskFilter('fine-paid')}
-                >
-                  Fine Paid
-                  <b>{overviewPerformanceReport.finePaidCustomers.length}</b>
-                </button>
-                <button
-                  type="button"
-                  className={overviewPendingRiskFilter === 'pending' ? 'active pending' : 'pending'}
-                  onClick={() => setOverviewPendingRiskFilter('pending')}
-                >
-                  Pending
-                  <b>{overviewPerformanceReport.pendingTierCustomers.length}</b>
-                </button>
-                <button
-                  type="button"
-                  className={overviewPendingRiskFilter === 'risky' ? 'active risky' : 'risky'}
-                  onClick={() => setOverviewPendingRiskFilter('risky')}
-                >
-                  Risky
-                  <b>{overviewPerformanceReport.riskyCustomers.length}</b>
-                </button>
-              </div>
-            </div>
-
-            {filteredOverviewPendingCustomers.length ? (
-              <>
-                <div className="reports-cycle-pending-table-wrap">
-                  <table className="reports-cycle-pending-table reports-overview-pending-table">
-                    <thead>
-                      <tr>
-                        <th>Customer</th>
-                        <th>Customer ID</th>
-                        <th>Cycle(s)</th>
-                        <th>Loan ID(s)</th>
-                        <th>Pending Dues</th>
-                        <th>Pending Amount</th>
-                        <th>Oldest Due</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredOverviewPendingCustomers.map((row) => (
-                        <tr key={row.key}>
-                          <td>
-                            <strong>
-                              {row.customerDbId
-                                ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
-                                : row.customerName}
-                            </strong>
-                          </td>
-                          <td>{row.customerId}</td>
-                          <td>{row.cycles.length ? row.cycles.join(', ') : '—'}</td>
-                          <td>{row.loanIds.length ? row.loanIds.join(', ') : '—'}</td>
-                          <td><strong>{row.pendingDueCount}</strong></td>
-                          <td className="reports-cycle-pending-money">{formatCurrency(row.pendingAmount)}</td>
-                          <td>{formatDate(row.oldestDue)}</td>
-                          <td>
-                            <span className={`reports-risk-badge ${row.category}`}>
-                              {row.categoryLabel}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="reports-cycle-pending-mobile">
-                  {filteredOverviewPendingCustomers.map((row) => (
-                    <article className="reports-cycle-pending-mobile-card" key={`overview-mobile-${row.key}`}>
-                      <div className="reports-cycle-pending-mobile-top">
-                        <div>
-                          <strong>
-                            {row.customerDbId
-                              ? <CustomerProfileLink customerId={row.customerDbId}>{row.customerName}</CustomerProfileLink>
-                              : row.customerName}
-                          </strong>
-                          <small>
-                            {row.customerId}
-                            {' · '}
-                            {row.cycles.length ? row.cycles.join(', ') : '—'}
-                            {' · '}
-                            {row.loanIds.length ? row.loanIds.join(', ') : '—'}
-                          </small>
-                        </div>
-                        <span className={`reports-risk-badge ${row.category}`}>{row.categoryLabel}</span>
-                      </div>
-
-                      <div className="reports-cycle-pending-mobile-grid">
-                        <div><span>Pending Dues</span><strong>{row.pendingDueCount}</strong></div>
-                        <div><span>Pending Amount</span><strong>{formatCurrency(row.pendingAmount)}</strong></div>
-                        <div><span>Oldest Due</span><strong>{formatDate(row.oldestDue)}</strong></div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div className="reports-cycle-pending-empty">
-                No {overviewPendingRiskFilter === 'fine-paid' ? 'Fine Paid' : overviewPendingRiskFilter === 'pending' ? 'Pending' : overviewPendingRiskFilter === 'risky' ? 'Risky' : 'Normal'} pending customers found in the overview.
-              </div>
-            )}
-          </div>
         </section>
       )}
 
@@ -4011,6 +3639,7 @@ export default function Reports() {
       )}
 
       {downloadDialog}
+      {!downloadOpen && downloadError && <div className="form-error" role="alert">{downloadError}</div>}
     </div>
   );
 }

@@ -114,3 +114,23 @@
     width: min(190px, 48vw);
   }
 }
+
+
+/* Removable "only showing …" chip on list pages (opened from Reports). */
+.list-period-chip {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+  border: 1px solid color-mix(in srgb, var(--blue-500) 35%, var(--line));
+  border-radius: 999px;
+  background: var(--blue-100);
+  color: var(--blue-600);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.list-period-chip:hover { border-color: var(--blue-500); }

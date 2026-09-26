@@ -60,10 +60,10 @@
 .side-link:hover { background: var(--surface-soft); color: var(--ink-950); }
 
 .side-link.active {
-  background: linear-gradient(90deg, #027a99, #24a8bb);
+  background: linear-gradient(90deg, var(--blue-600), var(--blue-500));
   color: #fff;
   font-weight: 800;
-  box-shadow: 0 8px 18px rgba(2,122,153,.24);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--blue-600) 26%, transparent);
 }
 
 .side-badge {

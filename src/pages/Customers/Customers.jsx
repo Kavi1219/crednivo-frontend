@@ -11,7 +11,7 @@ import {
   BadgeIndianRupee,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { PageBackButton } from '../../components/GlobalBackButton';
@@ -47,6 +47,16 @@ export default function Customers() {
   const [search, setSearch] = useState('');
   const [downloadOpen, setDownloadOpen] = useState(false);
   const cycle = routeCycle(location.pathname);
+  // Links from Reports: ?status=active (customers with a running loan) and
+  // ?period=this-month (customers added this month).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeOnly = searchParams.get('status') === 'active';
+  const thisMonthOnly = searchParams.get('period') === 'this-month';
+  const clearListParam = (key) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(key);
+    setSearchParams(next, { replace: true });
+  };
   const downloadMenuRef = useRef(null);
 
   useEffect(() => {
@@ -101,10 +111,15 @@ export default function Customers() {
     }];
   })), [customers, loans]);
 
-  const cycleCustomers = useMemo(() => customers.filter((customer) => {
-    if (cycle === 'All') return true;
-    return customerSummaries[customer.id]?.cycles.includes(cycle);
-  }), [customers, cycle, customerSummaries]);
+  const cycleCustomers = useMemo(() => {
+    const monthKey = toInputDate().slice(0, 7);
+    return customers.filter((customer) => {
+      if (activeOnly && !(customerSummaries[customer.id]?.activeLoans.length > 0)) return false;
+      if (thisMonthOnly && String(customer.date || '').slice(0, 7) !== monthKey) return false;
+      if (cycle === 'All') return true;
+      return customerSummaries[customer.id]?.cycles.includes(cycle);
+    });
+  }, [customers, cycle, customerSummaries, activeOnly, thisMonthOnly]);
 
   const filtered = useMemo(() => cycleCustomers.filter((customer) => {
     const q = search.trim().toLowerCase();
@@ -217,6 +232,16 @@ export default function Customers() {
             )}
           </label>
           <div className="module-toolbar-group customers-toolbar-group">
+            {activeOnly && (
+              <button type="button" className="list-period-chip" onClick={() => clearListParam('status')} title="Show all customers">
+                Active only <X size={13} />
+              </button>
+            )}
+            {thisMonthOnly && (
+              <button type="button" className="list-period-chip" onClick={() => clearListParam('period')} title="Show all customers">
+                Added this month <X size={13} />
+              </button>
+            )}
             {['All', 'Daily', 'Weekly', 'Monthly'].map((item) => (
               <button key={item} className={`filter-chip ${cycle === item ? 'active' : ''}`} onClick={() => navigate(item === 'All' ? '/customers' : `/customers/${item.toLowerCase()}`)}>{item}</button>
             ))}

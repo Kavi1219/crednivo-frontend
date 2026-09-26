@@ -4198,3 +4198,10 @@ html[data-theme='dark'] .report-data-warning{color:#e5b45d;border-color:#604c2b;
   .reports-brand-strip > div span { color: #71839a !important; font-size: 6.5pt !important; }
   .reports-brand-strip > small { display: block !important; color: #a77724 !important; font-size: 6.5pt !important; }
 }
+
+
+/* Overview: "Current Collection Capacity" sits right under the activity
+   panels — no eyebrow label, tighter spacing, title and date on one line. */
+.reports-overall-report{margin-top:0;gap:12px}
+.reports-overall-report>.reports-overall-section-heading:first-child{margin-top:0;align-items:center}
+.reports-overall-report>.reports-overall-section-heading:first-child>div>strong{font-size:14px}
