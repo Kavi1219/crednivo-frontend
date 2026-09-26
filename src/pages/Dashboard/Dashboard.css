@@ -1253,7 +1253,7 @@
   padding-right: 4px;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   scrollbar-gutter: stable;
 }
 
@@ -1487,12 +1487,6 @@ html[data-theme='dark'] .dashboard-reference-hero {
   }
   .dashboard-reference-page .dashboard-reference-lower-grid { grid-template-columns: minmax(0, 1fr) !important; }
 
-  /* Risky list: no inner scroll box on phones — it grows with its rows and
-     the page scrolls normally through it and on to the next section. */
-  .dashboard-reference-page .risky-overdue-card .risky-overdue-list {
-    max-height: none !important;
-    overflow: visible !important;
-  }
   /* Let the sections inside main / aside take part in the ordering. */
   .dashboard-reference-page .dashboard-reference-main,
   .dashboard-reference-page .dashboard-reference-side { display: contents !important; }
