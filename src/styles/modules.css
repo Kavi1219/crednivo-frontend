@@ -134,3 +134,15 @@
   cursor: pointer;
 }
 .list-period-chip:hover { border-color: var(--blue-500); }
+
+
+/* Shared pop-up (modal) frame. Expenses, Savings and other pages reuse the
+   Collection page's modal classes; these rules used to live only in
+   Collection.css, which is loaded only after visiting Collection — so on a
+   fresh visit the Edit / Delete pop-ups on Expenses opened unstyled at the
+   bottom of the page and looked like the buttons did nothing. */
+.collection-modal-backdrop { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(3, 20, 39, .48); backdrop-filter: blur(4px); }
+.collection-modal { width: min(460px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 18px; box-shadow: 0 20px 60px rgba(3, 29, 56, .25); }
+.collection-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.collection-modal-head strong { display: block; font-size: 15px; }
+.collection-modal-head span { display: block; margin-top: 4px; color: var(--ink-500); font-size: 9.5px; }

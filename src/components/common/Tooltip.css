@@ -17,11 +17,14 @@
   box-shadow: 0 6px 18px rgba(0,0,0,.18);
   transition: opacity .16s ease, transform .16s ease;
 }
+/* Show on mouse hover, and on keyboard focus only (:focus-visible). Plain
+   :focus-within kept the bubble open after a mouse click until you clicked
+   somewhere else. */
 .tooltip-wrap:hover .tooltip-bubble,
-.tooltip-wrap:focus-within .tooltip-bubble { opacity: 1; transform: translate(-50%, 0); }
+.tooltip-wrap:has(:focus-visible) .tooltip-bubble { opacity: 1; transform: translate(-50%, 0); }
 .tooltip-bottom .tooltip-bubble { top: calc(100% + 10px); bottom: auto; }
 .tooltip-right .tooltip-bubble { left: calc(100% + 10px); top: 50%; bottom: auto; transform: translate(4px,-50%); }
 .tooltip-right:hover .tooltip-bubble,
-.tooltip-right:focus-within .tooltip-bubble { transform: translate(0,-50%); }
+.tooltip-right:has(:focus-visible) .tooltip-bubble { transform: translate(0,-50%); }
 
 @media (hover: none), (max-width: 767px) { .tooltip-bubble { display: none; } }
