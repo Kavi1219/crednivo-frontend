@@ -49,6 +49,7 @@ export default function NavigationMemory() {
     [location.pathname, location.search, location.hash],
   );
   const previousUrlRef = useRef('');
+  const previousPathRef = useRef('');
   const timersRef = useRef([]);
   const userInteractedRef = useRef(false);
 
@@ -109,11 +110,15 @@ export default function NavigationMemory() {
       [80, 220, 500].forEach((delay) => {
         timersRef.current.push(window.setTimeout(restore, delay));
       });
-    } else {
+    } else if (previousPathRef.current !== location.pathname) {
+      // Only a real page change starts at the top. Filter, search and view
+      // changes on the same page (they only update ?query params) keep the
+      // user's scroll position.
       window.requestAnimationFrame(() => {
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
       });
     }
+    previousPathRef.current = location.pathname;
 
     return () => {
       events.forEach((name) => window.removeEventListener(name, stopRestore));

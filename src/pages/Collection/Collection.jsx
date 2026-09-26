@@ -1,10 +1,11 @@
-import { CalendarDays, Check, ChevronDown, Filter, HandCoins, IndianRupee, RotateCcw, Search, TriangleAlert, X } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, HandCoins, IndianRupee, RotateCcw, Search, SlidersHorizontal, TriangleAlert, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import { PageBackButton } from '../../components/GlobalBackButton';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -751,11 +752,7 @@ export default function Collection() {
 
   return (
     <div className="module-page collection-page">
-      <ModuleHeader
-        eyebrow="Field Collection"
-        title="Collections"
-        description="Focus on today's dues and overdue recovery. Upcoming shows only the next installment for each active loan."
-      />
+      <ModuleHeader actions={<div className="page-actions-row"><PageBackButton /></div>} />
 
       {actionError && <div className="form-error">{actionError}</div>}
 
@@ -834,28 +831,7 @@ export default function Collection() {
       </section>
 
       <section className="module-card">
-        <div className="collection-view-tabs" role="tablist" aria-label="Collection view">
-          {[
-            ['Today', todayCollections.length],
-            ['Overdue', overdueCollections.length],
-            ['Upcoming', upcomingCollections.length],
-            ['All', activeCollections.length],
-          ].map(([name, count]) => (
-            <button
-              type="button"
-              key={name}
-              role="tab"
-              aria-selected={collectionView === name}
-              className={`collection-view-tab ${collectionView === name ? 'active' : ''}`}
-              onClick={() => changeCollectionView(name)}
-            >
-              <span>{name}</span>
-              <b>{count}</b>
-            </button>
-          ))}
-        </div>
-
-        <div className="module-toolbar collection-toolbar">
+        <div className="module-toolbar collection-toolbar collection-filter-row">
           <label className="module-search">
             <Search size={16} />
             <input
@@ -866,6 +842,35 @@ export default function Collection() {
             />
           </label>
 
+          <div className="collection-quick-select">
+            <select value={collectionView} onChange={(event) => changeCollectionView(event.target.value)} aria-label="Collection view">
+              <option value="All">All ({activeCollections.length})</option>
+              <option value="Today">Today ({todayCollections.length})</option>
+              <option value="Overdue">Overdue ({overdueCollections.length})</option>
+              {collectionView === 'Upcoming' && <option value="Upcoming">Upcoming ({upcomingCollections.length})</option>}
+            </select>
+            <ChevronDown size={14} />
+          </div>
+          <div className="collection-quick-select">
+            <select value={cycle} onChange={(event) => changeCycle(event.target.value)} aria-label="Cycle">
+              <option value="All">All Cycle</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+            </select>
+            <ChevronDown size={14} />
+          </div>
+          <div className="collection-quick-select">
+            <select value={statusFilter} onChange={(event) => changeStatus(event.target.value)} aria-label="Status">
+              <option value="All">All Status</option>
+              <option value="Very Good">Very Good</option>
+              <option value="Good">Good</option>
+              <option value="Normal">Normal</option>
+              <option value="Risky">Risky</option>
+            </select>
+            <ChevronDown size={14} />
+          </div>
+
           <div className="collection-filter-menu">
             <button
               type="button"
@@ -875,7 +880,7 @@ export default function Collection() {
               aria-expanded={filtersOpen}
               title="Filters"
             >
-              <Filter size={18} />
+              <SlidersHorizontal size={16} />
               {activeFilterCount > 0 && <span className="collection-filter-count">{activeFilterCount}</span>}
             </button>
 
@@ -986,12 +991,13 @@ export default function Collection() {
           </div>
         </div>
 
-        <div className="collection-view-note">
-          {collectionView === 'Today' && 'Collections due today for open loans, including normal entries already paid today. Early-closed loans are excluded.'}
-          {collectionView === 'Overdue' && 'Previous unpaid and partial installments are grouped into one row per customer loan.'}
-          {collectionView === 'Upcoming' && 'Only the next unpaid installment for each active loan is shown.'}
-          {collectionView === 'All' && 'Overdue + today + one next upcoming installment per active loan.'}
-        </div>
+        {collectionView !== 'Today' && (
+          <div className="collection-view-note">
+            {collectionView === 'Overdue' && 'Previous unpaid and partial installments are grouped into one row per customer loan.'}
+            {collectionView === 'Upcoming' && 'Only the next unpaid installment for each active loan is shown.'}
+            {collectionView === 'All' && 'Overdue + today + one next upcoming installment per active loan.'}
+          </div>
+        )}
 
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table">

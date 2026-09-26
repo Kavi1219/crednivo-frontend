@@ -36,3 +36,35 @@
   }
   .crednivo-global-back svg{width:16px;height:16px}
 }
+
+
+/* Back button placed inside a page's action row (same look as Customers). */
+.page-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.page-back-button {
+  min-height: 42px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #bcd5f8;
+  border-radius: 12px;
+  color: var(--blue-600);
+  background: var(--blue-100);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.page-back-button:hover { background: #dce9fc; border-color: #9dc2f5; }
+@media (max-width: 767px) {
+  .page-actions-row { width: 100%; justify-content: flex-start; gap: 7px; }
+  .page-back-button { min-height: 36px; padding: 0 11px; border-radius: 10px; }
+}

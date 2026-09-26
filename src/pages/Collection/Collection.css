@@ -713,3 +713,48 @@
     font-size: 15px;
   }
 }
+
+
+/* Toolbar in the same style as the Loans page: wide search, quick Cycle and
+   Status dropdowns, then the filter button. */
+.collection-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.collection-filter-row .module-search { flex: 1 1 220px; min-width: 180px; width: auto; }
+.collection-quick-select { position: relative; flex: 0 0 auto; }
+.collection-quick-select select {
+  height: 40px;
+  padding: 0 30px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-800);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.collection-quick-select svg {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--ink-500);
+}
+.collection-filter-row .collection-filter-trigger {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.collection-filter-row .collection-filter-trigger:not(.active) { color: var(--ink-600); }
+
+@media (max-width: 767px) {
+  .collection-filter-row .module-search { flex-basis: 100%; }
+}

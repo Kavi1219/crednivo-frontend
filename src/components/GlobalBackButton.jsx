@@ -48,7 +48,9 @@ export default function GlobalBackButton() {
   // and should never show this browser-style Back button. Home/Overview is the
   // root page, so it should not display a Back button either.
   const customerListRoute = /^\/customers(?:\/(?:daily|weekly|monthly))?\/?$/.test(location.pathname);
-  if (Capacitor.isNativePlatform() || location.pathname.startsWith('/overview') || customerListRoute) return null;
+  // Pages that place their own <PageBackButton /> in their action row.
+  const ownBackButtonRoute = /^\/(?:loans|collection)\/?$/.test(location.pathname);
+  if (Capacitor.isNativePlatform() || location.pathname.startsWith('/overview') || customerListRoute || ownBackButtonRoute) return null;
 
   return (
     <div className="crednivo-global-back-row">
@@ -63,5 +65,17 @@ export default function GlobalBackButton() {
         <span>Back</span>
       </button>
     </div>
+  );
+}
+
+/** Back button for a page's own action row (e.g. "← Back  + Create Loan"). */
+export function PageBackButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  if (Capacitor.isNativePlatform()) return null;
+  return (
+    <button type="button" className="page-back-button" onClick={() => goActualBack(navigate, location)}>
+      <ArrowLeft size={16} /> Back
+    </button>
   );
 }

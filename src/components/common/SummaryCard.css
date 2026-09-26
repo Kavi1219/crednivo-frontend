@@ -1,0 +1,164 @@
+/* Summary card shared by Home, Customers and Loans pages (moved from Customers.css). */
+.customer-home-card {
+  position: relative;
+  min-width: 0;
+  min-height: 116px;
+  padding: 11px 13px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(165, 190, 226, .48);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(28, 67, 121, .07);
+}
+
+.customer-home-arrow {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  color: rgba(95, 122, 163, .55);
+}
+
+.customer-home-icon {
+  position: relative;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 7px;
+  border-radius: 11px;
+}
+
+.customer-home-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+}
+
+.customer-home-copy strong {
+  display: block;
+  margin: 0;
+  color: #18244f;
+  font-size: 17px;
+  line-height: 1.05;
+  font-weight: 850;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+
+.customer-home-copy p {
+  margin: 1px 0 0;
+  color: #49597c;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.customer-home-copy small {
+  display: block;
+  margin-top: 5px;
+  color: #8da0c3;
+  font-size: 8.5px;
+  font-weight: 700;
+}
+
+.customer-home-graphic {
+  position: absolute;
+  z-index: 1;
+  right: 9px;
+  bottom: 10px;
+  width: 52px;
+  height: 44px;
+  display: block;
+  transform: scale(.78);
+  transform-origin: right bottom;
+  opacity: .95;
+}
+
+.customer-home-graphic span {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  border-radius: 999px;
+}
+
+.customer-home-graphic span:nth-child(1) { left: 0; height: 18px; }
+.customer-home-graphic span:nth-child(2) { left: 14px; height: 28px; }
+.customer-home-graphic span:nth-child(3) { left: 28px; height: 38px; }
+
+.customer-home-orb {
+  position: absolute;
+  right: -10px;
+  bottom: -14px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.customer-home-card.tone-blue {
+  background: linear-gradient(180deg, #fbfdff 0%, #f5f8ff 100%);
+}
+.customer-home-card.tone-blue .customer-home-icon {
+  background: linear-gradient(180deg, #edf4ff, #e3eeff);
+  color: #3f8cff;
+}
+.customer-home-card.tone-blue .customer-home-graphic span {
+  background: linear-gradient(180deg, rgba(117, 136, 201, .62), rgba(117, 136, 201, .18));
+}
+.customer-home-card.tone-blue .customer-home-orb { background: rgba(118, 159, 255, .12); }
+
+.customer-home-card.tone-green {
+  background: linear-gradient(180deg, #f5fffb 0%, #effff8 100%);
+  border-color: rgba(59, 197, 139, .34);
+}
+.customer-home-card.tone-green .customer-home-icon {
+  background: linear-gradient(180deg, #e1fbf1, #d6fff0);
+  color: #29c28a;
+}
+.customer-home-card.tone-green .customer-home-graphic span {
+  background: linear-gradient(180deg, rgba(44, 210, 145, .9), rgba(44, 210, 145, .2));
+}
+.customer-home-card.tone-green .customer-home-orb { background: rgba(79, 222, 165, .16); }
+
+.customer-home-card.tone-orange {
+  background: linear-gradient(180deg, #fffaf5 0%, #fffaf2 100%);
+  border-color: rgba(244, 172, 91, .35);
+}
+.customer-home-card.tone-orange .customer-home-icon {
+  background: linear-gradient(180deg, #fff0dd, #ffebd0);
+  color: #e5a338;
+}
+.customer-home-card.tone-orange .customer-home-graphic span {
+  background: linear-gradient(180deg, rgba(238, 183, 87, .82), rgba(238, 183, 87, .18));
+}
+.customer-home-card.tone-orange .customer-home-orb { background: rgba(248, 202, 112, .14); }
+
+html[data-theme='dark'] .customer-home-card {
+  background: var(--surface-soft);
+  border-color: var(--line);
+}
+html[data-theme='dark'] .customer-home-copy strong { color: var(--ink-950); }
+html[data-theme='dark'] .customer-home-copy p { color: var(--ink-700); }
+html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
+
+
+.customer-home-card.tone-purple {
+  background: linear-gradient(180deg, #fbf9ff 0%, #f6f2ff 100%);
+  border-color: rgba(145, 112, 238, .30);
+}
+.customer-home-card.tone-purple .customer-home-icon {
+  background: linear-gradient(180deg, #f1ebff, #e9e0ff);
+  color: #7a4feb;
+}
+.customer-home-card.tone-purple .customer-home-graphic span {
+  background: linear-gradient(180deg, rgba(141, 104, 240, .78), rgba(141, 104, 240, .18));
+}
+.customer-home-card.tone-purple .customer-home-orb { background: rgba(160, 128, 255, .14); }
+
+.customer-home-trend { font-style: normal; font-weight: 800; }
+.customer-home-trend.up { color: var(--success); }
+.customer-home-trend.down { color: var(--danger); }
+
+@media (max-width: 767px) {
+  .customer-home-card { min-height: 108px; }
+}

@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  ArrowRight,
   ChevronDown,
   Download,
   FileSpreadsheet,
@@ -24,6 +23,7 @@ import { exportCustomersListPdf, exportCustomersListXlsx } from '../../utils/cus
 import { formatCurrency, formatIndianMobile, normalizeIndianMobile, toInputDate } from '../../utils/finance';
 import './Customers.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
+import CustomerSummaryCard from '../../components/common/SummaryCard';
 
 function routeCycle(pathname) {
   if (pathname.includes('/daily')) return 'Daily';
@@ -32,22 +32,6 @@ function routeCycle(pathname) {
   return 'All';
 }
 
-
-function CustomerSummaryCard({ title, value, note, icon: Icon, tone = 'blue' }) {
-  return (
-    <div className={`customer-home-card tone-${tone}`} aria-label={`${title}: ${value}. ${note}.`}>
-      <span className="customer-home-arrow" aria-hidden="true"><ArrowRight size={15} /></span>
-      <span className="customer-home-icon"><Icon size={18} strokeWidth={2.1} /></span>
-      <div className="customer-home-copy">
-        <strong>{value}</strong>
-        <p>{title}</p>
-        <small>{note}</small>
-      </div>
-      <span className="customer-home-graphic" aria-hidden="true"><span></span><span></span><span></span></span>
-      <span className="customer-home-orb" aria-hidden="true"></span>
-    </div>
-  );
-}
 
 function handleCardKeyDown(event, onOpen) {
   if (event.key === 'Enter' || event.key === ' ') {

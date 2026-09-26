@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
+import SummaryCard from '../../components/common/SummaryCard';
+import { PageBackButton } from '../../components/GlobalBackButton';
 import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -98,42 +100,21 @@ export default function Loans() {
   const disbursedTrend = trendOf((list) => list.reduce((sum, l) => sum + Number(l.disbursedAmount ?? l.principal ?? 0), 0));
 
   return <div className="module-page loans-page">
-    <ModuleHeader eyebrow="Loan Management" title="Loans" description="Track every loan, its cycle, repayment plan, balance and current status." actions={hasPermission('loans.create') ? <ActionButton icon={Plus} onClick={()=>navigate('/loans/create')}>Create Loan</ActionButton> : null} />
+    <ModuleHeader actions={
+      <div className="page-actions-row">
+        <PageBackButton />
+        {hasPermission('loans.create') && <ActionButton icon={Plus} onClick={()=>navigate('/loans/create')}>Create Loan</ActionButton>}
+      </div>
+    } />
 
-    <div className="loan-stat-grid">
-      <article className="loan-stat-card">
-        <span className="loan-stat-icon blue"><WalletCards size={20} /></span>
-        <div className="loan-stat-copy">
-          <span>Total Loans</span>
-          <strong>{totalLoans}</strong>
-          {totalTrend !== null && <em className={totalTrend >= 0 ? 'up' : 'down'}>{totalTrend >= 0 ? '↗' : '↘'} {Math.abs(totalTrend)}%</em>}
-        </div>
-      </article>
-      <article className="loan-stat-card">
-        <span className="loan-stat-icon green"><Users size={20} /></span>
-        <div className="loan-stat-copy">
-          <span>Active Loans</span>
-          <strong>{activeLoans}</strong>
-          {activeTrend !== null && <em className={activeTrend >= 0 ? 'up' : 'down'}>{activeTrend >= 0 ? '↗' : '↘'} {Math.abs(activeTrend)}%</em>}
-        </div>
-      </article>
-      <article className="loan-stat-card">
-        <span className="loan-stat-icon orange"><CheckCircle2 size={20} /></span>
-        <div className="loan-stat-copy">
-          <span>Closed Loans</span>
-          <strong>{closedLoans}</strong>
-          {closedTrend !== null && <em className={closedTrend >= 0 ? 'up' : 'down'}>{closedTrend >= 0 ? '↗' : '↘'} {Math.abs(closedTrend)}%</em>}
-        </div>
-      </article>
-      <article className="loan-stat-card">
-        <span className="loan-stat-icon purple"><IndianRupee size={20} /></span>
-        <div className="loan-stat-copy">
-          <span>Total Disbursed</span>
-          <strong>{formatCurrency(totalDisbursed)}</strong>
-          {disbursedTrend !== null && <em className={disbursedTrend >= 0 ? 'up' : 'down'}>{disbursedTrend >= 0 ? '↗' : '↘'} {Math.abs(disbursedTrend)}%</em>}
-        </div>
-      </article>
-    </div>
+    <section className="stats-section loan-summary-stats">
+      <div className="loan-summary-grid">
+        <SummaryCard title="Total Loans" value={String(totalLoans)} note="All loans created" icon={WalletCards} tone="blue" trend={totalTrend} />
+        <SummaryCard title="Active Loans" value={String(activeLoans)} note="Currently running" icon={Users} tone="green" trend={activeTrend} />
+        <SummaryCard title="Closed Loans" value={String(closedLoans)} note="Fully repaid or closed" icon={CheckCircle2} tone="orange" trend={closedTrend} />
+        <SummaryCard title="Total Disbursed" value={formatCurrency(totalDisbursed)} note="Amount given out" icon={IndianRupee} tone="purple" trend={disbursedTrend} />
+      </div>
+    </section>
 
     <section className="module-card">
       <div className="loan-filter-row">
