@@ -1,4 +1,4 @@
-import { Laptop2, MapPin, RefreshCw, ShieldCheck, X } from 'lucide-react';
+import { Laptop2, MapPin, RefreshCw, ShieldCheck, X, Globe } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { apiRequest } from '../../services/api';
@@ -96,7 +96,20 @@ export default function SessionsModal({ open, onClose }) {
               <span className="sessions-modal-icon"><Laptop2 size={17} /></span>
               <div className="sessions-modal-info">
                 <strong>{session.deviceLabel || 'Unknown device'}{session.current && <em> · This device</em>}</strong>
-                <span className="sessions-modal-meta"><MapPin size={12} />{session.ipAddress || 'Unknown IP'}</span>
+                <span className="sessions-modal-meta" title={session.location ? `Approx. ${session.location}` : undefined}>
+                  <MapPin size={12} />
+                  {Number.isFinite(session.latitude) && Number.isFinite(session.longitude) ? (
+                    <a
+                      className="sessions-modal-coords"
+                      href={`https://www.google.com/maps?q=${session.latitude},${session.longitude}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {session.latitude.toFixed(6)}, {session.longitude.toFixed(6)}
+                    </a>
+                  ) : (session.location || 'Location unavailable')}
+                </span>
+                <span className="sessions-modal-meta sessions-modal-ip"><Globe size={12} />IP {session.ipAddress || 'unknown'}</span>
                 <span className="sessions-modal-meta">Last active {formatWhen(session.lastActiveAt)}</span>
               </div>
               {!session.current && (

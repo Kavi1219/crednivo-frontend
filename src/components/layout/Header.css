@@ -997,3 +997,7 @@ html[data-theme='dark'] .profile-dropdown {
 @media (max-width: 340px) {
   .app-header .mobile-header-brand-copy { display: none !important; }
 }
+
+/* Session coordinates: "11.218972, 78.101916", opens Google Maps. */
+.sessions-modal-coords { color: var(--blue-600); font-weight: 600; text-decoration: none; font-variant-numeric: tabular-nums; }
+.sessions-modal-coords:hover { text-decoration: underline; }
