@@ -76,3 +76,7 @@
   .report-activity-panel.wide .report-activity-list { grid-template-columns: 1fr; }
   .report-activity-panel { padding: 13px; border-radius: 16px; }
 }
+
+/* Dark mode: darker icon chips so the rows don't glare. */
+html[data-theme='dark'] .report-activity-icon { background: color-mix(in srgb, currentColor 16%, var(--surface)) !important; }
+html[data-theme='dark'] .report-activity-panel { background: var(--surface); box-shadow: none; }

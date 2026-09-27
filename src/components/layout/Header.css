@@ -722,7 +722,7 @@ html[data-theme='dark'] .profile-dropdown {
     place-items: center;
     border-radius: 50%;
     color: var(--ink-950);
-    background: #ffffff;
+    background: var(--surface);
     border: 1px solid var(--line);
     transform: translateY(-50%);
     box-shadow: none;
@@ -812,8 +812,8 @@ html[data-theme='dark'] .profile-dropdown {
     padding: 0 17px;
     border: 1px solid var(--line);
     border-radius: 999px;
-    color: #7f8fa6;
-    background: #ffffff;
+    color: var(--ink-500);
+    background: var(--surface);
     box-shadow: none;
   }
 
@@ -824,7 +824,7 @@ html[data-theme='dark'] .profile-dropdown {
   }
 
   .framed-header .search-box input::placeholder {
-    color: #8c9bb0;
+    color: var(--ink-500);
   }
 
   .framed-header .header-icon-btn {
@@ -835,18 +835,18 @@ html[data-theme='dark'] .profile-dropdown {
     border: 1px solid var(--line) !important;
     border-radius: 999px !important;
     color: var(--blue-600) !important;
-    background: #ffffff !important;
+    background: var(--surface) !important;
     box-shadow: none !important;
   }
 
   .framed-header .header-icon-btn:hover {
-    background: #f8fbff !important;
+    background: var(--surface-hover) !important;
   }
 
   .framed-header .notification-count {
     top: -4px;
     right: -4px;
-    border-color: #ffffff;
+    border-color: var(--surface);
   }
 
   .framed-header .profile-menu-wrap {
@@ -860,12 +860,12 @@ html[data-theme='dark'] .profile-dropdown {
     gap: 9px;
     border: 1px solid var(--line);
     border-radius: 999px;
-    background: #ffffff;
+    background: var(--surface);
     box-shadow: none;
   }
 
   .framed-header .profile-button:hover {
-    background: #f8fbff;
+    background: var(--surface-hover);
   }
 
   .framed-header .company-copy strong {

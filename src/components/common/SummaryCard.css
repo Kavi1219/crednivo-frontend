@@ -138,7 +138,7 @@ html[data-theme='dark'] .customer-home-card {
   border-color: var(--line);
 }
 html[data-theme='dark'] .customer-home-copy strong { color: var(--ink-950); }
-html[data-theme='dark'] .customer-home-copy p { color: var(--ink-700); }
+html[data-theme='dark'] .customer-home-copy p { color: var(--ink-800); }
 html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
 
 
@@ -175,3 +175,7 @@ html[data-theme='dark'] .customer-home-copy small { color: var(--ink-500); }
 @media (max-width: 767px) {
   .customer-home-card { min-height: 108px; }
 }
+
+/* Dark mode: soften the light icon chips so they don't glare. */
+html[data-theme='dark'] .customer-home-icon { background: color-mix(in srgb, currentColor 16%, var(--surface)) !important; }
+html[data-theme='dark'] .customer-home-orb { opacity: .45; }

@@ -2,13 +2,17 @@
   --navy-950: #011546;
   --navy-900: #002c8a;
   --navy-850: #0238ad;
+  --blue-700: #004ee0;
   --blue-600: #0059ff;
   --blue-500: #1770ff;
   --blue-100: #cfefff;
   --ink-950: #09162d;
+  --ink-900: #0f1f3a;
   --ink-800: #172846;
+  --ink-700: #34445e;
   --ink-600: #51617a;
   --ink-500: #718198;
+  --ink-400: #8a98ad; /* ink-900/700/400 were used across the app but never defined */
   --line: #e4eaf2;
   --surface: #ffffff;
   --surface-soft: #f8fafd;
@@ -46,13 +50,17 @@ html[data-theme='dark'] {
   --navy-950: #061522;
   --navy-900: #09233a;
   --navy-850: #0c2d49;
+  --blue-700: #1f6fe6;
   --blue-600: #2c82ff;
   --blue-500: #54a0ff;
   --blue-100: #102b4d;
   --ink-950: #eef5ff;
+  --ink-900: #e5eefa;
   --ink-800: #dce7f6;
+  --ink-700: #c2d0e1;
   --ink-600: #a9b9cc;
   --ink-500: #8799af;
+  --ink-400: #6f8299;
   --line: #25384e;
   --surface: #101d2b;
   --surface-soft: #142335;
