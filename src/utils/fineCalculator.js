@@ -1,66 +1,146 @@
 import { toInputDate } from './finance';
 
+/*
+ * CREDNIVO FINE RULE (same for Daily, Weekly and Monthly)
+ * -------------------------------------------------------
+ *   Fine = number of pending days × (fine amount ÷ cycle days)
+ *
+ *   cycle days: Daily = 1, Weekly = 7, Monthly = 30
+ *
+ * - It counts DAYS, not installments. Days when several dues are pending at
+ *   the same time are counted once (no double counting).
+ * - A day is "pending" when some due from an EARLIER date is still unpaid on
+ *   that day. So a due that falls today adds nothing today; its fine starts
+ *   from tomorrow.
+ * - A due stops adding fine on the day it is fully paid. A due settled by a
+ *   fine-only payment ("Fine" status) stops on the day that fine was paid.
+ * - Pending fine = fine accrued so far − fines already paid on the loan.
+ *
+ * Example (weekly loan, fine ₹100): first due 20-07-2026, nothing paid,
+ * today 28-09-2026 → 70 pending days → 100 ÷ 7 × 70 = ₹1,000.
+ */
+
 function numberValue(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 }
 
-// How many days one fine-rate period covers, by the loan's own cycle. A
-// Weekly loan's fineAmount is "per week" (/7); a Monthly loan's is "per
-// month" (/30, a flat approximation, not the exact days in that calendar
-// month); a Daily loan's fineAmount already IS the per-day amount (/1).
-function cycleDays(loan) {
+export function fineCycleDays(loan) {
   const cycle = String(loan?.cycle || '').trim().toLowerCase();
   if (cycle === 'weekly') return 7;
   if (cycle === 'monthly') return 30;
   return 1;
 }
 
-function daysBetween(dateKey, today) {
-  const from = new Date(`${dateKey}T00:00:00`);
-  const to = new Date(`${today}T00:00:00`);
-  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) return 0;
-  return Math.floor((to - from) / 86400000);
+function dayNumber(dateKey) {
+  const time = new Date(`${String(dateKey).slice(0, 10)}T00:00:00Z`).getTime();
+  return Number.isNaN(time) ? null : Math.round(time / 86400000);
 }
 
+const isStatus = (entry, status) => String(entry?.status || '').trim().toLowerCase() === status;
+
 /**
- * The earliest due date that's currently unpaid (date has arrived, balance
- * still > 0) for one loan — the single starting point the whole pending
- * period is measured from. Returns null if nothing is currently pending.
+ * Replays the loan's collections in date order the same way the backend
+ * applies them (oldest due on/before the payment date first, then later dues)
+ * and returns, per schedule row, the date it was last paid and whether it is
+ * fully settled: Map(entryId -> { paidDate, settledDate }).
  */
-function oldestPendingDueDate(collectionEntries, today) {
-  let oldest = null;
-  (collectionEntries || []).forEach((item) => {
-    const dueDate = String(item.date || '').slice(0, 10);
-    if (!dueDate || dueDate > today) return;
-    const balance = Math.max(0, numberValue(item.dueAmount) - numberValue(item.paidAmount));
-    if (balance <= 0) return;
-    if (!oldest || dueDate < oldest) oldest = dueDate;
+export function scheduleSettlement(loan, collectionEntries, paymentsForLoan) {
+  const rows = (collectionEntries || [])
+    .filter((entry) => !isStatus(entry, 'cancelled'))
+    .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+  const result = new Map(rows.map((entry) => [entry.id, { paidDate: null, settledDate: null }]));
+  const filled = new Map(rows.map((entry) => [entry.id, 0]));
+  const io = loan?.loanType === 'IO';
+
+  const loanPayments = [...(paymentsForLoan || [])]
+    .filter((p) => p.type === 'Collection' && p.direction === 'in')
+    .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(a.id || '').localeCompare(String(b.id || '')));
+
+  loanPayments.forEach((payment) => {
+    const payDate = String(payment.date || '').slice(0, 10);
+    let credit = numberValue(io ? payment.interestPaid : payment.collectionAmount);
+    const fine = numberValue(payment.fineAmount);
+
+    // Fine-only payment settles the next "Fine" row on this date.
+    if (!io && credit <= 0 && fine > 0) {
+      const fineRow = rows.find((entry) => isStatus(entry, 'fine') && !result.get(entry.id).settledDate);
+      if (fineRow) result.set(fineRow.id, { paidDate: payDate, settledDate: payDate });
+      return;
+    }
+
+    const open = rows
+      .filter((entry) => !isStatus(entry, 'fine') && (filled.get(entry.id) || 0) < numberValue(entry.dueAmount))
+      .sort((a, b) => {
+        const aLater = String(a.date) > payDate ? 1 : 0;
+        const bLater = String(b.date) > payDate ? 1 : 0;
+        return aLater - bLater || String(a.date).localeCompare(String(b.date));
+      });
+    for (const entry of open) {
+      if (credit <= 0) break;
+      const due = numberValue(entry.dueAmount);
+      const room = due - (filled.get(entry.id) || 0);
+      const applied = Math.min(room, credit);
+      if (applied <= 0) continue;
+      const total = (filled.get(entry.id) || 0) + applied;
+      filled.set(entry.id, total);
+      result.set(entry.id, { paidDate: payDate, settledDate: total >= due - 0.005 ? payDate : null });
+      credit -= applied;
+    }
   });
-  return oldest;
+
+  // Rows already fully paid per the server but not matched above (older data).
+  rows.forEach((entry) => {
+    const info = result.get(entry.id);
+    if (info.settledDate) return;
+    const due = numberValue(entry.dueAmount);
+    if (!isStatus(entry, 'fine') && due > 0 && numberValue(entry.paidAmount) >= due) {
+      result.set(entry.id, { paidDate: info.paidDate, settledDate: info.paidDate || String(entry.date).slice(0, 10) });
+    }
+  });
+  return result;
 }
 
-/**
- * Total fine accrued for one loan: ONE continuous calculation, not summed
- * per-due (summing per-due would double-count overlapping days across
- * multiple pending installments). Finds the oldest currently-unpaid due
- * date, counts days from there to today, and multiplies by the loan's
- * daily rate (fineAmount / cycle length). No grace period, no cap — keeps
- * growing for as long as the loan stays pending, even across many months.
- */
-export function calculateLoanAccruedFine(loan, collectionEntries, today = toInputDate()) {
+/** Number of distinct pending days for the loan up to and including today. */
+export function countPendingDays(loan, collectionEntries, paymentsForLoan, today = toInputDate()) {
+  const todayNo = dayNumber(today);
+  if (todayNo == null) return 0;
+  const settlement = scheduleSettlement(loan, collectionEntries, paymentsForLoan);
+  const intervals = [];
+  (collectionEntries || []).forEach((entry) => {
+    if (isStatus(entry, 'cancelled')) return;
+    const dueNo = dayNumber(entry.date);
+    if (dueNo == null || dueNo >= todayNo) return; // due today/future: no fine yet
+    const isFineRow = isStatus(entry, 'fine');
+    if (!isFineRow && numberValue(entry.dueAmount) <= 0) return;
+    const settled = settlement.get(entry.id)?.settledDate;
+    const endNo = settled ? Math.min(dayNumber(settled), todayNo) : todayNo;
+    // Pending days are the days AFTER the due date up to the settle day.
+    if (endNo > dueNo) intervals.push([dueNo + 1, endNo]);
+  });
+  intervals.sort((a, b) => a[0] - b[0]);
+  let days = 0;
+  let current = null;
+  intervals.forEach(([start, end]) => {
+    if (!current || start > current[1] + 1) {
+      if (current) days += current[1] - current[0] + 1;
+      current = [start, end];
+    } else {
+      current[1] = Math.max(current[1], end);
+    }
+  });
+  if (current) days += current[1] - current[0] + 1;
+  return days;
+}
+
+/** Total fine accrued so far: pending days × (fine ÷ cycle days). */
+export function calculateLoanAccruedFine(loan, collectionEntries, paymentsForLoan = [], today = toInputDate()) {
   if (!loan?.fineEnabled) return 0;
   const fineRate = numberValue(loan.fineAmount);
   if (fineRate <= 0) return 0;
-
-  const oldest = oldestPendingDueDate(collectionEntries, today);
-  if (!oldest) return 0;
-
-  const daysPending = daysBetween(oldest, today);
-  if (daysPending < 1) return 0;
-
-  const dailyRate = fineRate / cycleDays(loan);
-  return Math.round(daysPending * dailyRate * 100) / 100;
+  const days = countPendingDays(loan, collectionEntries, paymentsForLoan, today);
+  if (days < 1) return 0;
+  return Math.round(days * (fineRate / fineCycleDays(loan)) * 100) / 100;
 }
 
 /** Sum of fine amounts already recorded as paid against a set of payments. */
@@ -68,12 +148,17 @@ export function sumFinePaid(paymentsForLoan) {
   return (paymentsForLoan || []).reduce((sum, p) => sum + Math.max(0, numberValue(p.fineAmount)), 0);
 }
 
-/**
- * Net fine still pending for one loan: what's accrued, minus what's
- * already been paid toward it. Never negative.
- */
+/** Fine still to collect on the loan: accrued − already paid. Never negative. */
 export function calculateLoanPendingFine(loan, collectionEntries, paymentsForLoan, today = toInputDate()) {
-  const accrued = calculateLoanAccruedFine(loan, collectionEntries, today);
+  const accrued = calculateLoanAccruedFine(loan, collectionEntries, paymentsForLoan, today);
   const paid = sumFinePaid(paymentsForLoan);
   return Math.max(0, Math.round((accrued - paid) * 100) / 100);
+}
+
+/** Convenience for pop-ups: pending fine for one loan from the global lists. */
+export function pendingFineForLoan(loan, allCollections, allPayments, today = toInputDate()) {
+  if (!loan) return 0;
+  const entries = (allCollections || []).filter((entry) => entry.loanId === loan.id);
+  const loanPayments = (allPayments || []).filter((p) => p.loanId === loan.id);
+  return calculateLoanPendingFine(loan, entries, loanPayments, today);
 }

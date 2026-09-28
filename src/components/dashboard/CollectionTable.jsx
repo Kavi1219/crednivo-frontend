@@ -1,4 +1,5 @@
 import { ArrowRight, CalendarDays, ChevronDown, Download, FileSpreadsheet, FileText, HandCoins, X } from 'lucide-react';
+import { pendingFineForLoan } from '../../utils/fineCalculator';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrednivo } from '../../context/CrednivoContext';
@@ -234,7 +235,8 @@ export default function CollectionTable() {
       initialPaymentAmount: loan.loanType === 'IO'
         ? (balance || Number(loan.collectionAmount) || Number(loan.interestAmount) || 0)
         : (balance || Number(row.dueAmount) || 0),
-      initialFine: row.status === 'Overdue' ? Number(row.fine || 0) : 0,
+      // Shared fine rule: pending days × (fine ÷ cycle days) − fines already paid.
+      initialFine: pendingFineForLoan(loan, collections, payments),
     });
   };
 

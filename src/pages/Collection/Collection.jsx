@@ -6,6 +6,7 @@ import CustomerProfileLink from '../../components/common/CustomerProfileLink';
 import IconButton from '../../components/common/IconButton';
 import ModuleHeader from '../../components/common/ModuleHeader';
 import { PageBackButton } from '../../components/GlobalBackButton';
+import { pendingFineForLoan } from '../../utils/fineCalculator';
 import StatusBadge from '../../components/common/StatusBadge';
 import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
@@ -635,12 +636,10 @@ export default function Collection() {
       setInterestAmount('');
       setPrincipalAmount('0');
     }
-    const displayStatus = getDisplayStatus(item, today);
-    const defaultFine = displayStatus === 'Overdue'
-      && loan?.fineEnabled
-      && Number(item.fine || 0) <= 0
-        ? Number(loan.fineAmount || 0)
-        : 0;
+    // Shared fine rule: pending days × (fine ÷ cycle days) − fines already paid.
+    const defaultFine = hasPermission('collections.fine')
+      ? pendingFineForLoan(loan, collections, payments, today)
+      : 0;
     setFine(String(defaultFine));
     setPaymentDate(toInputDate());
     setPaymentMode('Cash');

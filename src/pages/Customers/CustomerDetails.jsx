@@ -7,7 +7,7 @@ import { useCrednivo } from '../../context/CrednivoContext';
 import { useAuth } from '../../context/AuthContext';
 import { getAuthToken } from '../../services/api';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
-import { calculateLoanPendingFine } from '../../utils/fineCalculator';
+import { calculateLoanPendingFine, scheduleSettlement } from '../../utils/fineCalculator';
 import './CustomerDetails.css';
 
 function documentSource(document) {
@@ -432,6 +432,18 @@ export default function CustomerDetails() {
     .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
 
   const scheduleBalanceOf = (entry) => Math.max(0, Number(entry?.dueAmount || 0) - Number(entry?.paidAmount || 0));
+
+  /**
+   * Paid date per schedule row, worked out by replaying the loan's collections
+   * in date order the same way the backend applies them: each payment fills the
+   * oldest due on/before its date first, then later dues. The row's paid date is
+   * the date of the payment that last added money to it. A fine-only payment
+   * gives its date to the next "Fine" row. Returns Map(entryId -> 'YYYY-MM-DD').
+   */
+  const paidDatesForLoan = (loan) => {
+    const settlement = scheduleSettlement(loan, scheduleRowsForLoan(loan?.id), paymentsForLoan(loan?.id));
+    return new Map([...settlement].map(([id, info]) => [id, info.paidDate]));
+  };
 
   const scheduleDisplayStatus = (entry) => {
     const due = Number(entry?.dueAmount || 0);
@@ -891,7 +903,10 @@ export default function CustomerDetails() {
       setPaymentInterest('');
       setPaymentPrincipal('0');
     }
-    setPaymentFine('0');
+    // Shared fine rule: pending days × (fine ÷ cycle days) − fines already paid.
+    setPaymentFine(String(hasPermission('collections.fine')
+      ? calculateLoanPendingFine(loan, scheduleRowsForLoan(loan.id), (payments || []).filter((p) => p.loanId === loan.id))
+      : 0));
     const today = toInputDate();
     setPaymentDate(today);
     setPaymentMode('Cash');
@@ -1718,7 +1733,7 @@ export default function CustomerDetails() {
       </div>
     </div>}
 
-    {scheduleLoan && <div className="customer-loan-schedule-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&setScheduleLoan(null)}>
+    {scheduleLoan && (() => { const schedulePaidDates = paidDatesForLoan(scheduleLoan); return <div className="customer-loan-schedule-backdrop" onMouseDown={(event)=>event.target===event.currentTarget&&setScheduleLoan(null)}>
       <div className="customer-loan-schedule-modal" onMouseDown={(event)=>event.stopPropagation()}>
         <div className="customer-loan-schedule-head">
           <div>
@@ -1737,21 +1752,21 @@ export default function CustomerDetails() {
         <div className="customer-loan-schedule-table-wrap">
           <table className="customer-loan-schedule-table">
             <thead>
-              <tr><th>#</th><th>Due Date</th><th>Due</th><th>Paid</th><th>Pending</th><th>Status</th></tr>
+              <tr><th>#</th><th>Pay Date</th><th>Paid Date</th><th>Due</th><th>Status</th></tr>
             </thead>
             <tbody>
               {scheduleRowsForLoan(scheduleLoan.id).map((entry, index) => {
                 const rowStatus = scheduleDisplayStatus(entry);
+                const paidOn = schedulePaidDates.get(entry.id);
                 return <tr key={entry.id || `${scheduleLoan.id}-${index}`}>
                   <td>{index + 1}</td>
                   <td>{formatDate(entry.date)}</td>
-                  <td>{formatCurrency(entry.dueAmount)}</td>
-                  <td>{formatCurrency(entry.paidAmount)}</td>
-                  <td><strong>{formatCurrency(scheduleBalanceOf(entry))}</strong></td>
+                  <td>{paidOn ? formatDate(paidOn) : '—'}</td>
+                  <td><strong>{rowStatus === 'Fine' ? `Fine ${formatCurrency(entry.fine || 0)}` : formatCurrency(entry.dueAmount)}</strong></td>
                   <td><span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span></td>
                 </tr>;
               })}
-              {scheduleRowsForLoan(scheduleLoan.id).length === 0 && <tr><td colSpan="6"><div className="customer-loan-schedule-empty">No schedule entries are available for this loan.</div></td></tr>}
+              {scheduleRowsForLoan(scheduleLoan.id).length === 0 && <tr><td colSpan="5"><div className="customer-loan-schedule-empty">No schedule entries are available for this loan.</div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -1761,20 +1776,20 @@ export default function CustomerDetails() {
             const rowStatus = scheduleDisplayStatus(entry);
             return <article key={entry.id || `mobile-${scheduleLoan.id}-${index}`}>
               <div className="customer-loan-schedule-mobile-top">
-                <strong>#{index + 1} · {formatDate(entry.date)}</strong>
+                <strong>#{index + 1}</strong>
                 <span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span>
               </div>
               <div className="customer-loan-schedule-mobile-grid">
-                <div><span>Due</span><strong>{formatCurrency(entry.dueAmount)}</strong></div>
-                <div><span>Paid</span><strong>{formatCurrency(entry.paidAmount)}</strong></div>
-                <div><span>Pending</span><strong>{formatCurrency(scheduleBalanceOf(entry))}</strong></div>
+                <div><span>Pay Date</span><strong>{formatDate(entry.date)}</strong></div>
+                <div><span>Paid Date</span><strong>{schedulePaidDates.get(entry.id) ? formatDate(schedulePaidDates.get(entry.id)) : '—'}</strong></div>
+                <div><span>Due</span><strong>{rowStatus === 'Fine' ? `Fine ${formatCurrency(entry.fine || 0)}` : formatCurrency(entry.dueAmount)}</strong></div>
               </div>
             </article>;
           })}
           {scheduleRowsForLoan(scheduleLoan.id).length === 0 && <div className="customer-loan-schedule-empty">No schedule entries are available for this loan.</div>}
         </div>
       </div>
-    </div>}
+    </div>; })()}
 
     {extensionLoan && <div className="customer-io-extension-backdrop" onMouseDown={()=>!extensionSaving&&closeIoExtension()}>
       <div className="customer-io-extension-modal" onMouseDown={(event)=>event.stopPropagation()}>
