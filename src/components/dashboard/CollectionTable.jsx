@@ -243,7 +243,7 @@ export default function CollectionTable() {
   };
 
   const openReschedule = (row) => {
-    if (!row || String(row.status || '').trim().toLowerCase() === 'paid') return;
+    if (!row || ['paid', 'fine'].includes(String(row.status || '').trim().toLowerCase())) return;
     setRescheduleError('');
     setRescheduling(row);
     setRescheduleDate(row.date > today ? row.date : '');

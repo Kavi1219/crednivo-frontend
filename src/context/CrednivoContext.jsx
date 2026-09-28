@@ -1229,7 +1229,7 @@ export function CrednivoProvider({ children }) {
       .filter((item) => item.status !== 'Paid')
       .reduce((sum, item) => sum + Math.max(0, item.dueAmount - item.paidAmount), 0);
     const overdue = data.collections
-      .filter((item) => item.date < today && item.status !== 'Paid' && item.status !== 'Cancelled')
+      .filter((item) => item.date < today && item.status !== 'Paid' && item.status !== 'Cancelled' && item.status !== 'Fine')
       .reduce((sum, item) => sum + Math.max(0, item.dueAmount - item.paidAmount), 0);
     const todayExpenses = data.expenses.filter((item) => item.date === today).reduce((sum, item) => sum + item.amount, 0);
     const todayNewLoans = data.payments.filter((item) => item.date === today && item.type === 'New Loan').reduce((sum, item) => sum + item.amount, 0);

@@ -440,6 +440,7 @@ export default function CustomerDetails() {
     const today = toInputDate();
 
     if (String(entry?.status || '').toLowerCase() === 'cancelled') return 'Cancelled';
+    if (String(entry?.status || '').toLowerCase() === 'fine') return 'Fine';
     if (String(entry?.status || '').toLowerCase() === 'paid' || paid >= due) return 'Paid';
     if (String(entry?.date || '') < today && balance > 0) return 'Overdue';
     if (paid > 0 && balance > 0) return 'Partial';

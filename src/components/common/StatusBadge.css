@@ -67,3 +67,7 @@
   background: #ffe7e3;
   border-color: #ffc7c0;
 }
+
+/* Fine-only payment: due settled by a fine, moved to the end of the schedule. */
+.status-badge.status-fine { color: #b45309; background: #fff4e0; border-color: #f6d6a3; }
+html[data-theme='dark'] .status-badge.status-fine { color: #f6b755; background: #3a2a12; border-color: #5a4220; }

@@ -30,6 +30,8 @@ function getDisplayStatus(item, today = toInputDate()) {
   const paid = Number(item.paidAmount || 0);
   const balance = Math.max(0, due - paid);
 
+  // Fine-only payment: due settled by a fine and moved to the end of the schedule.
+  if (item.status === 'Fine') return 'Fine';
   if (item.status === 'Paid' || paid >= due) return 'Paid';
 
   // Date decides whether a remaining balance is future, current or overdue.
@@ -399,7 +401,7 @@ export default function Collection() {
   // the existing "Expected Today" metrics already use.
   const todayTargetCustomers = new Set(todayCollections.map((item) => item.customerId)).size;
   const todayAchievedCustomers = new Set(
-    todayCollections.filter((item) => getDisplayStatus(item, today) === 'Paid').map((item) => item.customerId),
+    todayCollections.filter((item) => ['Paid', 'Fine'].includes(getDisplayStatus(item, today))).map((item) => item.customerId),
   ).size;
   const todayPendingCustomers = Math.max(0, todayTargetCustomers - todayAchievedCustomers);
   const todayAchievedAmount = Math.max(0, todayExpected - todayPending);
@@ -502,8 +504,8 @@ export default function Collection() {
       }
 
       const currentPrimary = current.primaryItem;
-      const currentPaid = getDisplayStatus(currentPrimary, today) === 'Paid';
-      const itemPaid = getDisplayStatus(item, today) === 'Paid';
+      const currentPaid = ['Paid', 'Fine'].includes(getDisplayStatus(currentPrimary, today));
+      const itemPaid = ['Paid', 'Fine'].includes(getDisplayStatus(item, today));
       if ((currentPaid && !itemPaid) || (!itemPaid && String(item.date || '') < String(currentPrimary.date || ''))) {
         current.primaryItem = item;
         current.loanId = item.loanId;
@@ -699,7 +701,7 @@ export default function Collection() {
 
   const openReschedule = (item) => {
     const source = item?.primaryItem || item;
-    if (!source || getDisplayStatus(source, today) === 'Paid') return;
+    if (!source || ['Paid', 'Fine'].includes(getDisplayStatus(source, today))) return;
     setActionError('');
     setRescheduling(source);
     setRescheduleDate(source.date > today ? source.date : '');
@@ -739,7 +741,7 @@ export default function Collection() {
     if (displayStatus === 'Partial') return 'Pay Balance';
     if (displayStatus === 'Pending') return 'Collect Balance';
     if (item.date > today && displayStatus !== 'Paid') return 'Pay Early';
-    if (displayStatus === 'Paid') return 'Add Payment';
+    if (displayStatus === 'Paid' || displayStatus === 'Fine') return 'Add Payment';
     return 'Collect';
   };
 
@@ -1009,7 +1011,7 @@ export default function Collection() {
               {displayRows.map((item) => {
                 const source = item.primaryItem || item;
                 const loanClosed = isLoanClosed(source);
-                const paid = getDisplayStatus(source, today) === 'Paid';
+                const paid = ['Paid', 'Fine'].includes(getDisplayStatus(source, today));
                 return (
                   <tr key={item.id}>
                     <td>
@@ -1072,7 +1074,7 @@ export default function Collection() {
           {displayRows.map((item) => {
             const source = item.primaryItem || item;
             const loanClosed = isLoanClosed(source);
-            const paid = getDisplayStatus(source, today) === 'Paid';
+            const paid = ['Paid', 'Fine'].includes(getDisplayStatus(source, today));
             return (
               <article className="mobile-data-card" key={item.id}>
                 <div className="mobile-data-top">
