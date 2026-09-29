@@ -2219,3 +2219,9 @@
     padding: 0 9px;
   }
 }
+
+/* "Fine" chip — light orange. Shown alone for fine-only dues, and next to
+   "Paid" when the due was paid together with a fine. */
+.customer-schedule-status-group{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.customer-schedule-status.fine{color:#c2410c;background:#ffedd5}
+html[data-theme='dark'] .customer-schedule-status.fine{color:#fdba74;background:rgba(251,146,60,.18)}

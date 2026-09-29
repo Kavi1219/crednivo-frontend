@@ -440,10 +440,15 @@ export default function CustomerDetails() {
    * the date of the payment that last added money to it. A fine-only payment
    * gives its date to the next "Fine" row. Returns Map(entryId -> 'YYYY-MM-DD').
    */
-  const paidDatesForLoan = (loan) => {
-    const settlement = scheduleSettlement(loan, scheduleRowsForLoan(loan?.id), paymentsForLoan(loan?.id));
-    return new Map([...settlement].map(([id, info]) => [id, info.paidDate]));
-  };
+  const paidDatesForLoan = (loan) => scheduleSettlement(loan, scheduleRowsForLoan(loan?.id), paymentsForLoan(loan?.id));
+
+  /** Status chip(s) for a schedule row: "Paid" + "Fine" when the due was paid together with a fine. */
+  const scheduleStatusChips = (rowStatus, settle) => (
+    <span className="customer-schedule-status-group">
+      <span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span>
+      {rowStatus !== 'Fine' && settle?.withFine && <span className="customer-schedule-status fine">Fine</span>}
+    </span>
+  );
 
   const scheduleDisplayStatus = (entry) => {
     const due = Number(entry?.dueAmount || 0);
@@ -1757,13 +1762,14 @@ export default function CustomerDetails() {
             <tbody>
               {scheduleRowsForLoan(scheduleLoan.id).map((entry, index) => {
                 const rowStatus = scheduleDisplayStatus(entry);
-                const paidOn = schedulePaidDates.get(entry.id);
+                const settle = schedulePaidDates.get(entry.id);
+                const paidOn = settle?.paidDate;
                 return <tr key={entry.id || `${scheduleLoan.id}-${index}`}>
                   <td>{index + 1}</td>
                   <td>{formatDate(entry.date)}</td>
                   <td>{paidOn ? formatDate(paidOn) : '—'}</td>
                   <td><strong>{rowStatus === 'Fine' ? `Fine ${formatCurrency(entry.fine || 0)}` : formatCurrency(entry.dueAmount)}</strong></td>
-                  <td><span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span></td>
+                  <td>{scheduleStatusChips(rowStatus, settle)}</td>
                 </tr>;
               })}
               {scheduleRowsForLoan(scheduleLoan.id).length === 0 && <tr><td colSpan="5"><div className="customer-loan-schedule-empty">No schedule entries are available for this loan.</div></td></tr>}
@@ -1777,11 +1783,11 @@ export default function CustomerDetails() {
             return <article key={entry.id || `mobile-${scheduleLoan.id}-${index}`}>
               <div className="customer-loan-schedule-mobile-top">
                 <strong>#{index + 1}</strong>
-                <span className={`customer-schedule-status ${String(rowStatus).toLowerCase()}`}>{rowStatus}</span>
+                {scheduleStatusChips(rowStatus, schedulePaidDates.get(entry.id))}
               </div>
               <div className="customer-loan-schedule-mobile-grid">
                 <div><span>Pay Date</span><strong>{formatDate(entry.date)}</strong></div>
-                <div><span>Paid Date</span><strong>{schedulePaidDates.get(entry.id) ? formatDate(schedulePaidDates.get(entry.id)) : '—'}</strong></div>
+                <div><span>Paid Date</span><strong>{schedulePaidDates.get(entry.id)?.paidDate ? formatDate(schedulePaidDates.get(entry.id).paidDate) : '—'}</strong></div>
                 <div><span>Due</span><strong>{rowStatus === 'Fine' ? `Fine ${formatCurrency(entry.fine || 0)}` : formatCurrency(entry.dueAmount)}</strong></div>
               </div>
             </article>;

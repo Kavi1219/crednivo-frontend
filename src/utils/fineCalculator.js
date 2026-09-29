@@ -43,14 +43,15 @@ const isStatus = (entry, status) => String(entry?.status || '').trim().toLowerCa
 /**
  * Replays the loan's collections in date order the same way the backend
  * applies them (oldest due on/before the payment date first, then later dues)
- * and returns, per schedule row, the date it was last paid and whether it is
- * fully settled: Map(entryId -> { paidDate, settledDate }).
+ * and returns, per schedule row, the date it was last paid, whether it is
+ * fully settled, and whether a fine was paid with it:
+ * Map(entryId -> { paidDate, settledDate, withFine }).
  */
 export function scheduleSettlement(loan, collectionEntries, paymentsForLoan) {
   const rows = (collectionEntries || [])
     .filter((entry) => !isStatus(entry, 'cancelled'))
     .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
-  const result = new Map(rows.map((entry) => [entry.id, { paidDate: null, settledDate: null }]));
+  const result = new Map(rows.map((entry) => [entry.id, { paidDate: null, settledDate: null, withFine: false }]));
   const filled = new Map(rows.map((entry) => [entry.id, 0]));
   const io = loan?.loanType === 'IO';
 
@@ -66,7 +67,7 @@ export function scheduleSettlement(loan, collectionEntries, paymentsForLoan) {
     // Fine-only payment settles the next "Fine" row on this date.
     if (!io && credit <= 0 && fine > 0) {
       const fineRow = rows.find((entry) => isStatus(entry, 'fine') && !result.get(entry.id).settledDate);
-      if (fineRow) result.set(fineRow.id, { paidDate: payDate, settledDate: payDate });
+      if (fineRow) result.set(fineRow.id, { paidDate: payDate, settledDate: payDate, withFine: true });
       return;
     }
 
@@ -85,7 +86,11 @@ export function scheduleSettlement(loan, collectionEntries, paymentsForLoan) {
       if (applied <= 0) continue;
       const total = (filled.get(entry.id) || 0) + applied;
       filled.set(entry.id, total);
-      result.set(entry.id, { paidDate: payDate, settledDate: total >= due - 0.005 ? payDate : null });
+      result.set(entry.id, {
+        paidDate: payDate,
+        settledDate: total >= due - 0.005 ? payDate : null,
+        withFine: result.get(entry.id).withFine || fine > 0, // paid together with a fine
+      });
       credit -= applied;
     }
   });
@@ -96,7 +101,7 @@ export function scheduleSettlement(loan, collectionEntries, paymentsForLoan) {
     if (info.settledDate) return;
     const due = numberValue(entry.dueAmount);
     if (!isStatus(entry, 'fine') && due > 0 && numberValue(entry.paidAmount) >= due) {
-      result.set(entry.id, { paidDate: info.paidDate, settledDate: info.paidDate || String(entry.date).slice(0, 10) });
+      result.set(entry.id, { ...info, settledDate: info.paidDate || String(entry.date).slice(0, 10) });
     }
   });
   return result;
