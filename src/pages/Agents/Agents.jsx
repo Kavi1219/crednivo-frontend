@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import ProtectedImage from '../../components/common/ProtectedImage';
 import { useMemo, useState, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import Work from '../Work/Work';
 import ActionButton from '../../components/common/ActionButton';
 import StatCard from '../../components/dashboard/StatCard';
 import IconButton from '../../components/common/IconButton';
@@ -45,6 +47,7 @@ const permissionGroups = [
 ];
 
 export default function Agents() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const actionLocksRef = useRef(new Set());
 
   const { agents, company, saveAgent, setAgentStatus, deleteAgent, saveAgentPermissions } = useCrednivo();
@@ -195,12 +198,41 @@ export default function Agents() {
     }
   };
 
+  // Agents ⇄ Work tab (?tab=work). Owners manage Work here; agents keep /work.
+  const activeTab = searchParams.get('tab') === 'work' ? 'work' : 'agents';
+  const switchTab = (tab) => {
+    const next = new URLSearchParams(searchParams);
+    if (tab === 'work') next.set('tab', 'work'); else next.delete('tab');
+    setSearchParams(next);
+  };
+  const tabBar = (
+    <div className="agents-tabs" role="tablist" aria-label="Agents sections">
+      <button type="button" role="tab" aria-selected={activeTab === 'agents'} className={activeTab === 'agents' ? 'active' : ''} onClick={() => switchTab('agents')}>
+        <UsersRound size={16} /> Agents
+      </button>
+      <button type="button" role="tab" aria-selected={activeTab === 'work'} className={activeTab === 'work' ? 'active' : ''} onClick={() => switchTab('work')}>
+        <ClipboardList size={16} /> Work
+      </button>
+    </div>
+  );
+
+  if (activeTab === 'work') {
+    return (
+      <div className="module-page agents-page agents-work-tab">
+        {tabBar}
+        <Work />
+      </div>
+    );
+  }
+
   return (
     <div className="module-page agents-page">
       <ModuleHeader eyebrow="Team Management" title="Agents" description="Manage field agents, approval status, profile details and collection access." actions={<>
         <ActionButton tone="secondary" icon={ClipboardList} onClick={() => setWorkModalOpen(true)}>Create Work</ActionButton>
         <ActionButton icon={UserPlus} onClick={openCreate}>Invite Agent</ActionButton>
       </>} />
+
+      {tabBar}
 
       <section className="stats-section">
         <div className="stats-grid">

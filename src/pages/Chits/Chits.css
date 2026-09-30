@@ -1,0 +1,85 @@
+/* ---------- Chits page ---------- */
+.chit-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+
+.chit-list, .chit-member-list { display: grid; gap: 10px; padding: 14px 16px 16px; }
+.chit-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto 18px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.chit-row:hover { border-color: color-mix(in srgb, var(--blue-500) 35%, var(--line)); background: var(--surface); box-shadow: 0 8px 20px rgba(18, 60, 116, .08); }
+.chit-row-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; color: #7559eb; background: color-mix(in srgb, #7559eb 14%, var(--surface)); flex: 0 0 auto; }
+.chit-row-main, .chit-row-value { display: grid; gap: 3px; min-width: 0; }
+.chit-row-main strong { color: var(--ink-950); font-size: 13px; }
+.chit-row-main small, .chit-row-value small { color: var(--ink-500); font-size: 10.5px; }
+.chit-row-value { text-align: right; }
+.chit-row-value strong { color: var(--ink-950); font-size: 14px; }
+.chit-row-value small.full { color: var(--success); font-weight: 700; }
+.chit-row-go { color: var(--ink-500); }
+
+.chit-hero { padding: 16px 18px; margin-bottom: 16px; }
+.chit-hero-title { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.chit-hero-title > div { flex: 1; min-width: 0; }
+.chit-hero-title h2 { margin: 0; font-size: 18px; color: var(--ink-950); }
+.chit-hero-title small { color: var(--ink-500); font-size: 11px; }
+.chit-hero-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.chit-hero-grid > div { display: grid; gap: 4px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+.chit-hero-grid span { color: var(--ink-500); font-size: 10.5px; }
+.chit-hero-grid strong { color: var(--ink-950); font-size: 14px; }
+
+.chit-member-card {
+  display: grid;
+  grid-template-columns: 38px 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.chit-ticket { color: var(--ink-500); font-size: 12px; font-weight: 800; }
+.chit-avatar {
+  width: 48px; height: 48px;
+  display: grid; place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  color: var(--blue-600);
+  background: var(--blue-100);
+  font-weight: 800;
+}
+.chit-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.chit-avatar-lg { width: 84px; height: 84px; border-radius: 22px; font-size: 26px; }
+.chit-member-main { display: grid; gap: 2px; min-width: 0; }
+.chit-member-main strong { color: var(--ink-950); font-size: 13px; }
+.chit-member-main span { color: var(--ink-700); font-size: 11.5px; }
+.chit-member-main small { overflow: hidden; color: var(--ink-500); font-size: 10.5px; white-space: nowrap; text-overflow: ellipsis; }
+
+.chit-member-photo-pick { display: grid; justify-items: center; gap: 6px; margin: 4px 0 12px; }
+.chit-member-photo-pick small { color: var(--ink-500); font-size: 10.5px; }
+.chit-photo-button { cursor: pointer; border: 2px dashed color-mix(in srgb, var(--blue-500) 40%, var(--line)); }
+.chit-form-hint { margin: 4px 0 12px; padding: 10px 12px; border-radius: 12px; color: var(--ink-700); background: var(--surface-soft); font-size: 11.5px; }
+.chit-form-hint strong { color: var(--ink-950); }
+.chit-modal textarea { width: 100%; resize: vertical; font: inherit; }
+
+@media (max-width: 1100px) { .chit-hero-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 767px) {
+  .chit-summary-grid { grid-template-columns: 1fr; gap: 9px; }
+  .chit-list, .chit-member-list { padding: 12px; }
+  .chit-row { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .chit-row-go { display: none; }
+  .chit-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chit-member-card { grid-template-columns: 30px 42px minmax(0, 1fr); }
+  .chit-member-card .row-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  .chit-avatar { width: 42px; height: 42px; }
+}

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { BarChart3, CircleDollarSign, ClipboardList, Landmark, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
+import { BarChart3, CircleDollarSign, ClipboardList, Coins, Landmark, PiggyBank, ReceiptText, Settings, Users, WalletCards, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import CrednivoMark from '../brand/CrednivoMark';
 import './MobileDrawer.css';
@@ -11,15 +11,19 @@ const items = [
   ['Expenses', '/expenses', ReceiptText, 'expenses.view'],
   ['Capital', '/capital', Landmark, 'capital.view'],
   ['Savings', '/savings', PiggyBank, null, true],
+  ['Chits', '/chits', Coins, null, true],
   ['Reports', '/reports', BarChart3, 'reports.full'],
   ['Agents', '/agents', Users, null, true],
-  ['Work', '/work', ClipboardList, null, false, true],
+  ['Work', '/work', ClipboardList, null, false, false, true], // agents only; owners use Agents → Work
   ['Settings', '/settings', Settings, null, false, true],
 ];
 
 export default function MobileDrawer({ open, onClose }) {
   const { isOwner, hasPermission } = useAuth();
-  const visible = items.filter(([, , , permission, ownerOnly, always]) => always || (ownerOnly ? isOwner : hasPermission(permission)));
+  const visible = items.filter(([, , , permission, ownerOnly, always, agentOnly]) => {
+    if (agentOnly) return !isOwner;
+    return always || (ownerOnly ? isOwner : hasPermission(permission));
+  });
   return (
     <>
       <button className={`drawer-overlay ${open ? 'show' : ''}`} onClick={onClose} aria-label="Close menu overlay" />

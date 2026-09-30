@@ -2,6 +2,7 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import {
   BarChart3, CircleDollarSign, ClipboardList, Gauge,
   HandCoins, Landmark, PiggyBank, ReceiptText, Settings, Users, UserRound, WalletCards,
+  Coins,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Tooltip from '../common/Tooltip';
@@ -13,10 +14,12 @@ const simpleItems = [
   { label: 'History', path: '/payments', icon: WalletCards, permission: 'payments.view' },
   { label: 'Capital', path: '/capital', icon: Landmark, permission: 'capital.view' },
   { label: 'Savings', path: '/savings', icon: PiggyBank, ownerOnly: true },
+  { label: 'Chits', path: '/chits', icon: Coins, ownerOnly: true },
   { label: 'Expenses', path: '/expenses', icon: ReceiptText, permission: 'expenses.view' },
   { label: 'Reports', path: '/reports', icon: BarChart3, permission: 'reports.full' },
   { label: 'Agents', path: '/agents', icon: Users, ownerOnly: true },
-  { label: 'Work', path: '/work', icon: ClipboardList, always: true },
+  // Owners find Work under Agents → Work; agents keep their own Work page.
+  { label: 'Work', path: '/work', icon: ClipboardList, agentOnly: true },
   { label: 'Settings', path: '/settings', icon: Settings, always: true },
 ];
 
@@ -27,7 +30,10 @@ function NavIcon({ label, children }) {
 export default function Sidebar() {
   const navigate = useNavigate();
   const { isOwner, hasPermission } = useAuth();
-  const visibleItems = simpleItems.filter((item) => item.always || (item.ownerOnly ? isOwner : hasPermission(item.permission)));
+  const visibleItems = simpleItems.filter((item) => {
+    if (item.agentOnly) return !isOwner;
+    return item.always || (item.ownerOnly ? isOwner : hasPermission(item.permission));
+  });
 
   return (
     <aside className="sidebar desktop-sidebar">

@@ -37,6 +37,7 @@ const Reports = lazyPage(() => import('../pages/Reports/Reports'));
 const Agents = lazyPage(() => import('../pages/Agents/Agents'));
 const Settings = lazyPage(() => import('../pages/Settings/Settings'));
 const Work = lazyPage(() => import('../pages/Work/Work'));
+const Chits = lazyPage(() => import('../pages/Chits/Chits'));
 
 
 function RootEntry() {
@@ -73,6 +74,12 @@ function ProtectedWorkspace() {
   if (status?.ownerSetupRequired) return <Navigate to="/register/company" replace />;
   if (!user) return <Navigate to="/login" replace />;
   return <CrednivoProvider><MainLayout /></CrednivoProvider>;
+}
+
+/** Owners manage Work inside Agents → Work; agents keep their own Work page. */
+function WorkRoute() {
+  const { user } = useAuth();
+  return user?.role === 'OWNER' ? <Navigate to="/agents?tab=work" replace /> : <Work />;
 }
 
 function OwnerOnly() {
@@ -119,10 +126,14 @@ export default function AppRoutes() {
           <Route element={<OwnerOnly />}><Route path="/savings" element={<Savings />} /></Route>
           <Route element={<PermissionOnly permission="reports.full" />}><Route path="/reports" element={<Reports />} /></Route>
           <Route element={<OwnerOnly />}><Route path="/agents" element={<Agents />} /></Route>
+          <Route element={<OwnerOnly />}>
+            <Route path="/chits" element={<Chits />} />
+            <Route path="/chits/:chitId" element={<Chits />} />
+          </Route>
           {/* Personal Settings are intentionally available to both Owner and Agent. */}
           <Route path="/settings" element={<Settings />} />
           {/* Work is available to both roles too — owners assign it, agents act on it. */}
-          <Route path="/work" element={<Work />} />
+          <Route path="/work" element={<WorkRoute />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

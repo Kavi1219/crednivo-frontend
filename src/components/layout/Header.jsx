@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BarChart3, Bell, ChevronDown, CircleDollarSign, ClipboardList, FileText, HandCoins, House, Landmark,
   LayoutGrid, Menu, PiggyBank, ReceiptText, Search, Settings, Sparkles, UserPlus, UserRound, Users, WalletCards,
+  Coins,
 } from 'lucide-react';
 import { listNotifications, markAllNotificationsRead, markNotificationRead, unreadNotificationCount } from '../../services/work';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -39,16 +40,20 @@ const HEADER_PAGES = [
   { prefix: '/payments', title: 'History', icon: WalletCards },
   { prefix: '/capital', title: 'Capital', icon: Landmark },
   { prefix: '/savings', title: 'Savings', icon: PiggyBank },
+  { prefix: '/chits', title: 'Chits', icon: Coins },
   { prefix: '/expenses', title: 'Expenses', icon: ReceiptText },
   { prefix: '/reports', title: 'Reports', icon: BarChart3 },
   { prefix: '/agents', title: 'Agents', icon: Users },
   { prefix: '/settings', title: 'Settings', icon: Settings },
 ];
 
-function getHeaderIdentity(pathname) {
+function getHeaderIdentity(pathname, search = '') {
   const page = HEADER_PAGES.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const params = new URLSearchParams(search);
+  const commitmentsView = page?.prefix === '/expenses' && params.get('view') === 'commitments';
+  const agentsWorkView = page?.prefix === '/agents' && params.get('tab') === 'work';
   return {
-    title: page?.title || 'Business Workspace',
+    title: commitmentsView ? 'Expenses / Commitments' : agentsWorkView ? 'Agents / Work' : (page?.title || 'Business Workspace'),
     Icon: page?.icon || LayoutGrid,
     isOverview: page?.prefix === '/overview',
   };
@@ -201,7 +206,7 @@ export default function Header({ onOpenMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
   const greeting = getGreeting();
-  const headerIdentity = useMemo(() => getHeaderIdentity(location.pathname), [location.pathname]);
+  const headerIdentity = useMemo(() => getHeaderIdentity(location.pathname, location.search), [location.pathname, location.search]);
   const { title, Icon: PageIcon, isOverview } = headerIdentity;
   const avatar = user?.profilePhoto || company.logo;
   const profileInitial = String(user?.displayName || company.name || 'C').charAt(0);
