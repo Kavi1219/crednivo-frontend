@@ -12,6 +12,9 @@ import {
   updateChit, updateChitMember,
 } from '../../services/chits';
 import { formatCurrency, formatDate, formatIndianMobile, toInputDate } from '../../utils/finance';
+// Chits reuses the Expenses page's section title, toolbar, form and delete
+// dialog styles, so load them here too (they aren't loaded unless Expenses was opened).
+import '../Expenses/Expenses.css';
 import './Chits.css';
 
 /** How often a chit installment comes round. */
