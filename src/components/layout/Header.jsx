@@ -51,9 +51,10 @@ function getHeaderIdentity(pathname, search = '') {
   const page = HEADER_PAGES.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`));
   const params = new URLSearchParams(search);
   const commitmentsView = page?.prefix === '/expenses' && params.get('view') === 'commitments';
+  const savingsView = page?.prefix === '/expenses' && params.get('view') === 'savings';
   const agentsWorkView = page?.prefix === '/agents' && params.get('tab') === 'work';
   return {
-    title: commitmentsView ? 'Expenses / Commitments' : agentsWorkView ? 'Agents / Work' : (page?.title || 'Business Workspace'),
+    title: commitmentsView ? 'Expenses / Commitments' : savingsView ? 'Expenses / Savings' : agentsWorkView ? 'Agents / Work' : (page?.title || 'Business Workspace'),
     Icon: page?.icon || LayoutGrid,
     isOverview: page?.prefix === '/overview',
   };

@@ -31,7 +31,6 @@ const CreateLoan = lazyPage(() => import('../pages/Loans/CreateLoan'));
 const Collection = lazyPage(() => import('../pages/Collection/Collection'));
 const Payments = lazyPage(() => import('../pages/Payments/Payments'));
 const Capital = lazyPage(() => import('../pages/Capital/Capital'));
-const Savings = lazyPage(() => import('../pages/Savings/Savings'));
 const Expenses = lazyPage(() => import('../pages/Expenses/Expenses'));
 const Reports = lazyPage(() => import('../pages/Reports/Reports'));
 const Agents = lazyPage(() => import('../pages/Agents/Agents'));
@@ -123,7 +122,8 @@ export default function AppRoutes() {
           <Route element={<PermissionOnly permission="payments.view" />}><Route path="/payments" element={<Payments />} /></Route>
           <Route element={<PermissionOnly permission="expenses.view" />}><Route path="/expenses" element={<Expenses />} /></Route>
           <Route element={<PermissionOnly permission="capital.view" />}><Route path="/capital" element={<Capital />} /></Route>
-          <Route element={<OwnerOnly />}><Route path="/savings" element={<Savings />} /></Route>
+          {/* Savings now lives under Expenses → Savings. */}
+          <Route element={<OwnerOnly />}><Route path="/savings" element={<Navigate to="/expenses?view=savings" replace />} /></Route>
           <Route element={<PermissionOnly permission="reports.full" />}><Route path="/reports" element={<Reports />} /></Route>
           <Route element={<OwnerOnly />}><Route path="/agents" element={<Agents />} /></Route>
           <Route element={<OwnerOnly />}>

@@ -1,7 +1,8 @@
-import { CalendarClock, Check, ChevronDown, ListChecks, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
+import { CalendarClock, Check, ChevronDown, ListChecks, Pencil, PiggyBank, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import CommitmentsPanel from './CommitmentsPanel';
+import Savings from '../Savings/Savings';
 import ActionButton from '../../components/common/ActionButton';
 import SummaryCard from '../../components/common/SummaryCard';
 import { PageBackButton } from '../../components/GlobalBackButton';
@@ -12,20 +13,40 @@ import { useAuth } from '../../context/AuthContext';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Expenses.css';
 
-const EXPENSE_CATEGORIES = ['General', 'Salary', 'Travel', 'Office', 'Food', 'Other'];
+// EMI / Loan / Interest / Rent also arrive from paid Commitments.
+const EXPENSE_CATEGORIES = ['General', 'Salary', 'EMI', 'Loan', 'Interest', 'Rent', 'Travel', 'Office', 'Food', 'Other'];
 const EXPENSE_CATEGORY_FILTERS = ['All', ...EXPENSE_CATEGORIES];
 
 export default function Expenses() {
   const actionLocksRef = useRef(new Set());
-  // Expenses ⇄ Commitments view (?view=commitments). The header title follows it.
+  // Expenses · Commitments · Savings tabs (?view=commitments / ?view=savings).
+  // Savings is Owner-only. The header title follows the tab.
   const [searchParams, setSearchParams] = useSearchParams();
-  const showCommitments = searchParams.get('view') === 'commitments';
+  const { isOwner } = useAuth();
+  const requestedView = searchParams.get('view');
+  const activeView = requestedView === 'commitments' ? 'commitments' : (requestedView === 'savings' && isOwner ? 'savings' : 'expenses');
+  const showCommitments = activeView === 'commitments';
   const commitmentsRef = useRef(null);
-  const toggleCommitments = () => {
+  const switchView = (view) => {
     const next = new URLSearchParams(searchParams);
-    if (showCommitments) next.delete('view'); else next.set('view', 'commitments');
+    if (view === 'expenses') next.delete('view'); else next.set('view', view);
     setSearchParams(next);
   };
+  const viewTabs = (
+    <div className="agents-tabs expense-view-tabs" role="tablist" aria-label="Expenses sections">
+      <button type="button" role="tab" aria-selected={activeView === 'expenses'} className={activeView === 'expenses' ? 'active' : ''} onClick={() => switchView('expenses')}>
+        <ReceiptText size={16} /> Expenses
+      </button>
+      <button type="button" role="tab" aria-selected={activeView === 'commitments'} className={activeView === 'commitments' ? 'active' : ''} onClick={() => switchView('commitments')}>
+        <ListChecks size={16} /> Commitments
+      </button>
+      {isOwner && (
+        <button type="button" role="tab" aria-selected={activeView === 'savings'} className={activeView === 'savings' ? 'active' : ''} onClick={() => switchView('savings')}>
+          <PiggyBank size={16} /> Savings
+        </button>
+      )}
+    </div>
+  );
 
   const { expenses, addExpense, updateExpense, deleteExpense } = useCrednivo();
   const { user, hasPermission } = useAuth();
@@ -132,6 +153,15 @@ export default function Expenses() {
     }
   };
 
+  if (activeView === 'savings') {
+    return (
+      <div className="module-page expenses-page expenses-savings-tab">
+        {viewTabs}
+        <Savings />
+      </div>
+    );
+  }
+
   return (
     <div className="module-page expenses-page">
       <ModuleHeader
@@ -141,20 +171,14 @@ export default function Expenses() {
         actions={
           <div className="page-actions-row">
             <PageBackButton />
-            {showCommitments ? (
-              <>
-                <ActionButton tone="secondary" icon={ReceiptText} onClick={toggleCommitments}>Expenses</ActionButton>
-                {hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={() => commitmentsRef.current?.startAdd()}>Commit</ActionButton>}
-              </>
-            ) : (
-              <>
-                <ActionButton tone="secondary" icon={ListChecks} onClick={toggleCommitments}>Commitments</ActionButton>
-                {hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton>}
-              </>
-            )}
+            {showCommitments
+              ? hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={() => commitmentsRef.current?.startAdd()}>Commit</ActionButton>
+              : hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton>}
           </div>
         }
       />
+
+      {viewTabs}
 
       {showCommitments ? <CommitmentsPanel ref={commitmentsRef} /> : (<>
       <section className="stats-section">

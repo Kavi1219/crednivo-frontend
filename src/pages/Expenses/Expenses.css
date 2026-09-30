@@ -303,3 +303,43 @@
 .commitment-mobile-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
 .commitment-mobile-head b { white-space: nowrap; }
 .commitment-mobile-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--ink-600); font-size: 11px; }
+
+/* Commitments: Pay / Paid */
+.commitment-row { cursor: pointer; }
+.commitment-row:hover td { background: var(--surface-soft); }
+.commitment-pay-cell { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.commitment-pay-button {
+  min-height: 30px; padding: 0 14px; border: 1px solid var(--blue-600); border-radius: 9px;
+  color: #fff; background: var(--blue-600); font: inherit; font-size: 11px; font-weight: 800; cursor: pointer;
+}
+.commitment-pay-button.overdue { border-color: var(--danger); background: var(--danger); }
+.commitment-pay-button.ghost { color: var(--blue-600); background: transparent; }
+.commitment-paid-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px;
+  color: #087a3c; background: #e5f7ec; font-size: 10.5px; font-weight: 800;
+}
+html[data-theme='dark'] .commitment-paid-chip { color: #6ee7a8; background: rgba(34,197,94,.16); }
+.commitment-overdue-note { display: block; color: var(--danger); font-size: 10px; font-weight: 700; }
+.commitment-undo-button {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink-600);
+  font: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.commitment-status { display: inline-flex; padding: 3px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 800; }
+.commitment-status.paid { color: #087a3c; background: #e5f7ec; }
+.commitment-status.overdue { color: #d92f3d; background: #ffebed; }
+.commitment-status.due { color: #a46605; background: #fff2d8; }
+.commitment-status.upcoming { color: #176bc4; background: #e8f2ff; }
+.commitment-history-modal { width: min(720px, 100%); }
+.commitment-history-table td, .commitment-history-table th { white-space: nowrap; }
+.commitment-pay-hint { margin: 4px 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface-soft); color: var(--ink-700); font-size: 11.5px; }
+.commitment-mobile-card { cursor: pointer; }
+.commitment-mobile-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* Expenses · Commitments · Savings tabs (same look as Agents / Work tabs) */
+.expense-view-tabs { display: inline-flex; gap: 4px; margin-bottom: 16px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.expense-view-tabs button { display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 16px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-600); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.expense-view-tabs button:hover { color: var(--ink-950); background: var(--surface-soft); }
+.expense-view-tabs button.active { color: #fff; background: var(--blue-600); }
+.expenses-savings-tab > .module-page { padding: 0; }
+@media (max-width: 767px) { .expense-view-tabs { display: flex; overflow-x: auto; } .expense-view-tabs button { flex: 1 0 auto; padding: 0 12px; } }

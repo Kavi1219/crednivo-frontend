@@ -13,7 +13,6 @@ const simpleItems = [
   { label: 'Collection', path: '/collection', icon: HandCoins, permission: 'collections.view' },
   { label: 'History', path: '/payments', icon: WalletCards, permission: 'payments.view' },
   { label: 'Capital', path: '/capital', icon: Landmark, permission: 'capital.view' },
-  { label: 'Savings', path: '/savings', icon: PiggyBank, ownerOnly: true },
   { label: 'Chits', path: '/chits', icon: Coins, ownerOnly: true },
   { label: 'Expenses', path: '/expenses', icon: ReceiptText, permission: 'expenses.view' },
   { label: 'Reports', path: '/reports', icon: BarChart3, permission: 'reports.full' },

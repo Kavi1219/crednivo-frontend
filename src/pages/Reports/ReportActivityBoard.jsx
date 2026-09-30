@@ -140,7 +140,7 @@ export default function ReportActivityBoard({ customers = [], loans = [], collec
 
       <Panel title="Other Activity" note="Profit, savings and spending">
         <Row icon={TrendingUp} tone={data.profit < 0 ? 'red' : 'green'} title="Profit" note="Actual profit earned" value={formatCurrency(data.profit)} onOpen={go('/capital')} />
-        <Row icon={PiggyBank} tone="purple" title="Savings" note={plural(data.savingsCount, 'entry', 'entries')} value={formatCurrency(data.savingsTotal)} onOpen={go('/savings')} />
+        <Row icon={PiggyBank} tone="purple" title="Savings" note={plural(data.savingsCount, 'entry', 'entries')} value={formatCurrency(data.savingsTotal)} onOpen={go('/expenses?view=savings')} />
         <Row icon={ReceiptText} tone="orange" title="Expenses" note={plural(data.expenseCount, 'expense', 'expenses')} value={formatCurrency(data.expensesPaid)} onOpen={go('/expenses')} />
       </Panel>
 

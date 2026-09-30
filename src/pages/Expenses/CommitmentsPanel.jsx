@@ -1,13 +1,19 @@
-import { CalendarClock, Check, ChevronDown, HandCoins, Pencil, Percent, Search, Trash2, X } from 'lucide-react';
+import { CalendarClock, Check, CheckCircle2, ChevronDown, HandCoins, Pencil, Percent, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import SummaryCard from '../../components/common/SummaryCard';
 import { useAuth } from '../../context/AuthContext';
-import { createCommitment, deleteCommitment, listCommitments, updateCommitment } from '../../services/commitments';
+import { useCrednivo } from '../../context/CrednivoContext';
+import {
+  createCommitment, deleteCommitment, getCommitmentHistory, listCommitments, payCommitment, undoCommitmentPayment, updateCommitment,
+} from '../../services/commitments';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 
-export const COMMITMENT_CATEGORIES = ['Salary', 'EMI', 'Loan', 'Interest', 'Rent', 'Chit Saving', 'Other'];
+export const COMMITMENT_CATEGORIES = ['Salary', 'EMI', 'Loan', 'Interest', 'Rent', 'Chit Saving', 'Savings', 'Other'];
+/** Payments for these go to Savings instead of Expenses (Owner only). */
+const SAVINGS_CATEGORIES = new Set(['Savings', 'Chit Saving']);
+const STATUS_LABEL = { PAID: 'Paid', OVERDUE: 'Overdue', DUE: 'Due today', UPCOMING: 'Upcoming' };
 /** Categories that show the Interest (%) field. */
 const INTEREST_CATEGORIES = new Set(['EMI', 'Loan', 'Interest']);
 const CYCLES = [
@@ -40,7 +46,8 @@ const emptyForm = () => ({ title: '', amount: '', cycle: 'MONTHLY', date: toInpu
  * The parent opens the "+ Commit" form through the ref: ref.current.startAdd().
  */
 const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
-  const { hasPermission } = useAuth();
+  const { hasPermission, isOwner } = useAuth();
+  const { refreshCoreData } = useCrednivo();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -52,6 +59,13 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
+  // Pay / history
+  const [historyFor, setHistoryFor] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [payFor, setPayFor] = useState(null); // { item, dueDate }
+  const [payForm, setPayForm] = useState({ amount: '', paidDate: toInputDate(), note: '' });
+  const [payError, setPayError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -66,6 +80,68 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const openHistory = async (item) => {
+    setHistoryFor(item);
+    setHistory([]);
+    setHistoryLoading(true);
+    try { setHistory(await getCommitmentHistory(item.id) || []); }
+    catch (err) { setError(err?.message || 'Could not load the history.'); }
+    finally { setHistoryLoading(false); }
+  };
+
+  const canPay = (item) => hasPermission('expenses.add') && (!SAVINGS_CATEGORIES.has(item.category) || isOwner);
+
+  const openPay = (item, dueDate = item.currentDueDate) => {
+    setPayFor({ item, dueDate });
+    setPayForm({ amount: String(item.amount ?? ''), paidDate: toInputDate(), note: '' });
+    setPayError('');
+  };
+
+  const submitPay = async () => {
+    if (!payFor) return;
+    if (!(Number(payForm.amount) > 0)) { setPayError('Enter an amount greater than 0.'); return; }
+    if (!payForm.paidDate) { setPayError('Choose the paid date.'); return; }
+    setSaving(true);
+    setPayError('');
+    try {
+      await payCommitment(payFor.item.id, {
+        amount: Number(payForm.amount), paidDate: payForm.paidDate, dueDate: payFor.dueDate, note: payForm.note.trim() || null,
+      });
+      const paidItem = payFor.item;
+      setPayFor(null);
+      await Promise.all([load(), refreshCoreData?.()]);
+      if (historyFor?.id === paidItem.id) await openHistory(paidItem);
+    } catch (err) { setPayError(err?.message || 'Could not record the payment.'); }
+    finally { setSaving(false); }
+  };
+
+  const undoPay = async (row) => {
+    if (!row?.paymentId || !historyFor) return;
+    setSaving(true);
+    try {
+      await undoCommitmentPayment(row.paymentId);
+      await Promise.all([load(), refreshCoreData?.()]);
+      await openHistory(historyFor);
+    } catch (err) { setError(err?.message || 'Could not undo the payment.'); }
+    finally { setSaving(false); }
+  };
+
+  const payCell = (item) => {
+    if (item.payStatus === 'PAID') return <span className="commitment-paid-chip"><CheckCircle2 size={13} /> Paid</span>;
+    const recentlyPaid = item.payStatus === 'UPCOMING' && item.paidCount > 0;
+    return (
+      <span className="commitment-pay-cell">
+        {recentlyPaid && <span className="commitment-paid-chip"><CheckCircle2 size={13} /> Paid</span>}
+        {canPay(item) && (
+          <button type="button" className={`commitment-pay-button ${item.payStatus === 'OVERDUE' ? 'overdue' : ''} ${recentlyPaid ? 'ghost' : ''}`}
+            onClick={(event) => { event.stopPropagation(); openPay(item); }}>
+            {recentlyPaid ? 'Pay next' : 'Pay'}
+          </button>
+        )}
+      </span>
+    );
+  };
 
   const startAdd = () => { setEdit(null); setForm(emptyForm()); setFormError(''); setOpen(true); };
   useImperativeHandle(ref, () => ({ startAdd }));
@@ -187,18 +263,22 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table commitments-table">
             <thead>
-              <tr><th>Commitment</th><th>Category</th><th>Cycle</th><th>Next Due</th><th>Amount</th><th>Interest</th><th>Actions</th></tr>
+              <tr><th>Commitment</th><th>Category</th><th>Cycle</th><th>Next Due</th><th>Amount</th><th>Interest</th><th>Pay</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {filtered.map((item) => (
-                <tr key={item.id}>
+                <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
                   <td><strong>{item.title}</strong>{item.note && <small className="table-sub">{item.note}</small>}</td>
                   <td><span className="commitment-category-chip">{item.category}</span></td>
                   <td>{cycleLabel(item.cycle)}</td>
-                  <td>{formatDate(item.nextDueDate || item.date)}</td>
+                  <td>
+                    {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
+                    {item.payStatus === 'OVERDUE' && <small className="commitment-overdue-note">Overdue</small>}
+                  </td>
                   <td><strong>{formatCurrency(item.amount)}</strong></td>
                   <td>{item.interestRate != null ? `${Number(item.interestRate)}%` : '—'}</td>
-                  <td>
+                  <td>{payCell(item)}</td>
+                  <td onClick={(event) => event.stopPropagation()}>
                     <div className="row-actions">
                       {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
                       {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
@@ -207,16 +287,16 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 </tr>
               ))}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan="7"><div className="expense-filter-empty">{items.length ? 'No commitments match your search.' : 'No commitments yet. Tap “+ Commit” to add salary, EMI, rent and more.'}</div></td></tr>
+                <tr><td colSpan="8"><div className="expense-filter-empty">{items.length ? 'No commitments match your search.' : 'No commitments yet. Tap “+ Commit” to add salary, EMI, rent and more.'}</div></td></tr>
               )}
-              {loading && <tr><td colSpan="7"><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
+              {loading && <tr><td colSpan="8"><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
             </tbody>
           </table>
         </div>
 
         <div className="mobile-data-list commitments-mobile-list">
           {filtered.map((item) => (
-            <article key={item.id} className="commitment-mobile-card">
+            <article key={item.id} className="commitment-mobile-card" onClick={() => openHistory(item)}>
               <div className="commitment-mobile-head">
                 <strong>{item.title}</strong>
                 <b>{formatCurrency(item.amount)}</b>
@@ -224,12 +304,15 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
               <div className="commitment-mobile-meta">
                 <span className="commitment-category-chip">{item.category}</span>
                 <span>{cycleLabel(item.cycle)}</span>
-                <span>Next: {formatDate(item.nextDueDate || item.date)}</span>
+                <span>Next: {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>
                 {item.interestRate != null && <span>{Number(item.interestRate)}% interest</span>}
               </div>
-              <div className="row-actions">
-                {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
-                {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
+              <div className="commitment-mobile-actions" onClick={(event) => event.stopPropagation()}>
+                {payCell(item)}
+                <div className="row-actions">
+                  {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
+                  {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
+                </div>
               </div>
             </article>
           ))}
@@ -289,13 +372,89 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         </div>
       )}
 
+      {historyFor && (
+        <div className="collection-modal-backdrop" onMouseDown={() => setHistoryFor(null)}>
+          <div className="collection-modal module-card commitment-history-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="collection-modal-head">
+              <div>
+                <strong>{historyFor.title}</strong>
+                <span>{historyFor.category} · {cycleLabel(historyFor.cycle)} · {formatCurrency(historyFor.amount)} · goes to {SAVINGS_CATEGORIES.has(historyFor.category) ? 'Savings' : 'Expenses'}</span>
+              </div>
+              <IconButton label="Close" onClick={() => setHistoryFor(null)}><X size={18} /></IconButton>
+            </div>
+            <div className="module-table-wrap">
+              <table className="module-table commitment-history-table">
+                <thead><tr><th>Pay Date</th><th>Paid Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  {history.map((row) => (
+                    <tr key={`${row.payDate}-${row.paymentId || 'open'}`}>
+                      <td>{formatDate(row.payDate)}</td>
+                      <td>{row.paidDate ? formatDate(row.paidDate) : '—'}</td>
+                      <td><strong>{formatCurrency(row.amount)}</strong></td>
+                      <td><span className={`commitment-status ${String(row.status).toLowerCase()}`}>{STATUS_LABEL[row.status] || row.status}</span></td>
+                      <td>
+                        {row.status === 'PAID'
+                          ? (hasPermission('expenses.delete') && (!row.savingId || isOwner) && (
+                            <button type="button" className="commitment-undo-button" onClick={() => undoPay(row)} disabled={saving} title="Undo this payment">
+                              <RotateCcw size={13} /> Undo
+                            </button>
+                          ))
+                          : canPay(historyFor) && (
+                            <button type="button" className={`commitment-pay-button ${row.status === 'OVERDUE' ? 'overdue' : ''}`} onClick={() => openPay(historyFor, row.payDate)}>
+                              Pay
+                            </button>
+                          )}
+                      </td>
+                    </tr>
+                  ))}
+                  {!historyLoading && history.length === 0 && <tr><td colSpan="5"><div className="expense-filter-empty">No dues yet.</div></td></tr>}
+                  {historyLoading && <tr><td colSpan="5"><div className="expense-filter-empty">Loading history…</div></td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {payFor && (
+        <div className="collection-modal-backdrop" onMouseDown={() => setPayFor(null)}>
+          <div className="collection-modal module-card" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="collection-modal-head">
+              <div><strong>Pay {payFor.item.title}</strong><span>Due on {formatDate(payFor.dueDate)}</span></div>
+              <IconButton label="Close" onClick={() => setPayFor(null)}><X size={18} /></IconButton>
+            </div>
+            <div className="form-grid expense-form">
+              <div className="form-field">
+                <label>Amount</label>
+                <input type="number" min="1" value={payForm.amount} onChange={(event) => setPayForm((value) => ({ ...value, amount: event.target.value }))} />
+              </div>
+              <div className="form-field">
+                <label>Paid Date</label>
+                <input type="date" value={payForm.paidDate} onChange={(event) => setPayForm((value) => ({ ...value, paidDate: event.target.value }))} />
+              </div>
+              <div className="form-field span-2">
+                <label>Note (optional)</label>
+                <input value={payForm.note} onChange={(event) => setPayForm((value) => ({ ...value, note: event.target.value }))} placeholder="Cheque no, UPI ref..." />
+              </div>
+            </div>
+            <div className="commitment-pay-hint">
+              {SAVINGS_CATEGORIES.has(payFor.item.category)
+                ? <>This will be added to <strong>Savings</strong>.</>
+                : <>This will be added to <strong>Expenses</strong> as <strong>{payFor.item.category}</strong>.</>}
+            </div>
+            {payError && <div className="form-error" role="alert">{payError}</div>}
+            <ActionButton icon={Check} onClick={submitPay} disabled={saving}>{saving ? 'Saving...' : 'Mark as Paid'}</ActionButton>
+          </div>
+        </div>
+      )}
+
       {deleteItem && (
         <div className="collection-modal-backdrop">
           <div className="delete-expense-dialog module-card">
             <span className="delete-expense-icon"><Trash2 size={22} /></span>
             <h2>Delete Commitment?</h2>
             <p><strong>{deleteItem.title}</strong> · {formatCurrency(deleteItem.amount)}</p>
-            <small>This permanently removes the commitment.</small>
+            <small>This removes the commitment. Expenses and Savings already paid from it are kept.</small>
             <div>
               <ActionButton tone="secondary" onClick={() => setDeleteItem(null)}>Cancel</ActionButton>
               <ActionButton tone="danger" icon={Trash2} onClick={remove} disabled={saving}>{saving ? 'Deleting...' : 'Delete'}</ActionButton>
