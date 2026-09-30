@@ -343,3 +343,9 @@ html[data-theme='dark'] .commitment-paid-chip { color: #6ee7a8; background: rgba
 .expense-view-tabs button.active { color: #fff; background: var(--blue-600); }
 .expenses-savings-tab > .module-page { padding: 0; }
 @media (max-width: 767px) { .expense-view-tabs { display: flex; overflow-x: auto; } .expense-view-tabs button { flex: 1 0 auto; padding: 0 12px; } }
+
+/* Expenses tab cards: Overall · Expenses · Commitments · Savings (Owner) */
+.expense-summary-grid.expense-summary-grid-cards.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.expense-summary-grid.expense-summary-grid-cards.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .expense-summary-grid.expense-summary-grid-cards.four, .expense-summary-grid.expense-summary-grid-cards.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .expense-summary-grid.expense-summary-grid-cards.four, .expense-summary-grid.expense-summary-grid-cards.three { grid-template-columns: 1fr; } }

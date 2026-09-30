@@ -48,7 +48,7 @@ export default function Expenses() {
     </div>
   );
 
-  const { expenses, addExpense, updateExpense, deleteExpense } = useCrednivo();
+  const { expenses, savings, addExpense, updateExpense, deleteExpense } = useCrednivo();
   const { user, hasPermission } = useAuth();
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
@@ -63,6 +63,12 @@ export default function Expenses() {
   const todays = useMemo(() => expenses.filter((item) => item.date === today), [expenses, today]);
   const total = todays.reduce((sum, item) => sum + item.amount, 0);
   const overall = expenses.reduce((sum, item) => sum + item.amount, 0);
+  // Expenses created by paying a Commitment carry "(commitment)" in their purpose
+  // (see backend CommitmentService.pay). Split them out for the cards below.
+  const isCommitmentExpense = (item) => /\(commitment\)/i.test(String(item?.purpose || ''));
+  const commitmentPaid = expenses.filter(isCommitmentExpense).reduce((sum, item) => sum + item.amount, 0);
+  const expensesOnly = overall - commitmentPaid;
+  const totalSavings = (savings || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
 
 
   const filteredExpenses = useMemo(() => {
@@ -182,9 +188,11 @@ export default function Expenses() {
 
       {showCommitments ? <CommitmentsPanel ref={commitmentsRef} /> : (<>
       <section className="stats-section">
-        <div className="expense-summary-grid">
-          <SummaryCard title="Today's Expenses" value={formatCurrency(total)} note="Recorded today" icon={ReceiptText} tone="red" />
-          <SummaryCard title="Overall Expenses" value={formatCurrency(overall)} note="All-time total" icon={ReceiptText} tone="orange" />
+        <div className={`expense-summary-grid expense-summary-grid-cards ${isOwner ? 'four' : 'three'}`}>
+          <SummaryCard title="Overall Expenses" value={formatCurrency(overall)} note="All-time total, incl. commitments" icon={ReceiptText} tone="orange" />
+          <SummaryCard title="Expenses" value={formatCurrency(expensesOnly)} note="Without commitment payments" icon={ReceiptText} tone="red" />
+          <SummaryCard title="Commitments" value={formatCurrency(commitmentPaid)} note="Total paid for commitments" icon={ListChecks} tone="purple" />
+          {isOwner && <SummaryCard title="Savings" value={formatCurrency(totalSavings)} note="Total savings" icon={PiggyBank} tone="green" />}
         </div>
       </section>
 
