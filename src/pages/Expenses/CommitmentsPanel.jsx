@@ -92,6 +92,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  // Toolbar: Search → Loan (All / EMI / Interest) → Category (non-loan categories).
+  // The two filters are separate: picking one clears the other.
+  const [loanFilter, setLoanFilter] = useState('All');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
@@ -301,23 +304,17 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return items.filter((item) => {
+      if (loanFilter !== 'All' && (categoryOf(item) !== 'Loan' || (loanFilter !== 'LOANS' && loanKindOf(item) !== loanFilter))) return false;
       if (categoryFilter !== 'All' && categoryOf(item) !== categoryFilter) return false;
       if (!query) return true;
       return [item.title, item.category, cycleLabel(item.cycle), item.amount, item.note]
         .some((value) => String(value ?? '').toLowerCase().includes(query));
     });
-  }, [items, search, categoryFilter]);
+  }, [items, search, loanFilter, categoryFilter]);
 
-  const loanItems = filtered.filter((item) => categoryOf(item) === 'Loan');
-  const otherItems = filtered.filter((item) => categoryOf(item) !== 'Loan');
-
-  /** One titled list (desktop table + phone cards) — used for Loans and Other Commitments. */
-  const renderCommitmentList = (list, emptyText, title, subtitle) => (
+  /** The commitments list (desktop table + phone cards). */
+  const renderCommitmentList = (list, emptyText) => (
     <div className="commitment-group">
-      <div className="commitment-group-head">
-        <div><strong>{title}</strong><small>{subtitle}</small></div>
-        <span>{list.length} {list.length === 1 ? 'item' : 'items'}</span>
-      </div>
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table commitments-table">
             <thead>
@@ -413,9 +410,18 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
             <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search commitment, category or amount..." aria-label="Search commitments" />
           </label>
           <div className="expense-quick-select">
-            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category">
+            <select value={loanFilter} onChange={(event) => { setLoanFilter(event.target.value); setCategoryFilter('All'); }} aria-label="Loan">
+              <option value="All">Loan</option>
+              <option value="LOANS">All Loans</option>
+              <option value="EMI">EMI</option>
+              <option value="INTEREST">Interest</option>
+            </select>
+            <ChevronDown size={14} />
+          </div>
+          <div className="expense-quick-select">
+            <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setLoanFilter('All'); }} aria-label="Category">
               <option value="All">All Category</option>
-              {COMMITMENT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+              {COMMITMENT_CATEGORIES.filter((category) => category !== 'Loan').map((category) => <option key={category} value={category}>{category}</option>)}
             </select>
             <ChevronDown size={14} />
           </div>
@@ -423,10 +429,8 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
 
         {error && <div className="form-error" role="alert">{error}</div>}
 
-        {renderCommitmentList(loanItems, items.some((item) => categoryOf(item) === 'Loan')
-          ? 'No loans match your search.' : 'No loans yet. Tap “+ Commit” and choose Loan.', 'Loans', 'EMI and interest repayments')}
-        {renderCommitmentList(otherItems, items.some((item) => categoryOf(item) !== 'Loan')
-          ? 'No commitments match your search.' : 'No other commitments yet.', 'Other Commitments', 'Salary, rent, chit saving, savings and other regular payments')}
+        {renderCommitmentList(filtered, items.length
+          ? 'No commitments match your search.' : 'No commitments yet. Tap “+ Commit” to add a loan, salary, rent and more.')}
       </section>
 
       {open && (
