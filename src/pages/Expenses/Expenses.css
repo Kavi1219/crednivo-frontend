@@ -276,30 +276,3 @@
   .expense-filter-row { padding: 12px; }
   .expense-filter-row .module-search { flex-basis: 100%; }
 }
-
-/* ---------- Expenses → Commitments ---------- */
-.commitment-category-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
-  color: var(--blue-600);
-  background: var(--blue-100);
-  font-size: 10.5px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.commitment-interest-input { position: relative; }
-.commitment-interest-input input { width: 100%; padding-right: 30px; }
-.commitment-interest-input svg { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-500); pointer-events: none; }
-.commitment-mobile-card {
-  display: grid;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
-}
-.commitment-mobile-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
-.commitment-mobile-head b { white-space: nowrap; }
-.commitment-mobile-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; color: var(--ink-600); font-size: 11px; }

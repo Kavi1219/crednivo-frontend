@@ -45,11 +45,10 @@ const HEADER_PAGES = [
   { prefix: '/settings', title: 'Settings', icon: Settings },
 ];
 
-function getHeaderIdentity(pathname, search = '') {
+function getHeaderIdentity(pathname) {
   const page = HEADER_PAGES.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-  const commitmentsView = page?.prefix === '/expenses' && new URLSearchParams(search).get('view') === 'commitments';
   return {
-    title: commitmentsView ? 'Expenses / Commitments' : (page?.title || 'Business Workspace'),
+    title: page?.title || 'Business Workspace',
     Icon: page?.icon || LayoutGrid,
     isOverview: page?.prefix === '/overview',
   };
@@ -202,7 +201,7 @@ export default function Header({ onOpenMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
   const greeting = getGreeting();
-  const headerIdentity = useMemo(() => getHeaderIdentity(location.pathname, location.search), [location.pathname, location.search]);
+  const headerIdentity = useMemo(() => getHeaderIdentity(location.pathname), [location.pathname]);
   const { title, Icon: PageIcon, isOverview } = headerIdentity;
   const avatar = user?.profilePhoto || company.logo;
   const profileInitial = String(user?.displayName || company.name || 'C').charAt(0);

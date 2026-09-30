@@ -1,7 +1,5 @@
-import { CalendarClock, Check, ChevronDown, ListChecks, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
+import { CalendarClock, Check, ChevronDown, Pencil, Plus, ReceiptText, Search, Trash2, UserRound, X } from 'lucide-react';
 import { useMemo, useState, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import CommitmentsPanel from './CommitmentsPanel';
 import ActionButton from '../../components/common/ActionButton';
 import SummaryCard from '../../components/common/SummaryCard';
 import { PageBackButton } from '../../components/GlobalBackButton';
@@ -17,15 +15,6 @@ const EXPENSE_CATEGORY_FILTERS = ['All', ...EXPENSE_CATEGORIES];
 
 export default function Expenses() {
   const actionLocksRef = useRef(new Set());
-  // Expenses ⇄ Commitments view (?view=commitments). The header title follows it.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const showCommitments = searchParams.get('view') === 'commitments';
-  const commitmentsRef = useRef(null);
-  const toggleCommitments = () => {
-    const next = new URLSearchParams(searchParams);
-    if (showCommitments) next.delete('view'); else next.set('view', 'commitments');
-    setSearchParams(next);
-  };
 
   const { expenses, addExpense, updateExpense, deleteExpense } = useCrednivo();
   const { user, hasPermission } = useAuth();
@@ -141,22 +130,11 @@ export default function Expenses() {
         actions={
           <div className="page-actions-row">
             <PageBackButton />
-            {showCommitments ? (
-              <>
-                <ActionButton tone="secondary" icon={ReceiptText} onClick={toggleCommitments}>Expenses</ActionButton>
-                {hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={() => commitmentsRef.current?.startAdd()}>Commit</ActionButton>}
-              </>
-            ) : (
-              <>
-                <ActionButton tone="secondary" icon={ListChecks} onClick={toggleCommitments}>Commitments</ActionButton>
-                {hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton>}
-              </>
-            )}
+            {hasPermission('expenses.add') && <ActionButton icon={Plus} onClick={startAdd}>Add Expense</ActionButton>}
           </div>
         }
       />
 
-      {showCommitments ? <CommitmentsPanel ref={commitmentsRef} /> : (<>
       <section className="stats-section">
         <div className="expense-summary-grid">
           <SummaryCard title="Today's Expenses" value={formatCurrency(total)} note="Recorded today" icon={ReceiptText} tone="red" />
@@ -271,7 +249,6 @@ export default function Expenses() {
           )}
         </div>
       </section>
-      </>)}
 
       {open && (
         <div className="collection-modal-backdrop" onMouseDown={() => setOpen(false)}>
