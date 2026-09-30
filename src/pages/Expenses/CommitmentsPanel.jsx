@@ -16,6 +16,10 @@ const SAVINGS_CATEGORIES = new Set(['Savings', 'Chit Saving']);
 const STATUS_LABEL = { PAID: 'Paid', OVERDUE: 'Overdue', DUE: 'Due today', UPCOMING: 'Upcoming' };
 /** Categories that show the Interest (%) field. */
 const INTEREST_CATEGORIES = new Set(['EMI', 'Loan', 'Interest']);
+/** Categories paid in installments: loan amount + EMI (payable) + tenure. */
+const EMI_CATEGORIES = new Set(['EMI', 'Loan']);
+/** What one due costs: the EMI when set, otherwise the full amount. */
+const payableOf = (item) => Number(item?.payableAmount ?? item?.installmentAmount ?? item?.amount) || 0;
 const CYCLES = [
   { value: 'ONE_TIME', label: 'One time' },
   { value: 'DAILY', label: 'Daily' },
@@ -28,7 +32,7 @@ const cycleLabel = (value) => CYCLES.find((item) => item.value === value)?.label
 
 /** Amount per month, used for the "Monthly Commitments" card (one-time excluded). */
 function monthlyShare(item) {
-  const amount = Number(item.amount) || 0;
+  const amount = payableOf(item);
   switch (item.cycle) {
     case 'DAILY': return amount * 30;
     case 'WEEKLY': return (amount * 52) / 12;
@@ -39,7 +43,7 @@ function monthlyShare(item) {
   }
 }
 
-const emptyForm = () => ({ title: '', amount: '', cycle: 'MONTHLY', date: toInputDate(), category: 'Salary', interestRate: '', note: '' });
+const emptyForm = () => ({ title: '', amount: '', cycle: 'MONTHLY', date: toInputDate(), category: 'Salary', interestRate: '', installmentAmount: '', tenure: '', note: '' });
 
 /**
  * Expenses → Commitments: everything the business has to pay regularly.
@@ -94,7 +98,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
 
   const openPay = (item, dueDate = item.currentDueDate) => {
     setPayFor({ item, dueDate });
-    setPayForm({ amount: String(item.amount ?? ''), paidDate: toInputDate(), note: '' });
+    setPayForm({ amount: String(payableOf(item) || ''), paidDate: toInputDate(), note: '' });
     setPayError('');
   };
 
@@ -136,7 +140,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         {canPay(item) && (
           <button type="button" className={`commitment-pay-button ${item.payStatus === 'OVERDUE' ? 'overdue' : ''} ${recentlyPaid ? 'ghost' : ''}`}
             onClick={(event) => { event.stopPropagation(); openPay(item); }}>
-            {recentlyPaid ? 'Pay next' : 'Pay'}
+            {recentlyPaid ? 'Pay next' : item.payStatus === 'OVERDUE' ? 'Pay Now' : 'Pay'}
           </button>
         )}
       </span>
@@ -155,6 +159,8 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       date: item.date || toInputDate(),
       category: item.category || 'Other',
       interestRate: item.interestRate == null ? '' : String(item.interestRate),
+      installmentAmount: item.installmentAmount == null ? '' : String(item.installmentAmount),
+      tenure: item.tenure == null ? '' : String(item.tenure),
       note: item.note || '',
     });
     setFormError('');
@@ -162,11 +168,13 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   };
 
   const showInterest = INTEREST_CATEGORIES.has(form.category);
+  const showEmi = EMI_CATEGORIES.has(form.category);
 
   const save = async () => {
     if (!form.title.trim()) { setFormError('Enter the commitment name.'); return; }
     if (!(Number(form.amount) > 0)) { setFormError('Enter an amount greater than 0.'); return; }
     if (!form.date) { setFormError('Choose the date.'); return; }
+    if (showEmi && !(Number(form.installmentAmount) > 0)) { setFormError('Enter the EMI amount you pay each time.'); return; }
     const payload = {
       title: form.title.trim(),
       amount: Number(form.amount),
@@ -174,6 +182,8 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       date: form.date,
       category: form.category,
       interestRate: showInterest && form.interestRate !== '' ? Number(form.interestRate) : null,
+      installmentAmount: showEmi && form.installmentAmount !== '' ? Number(form.installmentAmount) : null,
+      tenure: showEmi && form.tenure !== '' ? Number(form.tenure) : null,
       note: form.note.trim() || null,
     };
     setSaving(true);
@@ -212,7 +222,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
 
   const monthlyTotal = items.reduce((sum, item) => sum + monthlyShare(item), 0);
   const dueSoon = items.filter((item) => item.nextDueDate && item.nextDueDate >= today && item.nextDueDate <= weekAheadKey);
-  const dueSoonTotal = dueSoon.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  const dueSoonTotal = dueSoon.reduce((sum, item) => sum + payableOf(item), 0);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -270,12 +280,18 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
                   <td><strong>{item.title}</strong>{item.note && <small className="table-sub">{item.note}</small>}</td>
                   <td><span className="commitment-category-chip">{item.category}</span></td>
-                  <td>{cycleLabel(item.cycle)}</td>
+                  <td>
+                    {cycleLabel(item.cycle)}
+                    {item.tenure && <small className="table-sub">{item.paidCount} / {item.tenure} paid</small>}
+                  </td>
                   <td>
                     {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
                     {item.payStatus === 'OVERDUE' && <small className="commitment-overdue-note">Overdue</small>}
                   </td>
-                  <td><strong>{formatCurrency(item.amount)}</strong></td>
+                  <td>
+                    <strong>{formatCurrency(payableOf(item))}</strong>
+                    {item.installmentAmount != null && <small className="table-sub">of {formatCurrency(item.amount)}</small>}
+                  </td>
                   <td>{item.interestRate != null ? `${Number(item.interestRate)}%` : '—'}</td>
                   <td>{payCell(item)}</td>
                   <td onClick={(event) => event.stopPropagation()}>
@@ -299,13 +315,15 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
             <article key={item.id} className="commitment-mobile-card" onClick={() => openHistory(item)}>
               <div className="commitment-mobile-head">
                 <strong>{item.title}</strong>
-                <b>{formatCurrency(item.amount)}</b>
+                <b>{formatCurrency(payableOf(item))}</b>
               </div>
               <div className="commitment-mobile-meta">
                 <span className="commitment-category-chip">{item.category}</span>
                 <span>{cycleLabel(item.cycle)}</span>
                 <span>Next: {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>
                 {item.interestRate != null && <span>{Number(item.interestRate)}% interest</span>}
+                {item.installmentAmount != null && <span>Loan {formatCurrency(item.amount)}</span>}
+                {item.tenure && <span>{item.paidCount} / {item.tenure} paid</span>}
               </div>
               <div className="commitment-mobile-actions" onClick={(event) => event.stopPropagation()}>
                 {payCell(item)}
@@ -333,9 +351,21 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 <input value={form.title} onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))} placeholder="Staff salary, bank EMI, shop rent..." />
               </div>
               <div className="form-field">
-                <label>Amount</label>
+                <label>{showEmi ? 'Loan Amount' : 'Amount'}</label>
                 <input type="number" min="1" value={form.amount} onChange={(event) => setForm((value) => ({ ...value, amount: event.target.value }))} placeholder="₹" />
               </div>
+              {showEmi && (
+                <>
+                  <div className="form-field">
+                    <label>EMI Amount (you pay)</label>
+                    <input type="number" min="1" value={form.installmentAmount} onChange={(event) => setForm((value) => ({ ...value, installmentAmount: event.target.value }))} placeholder="₹ per installment" />
+                  </div>
+                  <div className="form-field">
+                    <label>Tenure (installments)</label>
+                    <input type="number" min="1" value={form.tenure} onChange={(event) => setForm((value) => ({ ...value, tenure: event.target.value }))} placeholder="e.g. 36" />
+                  </div>
+                </>
+              )}
               <div className="form-field">
                 <label>Commitment Cycle</label>
                 <select value={form.cycle} onChange={(event) => setForm((value) => ({ ...value, cycle: event.target.value }))}>
@@ -378,7 +408,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
             <div className="collection-modal-head">
               <div>
                 <strong>{historyFor.title}</strong>
-                <span>{historyFor.category} · {cycleLabel(historyFor.cycle)} · {formatCurrency(historyFor.amount)} · goes to {SAVINGS_CATEGORIES.has(historyFor.category) ? 'Savings' : 'Expenses'}</span>
+                <span>{historyFor.category} · {cycleLabel(historyFor.cycle)} · {formatCurrency(payableOf(historyFor))}{historyFor.tenure ? ` × ${historyFor.tenure}` : ''} · goes to {SAVINGS_CATEGORIES.has(historyFor.category) ? 'Savings' : 'Expenses'}</span>
               </div>
               <IconButton label="Close" onClick={() => setHistoryFor(null)}><X size={18} /></IconButton>
             </div>
@@ -401,7 +431,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                           ))
                           : canPay(historyFor) && (
                             <button type="button" className={`commitment-pay-button ${row.status === 'OVERDUE' ? 'overdue' : ''}`} onClick={() => openPay(historyFor, row.payDate)}>
-                              Pay
+                              {row.status === 'OVERDUE' ? 'Pay Now' : 'Pay'}
                             </button>
                           )}
                       </td>
@@ -453,7 +483,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
           <div className="delete-expense-dialog module-card">
             <span className="delete-expense-icon"><Trash2 size={22} /></span>
             <h2>Delete Commitment?</h2>
-            <p><strong>{deleteItem.title}</strong> · {formatCurrency(deleteItem.amount)}</p>
+            <p><strong>{deleteItem.title}</strong> · {formatCurrency(payableOf(deleteItem))}</p>
             <small>This removes the commitment. Expenses and Savings already paid from it are kept.</small>
             <div>
               <ActionButton tone="secondary" onClick={() => setDeleteItem(null)}>Cancel</ActionButton>
