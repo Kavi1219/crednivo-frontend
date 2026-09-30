@@ -308,49 +308,23 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
     });
   }, [items, search, categoryFilter]);
 
-  return (
-    <>
-      <section className="stats-section">
-        <div className="expense-summary-grid">
-          <SummaryCard title="Monthly Commitments" value={formatCurrency(Math.round(monthlyTotal))} note="All recurring commitments per month" icon={CalendarClock} tone="purple" />
-          <SummaryCard title="Due in Next 7 Days" value={formatCurrency(dueSoonTotal)} note={`${dueSoon.length} ${dueSoon.length === 1 ? 'commitment' : 'commitments'} coming up`} icon={HandCoins} tone="orange" />
-        </div>
-      </section>
+  const loanItems = filtered.filter((item) => categoryOf(item) === 'Loan');
+  const otherItems = filtered.filter((item) => categoryOf(item) !== 'Loan');
 
-      <section className="module-card">
-        <div className="expense-section-title">
-          <div>
-            <h2>Commitments</h2>
-            <span>Salary, EMI, interest, rent, chit saving and other regular payments</span>
-          </div>
-          <div className="expense-history-summary">
-            <span>{filtered.length} {filtered.length === 1 ? 'commitment' : 'commitments'}</span>
-          </div>
-        </div>
-
-        <div className="module-toolbar expense-filter-row">
-          <label className="module-search">
-            <Search size={16} aria-hidden="true" />
-            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search commitment, category or amount..." aria-label="Search commitments" />
-          </label>
-          <div className="expense-quick-select">
-            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category">
-              <option value="All">All Category</option>
-              {COMMITMENT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
-            </select>
-            <ChevronDown size={14} />
-          </div>
-        </div>
-
-        {error && <div className="form-error" role="alert">{error}</div>}
-
+  /** One titled list (desktop table + phone cards) — used for Loans and Other Commitments. */
+  const renderCommitmentList = (list, emptyText, title, subtitle) => (
+    <div className="commitment-group">
+      <div className="commitment-group-head">
+        <div><strong>{title}</strong><small>{subtitle}</small></div>
+        <span>{list.length} {list.length === 1 ? 'item' : 'items'}</span>
+      </div>
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table commitments-table">
             <thead>
               <tr><th>Commitment</th><th>Category</th><th>Cycle</th><th>Next Due</th><th>Amount</th><th>Interest</th><th>Pay</th><th>Actions</th></tr>
             </thead>
             <tbody>
-              {filtered.map((item) => (
+              {list.map((item) => (
                 <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
                   <td><strong>{item.title}</strong>{item.note && <small className="table-sub">{item.note}</small>}</td>
                   <td><span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span></td>
@@ -376,8 +350,8 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                   </td>
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && (
-                <tr><td colSpan="8"><div className="expense-filter-empty">{items.length ? 'No commitments match your search.' : 'No commitments yet. Tap “+ Commit” to add salary, EMI, rent and more.'}</div></td></tr>
+              {!loading && list.length === 0 && (
+                <tr><td colSpan="8"><div className="expense-filter-empty">{emptyText}</div></td></tr>
               )}
               {loading && <tr><td colSpan="8"><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
             </tbody>
@@ -385,7 +359,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         </div>
 
         <div className="mobile-data-list commitments-mobile-list">
-          {filtered.map((item) => (
+          {list.map((item) => (
             <article key={item.id} className="commitment-mobile-card" onClick={() => openHistory(item)}>
               <div className="commitment-mobile-head">
                 <strong>{item.title}</strong>
@@ -408,8 +382,51 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
               </div>
             </article>
           ))}
-          {!loading && filtered.length === 0 && <div className="expense-filter-empty">{items.length ? 'No commitments match your search.' : 'No commitments yet.'}</div>}
+          {!loading && list.length === 0 && <div className="expense-filter-empty">{emptyText}</div>}
         </div>
+    </div>
+  );
+
+  return (
+    <>
+      <section className="stats-section">
+        <div className="expense-summary-grid">
+          <SummaryCard title="Monthly Commitments" value={formatCurrency(Math.round(monthlyTotal))} note="All recurring commitments per month" icon={CalendarClock} tone="purple" />
+          <SummaryCard title="Due in Next 7 Days" value={formatCurrency(dueSoonTotal)} note={`${dueSoon.length} ${dueSoon.length === 1 ? 'commitment' : 'commitments'} coming up`} icon={HandCoins} tone="orange" />
+        </div>
+      </section>
+
+      <section className="module-card">
+        <div className="expense-section-title">
+          <div>
+            <h2>Commitments</h2>
+            <span>Loans and other regular payments</span>
+          </div>
+          <div className="expense-history-summary">
+            <span>{filtered.length} {filtered.length === 1 ? 'commitment' : 'commitments'}</span>
+          </div>
+        </div>
+
+        <div className="module-toolbar expense-filter-row">
+          <label className="module-search">
+            <Search size={16} aria-hidden="true" />
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search commitment, category or amount..." aria-label="Search commitments" />
+          </label>
+          <div className="expense-quick-select">
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category">
+              <option value="All">All Category</option>
+              {COMMITMENT_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+            <ChevronDown size={14} />
+          </div>
+        </div>
+
+        {error && <div className="form-error" role="alert">{error}</div>}
+
+        {renderCommitmentList(loanItems, items.some((item) => categoryOf(item) === 'Loan')
+          ? 'No loans match your search.' : 'No loans yet. Tap “+ Commit” and choose Loan.', 'Loans', 'EMI and interest repayments')}
+        {renderCommitmentList(otherItems, items.some((item) => categoryOf(item) !== 'Loan')
+          ? 'No commitments match your search.' : 'No other commitments yet.', 'Other Commitments', 'Salary, rent, chit saving, savings and other regular payments')}
       </section>
 
       {open && (
