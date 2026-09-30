@@ -14,8 +14,11 @@ import { toInputDate } from './finance';
  *   do not multiply the fine.
  * - Dues that were paid late are finished: their late days add no fine.
  *   Dues settled by a fine-only payment ("Fine" status) are finished too.
- * - Fines already paid during the current unpaid period are subtracted.
- *   Fines paid for earlier (already finished) periods are not.
+ * - Fines already paid WITH a due during the current unpaid period are
+ *   subtracted. Fines paid for earlier (finished) periods are not, and
+ *   fine-only payments are not (they settle their own "Fine" dues).
+ * - A fine-only payment covers one due per fine unit (the loan's fine amount):
+ *   ₹600 with a ₹200 fine → 3 dues become "Fine" and the loan grows by 3.
  *
  * Example (weekly loan, fine ₹500): oldest unpaid due 19-09-2026, today
  * 28-09-2026 → pending days 20–27 Sept = 8 → 500 ÷ 7 × 8 = ₹571.
@@ -39,6 +42,19 @@ function dayNumber(dateKey) {
 }
 
 const isStatus = (entry, status) => String(entry?.status || '').trim().toLowerCase() === status;
+
+/** How many dues a fine-only payment covers: fine ÷ loan fine amount (at least 1). */
+function fineUnitsCovered(loan, fine) {
+  const unit = numberValue(loan?.fineAmount);
+  if (unit <= 0) return 1;
+  return Math.max(1, Math.floor((fine + 0.005) / unit));
+}
+
+/** A fine-only payment (no due amount) — it pays for "Fine" dues, not the current overdue period. */
+function isFineOnlyPayment(loan, payment) {
+  const credit = numberValue(loan?.loanType === 'IO' ? payment?.interestPaid : payment?.collectionAmount);
+  return credit <= 0 && numberValue(payment?.fineAmount) > 0;
+}
 
 /**
  * Replays the loan's collections in date order the same way the backend
@@ -64,10 +80,15 @@ export function scheduleSettlement(loan, collectionEntries, paymentsForLoan) {
     let credit = numberValue(io ? payment.interestPaid : payment.collectionAmount);
     const fine = numberValue(payment.fineAmount);
 
-    // Fine-only payment settles the next "Fine" row on this date.
+    // Fine-only payment settles one "Fine" row per fine unit (the loan's fine
+    // amount), oldest first — e.g. ₹600 with a ₹200 fine settles 3 Fine rows.
     if (!io && credit <= 0 && fine > 0) {
-      const fineRow = rows.find((entry) => isStatus(entry, 'fine') && !result.get(entry.id).settledDate);
-      if (fineRow) result.set(fineRow.id, { paidDate: payDate, settledDate: payDate, withFine: true });
+      let rowsToSettle = fineUnitsCovered(loan, fine);
+      rows.forEach((entry) => {
+        if (rowsToSettle <= 0 || !isStatus(entry, 'fine') || result.get(entry.id).settledDate) return;
+        result.set(entry.id, { paidDate: payDate, settledDate: payDate, withFine: true });
+        rowsToSettle -= 1;
+      });
       return;
     }
 
@@ -158,8 +179,10 @@ export function calculateLoanPendingFine(loan, collectionEntries, paymentsForLoa
   const accrued = calculateLoanAccruedFine(loan, collectionEntries, paymentsForLoan, today);
   if (accrued <= 0) return 0;
   const oldest = oldestUnpaidDueDate(collectionEntries, today);
+  // Fines paid with a due during the current unpaid period reduce it.
+  // Fine-only payments don't: they settled their own "Fine" dues.
   const paidThisPeriod = sumFinePaid((paymentsForLoan || []).filter(
-    (p) => String(p.date || '').slice(0, 10) > oldest,
+    (p) => String(p.date || '').slice(0, 10) > oldest && !isFineOnlyPayment(loan, p),
   ));
   return Math.max(0, Math.round((accrued - paidThisPeriod) * 100) / 100);
 }
