@@ -10,14 +10,47 @@ import {
 } from '../../services/commitments';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 
-export const COMMITMENT_CATEGORIES = ['Salary', 'EMI', 'Loan', 'Interest', 'Rent', 'Chit Saving', 'Savings', 'Other'];
+export const COMMITMENT_CATEGORIES = ['Salary', 'Loan', 'Rent', 'Chit Saving', 'Savings', 'Other'];
+/** Older commitments saved as EMI / Interest are shown and filtered as Loan. */
+const categoryOf = (item) => (['EMI', 'Interest'].includes(item?.category) ? 'Loan' : item?.category);
+/** Loan repayment kind: EMI (fixed installments over a tenure) or Interest (interest only, no end). */
+const loanKindOf = (item) => {
+  if (item?.category === 'EMI') return 'EMI';
+  if (item?.category === 'Interest') return 'INTEREST';
+  return item?.tenure ? 'EMI' : 'INTEREST';
+};
+const PERIODS_PER_YEAR = { DAILY: 365, WEEKLY: 52, MONTHLY: 12, QUARTERLY: 4, YEARLY: 1, ONE_TIME: 12 };
+const CYCLE_UNIT = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', QUARTERLY: 'quarter', YEARLY: 'year', ONE_TIME: 'month' };
+const round2 = (value) => Math.round(value * 100) / 100;
+
+/**
+ * EMI for a loan (reducing balance): EMI = P·r·(1+r)^n / ((1+r)^n − 1),
+ * r = annual rate ÷ 100 ÷ installments per year. 0% → P ÷ n.
+ */
+function emiFromRate(principal, annualRate, n, cycle) {
+  if (!(principal > 0) || !(n > 0)) return 0;
+  const r = (Number(annualRate) || 0) / 100 / (PERIODS_PER_YEAR[cycle] || 12);
+  if (r <= 0) return round2(principal / n);
+  const f = (1 + r) ** n;
+  return round2((principal * r * f) / (f - 1));
+}
+
+/** Yearly interest rate that gives this EMI (inverse of emiFromRate); null if the EMI can't repay the loan. */
+function rateFromEmi(principal, emi, n, cycle) {
+  if (!(principal > 0) || !(n > 0) || !(emi > 0)) return null;
+  if (emi * n < principal - 0.5) return null; // EMI too small to ever repay the loan
+  if (Math.abs(emi * n - principal) < 0.5) return 0;
+  let low = 0;
+  let high = 1000;
+  for (let i = 0; i < 80; i += 1) {
+    const mid = (low + high) / 2;
+    if (emiFromRate(principal, mid, n, cycle) > emi) high = mid; else low = mid;
+  }
+  return round2((low + high) / 2);
+}
 /** Payments for these go to Savings instead of Expenses (Owner only). */
 const SAVINGS_CATEGORIES = new Set(['Savings', 'Chit Saving']);
 const STATUS_LABEL = { PAID: 'Paid', OVERDUE: 'Overdue', DUE: 'Due today', UPCOMING: 'Upcoming' };
-/** Categories that show the Interest (%) field. */
-const INTEREST_CATEGORIES = new Set(['EMI', 'Loan', 'Interest']);
-/** Categories paid in installments: loan amount + EMI (payable) + tenure. */
-const EMI_CATEGORIES = new Set(['EMI', 'Loan']);
 /** What one due costs: the EMI when set, otherwise the full amount. */
 const payableOf = (item) => Number(item?.payableAmount ?? item?.installmentAmount ?? item?.amount) || 0;
 const CYCLES = [
@@ -43,7 +76,10 @@ function monthlyShare(item) {
   }
 }
 
-const emptyForm = () => ({ title: '', amount: '', cycle: 'MONTHLY', date: toInputDate(), category: 'Salary', interestRate: '', installmentAmount: '', tenure: '', note: '' });
+const emptyForm = () => ({
+  title: '', amount: '', cycle: 'MONTHLY', date: toInputDate(), category: 'Salary',
+  loanKind: 'EMI', interestRate: '', installmentAmount: '', tenure: '', emiDriver: 'emi', note: '',
+});
 
 /**
  * Expenses → Commitments: everything the business has to pay regularly.
@@ -157,7 +193,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       amount: String(item.amount ?? ''),
       cycle: item.cycle || 'MONTHLY',
       date: item.date || toInputDate(),
-      category: item.category || 'Other',
+      category: categoryOf(item) || 'Other',
+      loanKind: loanKindOf(item),
+      emiDriver: 'emi',
       interestRate: item.interestRate == null ? '' : String(item.interestRate),
       installmentAmount: item.installmentAmount == null ? '' : String(item.installmentAmount),
       tenure: item.tenure == null ? '' : String(item.tenure),
@@ -167,23 +205,59 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
     setOpen(true);
   };
 
-  const showInterest = INTEREST_CATEGORIES.has(form.category);
-  const showEmi = EMI_CATEGORIES.has(form.category);
+  const isLoan = form.category === 'Loan';
+  const isEmi = isLoan && form.loanKind === 'EMI';
+  const isInterestOnly = isLoan && form.loanKind === 'INTEREST';
+  const cycleUnit = CYCLE_UNIT[form.cycle] || 'month';
+  // Interest-only: amount to pay each cycle = loan × rate % (rate per cycle).
+  const interestPayable = isInterestOnly && Number(form.amount) > 0 && Number(form.interestRate) > 0
+    ? round2(Number(form.amount) * Number(form.interestRate) / 100) : 0;
+  const emiTotals = isEmi && Number(form.installmentAmount) > 0 && Number(form.tenure) > 0
+    ? { total: round2(Number(form.installmentAmount) * Number(form.tenure)), interest: round2(Number(form.installmentAmount) * Number(form.tenure) - Number(form.amount || 0)) }
+    : null;
+
+  /**
+   * EMI form: enter EITHER the EMI or the yearly interest rate; the other is
+   * worked out from the loan amount and tenure. emiDriver remembers which one
+   * the user typed last, so changing the amount/tenure/cycle recalculates the other.
+   */
+  const updateEmiForm = (patch) => setForm((current) => {
+    const next = { ...current, ...patch };
+    if (next.category !== 'Loan' || next.loanKind !== 'EMI') return next;
+    const principal = Number(next.amount);
+    const n = Number(next.tenure);
+    if (next.emiDriver === 'rate') {
+      const emi = emiFromRate(principal, Number(next.interestRate), n, next.cycle);
+      next.installmentAmount = emi > 0 && next.interestRate !== '' ? String(emi) : next.installmentAmount;
+    } else {
+      const rate = rateFromEmi(principal, Number(next.installmentAmount), n, next.cycle);
+      next.interestRate = rate == null ? '' : String(rate);
+    }
+    return next;
+  });
 
   const save = async () => {
     if (!form.title.trim()) { setFormError('Enter the commitment name.'); return; }
     if (!(Number(form.amount) > 0)) { setFormError('Enter an amount greater than 0.'); return; }
     if (!form.date) { setFormError('Choose the date.'); return; }
-    if (showEmi && !(Number(form.installmentAmount) > 0)) { setFormError('Enter the EMI amount you pay each time.'); return; }
+    if (isEmi) {
+      if (!(Number(form.tenure) > 0)) { setFormError('Enter the tenure (number of installments).'); return; }
+      if (!(Number(form.installmentAmount) > 0)) { setFormError('Enter the EMI amount or the interest rate.'); return; }
+      if (Number(form.installmentAmount) * Number(form.tenure) < Number(form.amount) - 0.5) {
+        setFormError('This EMI is too small to repay the loan in this tenure.'); return;
+      }
+    }
+    if (isInterestOnly && !(Number(form.interestRate) > 0)) { setFormError('Enter the interest percentage.'); return; }
     const payload = {
       title: form.title.trim(),
       amount: Number(form.amount),
       cycle: form.cycle,
       date: form.date,
       category: form.category,
-      interestRate: showInterest && form.interestRate !== '' ? Number(form.interestRate) : null,
-      installmentAmount: showEmi && form.installmentAmount !== '' ? Number(form.installmentAmount) : null,
-      tenure: showEmi && form.tenure !== '' ? Number(form.tenure) : null,
+      // Loan → EMI: installment + tenure (+ yearly rate). Loan → Interest: payable = interest, no tenure.
+      interestRate: isLoan && form.interestRate !== '' ? Number(form.interestRate) : null,
+      installmentAmount: isEmi ? Number(form.installmentAmount) : isInterestOnly ? interestPayable : null,
+      tenure: isEmi ? Number(form.tenure) : null,
       note: form.note.trim() || null,
     };
     setSaving(true);
@@ -227,7 +301,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return items.filter((item) => {
-      if (categoryFilter !== 'All' && item.category !== categoryFilter) return false;
+      if (categoryFilter !== 'All' && categoryOf(item) !== categoryFilter) return false;
       if (!query) return true;
       return [item.title, item.category, cycleLabel(item.cycle), item.amount, item.note]
         .some((value) => String(value ?? '').toLowerCase().includes(query));
@@ -279,7 +353,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
               {filtered.map((item) => (
                 <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
                   <td><strong>{item.title}</strong>{item.note && <small className="table-sub">{item.note}</small>}</td>
-                  <td><span className="commitment-category-chip">{item.category}</span></td>
+                  <td><span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span></td>
                   <td>
                     {cycleLabel(item.cycle)}
                     {item.tenure && <small className="table-sub">{item.paidCount} / {item.tenure} paid</small>}
@@ -318,7 +392,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 <b>{formatCurrency(payableOf(item))}</b>
               </div>
               <div className="commitment-mobile-meta">
-                <span className="commitment-category-chip">{item.category}</span>
+                <span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span>
                 <span>{cycleLabel(item.cycle)}</span>
                 <span>Next: {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>
                 {item.interestRate != null && <span>{Number(item.interestRate)}% interest</span>}
@@ -351,46 +425,88 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 <input value={form.title} onChange={(event) => setForm((value) => ({ ...value, title: event.target.value }))} placeholder="Staff salary, bank EMI, shop rent..." />
               </div>
               <div className="form-field">
-                <label>{showEmi ? 'Loan Amount' : 'Amount'}</label>
-                <input type="number" min="1" value={form.amount} onChange={(event) => setForm((value) => ({ ...value, amount: event.target.value }))} placeholder="₹" />
+                <label>Category</label>
+                <select value={form.category} onChange={(event) => updateEmiForm({ category: event.target.value })}>
+                  {COMMITMENT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                </select>
               </div>
-              {showEmi && (
-                <>
-                  <div className="form-field">
-                    <label>EMI Amount (you pay)</label>
-                    <input type="number" min="1" value={form.installmentAmount} onChange={(event) => setForm((value) => ({ ...value, installmentAmount: event.target.value }))} placeholder="₹ per installment" />
-                  </div>
-                  <div className="form-field">
-                    <label>Tenure (installments)</label>
-                    <input type="number" min="1" value={form.tenure} onChange={(event) => setForm((value) => ({ ...value, tenure: event.target.value }))} placeholder="e.g. 36" />
-                  </div>
-                </>
-              )}
+              <div className="form-field">
+                <label>{isLoan ? 'Loan Amount' : 'Amount'}</label>
+                <input type="number" min="1" value={form.amount} onChange={(event) => updateEmiForm({ amount: event.target.value })} placeholder="₹" />
+              </div>
               <div className="form-field">
                 <label>Commitment Cycle</label>
-                <select value={form.cycle} onChange={(event) => setForm((value) => ({ ...value, cycle: event.target.value }))}>
-                  {CYCLES.map((cycle) => <option key={cycle.value} value={cycle.value}>{cycle.label}</option>)}
+                <select value={form.cycle} onChange={(event) => updateEmiForm({ cycle: event.target.value })}>
+                  {CYCLES.filter((cycle) => !isLoan || cycle.value !== 'ONE_TIME').map((cycle) => <option key={cycle.value} value={cycle.value}>{cycle.label}</option>)}
                 </select>
               </div>
               <div className="form-field">
                 <label>{form.cycle === 'ONE_TIME' ? 'Date' : 'First Due Date'}</label>
                 <input type="date" value={form.date} onChange={(event) => setForm((value) => ({ ...value, date: event.target.value }))} />
               </div>
-              <div className="form-field">
-                <label>Category</label>
-                <select value={form.category} onChange={(event) => setForm((value) => ({ ...value, category: event.target.value }))}>
-                  {COMMITMENT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
-                </select>
-              </div>
-              {showInterest && (
-                <div className="form-field">
-                  <label>Interest (%)</label>
-                  <div className="commitment-interest-input">
-                    <input type="number" min="0" step="0.01" value={form.interestRate} onChange={(event) => setForm((value) => ({ ...value, interestRate: event.target.value }))} placeholder="e.g. 12" />
-                    <Percent size={14} aria-hidden="true" />
+
+              {isLoan && (
+                <div className="form-field span-2">
+                  <label>Repayment</label>
+                  <div className="commitment-loan-kind" role="radiogroup" aria-label="Loan repayment type">
+                    {[{ value: 'EMI', label: 'EMI', hint: 'Fixed installments' }, { value: 'INTEREST', label: 'Interest', hint: 'Interest only' }].map((kind) => (
+                      <button key={kind.value} type="button" role="radio" aria-checked={form.loanKind === kind.value}
+                        className={form.loanKind === kind.value ? 'active' : ''}
+                        onClick={() => updateEmiForm({ loanKind: kind.value })}>
+                        <strong>{kind.label}</strong><small>{kind.hint}</small>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
+
+              {isEmi && (
+                <>
+                  <div className="form-field">
+                    <label>Tenure (installments)</label>
+                    <input type="number" min="1" value={form.tenure} onChange={(event) => updateEmiForm({ tenure: event.target.value })} placeholder="e.g. 36" />
+                  </div>
+                  <div className="form-field">
+                    <label>EMI Amount (you pay)</label>
+                    <input type="number" min="1" value={form.installmentAmount}
+                      onChange={(event) => updateEmiForm({ installmentAmount: event.target.value, emiDriver: 'emi' })}
+                      placeholder={`₹ per ${cycleUnit}`} />
+                  </div>
+                  <div className="form-field">
+                    <label>Interest (% per year)</label>
+                    <div className="commitment-interest-input">
+                      <input type="number" min="0" step="0.01" value={form.interestRate}
+                        onChange={(event) => updateEmiForm({ interestRate: event.target.value, emiDriver: 'rate' })}
+                        placeholder="or enter the rate" />
+                      <Percent size={14} aria-hidden="true" />
+                    </div>
+                  </div>
+                  <div className="form-field span-2">
+                    <div className="commitment-calc-note">
+                      Enter <strong>either</strong> the EMI <strong>or</strong> the interest rate — the other is calculated.
+                      {emiTotals && <> Total repayment <strong>{formatCurrency(emiTotals.total)}</strong> · interest <strong>{formatCurrency(Math.max(0, emiTotals.interest))}</strong>.</>}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {isInterestOnly && (
+                <>
+                  <div className="form-field">
+                    <label>Interest (% per {cycleUnit})</label>
+                    <div className="commitment-interest-input">
+                      <input type="number" min="0" step="0.01" value={form.interestRate}
+                        onChange={(event) => setForm((value) => ({ ...value, interestRate: event.target.value }))} placeholder="e.g. 2" />
+                      <Percent size={14} aria-hidden="true" />
+                    </div>
+                  </div>
+                  <div className="form-field">
+                    <label>Amount to pay</label>
+                    <div className="commitment-calc-value">{interestPayable > 0 ? `${formatCurrency(interestPayable)} / ${cycleUnit}` : '—'}</div>
+                  </div>
+                </>
+              )}
+
               <div className="form-field span-2">
                 <label>Note (optional)</label>
                 <input value={form.note} onChange={(event) => setForm((value) => ({ ...value, note: event.target.value }))} placeholder="Bank name, staff name, chit group..." />
