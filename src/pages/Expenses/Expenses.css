@@ -400,6 +400,17 @@ html[data-theme='dark'] .commitment-paid-chip { color: #6ee7a8; background: rgba
 .commitments-table .table-sub.commitment-overdue-note { color: var(--danger); font-size: 10px; font-weight: 700; }
 .commitments-table .commitment-pay-col { min-width: 170px; }
 
+/* Commitment detail (opened from a row): Edit · Complete · Delete on top */
+.commitment-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 12px; }
+.commitment-detail-actions .commitment-detail-delete { margin-left: auto; }
+.commitment-completed-note {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 12px; border-radius: 12px;
+  color: var(--success); background: var(--success-soft); font-size: 11.5px; font-weight: 650;
+}
+.commitment-muted { color: var(--ink-500); }
+.commitment-row.is-done td, .commitment-mobile-card.is-done { color: var(--ink-500); }
+.commitment-row.is-done td strong { color: var(--ink-600); }
+
 /* Commitment status: Active / Closed */
 .commitment-state { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; }
 .commitment-state.active { color: #087a3c; background: #e5f7ec; }

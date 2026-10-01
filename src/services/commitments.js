@@ -9,6 +9,12 @@ export const updateCommitment = (id, payload) =>
 export const deleteCommitment = (id) =>
   apiRequest(`/expenses/commitments/${encodeURIComponent(id)}`, { method: 'DELETE' });
 
+// Loans: mark as completed (no more dues) / reopen.
+export const completeCommitment = (id, payload = {}) =>
+  apiRequest(`/expenses/commitments/${encodeURIComponent(id)}/complete`, { method: 'PUT', body: JSON.stringify(payload) });
+export const reopenCommitment = (id) =>
+  apiRequest(`/expenses/commitments/${encodeURIComponent(id)}/reopen`, { method: 'PUT' });
+
 // Pay / Paid history. Paying adds an Expense (or Savings for Savings commitments).
 export const getCommitmentHistory = (id) => apiRequest(`/expenses/commitments/${encodeURIComponent(id)}/history`);
 export const payCommitment = (id, payload) =>

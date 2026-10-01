@@ -1,4 +1,4 @@
-import { CalendarClock, Check, CheckCircle2, ChevronDown, HandCoins, Pencil, Percent, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { BadgeCheck, CalendarClock, Check, CheckCircle2, ChevronDown, HandCoins, Pencil, Percent, RotateCcw, Search, Trash2, X } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
@@ -6,7 +6,8 @@ import SummaryCard from '../../components/common/SummaryCard';
 import { useAuth } from '../../context/AuthContext';
 import { useCrednivo } from '../../context/CrednivoContext';
 import {
-  createCommitment, deleteCommitment, getCommitmentHistory, listCommitments, payCommitment, undoCommitmentPayment, updateCommitment,
+  completeCommitment, createCommitment, deleteCommitment, getCommitmentHistory, listCommitments, payCommitment, reopenCommitment,
+  undoCommitmentPayment, updateCommitment,
 } from '../../services/commitments';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 
@@ -121,6 +122,10 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
+  // Loans: "Mark as completed" dialog
+  const [completeFor, setCompleteFor] = useState(null);
+  const [completeDate, setCompleteDate] = useState(toInputDate());
+  const [completeError, setCompleteError] = useState('');
   // Pay / history
   const [historyFor, setHistoryFor] = useState(null);
   const [history, setHistory] = useState([]);
@@ -190,6 +195,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   };
 
   const payCell = (item) => {
+    if (item.payStatus === 'COMPLETED') return <span className="commitment-muted">—</span>;
     if (item.payStatus === 'PAID') return <span className="commitment-paid-chip"><CheckCircle2 size={13} /> Paid</span>;
     const recentlyPaid = item.payStatus === 'UPCOMING' && item.paidCount > 0;
     return (
@@ -203,6 +209,35 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         )}
       </span>
     );
+  };
+
+  const isDone = (item) => item?.payStatus === 'COMPLETED' || item?.payStatus === 'PAID';
+
+  const openComplete = (item) => { setCompleteFor(item); setCompleteDate(toInputDate()); setCompleteError(''); };
+
+  const submitComplete = async () => {
+    if (!completeFor) return;
+    if (!completeDate) { setCompleteError('Choose the completed date.'); return; }
+    if (completeDate > toInputDate()) { setCompleteError("The completed date can't be in the future."); return; }
+    setSaving(true);
+    setCompleteError('');
+    try {
+      const updated = await completeCommitment(completeFor.id, { completedDate: completeDate });
+      setCompleteFor(null);
+      await Promise.all([load(), refreshCoreData?.()]);
+      if (historyFor?.id === updated?.id) await openHistory(updated);
+    } catch (err) { setCompleteError(err?.message || 'Could not complete the loan.'); }
+    finally { setSaving(false); }
+  };
+
+  const reopen = async (item) => {
+    setSaving(true);
+    try {
+      const updated = await reopenCommitment(item.id);
+      await load();
+      if (historyFor?.id === updated?.id) await openHistory(updated);
+    } catch (err) { setError(err?.message || 'Could not reopen the loan.'); }
+    finally { setSaving(false); }
   };
 
   const startAdd = () => { setEdit(null); setForm(emptyForm()); setFormError(''); setOpen(true); };
@@ -319,8 +354,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   weekAhead.setDate(weekAhead.getDate() + 7);
   const weekAheadKey = toInputDate(weekAhead);
 
-  const monthlyTotal = items.reduce((sum, item) => sum + monthlyShare(item), 0);
-  const dueSoon = items.filter((item) => item.nextDueDate && item.nextDueDate >= today && item.nextDueDate <= weekAheadKey);
+  const running = items.filter((item) => !isDone(item));
+  const monthlyTotal = running.reduce((sum, item) => sum + monthlyShare(item), 0);
+  const dueSoon = running.filter((item) => item.nextDueDate && item.nextDueDate >= today && item.nextDueDate <= weekAheadKey);
   const dueSoonTotal = dueSoon.reduce((sum, item) => sum + payableOf(item), 0);
 
   const isLoanView = view === 'loans';
@@ -349,7 +385,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   }, [items, search, isLoanView, categoryFilter]);
 
   const stateChip = (item) => (
-    <span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span>
+    <span className={`commitment-state ${isDone(item) ? 'closed' : 'active'}`}>{isDone(item) ? 'Completed' : 'Active'}</span>
   );
   /**
    * Date under the Pay button. Loans: "Due …". Payments (salary, rent…) aren't debts,
@@ -359,7 +395,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
     if (item.payStatus === 'OVERDUE') return isLoanView ? 'Due' : 'Overdue since';
     return isLoanView ? 'Due' : 'Next on';
   };
-  const dueNote = (item) => item.payStatus !== 'PAID' && (
+  const dueNote = (item) => !isDone(item) && (
     <small className={`table-sub ${item.payStatus === 'OVERDUE' ? 'commitment-overdue-note' : ''}`}>
       {dueLabel(item)} {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
     </small>
@@ -371,16 +407,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       {isLoanView && <small className="table-sub">per {CYCLE_UNIT[item.cycle] || 'month'}</small>}
     </>
   );
-  const rowActions = (item) => (
-    <div className="row-actions">
-      {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
-      {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
-    </div>
-  );
-
-  // Each list shows only the columns it needs.
-  const LOAN_HEADINGS = ['Loan', 'Lender', 'Type', 'Loan Amount', 'Received On', 'Interest', 'Tenure', 'Payable', 'Status', 'Pay', 'Actions'];
-  const PAYMENT_HEADINGS = ['Commitment', 'Paid To', 'Category', 'Frequency', 'Payable', 'Status', 'Pay', 'Actions'];
+  // Each list shows only the columns it needs. Edit / Delete / Complete live in the detail view (click a row).
+  const LOAN_HEADINGS = ['Loan', 'Lender', 'Type', 'Loan Amount', 'Received On', 'Interest', 'Tenure', 'Payable', 'Status', 'Pay'];
+  const PAYMENT_HEADINGS = ['Commitment', 'Paid To', 'Category', 'Frequency', 'Payable', 'Status', 'Pay'];
   const headings = isLoanView ? LOAN_HEADINGS : PAYMENT_HEADINGS;
 
   const loanCells = (item) => (
@@ -416,7 +445,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
             </thead>
             <tbody>
               {list.map((item) => (
-                <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
+                <tr key={item.id} className={`commitment-row ${isDone(item) ? 'is-done' : ''}`} onClick={() => openHistory(item)} title="Open details">
                   {isLoanView ? loanCells(item) : paymentCells(item)}
                   <td>{payableCell(item)}</td>
                   <td>{stateChip(item)}</td>
@@ -424,7 +453,6 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                     {payCell(item)}
                     {dueNote(item)}
                   </td>
-                  <td onClick={(event) => event.stopPropagation()}>{rowActions(item)}</td>
                 </tr>
               ))}
               {!loading && list.length === 0 && (
@@ -437,7 +465,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
 
         <div className="mobile-data-list commitments-mobile-list">
           {list.map((item) => (
-            <article key={item.id} className="commitment-mobile-card" onClick={() => openHistory(item)}>
+            <article key={item.id} className={`commitment-mobile-card ${isDone(item) ? 'is-done' : ''}`} onClick={() => openHistory(item)}>
               <div className="commitment-mobile-head">
                 <strong>{item.title}</strong>
                 <b>{formatCurrency(payableOf(item))}</b>
@@ -451,11 +479,10 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 {isLoanView && item.receivedDate && <span>Received {formatDate(item.receivedDate)}</span>}
                 {isLoanView && item.interestRate != null && <span>{interestLabel(item)}</span>}
                 {isLoanView && item.tenure && <span>{item.paidCount} / {item.tenure} paid</span>}
-                {item.payStatus !== 'PAID' && <span>{dueLabel(item)} {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>}
+                {!isDone(item) && <span>{dueLabel(item)} {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>}
               </div>
               <div className="commitment-mobile-actions" onClick={(event) => event.stopPropagation()}>
                 {payCell(item)}
-                {rowActions(item)}
               </div>
             </article>
           ))}
@@ -646,6 +673,31 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
               </div>
               <IconButton label="Close" onClick={() => setHistoryFor(null)}><X size={18} /></IconButton>
             </div>
+
+            {(hasPermission('expenses.edit') || hasPermission('expenses.delete')) && (
+              <div className="commitment-detail-actions">
+                {hasPermission('expenses.edit') && (
+                  <ActionButton tone="secondary" icon={Pencil} onClick={() => { const item = historyFor; setHistoryFor(null); startEdit(item); }}>Edit</ActionButton>
+                )}
+                {hasPermission('expenses.edit') && categoryOf(historyFor) === 'Loan' && (
+                  historyFor.payStatus === 'COMPLETED'
+                    ? <ActionButton tone="secondary" icon={RotateCcw} onClick={() => reopen(historyFor)} disabled={saving}>Reopen</ActionButton>
+                    : <ActionButton tone="success" icon={BadgeCheck} onClick={() => openComplete(historyFor)}>Mark as completed</ActionButton>
+                )}
+                {hasPermission('expenses.delete') && (
+                  <ActionButton tone="danger" icon={Trash2} className="commitment-detail-delete"
+                    onClick={() => { const item = historyFor; setHistoryFor(null); setDeleteItem(item); }}>Delete</ActionButton>
+                )}
+              </div>
+            )}
+
+            {historyFor.payStatus === 'COMPLETED' && (
+              <div className="commitment-completed-note">
+                <BadgeCheck size={15} aria-hidden="true" />
+                Completed on {formatDate(historyFor.completedDate)}. No more dues — only paid history is shown.
+              </div>
+            )}
+
             <div className="module-table-wrap">
               <table className="module-table commitment-history-table">
                 <thead><tr><th>Pay Date</th><th>Paid Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
@@ -708,6 +760,30 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
             </div>
             {payError && <div className="form-error" role="alert">{payError}</div>}
             <ActionButton icon={Check} onClick={submitPay} disabled={saving}>{saving ? 'Saving...' : 'Mark as Paid'}</ActionButton>
+          </div>
+        </div>
+      )}
+
+      {completeFor && (
+        <div className="collection-modal-backdrop" onMouseDown={() => setCompleteFor(null)}>
+          <div className="collection-modal module-card" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="collection-modal-head">
+              <div><strong>Complete {completeFor.title}?</strong><span>The loan stops creating dues. Payments already made stay in Expenses.</span></div>
+              <IconButton label="Close" onClick={() => setCompleteFor(null)}><X size={18} /></IconButton>
+            </div>
+            <div className="form-grid expense-form">
+              <div className="form-field span-2">
+                <label>Completed On</label>
+                <input type="date" value={completeDate} max={toInputDate()} onChange={(event) => setCompleteDate(event.target.value)} />
+              </div>
+            </div>
+            {completeFor.tenure && completeFor.paidCount < completeFor.tenure && (
+              <div className="commitment-pay-hint">
+                Only <strong>{completeFor.paidCount} of {completeFor.tenure}</strong> installments are recorded as paid. Use this when the loan is settled or closed early.
+              </div>
+            )}
+            {completeError && <div className="form-error" role="alert">{completeError}</div>}
+            <ActionButton tone="success" icon={BadgeCheck} onClick={submitComplete} disabled={saving}>{saving ? 'Saving...' : 'Mark as completed'}</ActionButton>
           </div>
         </div>
       )}
