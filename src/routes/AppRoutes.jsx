@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { recoverFromStaleChunk } from '../utils/runtimeRecovery';
+import { clearStaleChunkReloadGuard, recoverFromStaleChunk } from '../utils/runtimeRecovery';
 import { Capacitor } from '@capacitor/core';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
@@ -7,7 +7,11 @@ import { CrednivoProvider } from '../context/CrednivoContext';
 import { useAuth } from '../context/AuthContext';
 import AuthLoading from '../components/common/AuthLoading';
 
-const lazyPage = (importer) => lazy(() => importer().catch((error) => {
+const lazyPage = (importer) => lazy(() => importer().then((module) => {
+  // A page loaded fine, so this build's files are reachable: reset the reload attempts.
+  clearStaleChunkReloadGuard();
+  return module;
+}, (error) => {
   if (recoverFromStaleChunk(error)) return new Promise(() => {});
   throw error;
 }));

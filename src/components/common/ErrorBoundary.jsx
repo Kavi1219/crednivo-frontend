@@ -1,6 +1,6 @@
 import React from 'react';
 import './ErrorBoundary.css';
-import { recoverFromStaleChunk } from '../../utils/runtimeRecovery';
+import { hardReload, isStaleChunkError, recoverFromStaleChunk } from '../../utils/runtimeRecovery';
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -18,7 +18,8 @@ export default class ErrorBoundary extends React.Component {
   }
 
   handleReload = () => {
-    window.location.reload();
+    // Skip every cache so the newest version of the app is loaded.
+    hardReload();
   };
 
   handleReset = () => {
@@ -29,14 +30,19 @@ export default class ErrorBoundary extends React.Component {
 
   render() {
     if (!this.state.hasError) return this.props.children;
+    const updated = isStaleChunkError(this.state.error);
 
     return (
       <main className="crednivo-error-screen">
         <section className="crednivo-error-card">
           <div className="crednivo-error-mark">!</div>
           <p className="crednivo-error-eyebrow">CREDNIVO</p>
-          <h1>Something stopped this page from loading.</h1>
-          <p className="crednivo-error-copy">The app caught the problem instead of showing a blank screen. Open the browser console for the exact technical message.</p>
+          <h1>{updated ? 'Crednivo was updated.' : 'Something stopped this page from loading.'}</h1>
+          <p className="crednivo-error-copy">
+            {updated
+              ? 'A newer version is live. Reload to open this page with the latest version. If it keeps showing, check your internet connection.'
+              : 'The app caught the problem instead of showing a blank screen. Open the browser console for the exact technical message.'}
+          </p>
           <pre>{this.state.error?.message || 'Unknown rendering error'}</pre>
           <div className="crednivo-error-actions">
             <button type="button" onClick={this.handleReload}>Reload Page</button>
