@@ -400,6 +400,10 @@ html[data-theme='dark'] .commitment-paid-chip { color: #6ee7a8; background: rgba
 .commitments-table .table-sub.commitment-overdue-note { color: var(--danger); font-size: 10px; font-weight: 700; }
 .commitments-table .commitment-pay-col { min-width: 170px; }
 
+/* Commitments cards: Loans · Payments · Total in one row (stacked on phones) */
+.expense-summary-grid.commitment-summary-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 900px) { .expense-summary-grid.commitment-summary-cards { grid-template-columns: 1fr; } }
+
 /* Commitment detail (opened from a row): Edit · Complete · Delete on top */
 .commitment-detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 12px; }
 .commitment-detail-actions .commitment-detail-delete { margin-left: auto; }

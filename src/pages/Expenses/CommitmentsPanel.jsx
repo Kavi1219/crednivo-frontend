@@ -1,5 +1,6 @@
-import { BadgeCheck, CalendarClock, Check, CheckCircle2, ChevronDown, HandCoins, Pencil, Percent, RotateCcw, Search, Trash2, X } from 'lucide-react';
+import { BadgeCheck, Check, CheckCircle2, ChevronDown, Landmark, Pencil, Percent, ReceiptText, RotateCcw, Search, Sigma, Trash2, X } from 'lucide-react';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import SummaryCard from '../../components/common/SummaryCard';
@@ -10,8 +11,9 @@ import {
   undoCommitmentPayment, updateCommitment,
 } from '../../services/commitments';
 import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
+import { CYCLES, CYCLE_UNIT, emiFromRate, rateFromEmi, round2 } from '../../utils/commitmentMath';
 
-export const COMMITMENT_CATEGORIES = ['Salary', 'Loan', 'Rent', 'Chit Saving', 'Savings', 'Other'];
+export const COMMITMENT_CATEGORIES = ['Salary', 'Loan', 'Rent', 'Bills', 'Chit Saving', 'Savings', 'Other'];
 /** Older commitments saved as EMI / Interest are shown and filtered as Loan. */
 const categoryOf = (item) => (['EMI', 'Interest'].includes(item?.category) ? 'Loan' : item?.category);
 /** Loan repayment kind: EMI (fixed installments over a tenure) or Interest (interest only, no end). */
@@ -22,14 +24,11 @@ const loanKindOf = (item) => {
 };
 /** Chip text: loans show their repayment type (EMI / Interest), the rest show their category. */
 const chipLabel = (item) => (categoryOf(item) === 'Loan' ? (loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest') : item?.category);
-const PERIODS_PER_YEAR = { DAILY: 365, WEEKLY: 52, MONTHLY: 12, QUARTERLY: 4, YEARLY: 1, ONE_TIME: 12 };
-const CYCLE_UNIT = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', QUARTERLY: 'quarter', YEARLY: 'year', ONE_TIME: 'month' };
-const round2 = (value) => Math.round(value * 100) / 100;
-
 /** Tenure column: "48 months", "20 weeks" … or the cycle when there is no end ("Monthly"). */
 function tenureLabel(item) {
   if (item?.cycle === 'ONE_TIME') return 'One time';
   if (!item?.tenure) return CYCLES.find((c) => c.value === item?.cycle)?.label || '—';
+  if (item.cycle === 'BIMONTHLY') return `${item.tenure} × 2 months`;
   const unit = CYCLE_UNIT[item.cycle] || 'month';
   return `${item.tenure} ${unit}${Number(item.tenure) === 1 ? '' : 's'}`;
 }
@@ -42,44 +41,11 @@ function interestLabel(item) {
   return loanKindOf(item) === 'EMI' ? `${rate} / year` : `${rate} / ${CYCLE_UNIT[item.cycle] || 'month'}`;
 }
 
-/**
- * EMI for a loan (reducing balance): EMI = P·r·(1+r)^n / ((1+r)^n − 1),
- * r = annual rate ÷ 100 ÷ installments per year. 0% → P ÷ n.
- */
-function emiFromRate(principal, annualRate, n, cycle) {
-  if (!(principal > 0) || !(n > 0)) return 0;
-  const r = (Number(annualRate) || 0) / 100 / (PERIODS_PER_YEAR[cycle] || 12);
-  if (r <= 0) return round2(principal / n);
-  const f = (1 + r) ** n;
-  return round2((principal * r * f) / (f - 1));
-}
-
-/** Yearly interest rate that gives this EMI (inverse of emiFromRate); null if the EMI can't repay the loan. */
-function rateFromEmi(principal, emi, n, cycle) {
-  if (!(principal > 0) || !(n > 0) || !(emi > 0)) return null;
-  if (emi * n < principal - 0.5) return null; // EMI too small to ever repay the loan
-  if (Math.abs(emi * n - principal) < 0.5) return 0;
-  let low = 0;
-  let high = 1000;
-  for (let i = 0; i < 80; i += 1) {
-    const mid = (low + high) / 2;
-    if (emiFromRate(principal, mid, n, cycle) > emi) high = mid; else low = mid;
-  }
-  return round2((low + high) / 2);
-}
 /** Payments for these go to Savings instead of Expenses (Owner only). */
 const SAVINGS_CATEGORIES = new Set(['Savings', 'Chit Saving']);
 const STATUS_LABEL = { PAID: 'Paid', OVERDUE: 'Overdue', DUE: 'Due today', UPCOMING: 'Upcoming' };
 /** What one due costs: the EMI when set, otherwise the full amount. */
 const payableOf = (item) => Number(item?.payableAmount ?? item?.installmentAmount ?? item?.amount) || 0;
-const CYCLES = [
-  { value: 'ONE_TIME', label: 'One time' },
-  { value: 'DAILY', label: 'Daily' },
-  { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'QUARTERLY', label: 'Quarterly' },
-  { value: 'YEARLY', label: 'Yearly' },
-];
 const cycleLabel = (value) => CYCLES.find((item) => item.value === value)?.label || value || '—';
 
 /** Amount per month, used for the "Monthly Commitments" card (one-time excluded). */
@@ -89,6 +55,7 @@ function monthlyShare(item) {
     case 'DAILY': return amount * 30;
     case 'WEEKLY': return (amount * 52) / 12;
     case 'MONTHLY': return amount;
+    case 'BIMONTHLY': return amount / 2;
     case 'QUARTERLY': return amount / 3;
     case 'YEARLY': return amount / 12;
     default: return 0;
@@ -115,6 +82,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   // Two separate lists: 'loans' (EMI + Interest loans) and 'payments' (salary, rent, chit…).
   // Loans never show in Payments. The category dropdown exists only in Payments.
   const [view, setView] = useState('loans');
+  const viewPicked = useRef(false); // set once the starting tab is decided
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
@@ -240,8 +208,32 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
     finally { setSaving(false); }
   };
 
-  const startAdd = () => { setEdit(null); setForm(emptyForm()); setFormError(''); setOpen(true); };
+  const startAdd = (prefill = {}) => { setEdit(null); setForm({ ...emptyForm(), ...prefill }); setFormError(''); setOpen(true); };
   useImperativeHandle(ref, () => ({ startAdd }));
+
+  // Capital → Add Capital → "Loan (borrowed)" lands here with ?add=loan&lender=…&amount=…&received=…&title=…
+  // Open the loan form with those filled in, then tidy the address bar.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('add') !== 'loan') return;
+    if (hasPermission('expenses.add')) {
+      const lender = searchParams.get('lender') || '';
+      viewPicked.current = true; // stay on the Loans tab
+      setView('loans');
+      startAdd({
+        category: 'Loan',
+        loanKind: 'EMI',
+        title: searchParams.get('title') || (lender ? `Loan from ${lender}` : ''),
+        amount: searchParams.get('amount') || '',
+        receivedDate: searchParams.get('received') || '',
+        note: lender,
+      });
+    }
+    const next = new URLSearchParams(searchParams);
+    ['add', 'lender', 'amount', 'received', 'title'].forEach((key) => next.delete(key));
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const startEdit = (item) => {
     setEdit(item);
@@ -355,16 +347,26 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const weekAheadKey = toInputDate(weekAhead);
 
   const running = items.filter((item) => !isDone(item));
-  const monthlyTotal = running.reduce((sum, item) => sum + monthlyShare(item), 0);
-  const dueSoon = running.filter((item) => item.nextDueDate && item.nextDueDate >= today && item.nextDueDate <= weekAheadKey);
-  const dueSoonTotal = dueSoon.reduce((sum, item) => sum + payableOf(item), 0);
+  /** Card numbers for one group: per-month cost, how many are running, and what falls due in the next 7 days. */
+  const summarize = (list) => {
+    const dueSoon = list.filter((item) => item.nextDueDate && item.nextDueDate >= today && item.nextDueDate <= weekAheadKey);
+    return {
+      monthly: Math.round(list.reduce((sum, item) => sum + monthlyShare(item), 0)),
+      count: list.length,
+      dueSoonTotal: dueSoon.reduce((sum, item) => sum + payableOf(item), 0),
+    };
+  };
+  const loanSummary = summarize(running.filter((item) => categoryOf(item) === 'Loan'));
+  const paymentSummary = summarize(running.filter((item) => categoryOf(item) !== 'Loan'));
+  const totalSummary = summarize(running);
+  const dueText = (summary) => (summary.dueSoonTotal > 0 ? `${formatCurrency(summary.dueSoonTotal)} due in 7 days` : 'nothing due in 7 days');
+  const cardNote = (summary, noun) => `${summary.count} ${noun}, ${dueText(summary)}`;
 
   const isLoanView = view === 'loans';
   const loanCount = items.filter((item) => categoryOf(item) === 'Loan').length;
   const paymentCount = items.length - loanCount;
 
   // First load: if there are no loans but there are payments, open Payments instead of an empty tab.
-  const viewPicked = useRef(false);
   useEffect(() => {
     if (loading || viewPicked.current) return;
     viewPicked.current = true;
@@ -501,9 +503,14 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   return (
     <>
       <section className="stats-section">
-        <div className="expense-summary-grid">
-          <SummaryCard title="Monthly Commitments" value={formatCurrency(Math.round(monthlyTotal))} note="All recurring commitments per month" icon={CalendarClock} tone="purple" />
-          <SummaryCard title="Due in Next 7 Days" value={formatCurrency(dueSoonTotal)} note={`${dueSoon.length} ${dueSoon.length === 1 ? 'commitment' : 'commitments'} coming up`} icon={HandCoins} tone="orange" />
+        {/* Loans → Payments → Total. Amounts are per month; completed commitments are left out. */}
+        <div className="expense-summary-grid commitment-summary-cards">
+          <SummaryCard title="Loans per month" value={formatCurrency(loanSummary.monthly)}
+            note={cardNote(loanSummary, loanSummary.count === 1 ? 'loan' : 'loans')} icon={Landmark} tone="purple" />
+          <SummaryCard title="Payments per month" value={formatCurrency(paymentSummary.monthly)}
+            note={cardNote(paymentSummary, paymentSummary.count === 1 ? 'payment' : 'payments')} icon={ReceiptText} tone="orange" />
+          <SummaryCard title="Total per month" value={formatCurrency(totalSummary.monthly)}
+            note={cardNote(totalSummary, 'in all')} icon={Sigma} tone="blue" />
         </div>
       </section>
 

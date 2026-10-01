@@ -478,6 +478,9 @@ function mapBackendCapitalMetrics(item = {}) {
     loanBookOutstanding: asNumber(item.loanBookOutstanding),
     availableCapital: asNumber(item.availableCapital),
     entries: asNumber(item.entries),
+    borrowedCapital: asNumber(item.borrowedCapital),
+    borrowedToRepay: asNumber(item.borrowedToRepay),
+    borrowedLoans: asNumber(item.borrowedLoans),
     source: 'backend',
   };
 }
@@ -1174,7 +1177,10 @@ export function CrednivoProvider({ children }) {
       };
     }
 
-    const records = data.capital || [];
+    // Borrowed loans (from Expenses → Commitments) also come in this list; keep them out of "investment".
+    const borrowedRows = (data.capital || []).filter((item) => item.source === 'LOAN_COMMITMENT');
+    const borrowedCapital = borrowedRows.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const records = (data.capital || []).filter((item) => item.source !== 'LOAN_COMMITMENT');
     const investments = records.filter((item) => item.type !== 'Capital Withdrawal');
     const withdrawals = records.filter((item) => item.type === 'Capital Withdrawal');
     const totalInvestment = investments.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -1207,8 +1213,11 @@ export function CrednivoProvider({ children }) {
       expensesPaid,
       savingsTotal,
       loanBookOutstanding,
-      availableCapital: netCapital + collectionsReceived - loanDisbursed - expensesPaid - savingsTotal,
+      availableCapital: netCapital + borrowedCapital + collectionsReceived - loanDisbursed - expensesPaid - savingsTotal,
       entries: records.length,
+      borrowedCapital,
+      borrowedToRepay: 0,
+      borrowedLoans: borrowedRows.length,
       source: 'fallback',
     };
   }, [data, savingsTotal]);

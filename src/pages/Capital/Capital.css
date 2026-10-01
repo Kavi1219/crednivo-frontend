@@ -393,3 +393,39 @@
     width: 100%;
   }
 }
+
+/* Borrowed loans (from Expenses → Commitments) */
+.capital-type-chip.borrowed { background: var(--blue-100); color: var(--blue-600); }
+.capital-source-link { display: inline-flex; align-items: center; gap: 5px; color: var(--blue-600); font-size: 10.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.capital-source-link:hover { text-decoration: underline; }
+
+/* Six summary cards: 3 + 3 on desktop, 2 per row below 1200px, 1 on very narrow phones */
+.capital-metrics.capital-metrics-six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1200px) { .capital-metrics.capital-metrics-six { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 350px) { .capital-metrics.capital-metrics-six { grid-template-columns: 1fr; } }
+
+/* Add Capital → Loan (borrowed): hand-over note */
+.capital-loan-hint { padding: 10px 12px; border-radius: 12px; background: var(--blue-100); color: var(--ink-700); font-size: 11px; line-height: 1.5; }
+.capital-loan-hint strong { color: var(--blue-600); }
+
+/* Add Capital → Loan (borrowed): same loan inputs as Commitments */
+.capital-loan-kind { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.capital-loan-kind button {
+  display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface); color: var(--ink-800); font: inherit; text-align: left; cursor: pointer;
+}
+.capital-loan-kind button strong { font-size: 12px; }
+.capital-loan-kind button small { color: var(--ink-500); font-size: 9.5px; }
+.capital-loan-kind button.active { border-color: var(--blue-600); background: var(--blue-100); color: var(--blue-600); }
+.capital-loan-kind button.active small { color: var(--blue-600); }
+.capital-loan-kind button:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 2px; }
+.capital-input-suffix { position: relative; }
+.capital-input-suffix input { padding-right: 30px; }
+.capital-input-suffix svg { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-500); pointer-events: none; }
+.capital-calc-note { padding: 9px 12px; border-radius: 10px; background: var(--surface-soft); color: var(--ink-700); font-size: 10.5px; line-height: 1.5; }
+.capital-calc-note strong { color: var(--ink-950); }
+.capital-calc-value {
+  min-height: 42px; display: flex; align-items: center; padding: 0 11px; border: 1px dashed var(--line);
+  border-radius: 9px; background: var(--surface-soft); color: var(--ink-950); font-size: 12px; font-weight: 800;
+}
+.capital-form-error { padding: 9px 12px; border-radius: 10px; background: var(--danger-soft); color: var(--danger); font-size: 11px; font-weight: 650; }

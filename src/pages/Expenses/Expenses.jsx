@@ -14,7 +14,7 @@ import { formatCurrency, formatDate, toInputDate } from '../../utils/finance';
 import './Expenses.css';
 
 // EMI / Loan / Interest / Rent also arrive from paid Commitments.
-const EXPENSE_CATEGORIES = ['General', 'Salary', 'EMI', 'Loan', 'Interest', 'Rent', 'Travel', 'Office', 'Food', 'Other'];
+const EXPENSE_CATEGORIES = ['General', 'Salary', 'EMI', 'Loan', 'Interest', 'Rent', 'Bills', 'Travel', 'Office', 'Food', 'Other'];
 const EXPENSE_CATEGORY_FILTERS = ['All', ...EXPENSE_CATEGORIES];
 
 export default function Expenses() {
