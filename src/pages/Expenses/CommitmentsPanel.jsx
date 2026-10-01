@@ -23,6 +23,22 @@ const PERIODS_PER_YEAR = { DAILY: 365, WEEKLY: 52, MONTHLY: 12, QUARTERLY: 4, YE
 const CYCLE_UNIT = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', QUARTERLY: 'quarter', YEARLY: 'year', ONE_TIME: 'month' };
 const round2 = (value) => Math.round(value * 100) / 100;
 
+/** Tenure column: "48 months", "20 weeks" … or the cycle when there is no end ("Monthly"). */
+function tenureLabel(item) {
+  if (item?.cycle === 'ONE_TIME') return 'One time';
+  if (!item?.tenure) return CYCLES.find((c) => c.value === item?.cycle)?.label || '—';
+  const unit = CYCLE_UNIT[item.cycle] || 'month';
+  return `${item.tenure} ${unit}${Number(item.tenure) === 1 ? '' : 's'}`;
+}
+
+/** Interest column: EMI rate is per year; interest-only rate is per cycle. */
+function interestLabel(item) {
+  if (item?.interestRate == null) return '—';
+  const rate = `${Number(item.interestRate)}%`;
+  if (categoryOf(item) !== 'Loan') return rate;
+  return loanKindOf(item) === 'EMI' ? `${rate} / year` : `${rate} / ${CYCLE_UNIT[item.cycle] || 'month'}`;
+}
+
 /**
  * EMI for a loan (reducing balance): EMI = P·r·(1+r)^n / ((1+r)^n − 1),
  * r = annual rate ÷ 100 ÷ installments per year. 0% → P ÷ n.
@@ -77,6 +93,7 @@ function monthlyShare(item) {
 }
 
 const emptyForm = () => ({
+  receivedDate: '',
   title: '', amount: '', cycle: 'MONTHLY', date: toInputDate(), category: 'Salary',
   loanKind: 'EMI', interestRate: '', installmentAmount: '', tenure: '', emiDriver: 'emi', note: '',
 });
@@ -94,7 +111,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const [search, setSearch] = useState('');
   // Toolbar: Search → Loan (All / EMI / Interest) → Category (non-loan categories).
   // The two filters are separate: picking one clears the other.
-  const [loanFilter, setLoanFilter] = useState('All');
+  const [loansOnly, setLoansOnly] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
@@ -203,6 +220,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       installmentAmount: item.installmentAmount == null ? '' : String(item.installmentAmount),
       tenure: item.tenure == null ? '' : String(item.tenure),
       note: item.note || '',
+      receivedDate: item.receivedDate || '',
     });
     setFormError('');
     setOpen(true);
@@ -262,6 +280,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       installmentAmount: isEmi ? Number(form.installmentAmount) : isInterestOnly ? interestPayable : null,
       tenure: isEmi ? Number(form.tenure) : null,
       note: form.note.trim() || null,
+      receivedDate: isLoan && form.receivedDate ? form.receivedDate : null,
     };
     setSaving(true);
     setFormError('');
@@ -304,13 +323,13 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return items.filter((item) => {
-      if (loanFilter !== 'All' && (categoryOf(item) !== 'Loan' || (loanFilter !== 'LOANS' && loanKindOf(item) !== loanFilter))) return false;
+      if (loansOnly && categoryOf(item) !== 'Loan') return false;
       if (categoryFilter !== 'All' && categoryOf(item) !== categoryFilter) return false;
       if (!query) return true;
       return [item.title, item.category, cycleLabel(item.cycle), item.amount, item.note]
         .some((value) => String(value ?? '').toLowerCase().includes(query));
     });
-  }, [items, search, loanFilter, categoryFilter]);
+  }, [items, search, loansOnly, categoryFilter]);
 
   /** The commitments list (desktop table + phone cards). */
   const renderCommitmentList = (list, emptyText) => (
@@ -318,27 +337,34 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         <div className="module-table-wrap desktop-data-table">
           <table className="module-table commitments-table">
             <thead>
-              <tr><th>Commitment</th><th>Category</th><th>Cycle</th><th>Next Due</th><th>Amount</th><th>Interest</th><th>Pay</th><th>Actions</th></tr>
+              <tr><th>Commitment</th><th>Paid To</th><th>Category</th><th>Tenure</th><th>Received On</th><th>Loan</th><th>Interest</th><th>Payable</th><th>Status</th><th>Pay</th><th>Actions</th></tr>
             </thead>
             <tbody>
               {list.map((item) => (
                 <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
-                  <td><strong>{item.title}</strong>{item.note && <small className="table-sub">{item.note}</small>}</td>
+                  <td><strong>{item.title}</strong></td>
+                  <td>{item.note || '—'}</td>
                   <td><span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span></td>
                   <td>
-                    {cycleLabel(item.cycle)}
+                    {tenureLabel(item)}
                     {item.tenure && <small className="table-sub">{item.paidCount} / {item.tenure} paid</small>}
                   </td>
-                  <td>
-                    {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
-                    {item.payStatus === 'OVERDUE' && <small className="commitment-overdue-note">Overdue</small>}
-                  </td>
+                  <td>{categoryOf(item) === 'Loan' && item.receivedDate ? formatDate(item.receivedDate) : '—'}</td>
+                  <td>{categoryOf(item) === 'Loan' ? <strong>{formatCurrency(item.amount)}</strong> : '—'}</td>
+                  <td>{interestLabel(item)}</td>
                   <td>
                     <strong>{formatCurrency(payableOf(item))}</strong>
-                    {item.installmentAmount != null && <small className="table-sub">of {formatCurrency(item.amount)}</small>}
+                    <small className="table-sub">per {CYCLE_UNIT[item.cycle] || 'month'}</small>
                   </td>
-                  <td>{item.interestRate != null ? `${Number(item.interestRate)}%` : '—'}</td>
-                  <td>{payCell(item)}</td>
+                  <td><span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span></td>
+                  <td>
+                    {payCell(item)}
+                    {item.payStatus !== 'PAID' && (
+                      <small className={`table-sub ${item.payStatus === 'OVERDUE' ? 'commitment-overdue-note' : ''}`}>
+                        Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
+                      </small>
+                    )}
+                  </td>
                   <td onClick={(event) => event.stopPropagation()}>
                     <div className="row-actions">
                       {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
@@ -348,9 +374,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 </tr>
               ))}
               {!loading && list.length === 0 && (
-                <tr><td colSpan="8"><div className="expense-filter-empty">{emptyText}</div></td></tr>
+                <tr><td colSpan="11"><div className="expense-filter-empty">{emptyText}</div></td></tr>
               )}
-              {loading && <tr><td colSpan="8"><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
+              {loading && <tr><td colSpan="11"><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -364,11 +390,14 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
               </div>
               <div className="commitment-mobile-meta">
                 <span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span>
-                <span>{cycleLabel(item.cycle)}</span>
-                <span>Next: {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>
-                {item.interestRate != null && <span>{Number(item.interestRate)}% interest</span>}
-                {item.installmentAmount != null && <span>Loan {formatCurrency(item.amount)}</span>}
+                <span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span>
+                {item.note && <span>To: {item.note}</span>}
+                <span>{tenureLabel(item)}</span>
+                {categoryOf(item) === 'Loan' && <span>Loan {formatCurrency(item.amount)}</span>}
+                {categoryOf(item) === 'Loan' && item.receivedDate && <span>Received {formatDate(item.receivedDate)}</span>}
+                {item.interestRate != null && <span>{interestLabel(item)}</span>}
                 {item.tenure && <span>{item.paidCount} / {item.tenure} paid</span>}
+                {item.payStatus !== 'PAID' && <span>Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>}
               </div>
               <div className="commitment-mobile-actions" onClick={(event) => event.stopPropagation()}>
                 {payCell(item)}
@@ -409,17 +438,12 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
             <Search size={16} aria-hidden="true" />
             <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search commitment, category or amount..." aria-label="Search commitments" />
           </label>
+          <button type="button" className={`commitment-loan-toggle ${loansOnly ? 'active' : ''}`} aria-pressed={loansOnly}
+            onClick={() => { setLoansOnly((value) => !value); setCategoryFilter('All'); }} title={loansOnly ? 'Show all commitments' : 'Show only loans'}>
+            Loan
+          </button>
           <div className="expense-quick-select">
-            <select value={loanFilter} onChange={(event) => { setLoanFilter(event.target.value); setCategoryFilter('All'); }} aria-label="Loan">
-              <option value="All">Loan</option>
-              <option value="LOANS">All Loans</option>
-              <option value="EMI">EMI</option>
-              <option value="INTEREST">Interest</option>
-            </select>
-            <ChevronDown size={14} />
-          </div>
-          <div className="expense-quick-select">
-            <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setLoanFilter('All'); }} aria-label="Category">
+            <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setLoansOnly(false); }} aria-label="Category">
               <option value="All">All Category</option>
               {COMMITMENT_CATEGORIES.filter((category) => category !== 'Loan').map((category) => <option key={category} value={category}>{category}</option>)}
             </select>
@@ -465,6 +489,13 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 <label>{form.cycle === 'ONE_TIME' ? 'Date' : 'First Due Date'}</label>
                 <input type="date" value={form.date} onChange={(event) => setForm((value) => ({ ...value, date: event.target.value }))} />
               </div>
+
+              {isLoan && (
+                <div className="form-field">
+                  <label>Loan Received On</label>
+                  <input type="date" value={form.receivedDate} onChange={(event) => setForm((value) => ({ ...value, receivedDate: event.target.value }))} />
+                </div>
+              )}
 
               {isLoan && (
                 <div className="form-field span-2">
@@ -529,8 +560,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
               )}
 
               <div className="form-field span-2">
-                <label>Note (optional)</label>
-                <input value={form.note} onChange={(event) => setForm((value) => ({ ...value, note: event.target.value }))} placeholder="Bank name, staff name, chit group..." />
+                <label>Paid To</label>
+                <input value={form.note} onChange={(event) => setForm((value) => ({ ...value, note: event.target.value }))}
+                  placeholder={isLoan ? 'Bank or person who gave the loan' : 'Staff, landlord, chit group...'} />
               </div>
             </div>
             {formError && <div className="form-error" role="alert">{formError}</div>}
