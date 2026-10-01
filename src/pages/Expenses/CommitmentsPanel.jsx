@@ -1,5 +1,5 @@
 import { CalendarClock, Check, CheckCircle2, ChevronDown, HandCoins, Pencil, Percent, RotateCcw, Search, Trash2, X } from 'lucide-react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import ActionButton from '../../components/common/ActionButton';
 import IconButton from '../../components/common/IconButton';
 import SummaryCard from '../../components/common/SummaryCard';
@@ -19,6 +19,8 @@ const loanKindOf = (item) => {
   if (item?.category === 'Interest') return 'INTEREST';
   return item?.tenure ? 'EMI' : 'INTEREST';
 };
+/** Chip text: loans show their repayment type (EMI / Interest), the rest show their category. */
+const chipLabel = (item) => (categoryOf(item) === 'Loan' ? (loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest') : item?.category);
 const PERIODS_PER_YEAR = { DAILY: 365, WEEKLY: 52, MONTHLY: 12, QUARTERLY: 4, YEARLY: 1, ONE_TIME: 12 };
 const CYCLE_UNIT = { DAILY: 'day', WEEKLY: 'week', MONTHLY: 'month', QUARTERLY: 'quarter', YEARLY: 'year', ONE_TIME: 'month' };
 const round2 = (value) => Math.round(value * 100) / 100;
@@ -109,9 +111,9 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  // Toolbar: Search → Loan (All / EMI / Interest) → Category (non-loan categories).
-  // The two filters are separate: picking one clears the other.
-  const [loansOnly, setLoansOnly] = useState(false);
+  // Two separate lists: 'loans' (EMI + Interest loans) and 'payments' (salary, rent, chit…).
+  // Loans never show in Payments. The category dropdown exists only in Payments.
+  const [view, setView] = useState('loans');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [open, setOpen] = useState(false);
   const [edit, setEdit] = useState(null);
@@ -288,6 +290,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
       if (edit) await updateCommitment(edit.id, payload);
       else await createCommitment(payload);
       setOpen(false);
+      setView(isLoan ? 'loans' : 'payments');
       await load();
     } catch (err) {
       setFormError(err?.message || 'Could not save the commitment.');
@@ -320,63 +323,105 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const dueSoon = items.filter((item) => item.nextDueDate && item.nextDueDate >= today && item.nextDueDate <= weekAheadKey);
   const dueSoonTotal = dueSoon.reduce((sum, item) => sum + payableOf(item), 0);
 
+  const isLoanView = view === 'loans';
+  const loanCount = items.filter((item) => categoryOf(item) === 'Loan').length;
+  const paymentCount = items.length - loanCount;
+
+  // First load: if there are no loans but there are payments, open Payments instead of an empty tab.
+  const viewPicked = useRef(false);
+  useEffect(() => {
+    if (loading || viewPicked.current) return;
+    viewPicked.current = true;
+    if (loanCount === 0 && paymentCount > 0) setView('payments');
+  }, [loading, loanCount, paymentCount]);
+
+  const switchView = (next) => { setView(next); setCategoryFilter('All'); };
+
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return items.filter((item) => {
-      if (loansOnly && categoryOf(item) !== 'Loan') return false;
-      if (categoryFilter !== 'All' && categoryOf(item) !== categoryFilter) return false;
+      if ((categoryOf(item) === 'Loan') !== isLoanView) return false;
+      if (!isLoanView && categoryFilter !== 'All' && item.category !== categoryFilter) return false;
       if (!query) return true;
-      return [item.title, item.category, cycleLabel(item.cycle), item.amount, item.note]
+      return [item.title, item.note, chipLabel(item), cycleLabel(item.cycle), item.amount, payableOf(item)]
         .some((value) => String(value ?? '').toLowerCase().includes(query));
     });
-  }, [items, search, loansOnly, categoryFilter]);
+  }, [items, search, isLoanView, categoryFilter]);
 
-  /** The commitments list (desktop table + phone cards). */
+  const stateChip = (item) => (
+    <span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span>
+  );
+  const dueNote = (item) => item.payStatus !== 'PAID' && (
+    <small className={`table-sub ${item.payStatus === 'OVERDUE' ? 'commitment-overdue-note' : ''}`}>
+      Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
+    </small>
+  );
+  const payableCell = (item) => (
+    <>
+      <strong>{formatCurrency(payableOf(item))}</strong>
+      <small className="table-sub">per {CYCLE_UNIT[item.cycle] || 'month'}</small>
+    </>
+  );
+  const rowActions = (item) => (
+    <div className="row-actions">
+      {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
+      {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
+    </div>
+  );
+
+  // Each list shows only the columns it needs.
+  const LOAN_HEADINGS = ['Loan', 'Lender', 'Type', 'Loan Amount', 'Received On', 'Interest', 'Tenure', 'Payable', 'Status', 'Pay', 'Actions'];
+  const PAYMENT_HEADINGS = ['Commitment', 'Paid To', 'Category', 'Frequency', 'Payable', 'Status', 'Pay', 'Actions'];
+  const headings = isLoanView ? LOAN_HEADINGS : PAYMENT_HEADINGS;
+
+  const loanCells = (item) => (
+    <>
+      <td><strong>{item.title}</strong></td>
+      <td>{item.note || '—'}</td>
+      <td><span className="commitment-category-chip">{chipLabel(item)}</span></td>
+      <td><strong>{formatCurrency(item.amount)}</strong></td>
+      <td>{item.receivedDate ? formatDate(item.receivedDate) : '—'}</td>
+      <td>{interestLabel(item)}</td>
+      <td>
+        {tenureLabel(item)}
+        {item.tenure && <small className="table-sub">{item.paidCount} / {item.tenure} paid</small>}
+      </td>
+    </>
+  );
+  const paymentCells = (item) => (
+    <>
+      <td><strong>{item.title}</strong></td>
+      <td>{item.note || '—'}</td>
+      <td><span className="commitment-category-chip">{chipLabel(item)}</span></td>
+      <td>{cycleLabel(item.cycle)}</td>
+    </>
+  );
+
+  /** The commitments list (desktop table + phone cards) for the open tab. */
   const renderCommitmentList = (list, emptyText) => (
     <div className="commitment-group">
         <div className="module-table-wrap desktop-data-table">
-          <table className="module-table commitments-table">
+          <table className={`module-table commitments-table ${isLoanView ? 'is-loans' : 'is-payments'}`}>
             <thead>
-              <tr><th>Commitment</th><th>Paid To</th><th>Category</th><th>Tenure</th><th>Received On</th><th>Loan</th><th>Interest</th><th>Payable</th><th>Status</th><th>Pay</th><th>Actions</th></tr>
+              <tr>{headings.map((heading) => <th key={heading}>{heading}</th>)}</tr>
             </thead>
             <tbody>
               {list.map((item) => (
                 <tr key={item.id} className="commitment-row" onClick={() => openHistory(item)} title="Open payment history">
-                  <td><strong>{item.title}</strong></td>
-                  <td>{item.note || '—'}</td>
-                  <td><span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span></td>
-                  <td>
-                    {tenureLabel(item)}
-                    {item.tenure && <small className="table-sub">{item.paidCount} / {item.tenure} paid</small>}
-                  </td>
-                  <td>{categoryOf(item) === 'Loan' && item.receivedDate ? formatDate(item.receivedDate) : '—'}</td>
-                  <td>{categoryOf(item) === 'Loan' ? <strong>{formatCurrency(item.amount)}</strong> : '—'}</td>
-                  <td>{interestLabel(item)}</td>
-                  <td>
-                    <strong>{formatCurrency(payableOf(item))}</strong>
-                    <small className="table-sub">per {CYCLE_UNIT[item.cycle] || 'month'}</small>
-                  </td>
-                  <td><span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span></td>
-                  <td>
+                  {isLoanView ? loanCells(item) : paymentCells(item)}
+                  <td>{payableCell(item)}</td>
+                  <td>{stateChip(item)}</td>
+                  <td className="commitment-pay-col">
                     {payCell(item)}
-                    {item.payStatus !== 'PAID' && (
-                      <small className={`table-sub ${item.payStatus === 'OVERDUE' ? 'commitment-overdue-note' : ''}`}>
-                        Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
-                      </small>
-                    )}
+                    {dueNote(item)}
                   </td>
-                  <td onClick={(event) => event.stopPropagation()}>
-                    <div className="row-actions">
-                      {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
-                      {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
-                    </div>
-                  </td>
+                  <td onClick={(event) => event.stopPropagation()}>{rowActions(item)}</td>
                 </tr>
               ))}
               {!loading && list.length === 0 && (
-                <tr><td colSpan="11"><div className="expense-filter-empty">{emptyText}</div></td></tr>
+                <tr><td colSpan={headings.length}><div className="expense-filter-empty">{emptyText}</div></td></tr>
               )}
-              {loading && <tr><td colSpan="11"><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
+              {loading && <tr><td colSpan={headings.length}><div className="expense-filter-empty">Loading commitments…</div></td></tr>}
             </tbody>
           </table>
         </div>
@@ -389,22 +434,19 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 <b>{formatCurrency(payableOf(item))}</b>
               </div>
               <div className="commitment-mobile-meta">
-                <span className="commitment-category-chip">{categoryOf(item) === 'Loan' ? `Loan · ${loanKindOf(item) === 'EMI' ? 'EMI' : 'Interest'}` : item.category}</span>
-                <span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span>
-                {item.note && <span>To: {item.note}</span>}
-                <span>{tenureLabel(item)}</span>
-                {categoryOf(item) === 'Loan' && <span>Loan {formatCurrency(item.amount)}</span>}
-                {categoryOf(item) === 'Loan' && item.receivedDate && <span>Received {formatDate(item.receivedDate)}</span>}
-                {item.interestRate != null && <span>{interestLabel(item)}</span>}
-                {item.tenure && <span>{item.paidCount} / {item.tenure} paid</span>}
+                <span className="commitment-category-chip">{chipLabel(item)}</span>
+                {stateChip(item)}
+                {item.note && <span>{isLoanView ? 'From' : 'To'}: {item.note}</span>}
+                <span>{isLoanView ? tenureLabel(item) : cycleLabel(item.cycle)}</span>
+                {isLoanView && <span>Loan {formatCurrency(item.amount)}</span>}
+                {isLoanView && item.receivedDate && <span>Received {formatDate(item.receivedDate)}</span>}
+                {isLoanView && item.interestRate != null && <span>{interestLabel(item)}</span>}
+                {isLoanView && item.tenure && <span>{item.paidCount} / {item.tenure} paid</span>}
                 {item.payStatus !== 'PAID' && <span>Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>}
               </div>
               <div className="commitment-mobile-actions" onClick={(event) => event.stopPropagation()}>
                 {payCell(item)}
-                <div className="row-actions">
-                  {hasPermission('expenses.edit') && <IconButton size="sm" label={`Edit ${item.title}`} onClick={() => startEdit(item)}><Pencil size={15} /></IconButton>}
-                  {hasPermission('expenses.delete') && <IconButton size="sm" label={`Delete ${item.title}`} onClick={() => setDeleteItem(item)}><Trash2 size={15} /></IconButton>}
-                </div>
+                {rowActions(item)}
               </div>
             </article>
           ))}
@@ -412,6 +454,13 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         </div>
     </div>
   );
+
+  const countLabel = isLoanView
+    ? `${filtered.length} ${filtered.length === 1 ? 'loan' : 'loans'}`
+    : `${filtered.length} ${filtered.length === 1 ? 'commitment' : 'commitments'}`;
+  const emptyText = isLoanView
+    ? (loanCount ? 'No loans match your search.' : 'No loans yet. Tap “+ Commit” and choose Loan as the category.')
+    : (paymentCount ? 'No commitments match your search.' : 'No payments yet. Tap “+ Commit” to add salary, rent and more.');
 
   return (
     <>
@@ -426,35 +475,42 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
         <div className="expense-section-title">
           <div>
             <h2>Commitments</h2>
-            <span>Loans and other regular payments</span>
+            <span>{isLoanView ? 'Loans you are repaying' : 'Salary, rent and other regular payments'}</span>
           </div>
           <div className="expense-history-summary">
-            <span>{filtered.length} {filtered.length === 1 ? 'commitment' : 'commitments'}</span>
+            <span>{countLabel}</span>
           </div>
         </div>
 
         <div className="module-toolbar expense-filter-row">
+          <div className="commitment-view-tabs" role="tablist" aria-label="Commitment type">
+            <button type="button" role="tab" aria-selected={isLoanView} className={isLoanView ? 'active' : ''} onClick={() => switchView('loans')}>
+              Loans <span>{loanCount}</span>
+            </button>
+            <button type="button" role="tab" aria-selected={!isLoanView} className={!isLoanView ? 'active' : ''} onClick={() => switchView('payments')}>
+              Payments <span>{paymentCount}</span>
+            </button>
+          </div>
           <label className="module-search">
             <Search size={16} aria-hidden="true" />
-            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search commitment, category or amount..." aria-label="Search commitments" />
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)}
+              placeholder={isLoanView ? 'Search loan, lender or amount...' : 'Search commitment, paid to or amount...'}
+              aria-label={isLoanView ? 'Search loans' : 'Search payments'} />
           </label>
-          <button type="button" className={`commitment-loan-toggle ${loansOnly ? 'active' : ''}`} aria-pressed={loansOnly}
-            onClick={() => { setLoansOnly((value) => !value); setCategoryFilter('All'); }} title={loansOnly ? 'Show all commitments' : 'Show only loans'}>
-            Loan
-          </button>
-          <div className="expense-quick-select">
-            <select value={categoryFilter} onChange={(event) => { setCategoryFilter(event.target.value); setLoansOnly(false); }} aria-label="Category">
-              <option value="All">All Category</option>
-              {COMMITMENT_CATEGORIES.filter((category) => category !== 'Loan').map((category) => <option key={category} value={category}>{category}</option>)}
-            </select>
-            <ChevronDown size={14} />
-          </div>
+          {!isLoanView && (
+            <div className="expense-quick-select">
+              <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} aria-label="Category">
+                <option value="All">All categories</option>
+                {COMMITMENT_CATEGORIES.filter((category) => category !== 'Loan').map((category) => <option key={category} value={category}>{category}</option>)}
+              </select>
+              <ChevronDown size={14} />
+            </div>
+          )}
         </div>
 
         {error && <div className="form-error" role="alert">{error}</div>}
 
-        {renderCommitmentList(filtered, items.length
-          ? 'No commitments match your search.' : 'No commitments yet. Tap “+ Commit” to add a loan, salary, rent and more.')}
+        {renderCommitmentList(filtered, emptyText)}
       </section>
 
       {open && (

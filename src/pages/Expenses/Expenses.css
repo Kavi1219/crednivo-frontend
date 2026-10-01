@@ -376,13 +376,30 @@ html[data-theme='dark'] .commitment-paid-chip { color: #6ee7a8; background: rgba
 .commitment-group-head small { color: var(--ink-500); font-size: 10px; }
 .commitment-group-head > span { color: var(--ink-500); font-size: 10.5px; font-weight: 700; white-space: nowrap; }
 
-/* Commitments toolbar: Loan on/off button */
-.commitment-loan-toggle {
-  height: 40px; padding: 0 18px; border: 1px solid var(--line); border-radius: 10px;
-  background: var(--surface); color: var(--ink-800); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+/* Commitments toolbar: Loans / Payments switch (same height as the search box) */
+.commitment-view-tabs { display: inline-flex; flex: 0 0 auto; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.commitment-view-tabs button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 30px; padding: 0 14px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--ink-600); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
 }
-.commitment-loan-toggle:hover { background: var(--surface-soft); }
-.commitment-loan-toggle.active { border-color: var(--blue-600); background: var(--blue-600); color: #fff; }
+.commitment-view-tabs button span {
+  min-width: 18px; padding: 1px 6px; border-radius: 999px; background: var(--surface-soft);
+  color: var(--ink-600); font-size: 10px; font-weight: 800; text-align: center;
+}
+.commitment-view-tabs button:hover { color: var(--ink-950); background: var(--surface-soft); }
+.commitment-view-tabs button.active { color: #fff; background: var(--blue-600); }
+.commitment-view-tabs button.active span { color: #fff; background: rgba(255, 255, 255, .22); }
+.commitment-view-tabs button:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 2px; }
+@media (max-width: 767px) {
+  .commitment-view-tabs { display: flex; width: 100%; }
+  .commitment-view-tabs button { flex: 1 1 0; }
+}
+
+/* Commitments table: "per month", "Due …" and "6 / 48 paid" always sit on their own line under the value. */
+.commitments-table .table-sub { display: block; margin-top: 3px; color: var(--ink-500); font-size: 9.5px; font-weight: 600; }
+.commitments-table .table-sub.commitment-overdue-note { color: var(--danger); font-size: 10px; font-weight: 700; }
+.commitments-table .commitment-pay-col { min-width: 170px; }
+
 /* Commitment status: Active / Closed */
 .commitment-state { display: inline-flex; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; }
 .commitment-state.active { color: #087a3c; background: #e5f7ec; }

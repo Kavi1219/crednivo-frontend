@@ -11,6 +11,7 @@
 .module-table th { padding:13px 15px; text-align:left; white-space:nowrap; color:#53627a; background:var(--surface-soft); font-size:10px; letter-spacing:.015em; font-weight:700; }
 .module-table td { padding:13px 15px; border-top:1px solid var(--line); white-space:nowrap; color:var(--ink-800); }
 .module-table tbody tr:hover { background:var(--surface-hover); }
+.table-sub { display:block; margin-top:3px; color:var(--ink-500); font-size:9px; }
 .row-title { display:flex; align-items:center; gap:9px; }
 .row-avatar { width:34px; height:34px; flex:0 0 34px; display:grid; place-items:center; border-radius:10px; color:#1268dc; background:#e8f1ff; font-weight:800; font-size:11px; }
 .row-title strong { display:block; font-size:11.5px; }
