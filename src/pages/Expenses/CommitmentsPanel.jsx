@@ -351,15 +351,24 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
   const stateChip = (item) => (
     <span className={`commitment-state ${item.payStatus === 'PAID' ? 'closed' : 'active'}`}>{item.payStatus === 'PAID' ? 'Closed' : 'Active'}</span>
   );
+  /**
+   * Date under the Pay button. Loans: "Due …". Payments (salary, rent…) aren't debts,
+   * so they read "Next on …" — only a missed date is shown as "Overdue since …".
+   */
+  const dueLabel = (item) => {
+    if (item.payStatus === 'OVERDUE') return isLoanView ? 'Due' : 'Overdue since';
+    return isLoanView ? 'Due' : 'Next on';
+  };
   const dueNote = (item) => item.payStatus !== 'PAID' && (
     <small className={`table-sub ${item.payStatus === 'OVERDUE' ? 'commitment-overdue-note' : ''}`}>
-      Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
+      {dueLabel(item)} {formatDate(item.currentDueDate || item.nextDueDate || item.date)}
     </small>
   );
+  // Payments already have a Frequency column, so "per month" is only shown for loans.
   const payableCell = (item) => (
     <>
       <strong>{formatCurrency(payableOf(item))}</strong>
-      <small className="table-sub">per {CYCLE_UNIT[item.cycle] || 'month'}</small>
+      {isLoanView && <small className="table-sub">per {CYCLE_UNIT[item.cycle] || 'month'}</small>}
     </>
   );
   const rowActions = (item) => (
@@ -442,7 +451,7 @@ const CommitmentsPanel = forwardRef(function CommitmentsPanel(_props, ref) {
                 {isLoanView && item.receivedDate && <span>Received {formatDate(item.receivedDate)}</span>}
                 {isLoanView && item.interestRate != null && <span>{interestLabel(item)}</span>}
                 {isLoanView && item.tenure && <span>{item.paidCount} / {item.tenure} paid</span>}
-                {item.payStatus !== 'PAID' && <span>Due {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>}
+                {item.payStatus !== 'PAID' && <span>{dueLabel(item)} {formatDate(item.currentDueDate || item.nextDueDate || item.date)}</span>}
               </div>
               <div className="commitment-mobile-actions" onClick={(event) => event.stopPropagation()}>
                 {payCell(item)}
