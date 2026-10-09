@@ -1,0 +1,185 @@
+diff --git a/src/components/common/RescheduleLaterDues.css b/src/components/common/RescheduleLaterDues.css
+new file mode 100644
+index 0000000..e5668f8
+--- /dev/null
++++ b/src/components/common/RescheduleLaterDues.css
+@@ -0,0 +1,9 @@
++.reschedule-later-dues {
++  display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 4px; padding: 11px 12px;
++  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer;
++}
++.reschedule-later-dues.on { border-color: color-mix(in srgb, var(--blue-600) 45%, var(--line)); background: var(--blue-100); }
++.reschedule-later-dues input { width: 16px; height: 16px; margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--blue-600); cursor: pointer; }
++.reschedule-later-dues span { display: grid; gap: 3px; min-width: 0; }
++.reschedule-later-dues strong { color: var(--ink-950); font-size: 11.5px; font-weight: 750; }
++.reschedule-later-dues small { color: var(--ink-600); font-size: 10.5px; line-height: 1.45; }
+diff --git a/src/components/common/RescheduleLaterDues.jsx b/src/components/common/RescheduleLaterDues.jsx
+new file mode 100644
+index 0000000..6a9ba88
+--- /dev/null
++++ b/src/components/common/RescheduleLaterDues.jsx
+@@ -0,0 +1,52 @@
++import { formatDate } from '../../utils/finance';
++import './RescheduleLaterDues.css';
++
++const DONE = new Set(['Paid', 'Fine', 'Cancelled']);
++const dayNumber = (value) => {
++  const [y, m, d] = String(value || '').slice(0, 10).split('-').map(Number);
++  return y ? Date.UTC(y, m - 1, d) / 86400000 : NaN;
++};
++const addDays = (value, days) => new Date((dayNumber(value) + days) * 86400000).toISOString().slice(0, 10);
++
++/** Unpaid dues of the same loan that come after this one. */
++export function laterDuesFor(collections = [], entry) {
++  if (!entry?.loanId) return [];
++  return collections
++    .filter((item) => item.loanId === entry.loanId && item.id !== entry.id)
++    .filter((item) => String(item.date) > String(entry.date) && !DONE.has(item.status))
++    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
++}
++
++/** True when nothing of this loan is scheduled before this entry (it is installment #1). */
++export function isFirstInstallment(collections = [], entry) {
++  if (!entry?.loanId) return false;
++  return !collections.some((item) => item.loanId === entry.loanId && item.id !== entry.id && String(item.date) < String(entry.date));
++}
++
++/**
++ * Reschedule option: "Also move the later dues". Shows what the next dates become,
++ * e.g. moving a weekly due from Friday to Sunday turns every later due into a Sunday.
++ */
++export default function RescheduleLaterDues({ collections, entry, newDate, checked, onChange }) {
++  const later = laterDuesFor(collections, entry);
++  if (!later.length) return null;
++  const shift = newDate ? dayNumber(newDate) - dayNumber(entry.date) : 0;
++  const preview = shift ? later.slice(0, 3).map((item) => formatDate(addDays(item.date, shift))) : [];
++  const shiftText = `${Math.abs(shift)} day${Math.abs(shift) === 1 ? '' : 's'} ${shift > 0 ? 'later' : 'earlier'}`;
++
++  return (
++    <label className={`reschedule-later-dues ${checked ? 'on' : ''}`}>
++      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
++      <span>
++        <strong>Also move the {later.length} later {later.length === 1 ? 'due' : 'dues'}</strong>
++        <small>
++          {!shift
++            ? 'They keep the same gap as this one, so the whole schedule follows the new date.'
++            : checked
++              ? `Each moves ${shiftText}: ${preview.join(', ')}${later.length > 3 ? ', …' : ''}`
++              : `Only this due moves. Next due stays ${formatDate(later[0].date)}.`}
++        </small>
++      </span>
++    </label>
++  );
++}
+diff --git a/src/components/dashboard/CollectionTable.jsx b/src/components/dashboard/CollectionTable.jsx
+index 5d079db..b7b79c1 100644
+--- a/src/components/dashboard/CollectionTable.jsx
++++ b/src/components/dashboard/CollectionTable.jsx
+@@ -13,6 +13,7 @@ import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
+ import StatusBadge from '../common/StatusBadge';
+ import './CollectionTable.css';
+ import CustomerAvatar from '../common/CustomerAvatar';
++import RescheduleLaterDues, { isFirstInstallment, laterDuesFor } from '../common/RescheduleLaterDues';
+ 
+ 
+ const COLLECTION_CYCLES = ['Daily', 'Weekly', 'Monthly'];
+@@ -39,6 +40,7 @@ export default function CollectionTable() {
+   const [rescheduleDate, setRescheduleDate] = useState('');
+   const [rescheduleSaving, setRescheduleSaving] = useState(false);
+   const [rescheduleError, setRescheduleError] = useState('');
++  const [moveLaterDues, setMoveLaterDues] = useState(false);
+   const [downloadOpen, setDownloadOpen] = useState(false);
+   const { customers, collections, loans, payments, rescheduleCollection, company } = useCrednivo();
+   const { user } = useAuth();
+@@ -249,6 +251,8 @@ export default function CollectionTable() {
+     setRescheduleError('');
+     setRescheduling(row);
+     setRescheduleDate(row.date > today ? row.date : '');
++    // Moving installment #1 usually means the whole schedule should follow it.
++    setMoveLaterDues(isFirstInstallment(collections, row));
+   };
+ 
+   const closeReschedule = () => {
+@@ -263,7 +267,7 @@ export default function CollectionTable() {
+     setRescheduleSaving(true);
+     setRescheduleError('');
+     try {
+-      await rescheduleCollection(rescheduling.id, rescheduleDate);
++      await rescheduleCollection(rescheduling.id, rescheduleDate, moveLaterDues && laterDuesFor(collections, rescheduling).length > 0);
+       closeReschedule();
+     } catch (error) {
+       setRescheduleError(error?.message || 'Could not reschedule this collection.');
+@@ -423,6 +427,8 @@ export default function CollectionTable() {
+               <input type="date" min={today} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} />
+             </label>
+ 
++            <RescheduleLaterDues collections={collections} entry={rescheduling} newDate={rescheduleDate} checked={moveLaterDues} onChange={setMoveLaterDues} />
++
+             {rescheduleError && <div className="dashboard-reschedule-error">{rescheduleError}</div>}
+ 
+             <div className="dashboard-reschedule-actions">
+diff --git a/src/context/CrednivoContext.jsx b/src/context/CrednivoContext.jsx
+index dc050f9..dcafa71 100644
+--- a/src/context/CrednivoContext.jsx
++++ b/src/context/CrednivoContext.jsx
+@@ -937,11 +937,12 @@ export function CrednivoProvider({ children }) {
+     return true;
+   };
+ 
+-  const rescheduleCollection = async (collectionId, date) => {
++  // moveLaterDues: also move every later unpaid due of the same loan by the same number of days.
++  const rescheduleCollection = async (collectionId, date, moveLaterDues = false) => {
+     if (!collectionId || !date) return null;
+     const saved = await apiRequest(`/collections/${collectionId}/reschedule`, {
+       method: 'POST',
+-      body: JSON.stringify({ date }),
++      body: JSON.stringify({ date, moveLaterDues: Boolean(moveLaterDues) }),
+     });
+     await syncCoreData();
+     return saved;
+diff --git a/src/pages/Collection/Collection.jsx b/src/pages/Collection/Collection.jsx
+index c4b3f70..9088b88 100644
+--- a/src/pages/Collection/Collection.jsx
++++ b/src/pages/Collection/Collection.jsx
+@@ -21,6 +21,7 @@ import {
+ } from '../../utils/collectionTargets';
+ import './Collection.css';
+ import CustomerAvatar from '../../components/common/CustomerAvatar';
++import RescheduleLaterDues, { isFirstInstallment, laterDuesFor } from '../../components/common/RescheduleLaterDues';
+ 
+ function balanceOf(item) {
+   return Math.max(0, Number(item?.dueAmount || 0) - Number(item?.paidAmount || 0));
+@@ -221,6 +222,7 @@ export default function Collection() {
+   const [rescheduling, setRescheduling] = useState(null);
+   const [rescheduleDate, setRescheduleDate] = useState('');
+   const [rescheduleSaving, setRescheduleSaving] = useState(false);
++  const [moveLaterDues, setMoveLaterDues] = useState(false);
+   const [actionError, setActionError] = useState('');
+   const [paymentSaving, setPaymentSaving] = useState(false);
+   const paymentSubmitLockRef = useRef(false);
+@@ -704,6 +706,8 @@ export default function Collection() {
+     setActionError('');
+     setRescheduling(source);
+     setRescheduleDate(source.date > today ? source.date : '');
++    // Moving installment #1 usually means the whole schedule should follow it.
++    setMoveLaterDues(isFirstInstallment(collections, source));
+   };
+ 
+   const submitReschedule = async () => {
+@@ -711,7 +715,7 @@ export default function Collection() {
+     setRescheduleSaving(true);
+     setActionError('');
+     try {
+-      await rescheduleCollection(rescheduling.id, rescheduleDate);
++      await rescheduleCollection(rescheduling.id, rescheduleDate, moveLaterDues && laterDuesFor(collections, rescheduling).length > 0);
+       setRescheduling(null);
+       setRescheduleDate('');
+     } catch (apiError) {
+@@ -1131,6 +1135,7 @@ export default function Collection() {
+               <span>New collection date</span>
+               <input type="date" min={today} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} />
+             </label>
++            <RescheduleLaterDues collections={collections} entry={rescheduling} newDate={rescheduleDate} checked={moveLaterDues} onChange={setMoveLaterDues} />
+             <div className="collection-filter-actions">
+               <button type="button" className="collection-filter-reset" onClick={() => setRescheduling(null)} disabled={rescheduleSaving}>Cancel</button>
+               <button type="button" className="collection-filter-done" onClick={submitReschedule} disabled={!rescheduleDate || rescheduleSaving}>

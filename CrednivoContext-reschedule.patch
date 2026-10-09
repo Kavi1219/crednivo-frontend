@@ -1,0 +1,19 @@
+diff --git a/src/context/CrednivoContext.jsx b/src/context/CrednivoContext.jsx
+index dc050f9..dcafa71 100644
+--- a/src/context/CrednivoContext.jsx
++++ b/src/context/CrednivoContext.jsx
+@@ -937,11 +937,12 @@ export function CrednivoProvider({ children }) {
+     return true;
+   };
+ 
+-  const rescheduleCollection = async (collectionId, date) => {
++  // moveLaterDues: also move every later unpaid due of the same loan by the same number of days.
++  const rescheduleCollection = async (collectionId, date, moveLaterDues = false) => {
+     if (!collectionId || !date) return null;
+     const saved = await apiRequest(`/collections/${collectionId}/reschedule`, {
+       method: 'POST',
+-      body: JSON.stringify({ date }),
++      body: JSON.stringify({ date, moveLaterDues: Boolean(moveLaterDues) }),
+     });
+     await syncCoreData();
+     return saved;

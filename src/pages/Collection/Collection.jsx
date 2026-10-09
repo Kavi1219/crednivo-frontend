@@ -21,6 +21,7 @@ import {
 } from '../../utils/collectionTargets';
 import './Collection.css';
 import CustomerAvatar from '../../components/common/CustomerAvatar';
+import RescheduleLaterDues, { isFirstInstallment, laterDuesFor } from '../../components/common/RescheduleLaterDues';
 
 function balanceOf(item) {
   return Math.max(0, Number(item?.dueAmount || 0) - Number(item?.paidAmount || 0));
@@ -221,6 +222,7 @@ export default function Collection() {
   const [rescheduling, setRescheduling] = useState(null);
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
+  const [moveLaterDues, setMoveLaterDues] = useState(false);
   const [actionError, setActionError] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
   const paymentSubmitLockRef = useRef(false);
@@ -704,6 +706,8 @@ export default function Collection() {
     setActionError('');
     setRescheduling(source);
     setRescheduleDate(source.date > today ? source.date : '');
+    // Moving installment #1 usually means the whole schedule should follow it.
+    setMoveLaterDues(isFirstInstallment(collections, source));
   };
 
   const submitReschedule = async () => {
@@ -711,7 +715,7 @@ export default function Collection() {
     setRescheduleSaving(true);
     setActionError('');
     try {
-      await rescheduleCollection(rescheduling.id, rescheduleDate);
+      await rescheduleCollection(rescheduling.id, rescheduleDate, moveLaterDues && laterDuesFor(collections, rescheduling).length > 0);
       setRescheduling(null);
       setRescheduleDate('');
     } catch (apiError) {
@@ -1131,6 +1135,7 @@ export default function Collection() {
               <span>New collection date</span>
               <input type="date" min={today} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} />
             </label>
+            <RescheduleLaterDues collections={collections} entry={rescheduling} newDate={rescheduleDate} checked={moveLaterDues} onChange={setMoveLaterDues} />
             <div className="collection-filter-actions">
               <button type="button" className="collection-filter-reset" onClick={() => setRescheduling(null)} disabled={rescheduleSaving}>Cancel</button>
               <button type="button" className="collection-filter-done" onClick={submitReschedule} disabled={!rescheduleDate || rescheduleSaving}>

@@ -13,6 +13,7 @@ import RecordLoanPaymentModal from '../payments/RecordLoanPaymentModal';
 import StatusBadge from '../common/StatusBadge';
 import './CollectionTable.css';
 import CustomerAvatar from '../common/CustomerAvatar';
+import RescheduleLaterDues, { isFirstInstallment, laterDuesFor } from '../common/RescheduleLaterDues';
 
 
 const COLLECTION_CYCLES = ['Daily', 'Weekly', 'Monthly'];
@@ -39,6 +40,7 @@ export default function CollectionTable() {
   const [rescheduleDate, setRescheduleDate] = useState('');
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
   const [rescheduleError, setRescheduleError] = useState('');
+  const [moveLaterDues, setMoveLaterDues] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
   const { customers, collections, loans, payments, rescheduleCollection, company } = useCrednivo();
   const { user } = useAuth();
@@ -249,6 +251,8 @@ export default function CollectionTable() {
     setRescheduleError('');
     setRescheduling(row);
     setRescheduleDate(row.date > today ? row.date : '');
+    // Moving installment #1 usually means the whole schedule should follow it.
+    setMoveLaterDues(isFirstInstallment(collections, row));
   };
 
   const closeReschedule = () => {
@@ -263,7 +267,7 @@ export default function CollectionTable() {
     setRescheduleSaving(true);
     setRescheduleError('');
     try {
-      await rescheduleCollection(rescheduling.id, rescheduleDate);
+      await rescheduleCollection(rescheduling.id, rescheduleDate, moveLaterDues && laterDuesFor(collections, rescheduling).length > 0);
       closeReschedule();
     } catch (error) {
       setRescheduleError(error?.message || 'Could not reschedule this collection.');
@@ -422,6 +426,8 @@ export default function CollectionTable() {
               <span>New collection date</span>
               <input type="date" min={today} value={rescheduleDate} onChange={(event) => setRescheduleDate(event.target.value)} />
             </label>
+
+            <RescheduleLaterDues collections={collections} entry={rescheduling} newDate={rescheduleDate} checked={moveLaterDues} onChange={setMoveLaterDues} />
 
             {rescheduleError && <div className="dashboard-reschedule-error">{rescheduleError}</div>}
 
