@@ -2225,3 +2225,42 @@
 .customer-schedule-status-group{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .customer-schedule-status.fine{color:#c2410c;background:#ffedd5}
 html[data-theme='dark'] .customer-schedule-status.fine{color:#fdba74;background:rgba(251,146,60,.18)}
+
+
+/* ============================================================
+   PINNED PROFILE CARD
+   The customer summary card (avatar, status, total outstanding, profit,
+   loan counts) stays visible under the pinned Back bar while the rest of the
+   profile scrolls beneath it. --app-header-h / --back-bar-h are published by
+   Header.jsx and layout/StickyOffsets.jsx.
+   Pinned on tablet/desktop. On shorter screens (< 820px tall) the pinned card
+   uses a compact layout so it never takes over the view.
+   ============================================================ */
+@media (min-width: 768px) {
+  .page-content .customer-details-page > .customer-hero {
+    position: sticky;
+    top: calc(var(--app-header-h, 82px) + var(--back-bar-h, 0px));
+    z-index: 25;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm), 0 10px 18px -12px rgba(6, 32, 65, .22);
+  }
+}
+@media (min-width: 768px) and (max-height: 820px) {
+  .page-content .customer-details-page > .customer-hero {
+    min-height: 0;
+    padding: 10px 20px;
+    gap: 16px;
+  }
+  .page-content .customer-details-page > .customer-hero .customer-big-avatar {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    border-radius: 15px;
+  }
+  .page-content .customer-details-page > .customer-hero .customer-hero-main { gap: 12px; }
+  .page-content .customer-details-page > .customer-hero .customer-loan-summary-grid,
+  .page-content .customer-details-page > .customer-hero .customer-profit-card p,
+  .page-content .customer-details-page > .customer-hero .customer-rating span { display: none; }
+  .page-content .customer-details-page > .customer-hero .customer-finance-primary { gap: 12px; }
+  .page-content .customer-details-page > .customer-hero .customer-profit-card { padding-block: 8px; }
+}

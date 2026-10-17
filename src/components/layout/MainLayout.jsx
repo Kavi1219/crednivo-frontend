@@ -7,6 +7,7 @@ import MobileBottomNav from './MobileBottomNav';
 import AuthLoading from '../common/AuthLoading';
 import GlobalBackButton from '../GlobalBackButton';
 import NavigationMemory from '../NavigationMemory';
+import StickyOffsets from './StickyOffsets';
 import { useCrednivo } from '../../context/CrednivoContext';
 import './MainLayout.css';
 
@@ -24,7 +25,7 @@ export default function MainLayout() {
       <Sidebar />
       <div className="main-shell is-framed">
         <Header onOpenMenu={() => setDrawerOpen(true)} />
-        <main className="page-content"><NavigationMemory /><GlobalBackButton /><Outlet /></main>
+        <main className="page-content"><NavigationMemory /><StickyOffsets /><GlobalBackButton /><Outlet /></main>
       </div>
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <MobileBottomNav />

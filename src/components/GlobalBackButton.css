@@ -129,3 +129,53 @@
 
 /* Native app: no Back button is rendered, so never pin an empty row. */
 .page-content .crednivo-global-back-row:empty { display: none; }
+
+
+/* ============================================================
+   PINNED SEARCH / FILTER BAR (every list page)
+   The search + filter toolbar of a list card (Loans, Customers, Collection,
+   History, Expenses, Chits, Documents, Agents ...) sticks directly below the
+   pinned Back bar. --back-bar-h is published by layout/StickyOffsets.jsx.
+   ============================================================ */
+.page-content .module-card > .module-toolbar,
+.page-content .module-card > .loan-filter-row {
+  position: sticky;
+  top: calc(var(--app-header-h, 82px) + var(--back-bar-h, 0px));
+  z-index: 30;
+  background: var(--surface);
+  border-radius: 14px 14px 0 0;
+}
+/* Soft edge under the toolbar so scrolled rows tuck neatly beneath it */
+.page-content .module-card > .module-toolbar::after,
+.page-content .module-card > .loan-filter-row::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 8px;
+  background: linear-gradient(to bottom, rgba(6, 32, 65, .06), transparent);
+  pointer-events: none;
+}
+
+/* A card with overflow:hidden/auto becomes the scroll container for sticky
+   children, so its toolbar would be pushed down inside the card (blank gap +
+   hidden rows) instead of sticking to the page. `clip` clips the rounded
+   corners identically but does not create a scroll container. */
+.page-content .module-card:has(> .module-toolbar),
+.page-content .module-card:has(> .loan-filter-row) {
+  overflow: clip;
+}
+
+/* ------------------------------------------------------------
+   WHY position:sticky WAS NOT HOLDING ON SOME PAGES
+   .module-page was a CSS grid. A sticky grid item can only move inside its
+   own grid row, so the pinned Back bar (action row) and the pinned profile
+   card never actually stuck. A single-column flex stack looks identical
+   (same gap, same full-width children) but lets sticky items stick for the
+   whole page height.
+   ------------------------------------------------------------ */
+.page-content .module-page {
+  display: flex;
+  flex-direction: column;
+}
