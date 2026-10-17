@@ -212,7 +212,28 @@ export default function Header({ onOpenMenu }) {
   const avatar = user?.profilePhoto || company.logo;
   const profileInitial = String(user?.displayName || company.name || 'C').charAt(0);
   const searchWrapRef = useRef(null);
+  const headerRef = useRef(null);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Publish the real header height so the pinned Back bar can stick right
+  // beneath it on every screen size (desktop rail, mobile + safe-area).
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return undefined;
+    const root = document.documentElement;
+    const publish = () => root.style.setProperty('--app-header-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    publish();
+    let observer;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(publish);
+      observer.observe(el);
+    }
+    window.addEventListener('resize', publish);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', publish);
+    };
+  }, []);
 
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -268,7 +289,7 @@ export default function Header({ onOpenMenu }) {
   const handleSwitchAccount = async (id) => { setProfileOpen(false); await switchAccount(id); navigate('/', { replace: true }); };
 
   return (
-    <header className={`app-header framed-header ${isOverview ? 'overview-header' : ''}`.trim()}>
+    <header ref={headerRef} className={`app-header framed-header ${isOverview ? 'overview-header' : ''}`.trim()}>
       <div className="header-title-wrap">
         <span className="framed-title-orb" aria-hidden="true"><PageIcon size={18} /></span>
         <span className="framed-title-plate" aria-hidden="true" />

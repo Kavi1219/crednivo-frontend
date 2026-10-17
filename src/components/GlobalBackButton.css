@@ -82,3 +82,50 @@
 @media (max-width: 767px) {
   .page-back-button.crednivo-global-back { min-height: 36px; padding: 0 11px; border-radius: 10px; box-shadow: none; }
 }
+
+
+/* ============================================================
+   PINNED BACK BAR (every page)
+   The strip that holds the Back button (right → left, full width) is fixed
+   directly under the header, so Back is always reachable after scrolling to
+   the bottom of a long page. --app-header-h is published by Header.jsx.
+   - .crednivo-global-back-row : pages that use the shared Back row
+   - .module-header-actions-only: pages that keep Back in their action row
+     (Loans, Collection, Capital, Expenses, Reports, Chits, Customers list)
+   A ::before layer paints the bar edge-to-edge regardless of each page's
+   own side padding.
+   ============================================================ */
+.page-content .crednivo-global-back-row,
+.page-content .module-header.module-header-actions-only {
+  position: sticky;
+  top: var(--app-header-h, 82px);
+  z-index: 40;
+  padding: 6px 0;
+  background: var(--canvas);
+}
+/* Edge-to-edge background (right → left) independent of page side padding.
+   Overflow is clipped by .page-content below, so no sideways scrollbar. */
+.page-content .crednivo-global-back-row::before,
+.page-content .module-header.module-header-actions-only::before {
+  content: "";
+  position: absolute;
+  inset: 0 -100vmax;
+  z-index: -1;
+  background: var(--canvas);
+  pointer-events: none;
+}
+/* `clip` (not `hidden`) keeps position:sticky working and lets dropdown menus
+   (Download, etc.) open downward out of the bar. */
+.page-content { overflow-x: clip; }
+.page-content .crednivo-global-back-row { margin: 0 0 8px; }
+
+/* Keep the first row of content from jumping under the bar on small screens */
+@media (max-width: 767px) {
+  .page-content .crednivo-global-back-row,
+  .page-content .module-header.module-header-actions-only {
+    padding: 5px 0;
+  }
+}
+
+/* Native app: no Back button is rendered, so never pin an empty row. */
+.page-content .crednivo-global-back-row:empty { display: none; }
